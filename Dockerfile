@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0.300-alpine3.15 AS build
 
 # Copy event backend
-COPY Events ./Events
+COPY src/Events ./Events
 WORKDIR Events/
 
 
