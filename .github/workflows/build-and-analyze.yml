@@ -22,6 +22,7 @@ jobs:
         with:
           dotnet-version: |
             6.0.x
+            3.1.x
       - name: Build & Test
         run: |
            dotnet build Altinn.Platform.Events.sln -v m
