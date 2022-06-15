@@ -1,4 +1,4 @@
-name: Profile Scan
+name: Events Scan
 
 on:
   schedule:
