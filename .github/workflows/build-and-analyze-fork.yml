@@ -6,8 +6,7 @@ on:
 jobs:
   test:
     if:
-      github.repository_owner == 'Altinn' &&
-      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
+      ${{ github.event.pull_request.head.repo.full_name != github.repository }} ||
       ${{ github.actor == 'dependabot[bot]' }})
     name: Build and Test
     runs-on: ubuntu-latest
@@ -41,8 +40,7 @@ jobs:
 
   code-coverage:
     if:
-      github.repository_owner == 'Altinn' &&
-      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) ||
+      ${{ github.event.pull_request.head.repo.full_name != github.repository }} ||
       ${{ github.actor == 'dependabot[bot]' }})
     name: Report code coverage
     runs-on: ubuntu-latest
