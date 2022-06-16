@@ -20,10 +20,13 @@ namespace Altinn.Platform.Events.Configuration
         public bool IsTraceSensitiveData { get; set; } = false;
 
         /// <inheritdoc/>>
-        public string TraceToDirectory { get; set; }
+        public bool IsTraceToFile { get; set; } = false;
 
         /// <inheritdoc/>>
-        public bool IsTraceToFile { get; set; } = false;
+        public bool IsTraceToDirectory { get; set; } = false;
+
+        /// <inheritdoc/>>
+        public string TraceDirectory { get; set; }
 
         /// <summary>
         /// Info
