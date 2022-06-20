@@ -66,5 +66,11 @@ namespace Altinn.Platform.Events.Services
 
             return userProfile;
         }
+        
+        private bool ReturnTrue()
+        {
+        return true;
+        }
+        
     }
 }
