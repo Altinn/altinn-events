@@ -13,6 +13,8 @@ jobs:
           echo 'github.event.pull_request.head.repo.full_name' + ${{ github.event.pull_request.head.repo.full_name }}
           echo 'github.repository' + ${{ github.repository }}
           echo 'actor' +   ${{ github.actor }}
+          echo 'first check'   ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+          echo 'second check'  ${{ github.actor == 'dependabot[bot]' }})
   test:
     if:
       ${{ github.event.pull_request.head.repo.full_name != github.repository }} ||
