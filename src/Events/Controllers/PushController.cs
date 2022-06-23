@@ -17,7 +17,7 @@ using Microsoft.Extensions.Options;
 namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
-    /// Controller responsible for pushing events to subscribers
+    /// Controller responsible for pushing events to subscribersvewgwgw
     /// </summary>
     [Route("events/api/v1/push")]
     [ApiController]
