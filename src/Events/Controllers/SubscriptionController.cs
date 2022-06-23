@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
-    /// Controller to handle administration of event subscriptions
+    /// Controller to handle administration of event subscriptions sgwaegwgwg
     /// </summary>
     [Route("events/api/v1/subscriptions")]
     [ApiController]
