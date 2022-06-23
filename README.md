@@ -9,7 +9,7 @@
 These instructions will get you a copy of the events component up and running on your machine for development and testing purposes.
 
 ### Prerequisites
-
+atest
 1. [.NET 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
 2. Code editor of your choice
 3. Newest [Git](https://git-scm.com/downloads)
