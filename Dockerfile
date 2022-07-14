@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0.301-alpine3.15 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0.302-alpine3.15 AS build
 
 # Copy event backend
 COPY src/Events ./Events
