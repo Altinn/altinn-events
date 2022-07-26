@@ -16,6 +16,7 @@ using Altinn.Platform.Events.Health;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Swagger;
 using Altinn.Platform.Telemetry;
 
 using AltinnCore.Authentication.JwtCookie;
@@ -176,6 +177,7 @@ void ConfigureLogging(ILoggingBuilder logging)
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
+    services.AddAutoMapper(typeof(Program));
     services.AddControllers().AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -246,11 +248,15 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
     }
 
-    // Add Swagger support (Swashbuckle)
     services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "Altinn Platform Events", Version = "v1" });
         IncludeXmlComments(c);
+        c.EnableAnnotations();
+
+        // Adding filters to provide object examples
+        c.SchemaFilter<SchemaExampleFilter>();
+        c.RequestBodyFilter<RequestBodyExampleFilter>();
     });
 }
 

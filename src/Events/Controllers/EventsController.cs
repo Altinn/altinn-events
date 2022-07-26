@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+
 using Altinn.Common.AccessToken.Configuration;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Authorization;
@@ -12,6 +13,9 @@ using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platorm.Events.Extensions;
+
+using AutoMapper;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +37,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly string _eventsBaseUri;
         private readonly AuthorizationHelper _authorizationHelper;
         private readonly AccessTokenSettings _accessTokenSettings;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsController"/> class
@@ -43,7 +48,8 @@ namespace Altinn.Platform.Events.Controllers
             IOptions<GeneralSettings> settings,
             ILogger<EventsController> logger,
             IPDP pdp,
-            IOptions<AccessTokenSettings> accessTokenSettings)
+            IOptions<AccessTokenSettings> accessTokenSettings,
+            IMapper mapper)
         {
             _registerService = registerService;
             _logger = logger;
@@ -51,6 +57,7 @@ namespace Altinn.Platform.Events.Controllers
             _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
             _authorizationHelper = new AuthorizationHelper(pdp);
             _accessTokenSettings = accessTokenSettings.Value;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -65,7 +72,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
+        public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
             if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) || string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
             string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
@@ -82,7 +89,7 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.StoreCloudEvent(cloudEvent);
+                string cloudEventId = await _eventsService.StoreCloudEvent(_mapper.Map<CloudEvent>(cloudEvent));
                 _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
