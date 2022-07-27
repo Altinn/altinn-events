@@ -257,6 +257,32 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         // Adding filters to provide object examples
         c.SchemaFilter<SchemaExampleFilter>();
         c.RequestBodyFilter<RequestBodyExampleFilter>();
+
+        // add JWT Authentication
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            In = ParameterLocation.Header,
+            Description = "Please enter JWT token",
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            BearerFormat = "JWT",
+            Scheme = "bearer"
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
     });
 }
 

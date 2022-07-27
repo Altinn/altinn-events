@@ -35,6 +35,18 @@ namespace Altinn.Platform.Events.Swagger
                         ["alternativesubject"] = new OpenApiString("/person/27124902369"),
                         ["time"] = new OpenApiString("2020-10-29T07:22:19.438039Z")
                     };
+                case nameof(Subscription):
+                    return new OpenApiObject
+                    {
+                        ["endPoint"] = new OpenApiString("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
+                        ["id"] = new OpenApiInteger(1),
+                        ["sourceFilter"] = new OpenApiString("https://skd.apps.altinn.cloud/skd/mva-melding"),
+                        ["subjectFilter"] = new OpenApiString("/party/512345"),
+                        ["typeFilter"] = new OpenApiString("app.instance.process.completed"),
+                        ["consumer"] = new OpenApiString("/user/12345"),
+                        ["createdBy"] = new OpenApiString("/user/12345"),
+                        ["created"] = new OpenApiString("2022-07-27T13:14:14.395226Z")
+                    };
                 default:
                     return null;
             }

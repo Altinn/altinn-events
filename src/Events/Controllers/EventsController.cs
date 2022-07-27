@@ -113,7 +113,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="party" example="50002108">The party id representing the subjects</param>        
         /// <param name="unit" example="989271156">The organisation number representing the subject</param>
         /// <param name="person" example="01014922047">The person number representing the subject</param>
-        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.process.completed&quot;]">
+        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
         /// A list of the event types to include
         /// </param>
         [HttpGet("{org}/{app}")]
@@ -179,7 +179,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="person" example="01014922047">The person number representing the subject</param>
         /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
         /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;]">A list of the sources to include</param>
-        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.process.completed&quot;]">
+        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
         /// A list of the event types to include</param>
         [HttpGet("party")]
         [Consumes("application/json")]
