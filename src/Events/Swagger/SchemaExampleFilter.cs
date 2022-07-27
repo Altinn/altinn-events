@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 using Altinn.Platform.Events.Models;
 
@@ -12,6 +13,7 @@ namespace Altinn.Platform.Events.Swagger
     /// <summary>
     /// Filter for adding examples to the various classes to enrich open api spec.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class SchemaExampleFilter : ISchemaFilter
     {
         /// <inheritdoc/>

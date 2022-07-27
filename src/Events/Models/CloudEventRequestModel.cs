@@ -1,5 +1,6 @@
 using System;
 using System.Net.Mime;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Altinn.Platform.Events.Models
@@ -59,5 +60,14 @@ namespace Altinn.Platform.Events.Models
         /// </summary>
         [JsonPropertyName("contenttype")]
         public ContentType DataContentType { get; set; }
+
+        /// <summary>
+        /// Serializes the cloud event request to a JSON string.
+        /// </summary>
+        /// <returns>Serialized cloud event request</returns>
+        public string Serialize()
+        {
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+        }
     }
 }
