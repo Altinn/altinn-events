@@ -22,6 +22,6 @@ jobs:
     - name: Build the Docker image
       run: docker build . --tag altinn-events:${{github.sha}}
 
-    - uses: Azure/container-scan@v0
+    - uses: Azure/container-scan@v0.1
       with:
         image-name: altinn-events:${{ github.sha }}
