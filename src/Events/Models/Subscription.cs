@@ -55,7 +55,7 @@ namespace Altinn.Platform.Events.Models
         public DateTime Created { get; set; }
 
         /// <summary>
-        /// Serializes the cloud event to a JSON string.
+        /// Serializes the subscriont to a JSON string.
         /// </summary>
         /// <returns>Serialized cloud event</returns>
         public string Serialize()

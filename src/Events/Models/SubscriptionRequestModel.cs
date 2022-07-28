@@ -1,4 +1,6 @@
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Altinn.Platform.Events.Models
 {
@@ -31,5 +33,14 @@ namespace Altinn.Platform.Events.Models
         /// Filter for type. The different sources has different types. 
         /// </summary>
         public string TypeFilter { get; set; }
+
+        /// <summary>
+        /// Serializes the subscription request to a JSON string.
+        /// </summary>
+        /// <returns>Serialized cloud event</returns>
+        public string Serialize()
+        {
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+        }
     }
 }
