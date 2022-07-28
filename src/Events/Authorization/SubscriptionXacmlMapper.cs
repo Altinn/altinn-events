@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Constants;
 using Altinn.Common.PEP.Helpers;
+using Altinn.Platform.Events.Helpers;
 using Altinn.Platform.Events.Models;
 
 using static Altinn.Authorization.ABAC.Constants.XacmlConstants;
@@ -11,7 +12,7 @@ using static Altinn.Authorization.ABAC.Constants.XacmlConstants;
 namespace Altinn.Platform.Events.Authorization
 {
     /// <summary>
-    /// Utility class for converting Events to XACML request
+    /// Utility class for converting Events Subscription requests to XACML request
     /// </summary>
     public static class SubscriptionXacmlMapper
     {
@@ -49,7 +50,7 @@ namespace Altinn.Platform.Events.Authorization
                 app = pathParams[2];
             }
 
-            request.AccessSubject.Add(CreateSubjectCategory(subscriptionConsumer));
+            request.AccessSubject.Add(XacmlMapperHelper.CreateSubjectAttributes(subscriptionConsumer));
             request.Action.Add(CreateActionCategory("read"));
             request.Resource.Add(CreateEventsResourceCategory(org, app, subscriptionSubjectFilter));
 
@@ -91,39 +92,6 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppResource, "events", DefaultType, DefaultIssuer));
 
             return resourceCategory;
-        }
-
-        private static XacmlJsonCategory CreateSubjectCategory(string subscriptionConsumer)
-        {
-            XacmlJsonCategory subjectAttributes = new()
-            {
-                Attribute = CreateSubjectAttributes(subscriptionConsumer)
-            };
-
-            return subjectAttributes;
-        }
-
-        private static List<XacmlJsonAttribute> CreateSubjectAttributes(string consumer)
-        {
-            List<XacmlJsonAttribute> attributes = new();
-
-            if (consumer.StartsWith(UserPrefix))
-            {
-                string value = consumer.Replace(UserPrefix, string.Empty);
-                attributes.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimUserId, value, ClaimValueTypes.String, DefaultIssuer));
-            }
-            else if (consumer.StartsWith(OrgPrefix))
-            {
-                string value = consumer.Replace(OrgPrefix, string.Empty);
-                attributes.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrg, value, ClaimValueTypes.String, DefaultIssuer));
-            }
-            else if (consumer.StartsWith(PartyPrefix))
-            {
-                string value = consumer.Replace(PartyPrefix, string.Empty);
-                attributes.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer32, DefaultIssuer));
-            }
-
-            return attributes;
         }
 
         private static XacmlJsonAttribute CreateResourceAttribute(string resource)
