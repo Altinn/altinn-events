@@ -106,10 +106,7 @@ namespace Altinn.Platform.Events.Swagger
                  }))
             };
 
-            examples.ForEach(entry => appJson.Examples.Add(entry.Name, new OpenApiExample
-            {
-                Value = entry.Value
-            }));
+            examples.ForEach(entry => appJson.Examples.Add(entry.Name, new OpenApiExample { Value = entry.Value }));
 
             requestBody.Content["application/json"] = appJson;
         }
