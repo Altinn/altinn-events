@@ -116,6 +116,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
         /// A list of the event types to include
         /// </param>
+        /// <param name="size">The maximum number of events to include in the response</param>
         [HttpGet("{org}/{app}")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -124,16 +125,16 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
         public async Task<ActionResult<List<CloudEvent>>> GetForOrg(
-            [FromRoute] string org,
-            [FromRoute] string app,
-            [FromQuery] string after,
-            [FromQuery] DateTime? from,
-            [FromQuery] DateTime? to,
-            [FromQuery] int party,
-            [FromQuery] string unit,
-            [FromHeader] string person,
-            [FromQuery] List<string> type,
-            [FromQuery] int size = 50)
+                [FromRoute] string org,
+                [FromRoute] string app,
+                [FromQuery] string after,
+                [FromQuery] DateTime? from,
+                [FromQuery] DateTime? to,
+                [FromQuery] int party,
+                [FromQuery] string unit,
+                [FromHeader] string person,
+                [FromQuery] List<string> type,
+                [FromQuery] int size = 50)
         {
             if (string.IsNullOrEmpty(HttpContext.User.GetOrg()))
             {
@@ -181,6 +182,7 @@ namespace Altinn.Platform.Events.Controllers
         /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;]">A list of the sources to include</param>
         /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
         /// A list of the event types to include</param>
+        /// <param name="size">The maximum number of events to include in the response</param>
         [HttpGet("party")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]

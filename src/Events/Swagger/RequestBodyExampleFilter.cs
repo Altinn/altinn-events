@@ -56,8 +56,6 @@ namespace Altinn.Platform.Events.Swagger
                 }))
             };
 
-            Dictionary<string, OpenApiExample> exampleDict = new();
-
             examples.ForEach(entry => appJson.Examples.Add(entry.Name, new OpenApiExample { Value = entry.Value }));
 
             requestBody.Content["application/json"] = appJson;
@@ -107,8 +105,6 @@ namespace Altinn.Platform.Events.Swagger
                      ("sourceFilter", "https://ttd.apps.altinn.no/ttd/apps-test")
                  }))
             };
-
-            Dictionary<string, OpenApiExample> exampleDict = new();
 
             examples.ForEach(entry => appJson.Examples.Add(entry.Name, new OpenApiExample
             {
