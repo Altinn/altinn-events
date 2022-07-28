@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 
+using Altinn.Common.PEP.Interfaces;
+using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
@@ -22,6 +24,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ISubscriptionService _eventsSubscriptionService;
         private readonly IRegisterService _registerService;
         private readonly IProfile _profileService;
+        private readonly AuthorizationHelper _authorizationHelper;
 
         private const string OrganisationPrefix = "/org/";
         private const string PersonPrefix = "/person/";
@@ -35,11 +38,13 @@ namespace Altinn.Platform.Events.Controllers
         public SubscriptionController(
             ISubscriptionService eventsSubscriptionService,
             IRegisterService registerService,
-            IProfile profileService)
+            IProfile profileService,
+            IPDP pdp)
         {
             _registerService = registerService;
             _eventsSubscriptionService = eventsSubscriptionService;
             _profileService = profileService;
+            _authorizationHelper = new AuthorizationHelper(pdp);
         }
 
         /// <summary>
@@ -242,14 +247,23 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         private async Task<bool> AuthorizeSubjectForConsumer(Subscription eventsSubscription)
         {
-            // First version require that created and consumer is the same
             if (eventsSubscription.CreatedBy.StartsWith(UserPrefix))
             {
                 int userId = Convert.ToInt32(eventsSubscription.CreatedBy.Replace(UserPrefix, string.Empty));
                 UserProfile profile = await _profileService.GetUserProfile(userId);
                 string ssn = PersonPrefix + profile.Party.SSN;
 
-                if (!ssn.Equals(eventsSubscription.AlternativeSubjectFilter))
+                if (ssn.Equals(eventsSubscription.AlternativeSubjectFilter))
+                {
+                    return true;
+                }
+
+                bool hasRoleAccess = await _authorizationHelper.AuthorizeConsumerForEventsSubcription(
+                    eventsSubscription, 
+                    eventsSubscription.CreatedBy, 
+                    eventsSubscription.SubjectFilter ?? eventsSubscription.AlternativeSubjectFilter);
+
+                if (!hasRoleAccess)
                 {
                     return false;
                 }
