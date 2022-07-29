@@ -18,12 +18,9 @@ namespace Altinn.Platform.Events.Authorization
         private const string DefaultIssuer = "Altinn";
         private const string DefaultType = "string";
 
-        private const string OrgPrefix = "/org/";
         private const string PartyPrefix = "/party/";
 
-        private const string ClaimUserId = "urn:altinn:userid";
         private const string ClaimPartyID = "urn:altinn:partyid";
-        private const string ClaimOrg = "urn:altinn:org";
 
         /// <summary>
         /// Create a decision request based on a subscription

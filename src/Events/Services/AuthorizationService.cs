@@ -2,37 +2,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Constants;
 using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
+using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Services.Interfaces;
 
-namespace Altinn.Platform.Events.Authorization
+namespace Altinn.Platform.Events.Services
 {
     /// <summary>
-    /// Authorization Helper for 
+    /// The authorization service
     /// </summary>
-    public class AuthorizationHelper
+    public class AuthorizationService : IAuthorization
     {
         private readonly IPDP _pdp;
- 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AuthorizationHelper"/> class.
-        /// </summary>
-        /// <param name="pdp">The policy decision point</param>
-        public AuthorizationHelper(IPDP pdp)
-        {
-            _pdp = pdp;
-         }
 
         /// <summary>
-        /// Authorizes and filters events based on authorization
+        /// Initializes a new instance of the <see cref="AuthorizationService"/> class.
         /// </summary>
-        /// <param name="consumer">The event consumer</param>
-        /// <param name="cloudEvents">The list of events</param>
-        /// <returns>A list of authorized events</returns>
+        /// <param name="pdp">The policy decision point</param>
+        public AuthorizationService(IPDP pdp)
+        {
+            _pdp = pdp;
+        }
+
+        /// <inheritdoc/>
         public async Task<List<CloudEvent>> AuthorizeEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents)
         {
             XacmlJsonRequestRoot xacmlJsonRequest = CloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
@@ -68,9 +66,7 @@ namespace Altinn.Platform.Events.Authorization
             return authorizedEventsList;
         }
 
-        /// <summary>
-        /// Method to authorize access to an Altinn App event
-        /// </summary>
+        /// <inheritdoc/>
         public async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
         {
             XacmlJsonRequestRoot xacmlJsonRequest = CloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
@@ -78,9 +74,7 @@ namespace Altinn.Platform.Events.Authorization
             return ValidateResult(response);
         }
 
-        /// <summary>
-        /// Method to authorize access to create an Altinn App Events Subscription
-        /// </summary>
+        /// <inheritdoc/>
         public async Task<bool> AuthorizeConsumerForEventsSubcription(Subscription subscription)
         {
             XacmlJsonRequestRoot xacmlJsonRequest = SubscriptionXacmlMapper.CreateDecisionRequest(subscription);

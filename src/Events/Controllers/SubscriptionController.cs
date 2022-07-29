@@ -2,8 +2,8 @@ using System;
 using System.Threading.Tasks;
 
 using Altinn.Common.PEP.Interfaces;
-using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platorm.Events.Extensions;
@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ISubscriptionService _eventsSubscriptionService;
         private readonly IRegisterService _registerService;
         private readonly IProfile _profileService;
-        private readonly AuthorizationHelper _authorizationHelper;
+        private readonly IAuthorization _authorizationService;
 
         private const string OrganisationPrefix = "/org/";
         private const string PersonPrefix = "/person/";
@@ -39,12 +39,12 @@ namespace Altinn.Platform.Events.Controllers
             ISubscriptionService eventsSubscriptionService,
             IRegisterService registerService,
             IProfile profileService,
-            IPDP pdp)
+            IAuthorization authorizationService)
         {
             _registerService = registerService;
             _eventsSubscriptionService = eventsSubscriptionService;
             _profileService = profileService;
-            _authorizationHelper = new AuthorizationHelper(pdp);
+            _authorizationService = authorizationService;
         }
 
         /// <summary>
@@ -258,7 +258,7 @@ namespace Altinn.Platform.Events.Controllers
                     return true;
                 }
 
-                bool hasRoleAccess = await _authorizationHelper.AuthorizeConsumerForEventsSubcription(eventsSubscription);
+                bool hasRoleAccess = await _authorizationService.AuthorizeConsumerForEventsSubcription(eventsSubscription);
 
                 if (!hasRoleAccess)
                 {
