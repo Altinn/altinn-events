@@ -235,8 +235,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.AddSingleton<IQueueService, QueueService>();
-    services.AddTransient<IAuthorization, AuthorizationService>();
     services.AddSingleton<IPDP, PDPAppSI>();
+
+    services.AddTransient<IAuthorization, AuthorizationService>();
 
     if (!string.IsNullOrEmpty(applicationInsightsKey))
     {
