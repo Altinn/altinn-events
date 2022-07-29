@@ -37,30 +37,24 @@ namespace Altinn.Platform.Events.Services
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
             List<CloudEvent> authorizedEventsList = new List<CloudEvent>();
 
-            foreach (XacmlJsonResult result in response.Response)
+            foreach (XacmlJsonResult result in response.Response.Where(result => DecisionHelper.ValidateDecisionResult(result, consumer)))
             {
-                if (DecisionHelper.ValidateDecisionResult(result, consumer))
+                string eventId = string.Empty;
+
+                // Loop through all attributes in Category from the response
+                foreach (XacmlJsonCategory category in result.Category)
                 {
-                    string eventId = string.Empty;
+                    var attributes = category.Attribute;
 
-                    // Loop through all attributes in Category from the response
-                    foreach (XacmlJsonCategory category in result.Category)
+                    foreach (var attribute in attributes.Where(attribute => attribute.AttributeId.Equals(AltinnXacmlUrns.EventId)))
                     {
-                        var attributes = category.Attribute;
-
-                        foreach (var attribute in attributes)
-                        {
-                            if (attribute.AttributeId.Equals(AltinnXacmlUrns.EventId))
-                            {
-                                eventId = attribute.Value;
-                            }
-                        }
+                        eventId = attribute.Value;
                     }
-
-                    // Find the instance that has been validated to add it to the list of authorized instances.
-                    CloudEvent authorizedEvent = cloudEvents.First(i => i.Id == eventId);
-                    authorizedEventsList.Add(authorizedEvent);
                 }
+
+                // Find the instance that has been validated to add it to the list of authorized instances.
+                CloudEvent authorizedEvent = cloudEvents.First(i => i.Id == eventId);
+                authorizedEventsList.Add(authorizedEvent);
             }
 
             return authorizedEventsList;
