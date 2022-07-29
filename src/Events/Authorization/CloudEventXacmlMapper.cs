@@ -23,14 +23,6 @@ namespace Altinn.Platform.Events.Authorization
         private const string ActionId = "a";
         private const string ResourceId = "r";
 
-        private const string UserPrefix = "/user/";
-        private const string OrgPrefix = "/org/";
-        private const string PartyPrefix = "/party/";
-
-        private const string ClaimUserId = "urn:altinn:userid";
-        private const string ClaimPartyID = "urn:altinn:partyid";
-        private const string ClaimOrg = "urn:altinn:org";
-
         /// <summary>
         /// Create XACML request for multiple 
         /// </summary>

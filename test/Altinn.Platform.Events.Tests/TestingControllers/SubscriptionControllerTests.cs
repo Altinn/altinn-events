@@ -3,8 +3,8 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
@@ -15,6 +15,7 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
 using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
+
 using AltinnCore.Authentication.JwtCookie;
 
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -58,12 +59,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status and correct responseId.
             /// </summary>
             [Fact]
-            public async Task Post_GivenValidCloudEventSubscription_ReturnsStatusCreatedAndCorrectData()
+            public async Task Post_GivenValidSubscription_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
                 Subscription cloudEventSubscription = GetEventsSubscription("https://skd.apps.altinn.no/skd/flyttemelding", null, "https://www.skatteetaten.no/hook");
- 
+
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
@@ -87,7 +88,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// </summary>
             /// <returns></returns>
             [Fact]
-            public async Task Post_GivenInValidCloudEventSubscription_ReturnsBadRequest()
+            public async Task Post_GivenInvalidSubscription_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
@@ -135,7 +136,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             }
-           
+
             /// <summary>
             /// Scenario:
             ///   Post an invalid eventssubscription for user 1337. 
@@ -145,7 +146,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status and correct responseId.
             /// </summary>
             [Fact]
-            public async Task Post_GivenInvalidValidCloudEventSubscriptionUser_ReturnsBadRequest()
+            public async Task Post_GivenInvalidValidSubscriptionUser_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
@@ -174,7 +175,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status and correct responseId.
             /// </summary>
             [Fact]
-            public async Task Post_GivenValidValidCloudEventSubscriptionUser_ReturnsCreated()
+            public async Task Post_GivenValidSubscriptionUser_ReturnsCreated()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
@@ -252,6 +253,62 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
+            /// Post valid subscription for user with organization as subject
+            /// Expected result:
+            /// Returns HttpStatus created
+            /// Success criteria:
+            /// The response has correct status and correct responseId.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionUserWithValidOrganizationSubject_ReturnsCreated()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                Subscription cloudEventSubscription = GetEventsSubscription("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "/org/897069650", "https://www.ttd.no/hook");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Post valid subscription for user with persn as subject
+            /// Expected result:
+            /// Returns HttpStatus created
+            /// Success criteria:
+            /// The response has correct status and correct responseId.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionUserWithValidPersonSubject_ReturnsCreated()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                Subscription cloudEventSubscription = GetEventsSubscription("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "/person/12345678901", "https://www.ttd.no/hook");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            }
+
+            /// <summary>
             /// Post invalid subscription for org with invalid subject
             /// Expected result:
             /// Returns HttpStatus badrequest
@@ -259,7 +316,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// The response has correct status and correct responseId.
             /// </summary>
             [Fact]
-            public async Task Post_GivenSubscriptionOrgWithInValidSubject_ReturnsBadRequest()
+            public async Task Post_GivenSubscriptionOrgWithInvalidSubject_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
@@ -290,7 +347,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/12";
-                
+
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)

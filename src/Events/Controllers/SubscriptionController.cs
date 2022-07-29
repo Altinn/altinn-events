@@ -243,7 +243,7 @@ namespace Altinn.Platform.Events.Controllers
 
         /// <summary>
         /// Validates that the identity (user, organization or org) is authorized to create subscriptions for a given subject.
-        /// Currently the subject needs to match the identity.  Org does not need subject.
+        ///  Subscriptions crrated by org do not need subject.
         /// </summary>
         private async Task<bool> AuthorizeSubjectForConsumer(Subscription eventsSubscription)
         {
