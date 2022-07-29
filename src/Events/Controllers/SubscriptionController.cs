@@ -205,6 +205,12 @@ namespace Altinn.Platform.Events.Controllers
                 return false;
             }
 
+            if (!Uri.IsWellFormedUriString(eventsSubscription.SourceFilter.ToString(), UriKind.Absolute))
+            {
+                message = "SourceFilter must be an absolute URI";
+                return false;
+            }
+
             string absolutePath = eventsSubscription.SourceFilter.AbsolutePath;
             if (string.IsNullOrEmpty(absolutePath) || absolutePath.Split("/").Length != 3)
             {
