@@ -78,42 +78,31 @@
     "childParties": null
   },
   {
-    "PartyId": "1337",
-    "PartyTypeName": 1,
-    "OrgNumber": null,
-    "SSN": "01039012345",
-    "UnitType": null,
-    "Name": "Sophie Salt",
-    "IsDeleted": false,
-    "OnlyHierarchyElementWithNoAccess": false,
-    "Person": null,
-    "Organization": null,
-    "ChildParties": null
+    "partyId": "1337",
+    "partyTypeName": 1,
+    "orgNumber": "null",
+    "ssn": "01038712345",
+    "unitType": null,
+    "name": "Ola Nordmann",
+    "isDeleted": false,
+    "onlyHierarchyElementWithNoAccess": false,
+    "person": null,
+    "organisation": null,
+    "childParties": null
   },
   {
-    "PartyId": "1000",
-    "PartyTypeName": 1,
-    "OrgNumber": null,
-    "SSN": "12345678901",
-    "UnitType": null,
-    "Name": "Ola Nordmann",
-    "IsDeleted": false,
-    "OnlyHierarchyElementWithNoAccess": false,
-    "Person": null,
-    "Organization": null,
-    "ChildParties": null
-  },
-  {
-    "PartyId": "1001",
-    "PartyTypeName": 1,
-    "OrgNumber": null,
-    "SSN": "12345678901",
-    "UnitType": null,
-    "Name": "Tore Nordmann",
-    "IsDeleted": false,
-    "OnlyHierarchyElementWithNoAccess": false,
-    "Person": null,
-    "Organization": null,
-    "ChildParties": null
-   
+    "partyId": "54321",
+    "partyTypeName": 1,
+    "orgNumber": "null",
+    "ssn": "01039012345",
+    "unitType": null,
+    "name": "Sophie Salt",
+    "isDeleted": false,
+    "onlyHierarchyElementWithNoAccess": false,
+    "person": null,
+    "organisation": null,
+    "childParties": null
+  }
+
+
 ]

@@ -292,7 +292,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                Subscription cloudEventSubscription = GetEventsSubscription("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "/person/12345678901", "https://www.ttd.no/hook");
+                Subscription cloudEventSubscription = GetEventsSubscription("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "/person/01039012345", "https://www.ttd.no/hook");
 
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
