@@ -1,14 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
-using System.Text;
 
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Models;
-
-using AltinnCore.Authentication.Constants;
 
 using Xunit;
 
