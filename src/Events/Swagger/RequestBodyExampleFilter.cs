@@ -75,7 +75,14 @@ namespace Altinn.Platform.Events.Swagger
                     ("alternativeSubjectFilter", "/person/01017512345"),
                     ("typeFilter", "app.instance.process.completed")
                  })),
-
+                 ("End user (system) subscribing to events regarding an organisation",
+                 CreateOpenApiObject(new List<(string Name, string Value)>()
+                 {
+                    ("endpoint", "https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
+                    ("sourceFilter", "https://skd.apps.altinn.no/skd/mva-melding"),
+                    ("alternativeSubjectFilter", "/org/897069651"),
+                    ("typeFilter", "app.instance.process.completed")
+                 })),
                  ("Org subscription to events of all their apps",
                  CreateOpenApiObject(new List<(string Name, string Value)>()
                  {
