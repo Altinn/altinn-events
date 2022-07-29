@@ -4,7 +4,7 @@ using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Helpers;
 
-namespace Altinn.Platform.Events.Helpers
+namespace Altinn.Platform.Events.Authorization
 {
     /// <summary>
     /// Shared methods for mapping to xacml
@@ -27,7 +27,10 @@ namespace Altinn.Platform.Events.Helpers
         /// <returns></returns>
         public static XacmlJsonCategory CreateSubjectAttributes(string subjectOrResource)
         {
-            XacmlJsonCategory category = new();
+            XacmlJsonCategory category = new()
+            {
+                Attribute = new List<XacmlJsonAttribute>()
+            };
 
             if (subjectOrResource.StartsWith(UserPrefix))
             {

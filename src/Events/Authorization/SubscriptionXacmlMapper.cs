@@ -4,7 +4,6 @@ using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Constants;
 using Altinn.Common.PEP.Helpers;
-using Altinn.Platform.Events.Helpers;
 using Altinn.Platform.Events.Models;
 
 using static Altinn.Authorization.ABAC.Constants.XacmlConstants;
@@ -28,9 +27,9 @@ namespace Altinn.Platform.Events.Authorization
         private const string ClaimOrg = "urn:altinn:org";
 
         /// <summary>
-        /// Create a decision Request based on a subscription, subject (subscription consumer) and resorce (subscription (alternative) subject filter)
+        /// Create a decision request based on a subscription
         /// </summary>
-        public static XacmlJsonRequestRoot CreateDecisionRequest(Subscription cloudEvent, string subscriptionConsumer, string subscriptionSubjectFilter)
+        public static XacmlJsonRequestRoot CreateDecisionRequest(Subscription subscription)
         {
             XacmlJsonRequest request = new()
             {
@@ -42,7 +41,7 @@ namespace Altinn.Platform.Events.Authorization
             string org = null;
             string app = null;
 
-            string[] pathParams = cloudEvent.SourceFilter.AbsolutePath.Split("/");
+            string[] pathParams = subscription.SourceFilter.AbsolutePath.Split("/");
 
             if (pathParams.Length > 2)
             {
@@ -50,9 +49,9 @@ namespace Altinn.Platform.Events.Authorization
                 app = pathParams[2];
             }
 
-            request.AccessSubject.Add(XacmlMapperHelper.CreateSubjectAttributes(subscriptionConsumer));
+            request.AccessSubject.Add(XacmlMapperHelper.CreateSubjectAttributes(subscription.Consumer));
             request.Action.Add(CreateActionCategory("read"));
-            request.Resource.Add(CreateEventsResourceCategory(org, app, subscriptionSubjectFilter));
+            request.Resource.Add(CreateEventsResourceCategory(org, app, subscription.SubjectFilter ?? subscription.AlternativeSubjectFilter));
 
             XacmlJsonRequestRoot jsonRequest = new() { Request = request };
 

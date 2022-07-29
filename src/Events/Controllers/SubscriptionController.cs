@@ -258,10 +258,7 @@ namespace Altinn.Platform.Events.Controllers
                     return true;
                 }
 
-                bool hasRoleAccess = await _authorizationHelper.AuthorizeConsumerForEventsSubcription(
-                    eventsSubscription, 
-                    eventsSubscription.CreatedBy, 
-                    eventsSubscription.SubjectFilter ?? eventsSubscription.AlternativeSubjectFilter);
+                bool hasRoleAccess = await _authorizationHelper.AuthorizeConsumerForEventsSubcription(eventsSubscription);
 
                 if (!hasRoleAccess)
                 {

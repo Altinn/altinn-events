@@ -81,9 +81,9 @@ namespace Altinn.Platform.Events.Authorization
         /// <summary>
         /// Method to authorize access to create an Altinn App Events Subscription
         /// </summary>
-        public async Task<bool> AuthorizeConsumerForEventsSubcription(Subscription subscription, string consumer, string subjectFilter)
+        public async Task<bool> AuthorizeConsumerForEventsSubcription(Subscription subscription)
         {
-            XacmlJsonRequestRoot xacmlJsonRequest = SubscriptionXacmlMapper.CreateDecisionRequest(subscription, consumer, subjectFilter);
+            XacmlJsonRequestRoot xacmlJsonRequest = SubscriptionXacmlMapper.CreateDecisionRequest(subscription);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
             return ValidateResult(response);
         }
