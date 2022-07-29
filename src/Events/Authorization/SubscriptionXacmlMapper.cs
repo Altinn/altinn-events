@@ -18,7 +18,6 @@ namespace Altinn.Platform.Events.Authorization
         private const string DefaultIssuer = "Altinn";
         private const string DefaultType = "string";
 
-        private const string UserPrefix = "/user/";
         private const string OrgPrefix = "/org/";
         private const string PartyPrefix = "/party/";
 
@@ -51,7 +50,7 @@ namespace Altinn.Platform.Events.Authorization
 
             request.AccessSubject.Add(XacmlMapperHelper.CreateSubjectAttributes(subscription.Consumer));
             request.Action.Add(CreateActionCategory("read"));
-            request.Resource.Add(CreateEventsResourceCategory(org, app, subscription.SubjectFilter ?? subscription.AlternativeSubjectFilter));
+            request.Resource.Add(CreateEventsResourceCategory(org, app, subscription.SubjectFilter));
 
             XacmlJsonRequestRoot jsonRequest = new() { Request = request };
 
@@ -87,31 +86,15 @@ namespace Altinn.Platform.Events.Authorization
                 resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppId, app, DefaultType, DefaultIssuer));
             }
 
-            resourceCategory.Attribute.Add(CreateResourceAttribute(subscriptionSubjectFilter));
+            if (!string.IsNullOrEmpty(subscriptionSubjectFilter))
+            {
+                string value = subscriptionSubjectFilter.Replace(PartyPrefix, string.Empty);
+                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer));                 
+            }           
+
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppResource, "events", DefaultType, DefaultIssuer));
 
             return resourceCategory;
-        }
-
-        private static XacmlJsonAttribute CreateResourceAttribute(string resource)
-        {
-            if (resource.StartsWith(UserPrefix))
-            {
-                string value = resource.Replace(UserPrefix, string.Empty);
-                return DecisionHelper.CreateXacmlJsonAttribute(ClaimUserId, value, ClaimValueTypes.String, DefaultIssuer);
-            }
-            else if (resource.StartsWith(OrgPrefix))
-            {
-                string value = resource.Replace(OrgPrefix, string.Empty);
-                return DecisionHelper.CreateXacmlJsonAttribute(ClaimOrg, value, ClaimValueTypes.String, DefaultIssuer);
-            }
-            else if (resource.StartsWith(PartyPrefix))
-            {
-                string value = resource.Replace(PartyPrefix, string.Empty);
-                return DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer);
-            }
-
-            return null;
         }
     }
 }

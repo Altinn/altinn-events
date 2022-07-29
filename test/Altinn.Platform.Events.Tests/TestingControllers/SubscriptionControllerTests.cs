@@ -309,6 +309,34 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
+            /// Post invalid subscription for user with person as subject. User missing required role.
+            /// Expected result:
+            /// Returns HttpStatus Forbidden
+            /// Success criteria:
+            /// The response has correct status and correct responseId.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionUserWithInvalidPersonSubject_ReturnsCreated()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                Subscription cloudEventSubscription = GetEventsSubscription("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "/person/16069412345", "https://www.ttd.no/hook");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            }
+
+            /// <summary>
             /// Post invalid subscription for org with invalid subject
             /// Expected result:
             /// Returns HttpStatus badrequest
