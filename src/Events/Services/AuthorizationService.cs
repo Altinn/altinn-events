@@ -42,10 +42,8 @@ namespace Altinn.Platform.Events.Services
                 string eventId = string.Empty;
 
                 // Loop through all attributes in Category from the response
-                foreach (XacmlJsonCategory category in result.Category)
+                foreach (var attributes in result.Category.Select(category => category.Attribute))
                 {
-                    var attributes = category.Attribute;
-
                     foreach (var attribute in attributes.Where(attribute => attribute.AttributeId.Equals(AltinnXacmlUrns.EventId)))
                     {
                         eventId = attribute.Value;
