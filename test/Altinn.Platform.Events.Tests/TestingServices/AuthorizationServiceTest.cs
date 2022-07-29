@@ -1,7 +1,8 @@
-using Altinn.Platform.Events.Models;
-using Altinn.Platform.Events.Services;
 using System;
 using System.Threading.Tasks;
+
+using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Services;
 
 using Altinn.Platform.Events.UnitTest.Mocks;
 

@@ -105,7 +105,7 @@ async Task SetConfigurationProviders(ConfigurationManager config)
 
 async Task ConnectToKeyVaultAndSetApplicationInsights(ConfigurationManager config)
 {
-    Altinn.Common.AccessToken.Configuration.KeyVaultSettings keyVaultSettings = new Altinn.Common.AccessToken.Configuration.KeyVaultSettings();
+    Altinn.Common.AccessToken.Configuration.KeyVaultSettings keyVaultSettings = new();
     config.GetSection("kvSetting").Bind(keyVaultSettings);
     if (!string.IsNullOrEmpty(keyVaultSettings.ClientId) &&
         !string.IsNullOrEmpty(keyVaultSettings.TenantId) &&
@@ -117,7 +117,7 @@ async Task ConnectToKeyVaultAndSetApplicationInsights(ConfigurationManager confi
         string connectionString = $"RunAs=App;AppId={keyVaultSettings.ClientId};" +
                                   $"TenantId={keyVaultSettings.TenantId};" +
                                   $"AppKey={keyVaultSettings.ClientSecret}";
-        AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider(connectionString);
+        AzureServiceTokenProvider azureServiceTokenProvider = new(connectionString);
         KeyVaultClient keyVaultClient = new KeyVaultClient(
             new KeyVaultClient.AuthenticationCallback(
                 azureServiceTokenProvider.KeyVaultTokenCallback));
