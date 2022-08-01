@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -108,6 +109,21 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             return Ok(subscription);
+        }
+
+        /// <summary>
+        /// Get all subscription for the authorized consumer
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Produces("application/json")]
+        public async Task<ActionResult<List<Subscription>>> Get()
+        {
+            string consumer = GetConsumer();
+            List<Subscription> subscriptions = await _eventsSubscriptionService.GetAllSubscriptions(consumer);
+            return Ok(subscriptions);
         }
 
         /// <summary>
@@ -361,6 +377,22 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             return false;
+        }
+
+        private string GetConsumer()
+        {
+            string authenticatedConsumer = string.Empty;
+
+            if (!string.IsNullOrEmpty(HttpContext.User.GetOrg()))
+            {
+                authenticatedConsumer = OrgPrefix + HttpContext.User.GetOrg();
+            }
+            else if (HttpContext.User.GetUserIdAsInt().HasValue)
+            {
+                authenticatedConsumer = UserPrefix + HttpContext.User.GetUserIdAsInt().Value;
+            }
+
+            return authenticatedConsumer;
         }
     }
 }
