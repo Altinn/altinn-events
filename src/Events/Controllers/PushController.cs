@@ -1,17 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Altinn.Common.AccessToken.Configuration;
-using Altinn.Common.PEP.Interfaces;
-using Altinn.Platform.Events.Authorization;
+
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Controllers
@@ -26,7 +24,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ISubscriptionService _subscriptionService;
         private readonly IEventsService _eventsService;
 
-        private readonly AuthorizationHelper _authorizationHelper;
+        private readonly IAuthorization _authorizationService;
         private readonly PlatformSettings _platformSettings;
 
         private readonly IMemoryCache _memoryCache;
@@ -40,13 +38,13 @@ namespace Altinn.Platform.Events.Controllers
         public PushController(
         IEventsService eventsService,
         ISubscriptionService subscriptionService,
-        IPDP pdp,
+        IAuthorization authorizationService,
         IOptions<PlatformSettings> platformSettings,
         IMemoryCache memoryCache)
         {
             _eventsService = eventsService;
             _subscriptionService = subscriptionService;
-            _authorizationHelper = new AuthorizationHelper(pdp);
+            _authorizationService = authorizationService;
             _platformSettings = platformSettings.Value;
             _memoryCache = memoryCache;
             _orgSubscriptioncacheEntryOptions = new MemoryCacheEntryOptions()
@@ -118,7 +116,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (!_memoryCache.TryGetValue(cacheKey, out isAuthorized))
             {
-                isAuthorized = await _authorizationHelper.AuthorizeConsumerForAltinnAppEvent(cloudEvent, consumer);
+                isAuthorized = await _authorizationService.AuthorizeConsumerForAltinnAppEvent(cloudEvent, consumer);
                 _memoryCache.Set(cacheKey, isAuthorized, _orgAuthorizationEntryOptions);
             }
 

@@ -1,7 +1,9 @@
 using System;
 using System.Threading.Tasks;
 
+using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platorm.Events.Extensions;
@@ -22,6 +24,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ISubscriptionService _eventsSubscriptionService;
         private readonly IRegisterService _registerService;
         private readonly IProfile _profileService;
+        private readonly IAuthorization _authorizationService;
 
         private const string OrganisationPrefix = "/org/";
         private const string PersonPrefix = "/person/";
@@ -35,11 +38,13 @@ namespace Altinn.Platform.Events.Controllers
         public SubscriptionController(
             ISubscriptionService eventsSubscriptionService,
             IRegisterService registerService,
-            IProfile profileService)
+            IProfile profileService,
+            IAuthorization authorizationService)
         {
             _registerService = registerService;
             _eventsSubscriptionService = eventsSubscriptionService;
             _profileService = profileService;
+            _authorizationService = authorizationService;
         }
 
         /// <summary>
@@ -238,18 +243,24 @@ namespace Altinn.Platform.Events.Controllers
 
         /// <summary>
         /// Validates that the identity (user, organization or org) is authorized to create subscriptions for a given subject.
-        /// Currently the subject needs to match the identity.  Org does not need subject.
+        ///  Subscriptions crrated by org do not need subject.
         /// </summary>
         private async Task<bool> AuthorizeSubjectForConsumer(Subscription eventsSubscription)
         {
-            // First version require that created and consumer is the same
             if (eventsSubscription.CreatedBy.StartsWith(UserPrefix))
             {
                 int userId = Convert.ToInt32(eventsSubscription.CreatedBy.Replace(UserPrefix, string.Empty));
                 UserProfile profile = await _profileService.GetUserProfile(userId);
                 string ssn = PersonPrefix + profile.Party.SSN;
 
-                if (!ssn.Equals(eventsSubscription.AlternativeSubjectFilter))
+                if (ssn.Equals(eventsSubscription.AlternativeSubjectFilter))
+                {
+                    return true;
+                }
+
+                bool hasRoleAccess = await _authorizationService.AuthorizeConsumerForEventsSubcription(eventsSubscription);
+
+                if (!hasRoleAccess)
                 {
                     return false;
                 }
