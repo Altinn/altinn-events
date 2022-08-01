@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Altinn.Platform.Events.Models;
+
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -54,9 +56,14 @@ namespace Altinn.Platform.Events.Functions
             cloudEventEnvelope.Consumer = subscription.Consumer;
             cloudEventEnvelope.Endpoint = subscription.EndPoint;
             cloudEventEnvelope.SubscriptionId = subscription.Id;
-            cloudEventEnvelope.CloudEvent = new CloudEvent();
-            cloudEventEnvelope.CloudEvent.Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id);
-            cloudEventEnvelope.CloudEvent.Type = "platform.events.validatesubscription";
+            cloudEventEnvelope.CloudEvent = new CloudEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
+                Type = "platform.events.validatesubscription",
+                SpecVersion = "1.0"
+            };
+
             return cloudEventEnvelope;
         }
     }
