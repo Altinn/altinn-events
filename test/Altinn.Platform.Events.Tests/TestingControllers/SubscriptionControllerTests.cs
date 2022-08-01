@@ -456,7 +456,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(actual > 0);
+                Assert.True(actual.Count > 0);
                 Assert.DoesNotContain(actual.Subscriptions, s => s.Consumer != "/user/1337");
             }
 
