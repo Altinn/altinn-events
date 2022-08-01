@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -42,7 +40,9 @@ namespace Altinn.Platform.Events.Functions
         /// it will call subscription service
         /// </summary>
         [FunctionName("SubscriptionValidation")]
+#pragma warning disable IDE0060 // Remove unused parameter
         public async Task Run([QueueTrigger("subscription-validation", Connection = "QueueStorage")] string item, ILogger log)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             Subscription subscription = JsonSerializer.Deserialize<Subscription>(item);
             CloudEventEnvelope cloudEventEnvelope = CreateValidateEvent(subscription);
@@ -52,16 +52,18 @@ namespace Altinn.Platform.Events.Functions
 
         private CloudEventEnvelope CreateValidateEvent(Subscription subscription)
         {
-            CloudEventEnvelope cloudEventEnvelope = new CloudEventEnvelope();
-            cloudEventEnvelope.Consumer = subscription.Consumer;
-            cloudEventEnvelope.Endpoint = subscription.EndPoint;
-            cloudEventEnvelope.SubscriptionId = subscription.Id;
-            cloudEventEnvelope.CloudEvent = new CloudEvent
+            CloudEventEnvelope cloudEventEnvelope = new()
             {
-                Id = Guid.NewGuid().ToString(),
-                Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
-                Type = "platform.events.validatesubscription",
-                SpecVersion = "1.0"
+                Consumer = subscription.Consumer,
+                Endpoint = subscription.EndPoint,
+                SubscriptionId = subscription.Id,
+                CloudEvent = new()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
+                    Type = "platform.events.validatesubscription",
+                    SpecVersion = "1.0"
+                }
             };
 
             return cloudEventEnvelope;
