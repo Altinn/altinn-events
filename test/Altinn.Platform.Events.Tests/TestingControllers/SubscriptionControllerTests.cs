@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
@@ -15,6 +17,7 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
 using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
+
 using AltinnCore.Authentication.JwtCookie;
 
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -63,7 +66,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
                 Subscription cloudEventSubscription = GetEventsSubscription("https://skd.apps.altinn.no/skd/flyttemelding", null, "https://www.skatteetaten.no/hook");
- 
+
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
@@ -135,7 +138,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             }
-           
+
             /// <summary>
             /// Scenario:
             ///   Post an invalid eventssubscription for user 1337. 
@@ -290,7 +293,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/12";
-                
+
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
@@ -393,6 +396,42 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Get_MissingAuthToken_ReturnsUnauthorized()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                HttpClient client = GetTestClient();
+
+                var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Get_AuthenticatedUser_CallsServiceAndReturnsList()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                List<Subscription> actual = JsonSerializer.Deserialize<List<Subscription>>(content);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.NotEmpty(actual);
             }
 
             private HttpClient GetTestClient()
