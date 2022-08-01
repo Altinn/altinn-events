@@ -436,7 +436,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.NotEmpty(actual);
-                Assert.DoesNotContain(actual, s => s.Consumer != "/org/ttd"));
+                Assert.DoesNotContain(actual, s => s.Consumer != "/org/ttd");
             }
 
             [Fact]
