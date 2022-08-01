@@ -40,7 +40,9 @@ namespace Altinn.Platform.Events.Functions
         /// it will call subscription service
         /// </summary>
         [FunctionName("SubscriptionValidation")]
+#pragma warning disable IDE0060 // Remove unused parameter
         public async Task Run([QueueTrigger("subscription-validation", Connection = "QueueStorage")] string item, ILogger log)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             Subscription subscription = JsonSerializer.Deserialize<Subscription>(item);
             CloudEventEnvelope cloudEventEnvelope = CreateValidateEvent(subscription);
@@ -57,10 +59,13 @@ namespace Altinn.Platform.Events.Functions
                 SubscriptionId = subscription.Id,
                 CloudEvent = new()
                 {
+                    Id = Guid.NewGuid().ToString(),
                     Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
-                    Type = "platform.events.validatesubscription"
+                    Type = "platform.events.validatesubscription",
+                    SpecVersion = "1.0"
                 }
             };
+
             return cloudEventEnvelope;
         }
     }
