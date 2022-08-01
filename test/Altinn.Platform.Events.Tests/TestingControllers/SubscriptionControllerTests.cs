@@ -460,6 +460,28 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.DoesNotContain(actual.Subscriptions, s => s.Consumer != "/user/1337");
             }
 
+            [Fact]
+            public async Task Get_AuthenticatedUser_NoSubscriptionsReturnsEmtpyList()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1402));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Empty(actual.Subscriptions);
+                Assert.Equal(0, actual.Count);
+
+            }
+
             private HttpClient GetTestClient()
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
