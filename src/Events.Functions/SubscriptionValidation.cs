@@ -1,12 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Altinn.Platform.Events.Models;
+
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -50,13 +50,17 @@ namespace Altinn.Platform.Events.Functions
 
         private CloudEventEnvelope CreateValidateEvent(Subscription subscription)
         {
-            CloudEventEnvelope cloudEventEnvelope = new CloudEventEnvelope();
-            cloudEventEnvelope.Consumer = subscription.Consumer;
-            cloudEventEnvelope.Endpoint = subscription.EndPoint;
-            cloudEventEnvelope.SubscriptionId = subscription.Id;
-            cloudEventEnvelope.CloudEvent = new CloudEvent();
-            cloudEventEnvelope.CloudEvent.Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id);
-            cloudEventEnvelope.CloudEvent.Type = "platform.events.validatesubscription";
+            CloudEventEnvelope cloudEventEnvelope = new()
+            {
+                Consumer = subscription.Consumer,
+                Endpoint = subscription.EndPoint,
+                SubscriptionId = subscription.Id,
+                CloudEvent = new()
+                {
+                    Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
+                    Type = "platform.events.validatesubscription"
+                }
+            };
             return cloudEventEnvelope;
         }
     }
