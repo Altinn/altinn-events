@@ -44,6 +44,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             private readonly WebApplicationFactory<SubscriptionController> _factory;
 
+            private readonly JsonSerializerOptions _jsonOptions;
+
             /// <summary>
             /// Initializes a new instance of the <see cref="SubscriptionControllerTests"/> class with the given <see cref="WebApplicationFactory{TSubscriptionController}"/>.
             /// </summary>
@@ -51,6 +53,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public SubscriptionControllerTests(WebApplicationFactory<SubscriptionController> factory)
             {
                 _factory = factory;
+                _jsonOptions = new() { PropertyNameCaseInsensitive = true };
             }
 
             /// <summary>
@@ -428,12 +431,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string content = await response.Content.ReadAsStringAsync();
-                List<Subscription> actual = JsonSerializer.Deserialize<List<Subscription>>(content);
+                List<Subscription> actual = JsonSerializer.Deserialize<List<Subscription>>(content, _jsonOptions);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.NotEmpty(actual);
-                Assert.Empty(actual.Where(s => s.Consumer != "/org/ttd").ToList());
+                Assert.DoesNotContain(actual, s => s.Consumer != "/org/ttd"));
             }
 
             [Fact]
@@ -449,12 +452,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string content = await response.Content.ReadAsStringAsync();
-                List<Subscription> actual = JsonSerializer.Deserialize<List<Subscription>>(content);
+                List<Subscription> actual = JsonSerializer.Deserialize<List<Subscription>>(content, _jsonOptions);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.NotEmpty(actual);
-                Assert.Empty(actual.Where(s => s.Consumer != "/user/1337").ToList());
+                Assert.DoesNotContain(actual, s => s.Consumer != "/user/1337");
             }
 
             private HttpClient GetTestClient()
