@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -415,7 +416,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
-            public async Task Get_AuthenticatedUser_CallsServiceAndReturnsList()
+            public async Task Get_AuthenticatedOrg_CallsServiceAndReturnsList()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
@@ -432,6 +433,28 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.NotEmpty(actual);
+                Assert.Empty(actual.Where(s => s.Consumer != "/org/ttd").ToList());
+            }
+
+            [Fact]
+            public async Task Get_AuthenticatedUser_CallsServiceAndReturnsList()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                List<Subscription> actual = JsonSerializer.Deserialize<List<Subscription>>(content);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.NotEmpty(actual);
+                Assert.Empty(actual.Where(s => s.Consumer != "/user/1337").ToList());
             }
 
             private HttpClient GetTestClient()
