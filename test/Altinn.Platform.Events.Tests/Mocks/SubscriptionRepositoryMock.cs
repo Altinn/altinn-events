@@ -43,6 +43,13 @@ namespace Altinn.Platform.Events.Tests.Mocks
             {
                 string content = File.ReadAllText(subscriptionsPath);
                 List<Subscription> allSubscriptions = JsonConvert.DeserializeObject<List<Subscription>>(content);
+
+                if (consumer.EndsWith('%'))
+                {
+                    consumer = consumer.Replace("%", string.Empty);
+                    return allSubscriptions.Where(s => s.Consumer.StartsWith(consumer)).ToList();
+                }
+
                 return allSubscriptions.Where(s => s.Consumer == consumer).ToList();
             }
             else
