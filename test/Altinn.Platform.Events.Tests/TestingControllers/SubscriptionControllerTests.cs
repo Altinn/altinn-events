@@ -431,12 +431,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string content = await response.Content.ReadAsStringAsync();
-                List<Subscription> actual = JsonSerializer.Deserialize<List<Subscription>>(content, _jsonOptions);
+                SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.NotEmpty(actual);
-                Assert.DoesNotContain(actual, s => s.Consumer != "/org/ttd");
+                Assert.True(actual.Count > 0);
+                Assert.DoesNotContain(actual.Subscriptions, s => s.Consumer != "/org/ttd");
             }
 
             [Fact]
@@ -452,12 +452,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string content = await response.Content.ReadAsStringAsync();
-                List<Subscription> actual = JsonSerializer.Deserialize<List<Subscription>>(content, _jsonOptions);
+                SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.NotEmpty(actual);
-                Assert.DoesNotContain(actual, s => s.Consumer != "/user/1337");
+                Assert.True(actual > 0);
+                Assert.DoesNotContain(actual.Subscriptions, s => s.Consumer != "/user/1337");
             }
 
             private HttpClient GetTestClient()

@@ -119,11 +119,18 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Produces("application/json")]
-        public async Task<ActionResult<List<Subscription>>> Get()
+        public async Task<ActionResult<SubscriptionList>> Get()
         {
             string consumer = GetConsumer();
             List<Subscription> subscriptions = await _eventsSubscriptionService.GetAllSubscriptions(consumer);
-            return Ok(subscriptions);
+
+            SubscriptionList list = new()
+            {
+                Count = subscriptions != null ? subscriptions.Count : 0,
+                Subscriptions = subscriptions
+            };
+
+            return Ok(list);
         }
 
         /// <summary>
