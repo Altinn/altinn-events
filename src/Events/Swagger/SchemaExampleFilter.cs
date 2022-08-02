@@ -40,7 +40,7 @@ namespace Altinn.Platform.Events.Swagger
                 case nameof(Subscription):
                     return new OpenApiObject
                     {
-                        ["endPoint"] = new OpenApiString("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
+                        ["endPoint"] = new OpenApiString("https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
                         ["id"] = new OpenApiInteger(1),
                         ["sourceFilter"] = new OpenApiString("https://skd.apps.altinn.cloud/skd/mva-melding"),
                         ["subjectFilter"] = new OpenApiString("/party/512345"),
@@ -48,6 +48,33 @@ namespace Altinn.Platform.Events.Swagger
                         ["consumer"] = new OpenApiString("/user/12345"),
                         ["createdBy"] = new OpenApiString("/user/12345"),
                         ["created"] = new OpenApiString("2022-07-27T13:14:14.395226Z")
+                    };
+                case nameof(SubscriptionList):
+                    return new OpenApiObject
+                    {
+                        ["count"] = new OpenApiInteger(2),
+                        ["subscriptions"] = new OpenApiArray
+                        {
+                            new OpenApiObject
+                            {
+                                ["endPoint"] = new OpenApiString("https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
+                                ["id"] = new OpenApiInteger(1),
+                                ["sourceFilter"] = new OpenApiString("https://skd.apps.altinn.cloud/skd/mva-melding"),
+                                ["subjectFilter"] = new OpenApiString("/party/512345"),
+                                ["typeFilter"] = new OpenApiString("app.instance.process.completed"),
+                                ["consumer"] = new OpenApiString("/user/12345"),
+                                ["createdBy"] = new OpenApiString("/user/12345"),
+                                ["created"] = new OpenApiString("2022-07-27T13:14:14.395226Z")
+                            },            new OpenApiObject
+                            {
+                                ["endPoint"] = new OpenApiString("https://hooks.slack.com/services/ID/CODE"),
+                                ["id"] = new OpenApiInteger(2),
+                                ["sourceFilter"] = new OpenApiString("https://ttd.apps.altinn.cloud/ttd/apps-test"),
+                                ["consumer"] = new OpenApiString("/org/ttd"),
+                                ["createdBy"] = new OpenApiString("/org/ttd5"),
+                                ["created"] = new OpenApiString("2022-08-02T08:49:07.269958Z")
+                            }
+                        }
                     };
                 default:
                     return null;

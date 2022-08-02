@@ -479,7 +479,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.Empty(actual.Subscriptions);
                 Assert.Equal(0, actual.Count);
-
             }
 
             private HttpClient GetTestClient()
