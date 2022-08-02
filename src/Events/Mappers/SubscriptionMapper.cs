@@ -3,7 +3,7 @@
 namespace Altinn.Platform.Events.Mappers
 {
     /// <summary>
-    /// A cøass that holds the subscription mapper configurations
+    /// A class that holds the subscription mapper configurations
     /// </summary>
     public class SubscriptionMapper : AutoMapper.Profile
     {
