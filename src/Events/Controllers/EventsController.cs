@@ -172,7 +172,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Retrieves a set of events related to a party based on query parameters.
         /// </summary>
-        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter even that should be included</param>
+        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter event that should be included</param>
         /// <param name="from" example="2022-02-14 07:22:19Z">The lower limit for when the cloud event was created in UTC</param>
         /// <param name="to" example="2022-06-16 13:37:00Z">The upper limit for when the cloud event was created in UTC</param>
         /// <param name="party" example="50002108">The party id representing the subjects</param>        
