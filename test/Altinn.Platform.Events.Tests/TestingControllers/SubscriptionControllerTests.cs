@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
@@ -15,6 +16,7 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
 using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
+
 using AltinnCore.Authentication.JwtCookie;
 
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -108,6 +110,31 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
+            /// Scenario: Invalid source provided relative URI, absolute requied
+            /// Expected: Returns bad request
+            /// </summary>        
+            [Fact]
+            public async Task Post_GivenInvalidSubscription_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("skd/flyttemelding", null, "https://www.skatteetaten.no/hook");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            }
+
+            /// <summary>
             /// Scenario:
             ///   Post a valid EventsSubscription for SKD
             /// Expected result:
@@ -135,7 +162,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             }
-           
+
             /// <summary>
             /// Scenario:
             ///   Post an invalid eventssubscription for user 1337. 
@@ -290,7 +317,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/12";
-                
+
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
@@ -419,11 +446,22 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             private static SubscriptionRequestModel GetEventsSubscriptionRequest(string sourceFilter, string alternativeSubjectFilter, string endpoint)
             {
-                SubscriptionRequestModel subscription = new()
+                Uri sourceFilterUri;
+
+                try
+                {
+                    sourceFilterUri = new Uri(sourceFilter);
+                }
+                catch
+                {
+                    sourceFilterUri = new Uri(sourceFilter, UriKind.Relative);
+                }
+
+                SubscriptionRequestModel subscription = new SubscriptionRequestModel()
                 {
                     EndPoint = new Uri(endpoint),
                     AlternativeSubjectFilter = alternativeSubjectFilter,
-                    SourceFilter = new Uri(sourceFilter)
+                    SourceFilter = sourceFilterUri
                 };
 
                 return subscription;
