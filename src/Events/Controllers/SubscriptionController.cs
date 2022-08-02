@@ -6,6 +6,8 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platorm.Events.Extensions;
 
+using AutoMapper;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +24,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ISubscriptionService _eventsSubscriptionService;
         private readonly IRegisterService _registerService;
         private readonly IProfile _profileService;
+        private readonly IMapper _mapper;
 
         private const string OrganisationPrefix = "/org/";
         private const string PersonPrefix = "/person/";
@@ -35,11 +38,13 @@ namespace Altinn.Platform.Events.Controllers
         public SubscriptionController(
             ISubscriptionService eventsSubscriptionService,
             IRegisterService registerService,
-            IProfile profileService)
+            IProfile profileService,
+            IMapper mapper)
         {
             _registerService = registerService;
             _eventsSubscriptionService = eventsSubscriptionService;
             _profileService = profileService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -48,8 +53,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <remarks>
         /// Requires information about endpoint to post events for subscribers.
         /// </remarks>
-        /// <param name="eventsSubscription">The subscription details</param>
-        /// <returns></returns>
+        /// <param name="eventsSubscriptionRequest">The subscription details</param>
         [HttpPost]
         [Authorize]
         [Consumes("application/json")]
@@ -57,8 +61,10 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] Subscription eventsSubscription)
+        public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel eventsSubscriptionRequest)
         {
+            Subscription eventsSubscription = _mapper.Map<Subscription>(eventsSubscriptionRequest);
+
             await EnrichSubject(eventsSubscription);
 
             await SetCreatedBy(eventsSubscription);
@@ -93,7 +99,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Get(int id)
+        public async Task<ActionResult<Subscription>> Get(int id)
         {
             Subscription subscription = await _eventsSubscriptionService.GetSubscription(id);
 
@@ -118,7 +124,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Validate(int id)
+        public async Task<ActionResult<Subscription>> Validate(int id)
         {
             Subscription subscription = await _eventsSubscriptionService.GetSubscription(id);
 
@@ -140,7 +146,8 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<string>> Delete(int id)
+        [Produces("application/json")]
+        public async Task<ActionResult> Delete(int id)
         {
             Subscription subscription = await _eventsSubscriptionService.GetSubscription(id);
 
