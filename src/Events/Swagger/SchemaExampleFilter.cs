@@ -1,0 +1,57 @@
+using System;
+using System.Diagnostics.CodeAnalysis;
+
+using Altinn.Platform.Events.Models;
+
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
+
+using Swashbuckle.AspNetCore.SwaggerGen;
+
+namespace Altinn.Platform.Events.Swagger
+{
+    /// <summary>
+    /// Filter for adding examples to the various classes to enrich open api spec.
+    /// </summary>
+    [ExcludeFromCodeCoverage]
+    public class SchemaExampleFilter : ISchemaFilter
+    {
+        /// <inheritdoc/>
+        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        {
+            schema.Example = GetExampleOrNullFor(context.Type);
+        }
+
+        private IOpenApiAny GetExampleOrNullFor(Type type)
+        {
+            switch (type.Name)
+            {
+                case nameof(CloudEvent):
+                    return new OpenApiObject
+                    {
+                        ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
+                        ["source"] = new OpenApiString("https://ttd.apps.altinn.no/ttd/apps-test/instances/50015641/a72223a3-926b-4095-a2a6-bacc10815f2d"),
+                        ["specversion"] = new OpenApiString("1.0"),
+                        ["type"] = new OpenApiString("app.instance.created"),
+                        ["subject"] = new OpenApiString("/party/50015641"),
+                        ["alternativesubject"] = new OpenApiString("/person/27124902369"),
+                        ["time"] = new OpenApiString("2020-10-29T07:22:19.438039Z")
+                    };
+                case nameof(Subscription):
+                    return new OpenApiObject
+                    {
+                        ["endPoint"] = new OpenApiString("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
+                        ["id"] = new OpenApiInteger(1),
+                        ["sourceFilter"] = new OpenApiString("https://skd.apps.altinn.cloud/skd/mva-melding"),
+                        ["subjectFilter"] = new OpenApiString("/party/512345"),
+                        ["typeFilter"] = new OpenApiString("app.instance.process.completed"),
+                        ["consumer"] = new OpenApiString("/user/12345"),
+                        ["createdBy"] = new OpenApiString("/user/12345"),
+                        ["created"] = new OpenApiString("2022-07-27T13:14:14.395226Z")
+                    };
+                default:
+                    return null;
+            }
+        }
+    }
+}

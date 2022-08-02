@@ -32,7 +32,7 @@ namespace Altinn.Platform.Events.Functions.Services
         public async Task Send(CloudEventEnvelope envelope)
         {
             string payload = GetPayload(envelope);
-            StringContent httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
+            StringContent httpContent = new(payload, Encoding.UTF8, "application/json");
 
             try
             {
@@ -56,7 +56,7 @@ namespace Altinn.Platform.Events.Functions.Services
         {
             if (envelope.Endpoint.OriginalString.Contains(_slackUri))
             {
-                SlackEnvelope slackEnvelope = new SlackEnvelope
+                SlackEnvelope slackEnvelope = new()
                 {
                     CloudEvent = envelope.CloudEvent.Serialize()
                 };

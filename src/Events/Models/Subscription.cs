@@ -5,19 +5,19 @@ using System.Text.Json.Serialization;
 namespace Altinn.Platform.Events.Models
 {
     /// <summary>
-    /// Class that describes a events subscriptions
+    /// Class that describes an events subscription
     /// </summary>
     public class Subscription
     {
         /// <summary>
-        /// Endpoint to receive matching events
-        /// </summary>
-        public Uri EndPoint { get; set; }
-
-        /// <summary>
         /// Subscription Id
         /// </summary>
         public int Id { get; set; }
+
+        /// <summary>
+        /// Endpoint to receive matching events
+        /// </summary>
+        public Uri EndPoint { get; set; }
 
         /// <summary>
         /// Filter on source
@@ -55,7 +55,7 @@ namespace Altinn.Platform.Events.Models
         public DateTime Created { get; set; }
 
         /// <summary>
-        /// Serializes the cloud event to a JSON string.
+        /// Serializes the subscriont to a JSON string.
         /// </summary>
         /// <returns>Serialized cloud event</returns>
         public string Serialize()

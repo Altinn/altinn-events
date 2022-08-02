@@ -26,7 +26,9 @@ namespace Altinn.Platform.Events.Functions
         /// Retrieves messages from events-inbound queue and push events controller
         /// </summary>
         [FunctionName("EventsInbound")]
+#pragma warning disable IDE0060 // Remove unused parameter
         public async Task Run([QueueTrigger("events-inbound", Connection = "QueueStorage")] string item, ILogger log)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             CloudEvent cloudEvent = JsonSerializer.Deserialize<CloudEvent>(item);
             await _pushEventsService.SendToPushController(cloudEvent);

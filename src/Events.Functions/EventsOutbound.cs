@@ -26,7 +26,9 @@ namespace Altinn.Platform.Events.Functions
         /// Retrieves messages from events-outbound queue and send to webhook
         /// </summary>
         [FunctionName("EventsOutbound")]
+#pragma warning disable IDE0060 // Remove unused parameter
         public async Task Run([QueueTrigger("events-outbound", Connection = "QueueStorage")]string item, ILogger log)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             CloudEventEnvelope cloudEventEnvelope = JsonSerializer.Deserialize<CloudEventEnvelope>(item);
             await _webhookService.Send(cloudEventEnvelope);
