@@ -14,7 +14,7 @@ namespace Tests.TestingServices
     public class SubscriptionServiceTest
     {
         [Fact]
-        public async Task GetOrgSubscriptions_Three_Match()
+        public async Task GetOrgSubscriptions_Two_Match()
         {
             SubscriptionService subscriptionService = new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock());
             List<Subscription> result = await subscriptionService.GetOrgSubscriptions(

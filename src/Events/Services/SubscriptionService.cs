@@ -40,12 +40,6 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public List<Subscription> FindSubscriptions(string receiver, string source, string org)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
         public async Task<Subscription> GetSubscription(int id)
         {
             return await _repository.GetSubscription(id);
@@ -65,6 +59,12 @@ namespace Altinn.Platform.Events.Services
         public async Task<List<Subscription>> GetSubscriptions(string source, string subject, string type)
         {
             return await _repository.GetSubscriptionsExcludeOrg(source, subject, type);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<Subscription>> GetAllSubscriptions(string consumer)
+        {
+            return await _repository.GetSubscriptionsByConsumer(consumer);
         }
 
         /// <inheritdoc/>

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -42,6 +44,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             private readonly WebApplicationFactory<SubscriptionController> _factory;
 
+            private readonly JsonSerializerOptions _jsonOptions;
+
             /// <summary>
             /// Initializes a new instance of the <see cref="SubscriptionControllerTests"/> class with the given <see cref="WebApplicationFactory{TSubscriptionController}"/>.
             /// </summary>
@@ -49,6 +53,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public SubscriptionControllerTests(WebApplicationFactory<SubscriptionController> factory)
             {
                 _factory = factory;
+                _jsonOptions = new() { PropertyNameCaseInsensitive = true };
             }
 
             /// <summary>
@@ -420,6 +425,85 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Get_MissingAuthToken_ReturnsUnauthorized()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                HttpClient client = GetTestClient();
+
+                var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Get_AuthenticatedOrg_CallsServiceAndReturnsList()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.True(actual.Count > 0);
+                Assert.DoesNotContain(actual.Subscriptions, s => s.Consumer != "/org/ttd");
+            }
+
+            [Fact]
+            public async Task Get_AuthenticatedUser_CallsServiceAndReturnsList()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.True(actual.Count > 0);
+                Assert.DoesNotContain(actual.Subscriptions, s => s.Consumer != "/user/1337");
+            }
+
+            [Fact]
+            public async Task Get_AuthenticatedUser_NoSubscriptionsReturnsEmtpyList()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1402));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Empty(actual.Subscriptions);
+                Assert.Equal(0, actual.Count);
             }
 
             private HttpClient GetTestClient()
