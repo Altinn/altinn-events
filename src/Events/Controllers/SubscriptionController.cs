@@ -72,7 +72,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (!ValidateSubscription(eventsSubscription, out string message))
             {
-                return BadRequest(message);
+                return Problem(message, null, 400);
             }
 
             if (!AuthorizeIdentityForConsumer(eventsSubscription))

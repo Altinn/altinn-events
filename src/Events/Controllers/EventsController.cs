@@ -79,7 +79,7 @@ namespace Altinn.Platform.Events.Controllers
             if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) || string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
             string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
             {
-                return BadRequest("Missing parameter values: source, subject, type, id or time cannot be null");
+                return Problem("Missing parameter values: source, subject, type, id or time cannot be null", null, 400);
             }
 
             var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];
@@ -144,12 +144,12 @@ namespace Altinn.Platform.Events.Controllers
 
             if (string.IsNullOrEmpty(after) && from == null)
             {
-                return BadRequest("From or after must be defined.");
+                return Problem("From or after must be defined.", null, 400);
             }
 
             if (size < 1)
             {
-                return BadRequest("Size must be a number larger that 0.");
+                return Problem("Size must be a number larger that 0.", null, 400);
             }
 
             List<string> source = new List<string> { $"%{org}/{app}%" };
@@ -202,17 +202,18 @@ namespace Altinn.Platform.Events.Controllers
         {
             if (string.IsNullOrEmpty(after) && from == null)
             {
-                return BadRequest("From or after must be defined.");
+                return Problem("From or after must be defined.", null, 400);
             }
 
             if (size < 1)
             {
-                return BadRequest("Size must be a number larger that 0.");
+                return Problem("Size must be a number larger that 0.", null, 400);
             }
 
             if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
             {
-                return BadRequest("Subject must be specified using either query params party or unit or header value person.");
+                return Problem("Subject must be specified using either query params party or unit or header value person.", null, 400);
+
             }
 
             if (party <= 0)
