@@ -34,7 +34,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.FromResult(new Subscription() { Id = id, AlternativeSubjectFilter = "/organisation/950474084", CreatedBy = "/party/500700" });
         }
 
-        public async Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer)
+        public async Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer, bool includeInvalid)
         {
             await Task.CompletedTask;
 

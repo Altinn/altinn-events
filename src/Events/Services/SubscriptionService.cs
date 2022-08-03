@@ -48,7 +48,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<List<Subscription>> GetOrgSubscriptions(string source, string subject, string type)
         {
-            List<Subscription> searchresult = await _repository.GetSubscriptionsByConsumer("/org/%");
+            List<Subscription> searchresult = await _repository.GetSubscriptionsByConsumer("/org/%", false);
             return searchresult.Where(s =>
                 source.StartsWith(s.SourceFilter.OriginalString) &&
                 (s.SubjectFilter == null || s.SubjectFilter.Equals(subject)) &&
@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<List<Subscription>> GetAllSubscriptions(string consumer)
         {
-            return await _repository.GetSubscriptionsByConsumer(consumer);
+            return await _repository.GetSubscriptionsByConsumer(consumer, true);
         }
 
         /// <inheritdoc/>

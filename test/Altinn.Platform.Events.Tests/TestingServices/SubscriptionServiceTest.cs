@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Tests.Mocks;
+
+using Moq;
+
 using Xunit;
 
 namespace Tests.TestingServices
@@ -13,6 +17,13 @@ namespace Tests.TestingServices
     /// </summary>
     public class SubscriptionServiceTest
     {
+        private readonly Mock<ISubscriptionRepository> _repoMock;
+
+        public SubscriptionServiceTest()
+        {
+            _repoMock = new Mock<ISubscriptionRepository>();
+        }
+      
         [Fact]
         public async Task GetOrgSubscriptions_Two_Match()
         {
@@ -55,6 +66,32 @@ namespace Tests.TestingServices
                 "/party/1337",
                 null);
             Assert.True(result.Count == 0);
+        }
+
+        [Fact]
+        public async Task GetAllSubscriptions_SendsIncludeInvalidTrueToRepository()
+        {
+            _repoMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true))
+                .ReturnsAsync(new List<Subscription>());
+
+            SubscriptionService subscriptionService = new SubscriptionService(_repoMock.Object, new QueueServiceMock());
+
+            await subscriptionService.GetAllSubscriptions("/org/ttd");
+
+            _repoMock.VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetOrgSubscriptions_SendsIncludeInvalidFalseToRepository()
+        {
+            _repoMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), false))
+                .ReturnsAsync(new List<Subscription>());
+
+            SubscriptionService subscriptionService = new SubscriptionService(_repoMock.Object, new QueueServiceMock());
+
+            await subscriptionService.GetOrgSubscriptions("source", "subject", "type");
+
+            _repoMock.VerifyAll();
         }
     }
 }
