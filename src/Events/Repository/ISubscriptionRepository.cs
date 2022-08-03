@@ -39,6 +39,6 @@ namespace Altinn.Platform.Events.Repository
         /// Gets subscriptions for a given consumer
         /// consumer = "/org/%" will return subscriptions for all orgs
         /// </summary>
-        Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer);
+        Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer, bool includeInvalid);
     }
 }
