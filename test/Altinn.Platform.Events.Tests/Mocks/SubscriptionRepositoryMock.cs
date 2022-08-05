@@ -34,21 +34,28 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.FromResult(new Subscription() { Id = id, AlternativeSubjectFilter = "/organisation/950474084", CreatedBy = "/party/500700" });
         }
 
-        public Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer)
+        public async Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer, bool includeInvalid)
         {
+            await Task.CompletedTask;
+
             string subscriptionsPath = Path.Combine(GetSubscriptionPath(), "1.json");
-            List<Subscription> subscriptions = null;
             if (File.Exists(subscriptionsPath))
             {
                 string content = File.ReadAllText(subscriptionsPath);
-                subscriptions = JsonConvert.DeserializeObject<List<Subscription>>(content);
+                List<Subscription> allSubscriptions = JsonConvert.DeserializeObject<List<Subscription>>(content);
+
+                if (consumer.EndsWith('%'))
+                {
+                    consumer = consumer.Replace("%", string.Empty);
+                    return allSubscriptions.Where(s => s.Consumer.StartsWith(consumer)).ToList();
+                }
+
+                return allSubscriptions.Where(s => s.Consumer == consumer).ToList();
             }
             else
             {
-                subscriptions = new List<Subscription>();
+                return new List<Subscription>();
             }
-
-            return Task.FromResult(subscriptions.Where(s => s.Consumer.StartsWith("/org/")).ToList());
         }
 
         public Task<List<Subscription>> GetSubscriptionsExcludeOrg(string source, string subject, string type)

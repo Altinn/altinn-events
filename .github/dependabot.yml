@@ -35,3 +35,13 @@ updates:
       day: "thursday"
       time: "07:00"
       timezone: "Europe/Oslo"
+
+## Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "07:00"
+      timezone: "Europe/Oslo"
+    open-pull-requests-limit: 10

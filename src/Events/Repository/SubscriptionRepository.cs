@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Repository
         private readonly string deleteSubscription = "call events.deletesubscription(@_id)";
         private readonly string setValidSubscription = "call events.setvalidsubscription(@_id)";
         private readonly string getSubscriptionsExcludeOrgsSql = "select * from events.getsubscriptionsexcludeorgs(@source, @subject, @type)";
-        private readonly string getSubscriptionByConsumerSql = "select * from events.getsubscriptionsbyconsumer(@_consumer)";
+        private readonly string getSubscriptionByConsumerSql = "select * from events.getsubscriptionsbyconsumer(@_consumer, @_includeInvalid)";
         private readonly string connectionString;
 
         private readonly ILogger _logger;
@@ -188,7 +188,7 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer)
+        public async Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer, bool includeInvalid)
         {
             List<Subscription> searchResult = new List<Subscription>();
             try
@@ -198,7 +198,7 @@ namespace Altinn.Platform.Events.Repository
 
                 NpgsqlCommand pgcom = new NpgsqlCommand(getSubscriptionByConsumerSql, conn);
                 pgcom.Parameters.AddWithValue("_consumer", NpgsqlDbType.Varchar, consumer);
-
+                pgcom.Parameters.AddWithValue("_includeInvalid", NpgsqlDbType.Boolean, includeInvalid);
                 using (NpgsqlDataReader reader = pgcom.ExecuteReader())
                 {
                     while (reader.Read())
