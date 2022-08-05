@@ -60,10 +60,10 @@ namespace Altinn.Platform.Events.Repository
             List<CloudEvent> searchResult = new List<CloudEvent>();
             int index = 0;
 
-            using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
+            await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            NpgsqlCommand pgcom = new NpgsqlCommand(getEventSql, conn);
+            await using NpgsqlCommand pgcom = new NpgsqlCommand(getEventSql, conn);
             pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject);
             pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
             pgcom.Parameters.AddWithValue("_from", NpgsqlDbType.TimestampTz, from ?? (object)DBNull.Value);
@@ -71,9 +71,9 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
 
-            using (NpgsqlDataReader reader = pgcom.ExecuteReader())
+            await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
             {
-                while (reader.Read() && index < size)
+                while (await reader.ReadAsync() && index < size)
                 {
                     CloudEvent cloudEvent = DeserializeAndConvertTime(reader[0].ToString());
                     searchResult.Add(cloudEvent);
