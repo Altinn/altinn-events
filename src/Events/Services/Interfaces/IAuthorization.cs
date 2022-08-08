@@ -22,11 +22,16 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <summary>
         /// Method to authorize access to an Altinn App event
         /// </summary>
+        /// <param name="cloudEvent">The cloud event to authorize</param>
+        /// <param name="consumer">The consumer of the event</param>
+        /// <returns>A boolean indicating if the consumer is authorized or not</returns>
         public Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer);
 
         /// <summary>
         /// Method to authorize access to create an Altinn App Events Subscription
         /// </summary>
+        /// <param name="subscription">The subscription to be authorized containing source and consumer details</param>
+        /// <returns>A boolean indicating if the consumer is authorized or not</returns>
         public Task<bool> AuthorizeConsumerForEventsSubcription(Subscription subscription);
     }
 }
