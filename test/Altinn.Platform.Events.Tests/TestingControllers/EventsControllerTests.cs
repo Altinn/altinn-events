@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid CloudEvent instance.
+            ///   Post a valid CloudEventRequest instance.
             /// Expected result:
             ///   Returns HttpStatus Created and the Id for the instance.
             /// Success criteria:
@@ -62,7 +62,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/app";
                 string responseId = Guid.NewGuid().ToString();
-                CloudEvent cloudEvent = GetCloudEvent();
+                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(s => s.StoreCloudEvent(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
@@ -88,7 +88,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid CloudEvent instance but with a non matching access token.
+            ///   Post a valid CloudEventRequest instance but with a non matching access token.
             /// Expected result:
             ///   Returns HttpStatus not authorized
             /// Success criteria:
@@ -100,7 +100,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/app";
                 string responseId = Guid.NewGuid().ToString();
-                CloudEvent cloudEvent = GetCloudEvent();
+                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(s => s.StoreCloudEvent(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
@@ -134,7 +134,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
-                CloudEvent cloudEvent = GetCloudEvent();
+                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 cloudEvent.Subject = null;
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
@@ -168,7 +168,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
-                CloudEvent cloudEvent = GetCloudEvent();
+                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(er => er.StoreCloudEvent(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
@@ -705,15 +705,13 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 return client;
             }
 
-            private static CloudEvent GetCloudEvent()
+            private static CloudEventRequestModel GetCloudEventRequest()
             {
-                CloudEvent cloudEvent = new CloudEvent
+                CloudEventRequestModel cloudEvent = new CloudEventRequestModel
                 {
-                    Id = Guid.NewGuid().ToString(),
                     SpecVersion = "1.0",
                     Type = "instance.created",
                     Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/232243423"),
-                    Time = DateTime.Now,
                     Subject = "/party/456456",
                     Data = "something/extra",
                 };

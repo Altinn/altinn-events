@@ -26,15 +26,17 @@ namespace Altinn.Platform.Events.Services.Interfaces
         public Task SetValidSubscription(int id);
 
         /// <summary>
-        /// Opeation to list all events 
-        /// </summary>
-        public List<Subscription> FindSubscriptions(string receiver, string source, string org);
-
-        /// <summary>
         /// Get a given subscription
         /// </summary>
         /// <param name="id">The subcription Id</param>
         public Task<Subscription> GetSubscription(int id);
+
+        /// <summary>
+        /// Retrieves all subscriptions for the given consumer
+        /// </summary>
+        /// <param name="consumer">The subscription consumer</param>
+        /// <returns>A list of subscriptions</returns>
+        public Task<List<Subscription>> GetAllSubscriptions(string consumer);
 
         /// <summary>
         /// Get a list of matching org subscriptions

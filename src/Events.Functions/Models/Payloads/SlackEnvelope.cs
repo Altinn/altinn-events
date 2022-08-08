@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Functions.Models.Payloads
         /// <returns>Serialized slack envelope</returns>
         public string Serialize()
         {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions { IgnoreNullValues = true });
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
         }
     }
 }

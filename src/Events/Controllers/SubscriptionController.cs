@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Altinn.Common.PEP.Interfaces;
@@ -7,6 +8,8 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platorm.Events.Extensions;
+
+using AutoMapper;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -25,6 +28,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly IRegisterService _registerService;
         private readonly IProfile _profileService;
         private readonly IAuthorization _authorizationService;
+        private readonly IMapper _mapper;
 
         private const string OrganisationPrefix = "/org/";
         private const string PersonPrefix = "/person/";
@@ -39,11 +43,13 @@ namespace Altinn.Platform.Events.Controllers
             ISubscriptionService eventsSubscriptionService,
             IRegisterService registerService,
             IProfile profileService,
+            IMapper mapper,
             IAuthorization authorizationService)
         {
             _registerService = registerService;
             _eventsSubscriptionService = eventsSubscriptionService;
             _profileService = profileService;
+            _mapper = mapper;
             _authorizationService = authorizationService;
         }
 
@@ -53,8 +59,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <remarks>
         /// Requires information about endpoint to post events for subscribers.
         /// </remarks>
-        /// <param name="eventsSubscription">The subscription details</param>
-        /// <returns></returns>
+        /// <param name="eventsSubscriptionRequest">The subscription details</param>
         [HttpPost]
         [Authorize]
         [Consumes("application/json")]
@@ -62,8 +67,10 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] Subscription eventsSubscription)
+        public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel eventsSubscriptionRequest)
         {
+            Subscription eventsSubscription = _mapper.Map<Subscription>(eventsSubscriptionRequest);
+
             await EnrichSubject(eventsSubscription);
 
             await SetCreatedBy(eventsSubscription);
@@ -98,7 +105,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Get(int id)
+        public async Task<ActionResult<Subscription>> Get(int id)
         {
             Subscription subscription = await _eventsSubscriptionService.GetSubscription(id);
 
@@ -116,6 +123,28 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
+        /// Get all subscription for the authorized consumer
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [Produces("application/json")]
+        public async Task<ActionResult<SubscriptionList>> Get()
+        {
+            string consumer = GetConsumer();
+            List<Subscription> subscriptions = await _eventsSubscriptionService.GetAllSubscriptions(consumer);
+
+            SubscriptionList list = new()
+            {
+                Count = subscriptions != null ? subscriptions.Count : 0,
+                Subscriptions = subscriptions
+            };
+
+            return Ok(list);
+        }
+
+        /// <summary>
         /// Method to validate an specific subscription. Only avaiable from validation function.
         /// </summary>
         [Authorize(Policy = "PlatformAccess")]
@@ -123,7 +152,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Validate(int id)
+        public async Task<ActionResult<Subscription>> Validate(int id)
         {
             Subscription subscription = await _eventsSubscriptionService.GetSubscription(id);
 
@@ -145,7 +174,8 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<string>> Delete(int id)
+        [Produces("application/json")]
+        public async Task<ActionResult> Delete(int id)
         {
             Subscription subscription = await _eventsSubscriptionService.GetSubscription(id);
 
@@ -207,6 +237,12 @@ namespace Altinn.Platform.Events.Controllers
             if (eventsSubscription.SourceFilter == null)
             {
                 message = "Source is required";
+                return false;
+            }
+
+            if (!Uri.IsWellFormedUriString(eventsSubscription.SourceFilter.ToString(), UriKind.Absolute))
+            {
+                message = "SourceFilter must be an absolute URI";
                 return false;
             }
 
@@ -372,6 +408,22 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             return false;
+        }
+
+        private string GetConsumer()
+        {
+            string authenticatedConsumer = string.Empty;
+
+            if (!string.IsNullOrEmpty(HttpContext.User.GetOrg()))
+            {
+                authenticatedConsumer = OrgPrefix + HttpContext.User.GetOrg();
+            }
+            else if (HttpContext.User.GetUserIdAsInt().HasValue)
+            {
+                authenticatedConsumer = UserPrefix + HttpContext.User.GetUserIdAsInt().Value;
+            }
+
+            return authenticatedConsumer;
         }
     }
 }

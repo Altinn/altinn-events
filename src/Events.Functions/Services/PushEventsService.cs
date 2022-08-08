@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Functions.Services
         /// <inheritdoc/>
         public async Task SendToPushController(CloudEvent item)
         {
-            StringContent httpContent = new StringContent(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
+            StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
             try
             {
                 string endpointUrl = "push";

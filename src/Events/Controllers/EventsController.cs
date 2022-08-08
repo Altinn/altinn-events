@@ -12,11 +12,15 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platorm.Events.Extensions;
 
+using AutoMapper;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -33,6 +37,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ILogger _logger;
         private readonly string _eventsBaseUri;
         private readonly AccessTokenSettings _accessTokenSettings;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsController"/> class
@@ -43,7 +48,8 @@ namespace Altinn.Platform.Events.Controllers
             IAuthorization authorizationService,
             IOptions<GeneralSettings> settings,
             ILogger<EventsController> logger,
-            IOptions<AccessTokenSettings> accessTokenSettings)
+            IOptions<AccessTokenSettings> accessTokenSettings,
+            IMapper mapper)
         {
             _registerService = registerService;
             _logger = logger;
@@ -51,6 +57,7 @@ namespace Altinn.Platform.Events.Controllers
             _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
             _authorizationService = authorizationService;
             _accessTokenSettings = accessTokenSettings.Value;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -60,12 +67,12 @@ namespace Altinn.Platform.Events.Controllers
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
         [Consumes("application/json")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
+        [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
+        public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
             if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) || string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
             string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
@@ -82,7 +89,7 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.StoreCloudEvent(cloudEvent);
+                string cloudEventId = await _eventsService.StoreCloudEvent(_mapper.Map<CloudEvent>(cloudEvent));
                 _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
@@ -94,8 +101,20 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Retrieves a set of events based on query parameters.
+        /// Retrieves a set of events related to an application owner based on query parameters.
         /// </summary>
+        /// <param name="org">The organisation short code</param>
+        /// <param name="app">The name of the app</param>
+        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter even that should be included</param>
+        /// <param name="from" example="2022-02-14 07:22:19Z">The lower limit for when the cloud event was created in UTC</param>
+        /// <param name="to" example="2022-06-16 13:37:00Z">The upper limit for when the cloud event was created in UTC</param>
+        /// <param name="party" example="50002108">The party id representing the subjects</param>        
+        /// <param name="unit" example="989271156">The organisation number representing the subject</param>
+        /// <param name="person" example="01014922047">The person number representing the subject</param>
+        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
+        /// A list of the event types to include
+        /// </param>
+        /// <param name="size">The maximum number of events to include in the response</param>
         [HttpGet("{org}/{app}")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -104,16 +123,16 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
         public async Task<ActionResult<List<CloudEvent>>> GetForOrg(
-            [FromRoute] string org,
-            [FromRoute] string app,
-            [FromQuery] string after,
-            [FromQuery] DateTime? from,
-            [FromQuery] DateTime? to,
-            [FromQuery] int party,
-            [FromQuery] string unit,
-            [FromHeader] string person,
-            [FromQuery] List<string> type,
-            [FromQuery] int size = 50)
+                [FromRoute] string org,
+                [FromRoute] string app,
+                [FromQuery] string after,
+                [FromQuery] DateTime? from,
+                [FromQuery] DateTime? to,
+                [FromQuery] int party,
+                [FromQuery] string unit,
+                [FromHeader] string person,
+                [FromQuery] List<string> type,
+                [FromQuery] int size = 50)
         {
             if (string.IsNullOrEmpty(HttpContext.User.GetOrg()))
             {
@@ -149,8 +168,19 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Retrieves a set of events based on query parameters.
+        /// Retrieves a set of events related to a party based on query parameters.
         /// </summary>
+        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter event that should be included</param>
+        /// <param name="from" example="2022-02-14 07:22:19Z">The lower limit for when the cloud event was created in UTC</param>
+        /// <param name="to" example="2022-06-16 13:37:00Z">The upper limit for when the cloud event was created in UTC</param>
+        /// <param name="party" example="50002108">The party id representing the subjects</param>        
+        /// <param name="unit" example="989271156">The organisation number representing the subject</param>
+        /// <param name="person" example="01014922047">The person number representing the subject</param>
+        /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
+        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;]">A list of the sources to include</param>
+        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
+        /// A list of the event types to include</param>
+        /// <param name="size">The maximum number of events to include in the response</param>
         [HttpGet("party")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]

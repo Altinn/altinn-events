@@ -3,19 +3,13 @@ using System.Net.Mime;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Altinn.Platform.Events.Functions.Models
+namespace Altinn.Platform.Events.Models
 {
     /// <summary>
-    /// Represents a cloud event. Based on CloudEvent: https://github.com/cloudevents/spec/blob/v1.0/spec.md.
+    /// The model used in the request for registering a new cloud event.
     /// </summary>
-    public class CloudEvent
+    public class CloudEventRequestModel
     {
-        /// <summary>
-        /// Gets or sets the id of the event.
-        /// </summary>
-        [JsonPropertyName("id")]
-        public string Id { get; set; }
-
         /// <summary>
         /// Gets or sets the source of the event.
         /// </summary>
@@ -39,12 +33,6 @@ namespace Altinn.Platform.Events.Functions.Models
         /// </summary>
         [JsonPropertyName("subject")]
         public string Subject { get; set; }
-
-        /// <summary>
-        /// Gets or sets the time of the event.
-        /// </summary>
-        [JsonPropertyName("time")]
-        public DateTime? Time { get; set; }
 
         /// <summary>
         /// Gets or sets the alternative subject of the event.
@@ -74,21 +62,12 @@ namespace Altinn.Platform.Events.Functions.Models
         public ContentType DataContentType { get; set; }
 
         /// <summary>
-        /// Serializes the cloud event to a JSON string.
+        /// Serializes the cloud event request to a JSON string.
         /// </summary>
-        /// <returns>Serialized cloud event</returns>
+        /// <returns>Serialized cloud event request</returns>
         public string Serialize()
         {
             return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-        }
-
-        /// <summary>
-        /// Deserializes the cloud event to a JSON string.
-        /// </summary>
-        /// <returns>Cloud event</returns>
-        public static CloudEvent Deserialize(string jsonString)
-        {
-            return JsonSerializer.Deserialize<CloudEvent>(jsonString, new JsonSerializerOptions { });
         }
     }
 }
