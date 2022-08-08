@@ -24,27 +24,27 @@ namespace Altinn.Platform.Events.Authorization
         /// <summary>
         /// Generates subject attribute list 
         /// </summary>
-        /// <returns></returns>
-        public static XacmlJsonCategory CreateSubjectAttributes(string subjectOrResource)
+        /// <returns>The XacmlJsonCategory or the subject</returns>
+        public static XacmlJsonCategory CreateSubjectAttributes(string subject)
         {
             XacmlJsonCategory category = new()
             {
                 Attribute = new List<XacmlJsonAttribute>()
             };
 
-            if (subjectOrResource.StartsWith(UserPrefix))
+            if (subject.StartsWith(UserPrefix))
             {
-                string value = subjectOrResource.Replace(UserPrefix, string.Empty);
+                string value = subject.Replace(UserPrefix, string.Empty);
                 category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimUserId, value, ClaimValueTypes.String, DefaultIssuer));
             }
-            else if (subjectOrResource.StartsWith(OrgPrefix))
+            else if (subject.StartsWith(OrgPrefix))
             {
-                string value = subjectOrResource.Replace(OrgPrefix, string.Empty);
+                string value = subject.Replace(OrgPrefix, string.Empty);
                 category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrg, value, ClaimValueTypes.String, DefaultIssuer));
             }
-            else if (subjectOrResource.StartsWith(PartyPrefix))
+            else if (subject.StartsWith(PartyPrefix))
             {
-                string value = subjectOrResource.Replace(PartyPrefix, string.Empty);
+                string value = subject.Replace(PartyPrefix, string.Empty);
                 category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer));
             }
 

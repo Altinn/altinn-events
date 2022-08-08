@@ -41,8 +41,25 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             Assert.NotNull(xacmlJsonProfile);
             Assert.Single(xacmlJsonProfile.Request.Resource);
             Assert.Equal(expectedResourceAttCount, actualResourceAttCount);
+
+            string actualAppResource = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:appresource").Select(a => a.Value).First();
+            Assert.Equal("events", actualAppResource);
+
+            string actualOrgId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:org").Select(a => a.Value).First();
+            Assert.Equal("ttd", actualOrgId);
+
+            string actualAppId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:app").Select(a => a.Value).First();
+            Assert.Equal("apps-test", actualAppId);
+
+            string actualpartyId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:partyid").Select(a => a.Value).First();
+            Assert.Equal("500000", actualpartyId);
+
             Assert.Single(xacmlJsonProfile.Request.Action);
+            Assert.Equal("read", xacmlJsonProfile.Request.Action.First().Attribute.First().Value);
+
             Assert.Single(xacmlJsonProfile.Request.AccessSubject);
+            string actualSubjectValue = xacmlJsonProfile.Request.AccessSubject.First().Attribute.Where(a => a.AttributeId == "urn:altinn:userid").Select(a => a.Value).First();
+            Assert.Equal("1337", actualSubjectValue);
         }
 
         /// <summary>
@@ -67,13 +84,26 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             int actualResourceAttCount = xacmlJsonProfile.Request.Resource.First().Attribute.Count;
 
             // Assert
-            int expectedResourceAttCount = 4;
-
             Assert.NotNull(xacmlJsonProfile);
             Assert.Single(xacmlJsonProfile.Request.Resource);
-            Assert.Equal(expectedResourceAttCount, actualResourceAttCount);
+            string actualAppResource = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:appresource").Select(a => a.Value).First();
+            Assert.Equal("events", actualAppResource);
+
+            string actualOrgId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:org").Select(a => a.Value).First();
+            Assert.Equal("ttd", actualOrgId);
+
+            string actualAppId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:app").Select(a => a.Value).First();
+            Assert.Equal("apps-test", actualAppId);
+
+            string actualpartyId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:partyid").Select(a => a.Value).First();
+            Assert.Equal("54321", actualpartyId);
+
             Assert.Single(xacmlJsonProfile.Request.Action);
+            Assert.Equal("read", xacmlJsonProfile.Request.Action.First().Attribute.First().Value);
+
             Assert.Single(xacmlJsonProfile.Request.AccessSubject);
+            string actualSubjectValue = xacmlJsonProfile.Request.AccessSubject.First().Attribute.Where(a => a.AttributeId == "urn:altinn:userid").Select(a => a.Value).First();
+            Assert.Equal("1337", actualSubjectValue);
         }
     }
 }
