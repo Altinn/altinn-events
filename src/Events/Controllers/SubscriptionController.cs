@@ -296,17 +296,27 @@ namespace Altinn.Platform.Events.Controllers
 
                 bool hasRoleAccess = await _authorizationService.AuthorizeConsumerForEventsSubcription(eventsSubscription);
 
-                if (!hasRoleAccess)
+                if (hasRoleAccess)
                 {
-                    return false;
+                    return true;
                 }
             }
-            else if (!string.IsNullOrEmpty(eventsSubscription.SubjectFilter) && !eventsSubscription.SubjectFilter.Equals(eventsSubscription.Consumer))
+            else if (eventsSubscription.CreatedBy.StartsWith(OrgPrefix))
             {
-                return false;
+                if (string.IsNullOrEmpty(eventsSubscription.SubjectFilter))
+                {
+                    return true;
+                }
+            }
+            else if (eventsSubscription.CreatedBy.StartsWith(PartyPrefix))
+            {
+                if (!string.IsNullOrEmpty(eventsSubscription.SubjectFilter) && eventsSubscription.SubjectFilter.Equals(eventsSubscription.Consumer))
+                {
+                    return true;
+                }
             }
 
-            return true;
+            return false;
         }
 
         private async Task<string> GetPartyFromAlternativeSubject(string alternativeSubject)
