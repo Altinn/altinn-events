@@ -23,7 +23,7 @@ jobs:
         run: dotnet build Altinn.Platform.Events.sln -v m
 
       - name: dotnet test
-        run: dotnet test Altinn.Platform.Events.sln --results-directory TestResults/ --collect:"XPlat Code Coverage" -v m
+        run: dotnet test Altinn.Platform.Events.sln --results-directory TestResults/ --collect:"XPlat Code Coverage" -l "console;verbosity=normal"
 
       - name: Generate coverage results
         run: |
