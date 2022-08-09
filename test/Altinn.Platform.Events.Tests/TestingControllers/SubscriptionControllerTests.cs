@@ -271,7 +271,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
                     Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
                 };
