@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION events.get(
 	_to timestamp with time zone,
 	_type text[],
 	_source text[],
-    _size int)
+	_size int)
     RETURNS TABLE(cloudevents text)
     LANGUAGE 'plpgsql'
 
