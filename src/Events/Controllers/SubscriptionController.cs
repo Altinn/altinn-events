@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Models;
-using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platorm.Events.Extensions;

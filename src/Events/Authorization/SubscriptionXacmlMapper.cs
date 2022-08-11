@@ -85,8 +85,8 @@ namespace Altinn.Platform.Events.Authorization
 
             if (!string.IsNullOrEmpty(subscriptionSubjectFilter))
             {
-                string value = subscriptionSubjectFilter.Replace(PartyPrefix, string.Empty);
-                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer));                 
+                string partyId = subscriptionSubjectFilter.Replace(PartyPrefix, string.Empty);
+                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, partyId, ClaimValueTypes.Integer, DefaultIssuer));                 
             }           
 
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppResource, "events", DefaultType, DefaultIssuer));

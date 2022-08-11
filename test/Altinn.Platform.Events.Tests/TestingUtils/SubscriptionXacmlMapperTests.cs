@@ -81,7 +81,6 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             // Act
             XacmlJsonRequestRoot xacmlJsonProfile = SubscriptionXacmlMapper.CreateDecisionRequest(subscription);
-            int actualResourceAttCount = xacmlJsonProfile.Request.Resource.First().Attribute.Count;
 
             // Assert
             Assert.NotNull(xacmlJsonProfile);
