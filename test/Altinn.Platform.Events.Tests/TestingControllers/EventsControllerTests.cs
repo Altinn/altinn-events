@@ -55,7 +55,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public EventsControllerTests(WebApplicationFactory<EventsController> factory)
             {
                 _factory = factory;
-                _options = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+                _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             }
 
             /// <summary>
