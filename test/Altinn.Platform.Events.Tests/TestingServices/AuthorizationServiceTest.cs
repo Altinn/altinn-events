@@ -1,21 +1,19 @@
 using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Xacml.JsonProfile;
-using Altinn.Platform.Events.Authorization;
+
 using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Services;
+
 using Altinn.Platform.Events.UnitTest.Mocks;
-using AltinnCore.Authentication.Constants;
+
 using Xunit;
 
-namespace Altinn.Platform.Events.Tests.TestingUtils
+namespace Altinn.Platform.Events.Tests.TestingServices
 {
     /// <summary>
     /// Tests to verify authorization helper
     /// </summary>
-    public class AuthorizationHelperTests
+    public class AuthorizationServiceTest
     {
         /// <summary>
         /// Test access to own event
@@ -24,7 +22,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         public async Task AuthorizeAccessToEventForSelf()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            AuthorizationHelper authzHelper = new AuthorizationHelper(pdp);
+            AuthorizationService authzHelper = new AuthorizationService(pdp);
 
             CloudEvent cloudEvent = new CloudEvent()
             {
@@ -46,7 +44,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         public async Task AuthorizeOrgAccessToEventForUser()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            AuthorizationHelper authzHelper = new AuthorizationHelper(pdp);
+            AuthorizationService authzHelper = new AuthorizationService(pdp);
 
             CloudEvent cloudEvent = new CloudEvent()
             {
@@ -68,7 +66,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         public async Task AuthorizeOrgAccessToEventForUserNotAuthorized()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            AuthorizationHelper authzHelper = new AuthorizationHelper(pdp);
+            AuthorizationService authzHelper = new AuthorizationService(pdp);
 
             CloudEvent cloudEvent = new CloudEvent()
             {

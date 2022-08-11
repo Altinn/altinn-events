@@ -6,8 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Configuration;
-using Altinn.Common.PEP.Interfaces;
-using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Models;
@@ -35,9 +33,9 @@ namespace Altinn.Platform.Events.Controllers
     {
         private readonly IEventsService _eventsService;
         private readonly IRegisterService _registerService;
+        private readonly IAuthorization _authorizationService;
         private readonly ILogger _logger;
         private readonly string _eventsBaseUri;
-        private readonly AuthorizationHelper _authorizationHelper;
         private readonly AccessTokenSettings _accessTokenSettings;
         private readonly IMapper _mapper;
 
@@ -47,9 +45,9 @@ namespace Altinn.Platform.Events.Controllers
         public EventsController(
             IEventsService eventsService,
             IRegisterService registerService,
+            IAuthorization authorizationService,
             IOptions<GeneralSettings> settings,
             ILogger<EventsController> logger,
-            IPDP pdp,
             IOptions<AccessTokenSettings> accessTokenSettings,
             IMapper mapper)
         {
@@ -57,7 +55,7 @@ namespace Altinn.Platform.Events.Controllers
             _logger = logger;
             _eventsService = eventsService;
             _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
-            _authorizationHelper = new AuthorizationHelper(pdp);
+            _authorizationService = authorizationService;
             _accessTokenSettings = accessTokenSettings.Value;
             _mapper = mapper;
         }
@@ -243,7 +241,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (events.Count > 0)
             {
-                events = await _authorizationHelper.AuthorizeEvents(HttpContext.User, events);
+                events = await _authorizationService.AuthorizeEvents(HttpContext.User, events);
             }
 
             if (events.Count > 0)

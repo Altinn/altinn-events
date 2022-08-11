@@ -25,6 +25,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ISubscriptionService _eventsSubscriptionService;
         private readonly IRegisterService _registerService;
         private readonly IProfile _profileService;
+        private readonly IAuthorization _authorizationService;
         private readonly IMapper _mapper;
 
         private const string OrganisationPrefix = "/org/";
@@ -40,12 +41,14 @@ namespace Altinn.Platform.Events.Controllers
             ISubscriptionService eventsSubscriptionService,
             IRegisterService registerService,
             IProfile profileService,
-            IMapper mapper)
+            IMapper mapper,
+            IAuthorization authorizationService)
         {
             _registerService = registerService;
             _eventsSubscriptionService = eventsSubscriptionService;
             _profileService = profileService;
             _mapper = mapper;
+            _authorizationService = authorizationService;
         }
 
         /// <summary>
@@ -274,28 +277,38 @@ namespace Altinn.Platform.Events.Controllers
 
         /// <summary>
         /// Validates that the identity (user, organization or org) is authorized to create subscriptions for a given subject.
-        /// Currently the subject needs to match the identity.  Org does not need subject.
+        ///  Subscriptions created by org do not need subject.
         /// </summary>
         private async Task<bool> AuthorizeSubjectForConsumer(Subscription eventsSubscription)
         {
-            // First version require that created and consumer is the same
             if (eventsSubscription.CreatedBy.StartsWith(UserPrefix))
             {
                 int userId = Convert.ToInt32(eventsSubscription.CreatedBy.Replace(UserPrefix, string.Empty));
                 UserProfile profile = await _profileService.GetUserProfile(userId);
                 string ssn = PersonPrefix + profile.Party.SSN;
 
-                if (!ssn.Equals(eventsSubscription.AlternativeSubjectFilter))
+                if (ssn.Equals(eventsSubscription.AlternativeSubjectFilter))
                 {
-                    return false;
+                    return true;
+                }
+
+                bool hasRoleAccess = await _authorizationService.AuthorizeConsumerForEventsSubcription(eventsSubscription);
+
+                if (hasRoleAccess)
+                {
+                    return true;
                 }
             }
-            else if (!string.IsNullOrEmpty(eventsSubscription.SubjectFilter) && !eventsSubscription.SubjectFilter.Equals(eventsSubscription.Consumer))
+            else if (eventsSubscription.CreatedBy.StartsWith(OrgPrefix) && string.IsNullOrEmpty(eventsSubscription.SubjectFilter))
             {
-                return false;
+                return true;
+            }
+            else if (eventsSubscription.CreatedBy.StartsWith(PartyPrefix) && !string.IsNullOrEmpty(eventsSubscription.SubjectFilter) && eventsSubscription.SubjectFilter.Equals(eventsSubscription.Consumer))
+            {
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         private async Task<string> GetPartyFromAlternativeSubject(string alternativeSubject)
