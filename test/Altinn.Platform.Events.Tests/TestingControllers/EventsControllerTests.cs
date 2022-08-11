@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
@@ -15,12 +17,17 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
 using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
+
 using AltinnCore.Authentication.JwtCookie;
+
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+
 using Moq;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingControllers
@@ -39,6 +46,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             private readonly WebApplicationFactory<EventsController> _factory;
 
+            private readonly JsonSerializerOptions _options;
+
             /// <summary>
             /// Initializes a new instance of the <see cref="EventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsController}"/>.
             /// </summary>
@@ -46,6 +55,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public EventsControllerTests(WebApplicationFactory<EventsController> factory)
             {
                 _factory = factory;
+                _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             }
 
             /// <summary>
@@ -253,7 +263,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForOrg_MissingRequiredFromOrAfterParam_ReturnsBadRequest()
             {
                 // Arrange
-                string expected = "\"From or after must be defined.\"";
+                string expected = "From or after must be defined.";
 
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?size=5";
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
@@ -263,13 +273,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string actual = await response.Content.ReadAsStringAsync();
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual.Detail);
             }
-          
+
             /// <summary>
             /// Scenario:
             ///   Get events with negative size.
@@ -283,7 +294,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01&size=-5";
-                string expected = "\"Size must be a number larger that 0.\"";
+                string expected = "Size must be a number larger that 0.";
 
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
@@ -292,11 +303,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string actual = await response.Content.ReadAsStringAsync();
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual.Detail);
             }
 
             /// <summary>
@@ -426,7 +438,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_MissingRequiredQueryParam_ReturnsBadRequest()
             {
                 // Arrange   
-                string expected = "\"From or after must be defined.\"";
+                string expected = "From or after must be defined.";
 
                 string requestUri = $"{BasePath}/app/party?size=5";
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
@@ -436,11 +448,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string actual = await response.Content.ReadAsStringAsync();
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual.Detail);
             }
 
             /// <summary>
@@ -456,7 +469,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01&size=-5";
-                string expected = "\"Size must be a number larger that 0.\"";
+                string expected = "Size must be a number larger that 0.";
 
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -465,11 +478,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string actual = await response.Content.ReadAsStringAsync();
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual.Detail);
             }
 
             /// <summary>
@@ -485,7 +499,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01&size=5";
-                string expected = "\"Subject must be specified using either query params party or unit or header value person.\"";
+                string expected = "Subject must be specified using either query params party or unit or header value person.";
 
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -494,11 +508,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string actual = await response.Content.ReadAsStringAsync();
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual);
+                Assert.Equal(expected, actual.Detail);
             }
 
             /// <summary>
