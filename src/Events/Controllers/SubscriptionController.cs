@@ -299,19 +299,13 @@ namespace Altinn.Platform.Events.Controllers
                     return true;
                 }
             }
-            else if (eventsSubscription.CreatedBy.StartsWith(OrgPrefix))
+            else if (eventsSubscription.CreatedBy.StartsWith(OrgPrefix) && string.IsNullOrEmpty(eventsSubscription.SubjectFilter))
             {
-                if (string.IsNullOrEmpty(eventsSubscription.SubjectFilter))
-                {
-                    return true;
-                }
+                return true;
             }
-            else if (eventsSubscription.CreatedBy.StartsWith(PartyPrefix))
+            else if (eventsSubscription.CreatedBy.StartsWith(PartyPrefix) && !string.IsNullOrEmpty(eventsSubscription.SubjectFilter) && eventsSubscription.SubjectFilter.Equals(eventsSubscription.Consumer))
             {
-                if (!string.IsNullOrEmpty(eventsSubscription.SubjectFilter) && eventsSubscription.SubjectFilter.Equals(eventsSubscription.Consumer))
-                {
-                    return true;
-                }
+                return true;
             }
 
             return false;
