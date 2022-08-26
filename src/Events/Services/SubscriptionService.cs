@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Services
         {
             List<Subscription> searchresult = await _repository.GetSubscriptionsByConsumer("/org/%", false);
             return searchresult.Where(s =>
-                source.StartsWith(s.SourceFilter.OriginalString) &&
+                IsURIPathSegmentsMatching(source, s.SourceFilter) &&
                 (s.SubjectFilter == null || s.SubjectFilter.Equals(subject)) &&
                 (s.TypeFilter == null || s.TypeFilter.Equals(type))).ToList();
         }
@@ -71,6 +71,37 @@ namespace Altinn.Platform.Events.Services
         public async Task SetValidSubscription(int id)
         {
             await _repository.SetValidSubscription(id);
+        }
+
+        private static bool IsURIPathSegmentsMatching(string source, Uri sourceFilter)
+        {
+            Uri sourceUri;
+
+            try
+            {
+                sourceUri = new Uri(source);
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (!sourceUri.Scheme.Equals(sourceFilter.Scheme) ||
+                !sourceUri.Host.Equals(sourceFilter.Host) || 
+                sourceFilter.Segments.Length > sourceUri.Segments.Length)
+            {
+                return false;
+            }
+
+            foreach (var segments in sourceUri.Segments.Zip(sourceFilter.Segments, (s1, s2) => new { S1 = s1, S2 = s2 }))
+            {
+                if (!segments.S1.Equals(segments.S2))
+                {
+                    return false;
+                }
+            }
+            
+            return true;
         }
     }
 }
