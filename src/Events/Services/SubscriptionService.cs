@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Services
         {
             List<Subscription> searchresult = await _repository.GetSubscriptionsByConsumer("/org/%", false);
             return searchresult.Where(s =>
-                IsURIPathSegmentsMatching(source, s.SourceFilter) &&
+                CheckIfSourceURIPathSegmentsMatch(source, s.SourceFilter) &&
                 (s.SubjectFilter == null || s.SubjectFilter.Equals(subject)) &&
                 (s.TypeFilter == null || s.TypeFilter.Equals(type))).ToList();
         }
@@ -73,7 +73,7 @@ namespace Altinn.Platform.Events.Services
             await _repository.SetValidSubscription(id);
         }
 
-        private static bool IsURIPathSegmentsMatching(string source, Uri sourceFilter)
+        private static bool CheckIfSourceURIPathSegmentsMatch(string source, Uri sourceFilter)
         {
             Uri sourceUri;
 
