@@ -4,16 +4,16 @@ updates:
   - directory: "src/Events"
     package-ecosystem: "nuget"
     schedule:
-      interval: "daily"
-      ##day: "thursday"
+      interval: "weekly"
+      day: "thursday"
       time: "07:00"
       timezone: "Europe/Oslo"
   ## Events.Functions
   - directory: "src/Events.Functions"
     package-ecosystem: "nuget"
     schedule:
-      interval: "daily"
-      ##day: "thursday"
+      interval: "weekly"
+      day: "thursday"
       time: "07:00"
       timezone: "Europe/Oslo"
       
@@ -21,16 +21,16 @@ updates:
   - directory: "test/Altinn.Platform.Events.Tests"
     package-ecosystem: "nuget"
     schedule:
-      interval: "daily"
-      ##day: "thursday"
+      interval: "weekly"
+      day: "thursday"
       time: "07:00"
       timezone: "Europe/Oslo"
 ## Dockerfile
   - directory: "/"
     package-ecosystem: "docker"
     schedule:
-      interval: "daily"
-      ##day: "thursday"
+      interval: "weekly"
+      day: "thursday"
       time: "07:00"
       timezone: "Europe/Oslo"
 
@@ -38,8 +38,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-      ##day: "thursday"
+      interval: "weekly"
+      day: "thursday"
       time: "07:00"
       timezone: "Europe/Oslo"
     open-pull-requests-limit: 10
