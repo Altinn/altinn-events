@@ -77,11 +77,7 @@ namespace Altinn.Platform.Events.Services
         {
             Uri sourceUri;
 
-            try
-            {
-                sourceUri = new Uri(source);
-            }
-            catch
+            if (!Uri.TryCreate(source, UriKind.Absolute, out sourceUri))
             {
                 return false;
             }

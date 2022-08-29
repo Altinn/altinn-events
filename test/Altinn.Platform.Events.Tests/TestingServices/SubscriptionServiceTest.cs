@@ -89,9 +89,20 @@ namespace Tests.TestingServices
 
             SubscriptionService subscriptionService = new SubscriptionService(_repoMock.Object, new QueueServiceMock());
 
-            await subscriptionService.GetOrgSubscriptions("source", "subject", "type");
+            await subscriptionService.GetOrgSubscriptions("source", "party/1337", null);
 
             _repoMock.VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetOrgSubscriptions_InvalidSourceUri()
+        {
+            SubscriptionService subscriptionService = new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock());
+            List<Subscription> result = await subscriptionService.GetOrgSubscriptions(
+                "ttd/endring-av-navn-v2",
+                "/party/1337",
+                "app.instance.process.completed");
+            Assert.True(result.Count == 0);
         }
     }
 }
