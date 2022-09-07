@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -32,6 +33,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 List<EventsTableEntry> tableEntries = JsonConvert.DeserializeObject<List<EventsTableEntry>>(content);
 
                 // logic for filtering on source and type not implemented.
+                // source filtering is only enabled for 1 source list element.
                 IEnumerable<EventsTableEntry> filter = tableEntries;
 
                 if (!string.IsNullOrEmpty(after))
@@ -54,6 +56,12 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 {
                     string subject = $"/party/{partyId}";
                     filter = filter.Where(te => te.Subject.Equals(subject));
+                }
+
+                if (source.Count == 1)
+                {
+                    string pattern = "^" + Regex.Escape(source[0]).Replace("%", "*").Replace("_", ".");
+                    filter = filter.Where(te => Regex.IsMatch(te.Source.ToString(), pattern));
                 }
 
                 List<CloudEvent> result = filter.Select(t => t.CloudEvent)

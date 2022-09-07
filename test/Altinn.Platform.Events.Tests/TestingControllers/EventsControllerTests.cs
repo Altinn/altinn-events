@@ -701,6 +701,35 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
             }
 
+            /// <summary>
+            /// Scenario:
+            ///   Gets the events for party specifying the source using wildcard '%' for app name.
+            /// Expected result:
+            ///   The result should contain all (2) events from ttd/endring-av-navn-v2
+            /// Success criteria:
+            ///   Result status is 200 OK and number of events is 2
+            /// </summary>
+            [Fact]
+            public async void GetForParty_WildcardApp_ReturnsOk()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01&party=1337&source=https://ttd.apps.altinn.no/ttd/%";
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                int expectedCount = 2;
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(expectedCount, actual.Count);
+            }
+
             private HttpClient GetTestClient(IEventsService eventsService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
