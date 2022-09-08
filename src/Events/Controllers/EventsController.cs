@@ -177,7 +177,8 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="unit" example="989271156">The organisation number representing the subject</param>
         /// <param name="person" example="01014922047">The person number representing the subject</param>
         /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
-        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;]">A list of the sources to include</param>
+        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;, &quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-%/&quot;]">
+        /// A list of the sources to include</param>
         /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
         /// A list of the event types to include</param>
         /// <param name="size">The maximum number of events to include in the response</param>
