@@ -92,20 +92,6 @@ namespace Altinn.Platform.Events.Swagger
                     ("typeFilter", "app.instance.process.completed")
                  })),
 
-                 ("Org subscription to events with wildcard `_` in source",
-                 CreateOpenApiObject(new List<(string Name, string Value)>()
-                 {
-                    ("endpoint", "https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
-                    ("sourceFilter", "https://ttd.apps.altinn.no/ttd/apps-test_"),
-                 })),
-
-                 ("Org subscription with wildcard `%25` in source for unknown string",
-                 CreateOpenApiObject(new List<(string Name, string Value)>()
-                 {
-                     ("endpoint", "https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
-                     ("sourceFilter", "https://ttd.apps.altinn.no/ttd/versionedapp_v%25"),
-                 })),
-
                  ("Subscription with Slack webhook",
                  CreateOpenApiObject(new List<(string Name, string Value)>()
                  {
