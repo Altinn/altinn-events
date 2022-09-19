@@ -17,14 +17,30 @@ namespace Altinn.Platform.Events.Tests.Mocks
     public class EventsServiceMock : IEventsService
     {
         private readonly int _eventsCollection;
+        private readonly Dictionary<string, int> _partyLookup;
 
         public EventsServiceMock(int eventsCollection = 1)
         {
             _eventsCollection = eventsCollection;
+            _partyLookup = new()
+            {
+                { "897069650", 500000 },
+                { "897069651", 500001 },
+                { "897069652", 500002 },
+                { "897069653", 500003 },
+                { "897069631", 1002 },
+                { "01039012345", 1337 },
+                { "12345678901",  1000 }
+            };
         }
 
-        public Task<List<CloudEvent>> Get(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, int size)
+        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, string unit, string person, int size)
         {
+            if (partyId <= 0)
+            {
+                partyId = PartyLookup(unit, person);
+            }
+
             string eventsPath = Path.Combine(GetEventsPath(), $@"{_eventsCollection}.json");
 
             if (File.Exists(eventsPath))
@@ -83,6 +99,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
         public Task<string> StoreCloudEvent(CloudEvent cloudEvent)
         {
             throw new NotImplementedException();
+        }
+
+        private int PartyLookup(string unit, string person)
+        {
+            return string.IsNullOrEmpty(unit) ? _partyLookup.GetValueOrDefault(person) : _partyLookup.GetValueOrDefault(unit);
         }
 
         private static string GetEventsPath()

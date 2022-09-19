@@ -23,7 +23,7 @@ namespace Altinn.Platform.Events.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        ///<inheritdoc/>
+        /// <inheritdoc/>
         public ClaimsPrincipal GetUser()
         {
             return _httpContextAccessor.HttpContext.User;
