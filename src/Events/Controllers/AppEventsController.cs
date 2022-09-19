@@ -29,7 +29,7 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Authorize]
     [Route("events/api/v1/app")]
-    public class EventsController : ControllerBase
+    public class AppEventsController : ControllerBase
     {
         private readonly IEventsService _eventsService;
         private readonly IRegisterService _registerService;
@@ -40,14 +40,14 @@ namespace Altinn.Platform.Events.Controllers
         private readonly IMapper _mapper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventsController"/> class
+        /// Initializes a new instance of the <see cref="AppEventsController"/> class
         /// </summary>
-        public EventsController(
+        public AppEventsController(
             IEventsService eventsService,
             IRegisterService registerService,
             IAuthorization authorizationService,
             IOptions<GeneralSettings> settings,
-            ILogger<EventsController> logger,
+            ILogger<AppEventsController> logger,
             IOptions<AccessTokenSettings> accessTokenSettings,
             IMapper mapper)
         {
@@ -273,7 +273,7 @@ namespace Altinn.Platform.Events.Controllers
             }
             else
             {
-                _logger.LogError(e, "// EventsController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
+                _logger.LogError(e, "// AppEventsController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
                 return StatusCode(500, e);
             }
         }
