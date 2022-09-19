@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -113,7 +114,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
 
-            EventsService eventsService = GetEventService(loggerMock: logger);
+            EventsService eventsService = GetEventService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act
             await eventsService.StoreCloudEvent(GetCloudEvent());
@@ -169,16 +170,31 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedCount, actual.Count);
         }
 
-        private EventsService GetEventService(ICloudEventRepository repositoryMock = null, Mock<ILogger<IEventsService>> loggerMock = null)
+        private EventsService GetEventService(
+            ICloudEventRepository repositoryMock = null,
+            IQueueService queueMock = null,
+            Mock<IAuthorization> authorizationMock = null,
+            Mock<ILogger<IEventsService>> loggerMock = null)
         {
             repositoryMock = repositoryMock ?? _repositoryMock;
+            queueMock = queueMock ?? _queueMock;
             loggerMock = loggerMock ?? _loggerMock;
+
+            // default mocked authorization logic. All elements are returned
+            if (authorizationMock == null)
+            {
+                _authorizationMock
+                    .Setup(a => a.AuthorizeEvents(It.IsAny<ClaimsPrincipal>(), It.IsAny<List<CloudEvent>>()))
+                    .ReturnsAsync((ClaimsPrincipal user, List<CloudEvent> events) => events);
+
+                authorizationMock = _authorizationMock;
+            }
 
             return new EventsService(
                 repositoryMock,
-                _queueMock,
+                queueMock,
                 _registerMock.Object,
-                _authorizationMock.Object,
+                authorizationMock.Object,
                 _claimsPrincipalProviderMock.Object,
                 loggerMock.Object);
         }
