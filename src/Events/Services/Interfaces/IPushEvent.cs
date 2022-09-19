@@ -10,13 +10,8 @@ namespace Altinn.Platform.Events.Services.Interfaces
     public interface IPushEvent
     {
         /// <summary>
-        /// Push a event to the given consumer endpoint
+        /// Push a event to all consumer subcribing to source and/or subject
         /// </summary>
-        Task PushToConsumer(CloudEventEnvelope cloudEventEnvelope);
-
-        /// <summary>
-        /// Push a event to the consumer specified in the subscription
-        /// </summary>
-        Task Push(CloudEvent cloudEvent, Subscription subscription);
+        Task Push(CloudEvent cloudEvent);
     }
 }
