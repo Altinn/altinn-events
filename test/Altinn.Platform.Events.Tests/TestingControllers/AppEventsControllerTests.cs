@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -38,21 +37,21 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="EventsController"/>.
+        /// Represents a collection of integration tests of the <see cref="AppEventsController"/>.
         /// </summary>
-        public class EventsControllerTests : IClassFixture<WebApplicationFactory<EventsController>>
+        public class AppEventsControllerTests : IClassFixture<WebApplicationFactory<AppEventsController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<EventsController> _factory;
+            private readonly WebApplicationFactory<AppEventsController> _factory;
 
             private readonly JsonSerializerOptions _options;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="EventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsController}"/>.
+            /// Initializes a new instance of the <see cref="AppEventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
             /// </summary>
-            /// <param name="factory">The <see cref="WebApplicationFactory{TEventsController}"/> to use when setting up the test server.</param>
-            public EventsControllerTests(WebApplicationFactory<EventsController> factory)
+            /// <param name="factory">The <see cref="WebApplicationFactory{TAppEventsController}"/> to use when setting up the test server.</param>
+            public AppEventsControllerTests(WebApplicationFactory<AppEventsController> factory)
             {
                 _factory = factory;
                 _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
