@@ -21,44 +21,15 @@ namespace Altinn.Platform.Events.Controllers
     [ApiController]
     public class PushController : ControllerBase
     {
-        private readonly ISubscriptionService _subscriptionService;
-        private readonly IEventsService _eventsService;
-
-        private readonly IAuthorization _authorizationService;
-        private readonly PlatformSettings _platformSettings;
-
-        private readonly IMemoryCache _memoryCache;
-        private readonly MemoryCacheEntryOptions _orgSubscriptioncacheEntryOptions;
-        private readonly MemoryCacheEntryOptions _partySubscriptioncacheEntryOptions;
-        private readonly MemoryCacheEntryOptions _orgAuthorizationEntryOptions;
+        private readonly IPushEvent _pushEventsService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PushController"/> class.
         /// </summary>
         public PushController(
-        IEventsService eventsService,
-        ISubscriptionService subscriptionService,
-        IAuthorization authorizationService,
-        IOptions<PlatformSettings> platformSettings,
-        IMemoryCache memoryCache)
+        IPushEvent pushEventsService)
         {
-            _eventsService = eventsService;
-            _subscriptionService = subscriptionService;
-            _authorizationService = authorizationService;
-            _platformSettings = platformSettings.Value;
-            _memoryCache = memoryCache;
-            _orgSubscriptioncacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetPriority(CacheItemPriority.High)
-                .SetAbsoluteExpiration(
-                    new TimeSpan(0, 0, _platformSettings.SubscriptionCachingLifetimeInSeconds));
-            _partySubscriptioncacheEntryOptions = new MemoryCacheEntryOptions()
-              .SetPriority(CacheItemPriority.Normal)
-              .SetAbsoluteExpiration(
-                  new TimeSpan(0, 0, _platformSettings.SubscriptionCachingLifetimeInSeconds));
-            _orgAuthorizationEntryOptions = new MemoryCacheEntryOptions()
-              .SetPriority(CacheItemPriority.High)
-              .SetAbsoluteExpiration(
-                  new TimeSpan(0, 0, _platformSettings.SubscriptionCachingLifetimeInSeconds));
+            _pushEventsService = pushEventsService;
         }
 
         /// <summary>
@@ -104,7 +75,7 @@ namespace Altinn.Platform.Events.Controllers
             if (await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer))
             {
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
-                await _eventsService.PushToConsumer(cloudEventEnvelope);
+                await _pushEventsService.PushToConsumer(cloudEventEnvelope);
             }
         }
 
