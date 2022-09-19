@@ -350,7 +350,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01&party=1337";
                 int expectedCount = 2;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                HttpClient client = GetTestClient(new AppEventsServiceMock(1));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -382,7 +382,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01&party=1337";
                 int expectedCount = 1;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                HttpClient client = GetTestClient(new AppEventsServiceMock(1));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -556,7 +556,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 int expectedCount = 2;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                HttpClient client = GetTestClient(new AppEventsServiceMock(1));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -589,7 +589,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 int expectedCount = 2;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                HttpClient client = GetTestClient(new AppEventsServiceMock(1));
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
@@ -624,7 +624,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 int expectedCount = 1;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                HttpClient client = GetTestClient(new AppEventsServiceMock(1));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -657,7 +657,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 int expectedCount = 2;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                HttpClient client = GetTestClient(new AppEventsServiceMock(1));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -713,7 +713,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01&party=1337&source=https://ttd.apps.altinn.no/ttd/%";
-                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                HttpClient client = GetTestClient(new AppEventsServiceMock(1));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);

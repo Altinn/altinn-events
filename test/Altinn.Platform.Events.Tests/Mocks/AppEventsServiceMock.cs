@@ -14,12 +14,12 @@ using Newtonsoft.Json;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
-    public class EventsServiceMock : IAppEventsService
+    public class AppEventsServiceMock : IAppEventsService
     {
         private readonly int _eventsCollection;
         private readonly Dictionary<string, int> _partyLookup;
 
-        public EventsServiceMock(int eventsCollection = 1)
+        public AppEventsServiceMock(int eventsCollection = 1)
         {
             _eventsCollection = eventsCollection;
             _partyLookup = new()
@@ -108,7 +108,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
         private static string GetEventsPath()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(EventsServiceMock).Assembly.Location).LocalPath);
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AppEventsServiceMock).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "events");
         }
     }

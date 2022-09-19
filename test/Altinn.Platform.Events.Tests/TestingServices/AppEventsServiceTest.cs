@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     /// <summary>
     /// A collection of tests related to <see cref="AppEventsService"/>.
     /// </summary>
-    public class EventsServiceTest
+    public class AppEventsServiceTest
     {
         private readonly ICloudEventRepository _repositoryMock;
         private readonly IQueueService _queueMock;
@@ -30,7 +30,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly Mock<IClaimsPrincipalProvider> _claimsPrincipalProviderMock;
         private readonly Mock<ILogger<IAppEventsService>> _loggerMock;
 
-        public EventsServiceTest()
+        public AppEventsServiceTest()
         {
             _repositoryMock = new CloudEventRepositoryMock();
             _queueMock = new QueueServiceMock();
