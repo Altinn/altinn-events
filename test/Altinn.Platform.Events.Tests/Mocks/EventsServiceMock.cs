@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
-    public class EventsServiceMock : IEventsService
+    public class EventsServiceMock : IAppEventsService
     {
         private readonly int _eventsCollection;
         private readonly Dictionary<string, int> _partyLookup;

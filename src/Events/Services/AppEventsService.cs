@@ -22,7 +22,7 @@ namespace Altinn.Platform.Events.Services
     /// - the id for the cloudevent is created by the app
     /// - time is set to null, it will be created in the database
     /// </summary>
-    public class EventsService : IEventsService
+    public class AppEventsService : IAppEventsService
     {
         private readonly ICloudEventRepository _repository;
         private readonly IQueueService _queue;
@@ -30,18 +30,18 @@ namespace Altinn.Platform.Events.Services
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
-        private readonly ILogger<IEventsService> _logger;
+        private readonly ILogger<IAppEventsService> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventsService"/> class.
+        /// Initializes a new instance of the <see cref="AppEventsService"/> class.
         /// </summary>
-        public EventsService(
+        public AppEventsService(
             ICloudEventRepository repository,
             IQueueService queue,
             IRegisterService registerService,
             IAuthorization authorizationService,
             IClaimsPrincipalProvider claimsPrincipalProvider,
-            ILogger<IEventsService> logger)
+            ILogger<IAppEventsService> logger)
         {
             _repository = repository;
             _queue = queue;

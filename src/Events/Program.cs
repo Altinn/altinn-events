@@ -231,7 +231,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     services.AddHttpClient<IRegisterService, RegisterService>();
     services.AddHttpClient<IProfile, ProfileService>();
-    services.AddSingleton<IEventsService, EventsService>();
+    services.AddSingleton<IAppEventsService, AppEventsService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();

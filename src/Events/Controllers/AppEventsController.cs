@@ -31,7 +31,7 @@ namespace Altinn.Platform.Events.Controllers
     [Route("events/api/v1/app")]
     public class AppEventsController : ControllerBase
     {
-        private readonly IEventsService _eventsService;
+        private readonly IAppEventsService _eventsService;
         private readonly IMapper _mapper;
         private readonly ILogger _logger;
         private readonly AccessTokenSettings _accessTokenSettings;
@@ -41,7 +41,7 @@ namespace Altinn.Platform.Events.Controllers
         /// Initializes a new instance of the <see cref="AppEventsController"/> class
         /// </summary>
         public AppEventsController(
-            IEventsService eventsService,
+            IAppEventsService eventsService,
             IOptions<GeneralSettings> settings,
             ILogger<AppEventsController> logger,
             IOptions<AccessTokenSettings> accessTokenSettings,
@@ -84,7 +84,6 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 string cloudEventId = await _eventsService.StoreCloudEvent(_mapper.Map<CloudEvent>(cloudEvent));
-                _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
@@ -150,6 +149,7 @@ namespace Altinn.Platform.Events.Controllers
             {
                 List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
                 SetNextLink(events);
+
                 return events;
             }
             catch (PlatformHttpException e)
