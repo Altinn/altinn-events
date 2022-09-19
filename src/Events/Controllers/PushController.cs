@@ -22,7 +22,7 @@ namespace Altinn.Platform.Events.Controllers
     public class PushController : ControllerBase
     {
         private readonly ISubscriptionService _subscriptionService;
-        private readonly IEventsService _eventsService;
+        private readonly IAppEventsService _appEventsService;
 
         private readonly IAuthorization _authorizationService;
         private readonly PlatformSettings _platformSettings;
@@ -36,13 +36,13 @@ namespace Altinn.Platform.Events.Controllers
         /// Initializes a new instance of the <see cref="PushController"/> class.
         /// </summary>
         public PushController(
-        IEventsService eventsService,
+        IAppEventsService appEventsService,
         ISubscriptionService subscriptionService,
         IAuthorization authorizationService,
         IOptions<PlatformSettings> platformSettings,
         IMemoryCache memoryCache)
         {
-            _eventsService = eventsService;
+            _appEventsService = appEventsService;
             _subscriptionService = subscriptionService;
             _authorizationService = authorizationService;
             _platformSettings = platformSettings.Value;
@@ -104,7 +104,7 @@ namespace Altinn.Platform.Events.Controllers
             if (await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer))
             {
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
-                await _eventsService.PushToConsumer(cloudEventEnvelope);
+                await _appEventsService.PushToConsumer(cloudEventEnvelope);
             }
         }
 
