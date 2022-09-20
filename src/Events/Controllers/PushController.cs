@@ -1,16 +1,11 @@
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -44,7 +39,6 @@ namespace Altinn.Platform.Events.Controllers
         [HttpPost]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [Produces("application/json")]
         public async Task<ActionResult> Post([FromBody] CloudEvent cloudEvent)
         {
