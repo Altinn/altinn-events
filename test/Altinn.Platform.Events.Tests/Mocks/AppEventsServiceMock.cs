@@ -91,11 +91,6 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
-        public Task PushToConsumer(CloudEventEnvelope cloudEventEnvelope)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<string> StoreCloudEvent(CloudEvent cloudEvent)
         {
             throw new NotImplementedException();

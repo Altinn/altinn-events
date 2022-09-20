@@ -22,10 +22,5 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Gets list of cloud event based on query params
         /// </summary>
         Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, string unit, string person, int size = 50);
-        
-        /// <summary>
-        /// Push a event to the given consumer endpoint
-        /// </summary>
-        Task PushToConsumer(CloudEventEnvelope cloudEventEnvelope);
     }
 }

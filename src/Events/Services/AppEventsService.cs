@@ -1,18 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -66,19 +61,6 @@ namespace Altinn.Platform.Events.Services
             }
 
             return cloudEvent.Id;
-        }
-
-        /// <inheritdoc/>
-        public async Task PushToConsumer(CloudEventEnvelope cloudEventEnvelope)
-        {
-            PushQueueReceipt receipt = await _queue.PushToOutboundQueue(JsonSerializer.Serialize(cloudEventEnvelope));
-            string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
-            int subscriptionId = cloudEventEnvelope.SubscriptionId;
-
-            if (!receipt.Success)
-            {
-                _logger.LogError(receipt.Exception, "// EventsService // StoreCloudEvent // Failed to push event envelope {EventId} to comsumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
-            }
         }
 
         /// <inheritdoc/>
