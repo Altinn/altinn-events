@@ -71,16 +71,63 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Single(QueueServiceMock.OutboundQueue[cloudEvent.Id]);
         }
 
-        private IPushEvent GetPushEventService()
+        /// <summary>
+        /// Scenario:
+        ///   Post an event for outbound push. One subscriptions are matching and is authorized
+        /// Expected result:
+        ///   The event are pushed to two different subscribers
+        /// Success criteria:
+        ///   The event is pushed to two subscribers
+        /// </summary>
+        [Fact]
+        public async void Push_QueueReportsFailue_ErrorIsLogged()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
+
+            var queueMock = new Mock<IQueueService>();
+            queueMock.Setup(q => q.PushToOutboundQueue(It.IsAny<string>()))
+                    .ReturnsAsync(new PushQueueReceipt { Success = false });
+
+            var loggerMock = new Mock<ILogger<IPushEvent>>();
+
+            var service = GetPushEventService(queueMock: queueMock.Object, loggerMock: loggerMock.Object);
+
+            // Act
+            await service.Push(cloudEvent);
+
+            // Assert
+            loggerMock.Verify(
+               x => x.Log(
+                   LogLevel.Error,
+                   It.IsAny<EventId>(),
+                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// EventsService // StoreCloudEvent // Failed to push event envelope", StringComparison.InvariantCultureIgnoreCase)),
+                   It.IsAny<Exception>(),
+                   It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+               Times.Once);
+            queueMock.VerifyAll();
+        }
+
+        private IPushEvent GetPushEventService(IQueueService queueMock = null, ILogger<IPushEvent> loggerMock = null)
         {
             var services = new ServiceCollection();
             services.AddMemoryCache();
             var serviceProvider = services.BuildServiceProvider();
             var memoryCache = serviceProvider.GetService<IMemoryCache>();
 
+            if (queueMock == null)
+            {
+                queueMock = new QueueServiceMock();
+            }
+
+            if (loggerMock == null)
+            {
+                loggerMock = new Mock<ILogger<IPushEvent>>().Object;
+            }
+
             IAuthorization authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI());
             var service = new PushEventService(
-                new QueueServiceMock(),
+                queueMock,
                 new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock()),
                 authorizationMock,
                 Options.Create(new PlatformSettings
@@ -89,7 +136,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     AppsDomain = "apps.altinn.no"
                 }),
                 memoryCache,
-                new Mock<ILogger<IPushEvent>>().Object);
+                loggerMock);
 
             return service;
         }
