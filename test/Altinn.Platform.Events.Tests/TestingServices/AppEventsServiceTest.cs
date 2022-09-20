@@ -120,7 +120,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///  PartyId is coverted to correct subject and matched in the repository.
         /// </summary>
         [Fact]
-        public async Task Get_QueryIncludesFromAndPartyId_RetrievesCorrectNumberOfEvents()
+        public async Task GetAppEvents_QueryIncludesFromAndPartyId_RetrievesCorrectNumberOfEvents()
         {
             // Arrange
             int expectedCount = 1;
@@ -145,7 +145,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///  Passes on the after parameter to the repository.
         /// </summary>
         [Fact]
-        public async Task Get_QueryIncludesAfter_RetrievesCorrectNumberOfEvents()
+        public async Task GetAppEvents_QueryIncludesAfter_RetrievesCorrectNumberOfEvents()
         {
             // Arrange
             int expectedCount = 3;
@@ -156,6 +156,71 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Get instances with various input 
+        /// Expected result:
+        ///   Conditions to evaluate input to repository method are evaluated.
+        /// Success criteria:
+        ///  Conditions are evaluated correctly.
+        /// </summary>
+        [Fact]
+        public async Task GetAppEvents_AllConditionsHaveValues_ConditionsEvaluatedCorrectly()
+        {
+            // Arrange
+            int partyId = 50;
+            var repositoryMock = new Mock<ICloudEventRepository>();
+            repositoryMock.Setup(r => r.Get(
+                It.IsAny<string>(), // afer
+                It.IsAny<DateTime?>(), // from
+                It.IsAny<DateTime?>(), // to
+                It.Is<string>(subject => subject.Equals($"/party/{partyId}")),
+                It.Is<List<string>>(sourceFilter => sourceFilter != null),
+                It.Is<List<string>>(typeFiler => typeFiler != null),
+                It.IsAny<int>())) // size
+                .ReturnsAsync(new List<CloudEvent>());
+
+            AppEventsService eventsService = GetAppEventService(repositoryMock: repositoryMock.Object);
+
+            // Act
+            List<CloudEvent> actual = await eventsService.GetAppEvents(null, null, null, partyId, new List<string>() { "https://ttd.apps.tt02.altinn.no/ttd/apps-test/" }, new List<string>() { "instance.completed" }, null, null);
+
+            // Assert
+            repositoryMock.VerifyAll();
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Get instances with various input 
+        /// Expected result:
+        ///   Conditions to evaluate input to repository method are evaluated.
+        /// Success criteria:
+        ///  Conditions are evaluated correctly.
+        /// </summary>
+        [Fact]
+        public async Task GetAppEvents_AllConditionsAreNull_ConditionsEvaluatedCorrectly()
+        {
+            // Arrange
+            var repositoryMock = new Mock<ICloudEventRepository>();
+            repositoryMock.Setup(r => r.Get(
+                It.IsAny<string>(), // afer
+                It.IsAny<DateTime?>(), // from
+                It.IsAny<DateTime?>(), // to
+                string.Empty, // subject
+                null, // sourceFilter
+                null, // typeFilter
+                It.IsAny<int>())) // size
+                .ReturnsAsync(new List<CloudEvent>());
+
+            AppEventsService eventsService = GetAppEventService(repositoryMock: repositoryMock.Object);
+
+            // Act
+            List<CloudEvent> actual = await eventsService.GetAppEvents(null, null, null, 0, new List<string>(), new List<string>(), null, null);
+
+            // Assert
+            repositoryMock.VerifyAll();
         }
 
         private AppEventsService GetAppEventService(
