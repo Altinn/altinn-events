@@ -239,7 +239,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IQueueService, QueueService>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorization, AuthorizationService>();
-
+    services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
     if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
     {
         services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });

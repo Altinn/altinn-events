@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
+using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 
 using Moq;
@@ -23,11 +25,11 @@ namespace Tests.TestingServices
         {
             _repoMock = new Mock<ISubscriptionRepository>();
         }
-      
+
         [Fact]
         public async Task GetOrgSubscriptions_Two_Match()
         {
-            SubscriptionService subscriptionService = new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock());
+            SubscriptionService subscriptionService = GetServiceForTest();
             List<Subscription> result = await subscriptionService.GetOrgSubscriptions(
                 "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2",
                 "/party/1337",
@@ -38,7 +40,7 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetOrgSubscriptions_Zero_Match()
         {
-            SubscriptionService subscriptionService = new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock());
+            SubscriptionService subscriptionService = GetServiceForTest();
             List<Subscription> result = await subscriptionService.GetOrgSubscriptions(
                 "https://ttd.apps.altinn.no/ttd/endring-av-navn-v1",
                 "/party/1337",
@@ -49,7 +51,7 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetSubscriptions_One_Match()
         {
-            SubscriptionService subscriptionService = new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock());
+            SubscriptionService subscriptionService = GetServiceForTest();
             List<Subscription> result = await subscriptionService.GetSubscriptions(
                 "https://ttd.apps.altinn.no/ttd/new-app",
                 "/party/1337",
@@ -60,7 +62,7 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetSubscriptions_Zero_Match()
         {
-            SubscriptionService subscriptionService = new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock());
+            SubscriptionService subscriptionService = GetServiceForTest();
             List<Subscription> result = await subscriptionService.GetSubscriptions(
                 "https://ttd.apps.altinn.no/ttd/endring-av-navn-v1",
                 "/party/1337",
@@ -74,7 +76,7 @@ namespace Tests.TestingServices
             _repoMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true))
                 .ReturnsAsync(new List<Subscription>());
 
-            SubscriptionService subscriptionService = new SubscriptionService(_repoMock.Object, new QueueServiceMock());
+            SubscriptionService subscriptionService = GetServiceForTest(repository: _repoMock.Object);
 
             await subscriptionService.GetAllSubscriptions("/org/ttd");
 
@@ -87,7 +89,7 @@ namespace Tests.TestingServices
             _repoMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), false))
                 .ReturnsAsync(new List<Subscription>());
 
-            SubscriptionService subscriptionService = new SubscriptionService(_repoMock.Object, new QueueServiceMock());
+            SubscriptionService subscriptionService = GetServiceForTest(repository: _repoMock.Object);
 
             await subscriptionService.GetOrgSubscriptions("source", "party/1337", null);
 
@@ -97,12 +99,23 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetOrgSubscriptions_InvalidSourceUri()
         {
-            SubscriptionService subscriptionService = new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock());
+            SubscriptionService subscriptionService = GetServiceForTest();
             List<Subscription> result = await subscriptionService.GetOrgSubscriptions(
                 "ttd/endring-av-navn-v2",
                 "/party/1337",
                 "app.instance.process.completed");
             Assert.True(result.Count == 0);
+        }
+
+        private SubscriptionService GetServiceForTest(ISubscriptionRepository repository = null)
+        {
+            return new SubscriptionService(
+                repository ?? new SubscriptionRepositoryMock(),
+                new QueueServiceMock(),
+                new Mock<IClaimsPrincipalProvider>().Object,
+                new Mock<IProfile>().Object,
+                new Mock<IAuthorization>().Object,
+                new Mock<IRegisterService>().Object);
         }
     }
 }
