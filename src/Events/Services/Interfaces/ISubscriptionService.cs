@@ -12,9 +12,9 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <summary>
         /// Operation to create a subscription
         /// </summary>
-        /// <param name="eventsSubcrition">The event subscription</param>
+        /// <param name="eventsSubcription">The event subscription</param>
         /// <returns>A subscription if creation was successful or an errorr object</returns>
-        public Task<(Subscription Subscription, ServiceError Error)> CreateSubscription(Subscription eventsSubcrition);
+        public Task<(Subscription Subscription, ServiceError Error)> CreateSubscription(Subscription eventsSubcription);
 
         /// <summary>
         /// Operation to delete a given subscriptions

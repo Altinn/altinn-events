@@ -319,7 +319,6 @@ namespace Altinn.Platform.Events.Services
                 {
                     int partyId = await _register.PartyLookup(organization, null);
                     eventsSubscription.Consumer = PartyPrefix + partyId;
-                    return;
                 }
             }
         }
@@ -347,7 +346,6 @@ namespace Altinn.Platform.Events.Services
             {
                 int partyId = await _register.PartyLookup(organization, null);
                 eventsSubscription.CreatedBy = PartyPrefix + partyId;
-                return;
             }
         }
 
@@ -374,8 +372,6 @@ namespace Altinn.Platform.Events.Services
                 return true;
             }
 
-            // check if platform access i asking.
-
             return false;
         }
 
@@ -400,24 +396,6 @@ namespace Altinn.Platform.Events.Services
             }
 
             return null;
-        }
-
-        private string GetConsumer()
-        {
-            var user = _claimsPrincipalProvider.GetUser();
-
-            string authenticatedConsumer = string.Empty;
-
-            if (!string.IsNullOrEmpty(user.GetOrg()))
-            {
-                authenticatedConsumer = OrgPrefix + user.GetOrg();
-            }
-            else if (user.GetUserIdAsInt().HasValue)
-            {
-                authenticatedConsumer = UserPrefix + user.GetUserIdAsInt().Value;
-            }
-
-            return authenticatedConsumer;
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetOrgSubscriptions_Two_Match()
         {
-            SubscriptionService subscriptionService = GetServiceForTest();
+            SubscriptionService subscriptionService = GetSubscriptionService();
             List<Subscription> result = await subscriptionService.GetOrgSubscriptions(
                 "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2",
                 "/party/1337",
@@ -40,7 +40,7 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetOrgSubscriptions_Zero_Match()
         {
-            SubscriptionService subscriptionService = GetServiceForTest();
+            SubscriptionService subscriptionService = GetSubscriptionService();
             List<Subscription> result = await subscriptionService.GetOrgSubscriptions(
                 "https://ttd.apps.altinn.no/ttd/endring-av-navn-v1",
                 "/party/1337",
@@ -51,7 +51,7 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetSubscriptions_One_Match()
         {
-            SubscriptionService subscriptionService = GetServiceForTest();
+            SubscriptionService subscriptionService = GetSubscriptionService();
             List<Subscription> result = await subscriptionService.GetSubscriptions(
                 "https://ttd.apps.altinn.no/ttd/new-app",
                 "/party/1337",
@@ -62,7 +62,7 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetSubscriptions_Zero_Match()
         {
-            SubscriptionService subscriptionService = GetServiceForTest();
+            SubscriptionService subscriptionService = GetSubscriptionService();
             List<Subscription> result = await subscriptionService.GetSubscriptions(
                 "https://ttd.apps.altinn.no/ttd/endring-av-navn-v1",
                 "/party/1337",
@@ -76,7 +76,7 @@ namespace Tests.TestingServices
             _repoMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true))
                 .ReturnsAsync(new List<Subscription>());
 
-            SubscriptionService subscriptionService = GetServiceForTest(repository: _repoMock.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(repository: _repoMock.Object);
 
             await subscriptionService.GetAllSubscriptions("/org/ttd");
 
@@ -89,7 +89,7 @@ namespace Tests.TestingServices
             _repoMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), false))
                 .ReturnsAsync(new List<Subscription>());
 
-            SubscriptionService subscriptionService = GetServiceForTest(repository: _repoMock.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(repository: _repoMock.Object);
 
             await subscriptionService.GetOrgSubscriptions("source", "party/1337", null);
 
@@ -99,7 +99,7 @@ namespace Tests.TestingServices
         [Fact]
         public async Task GetOrgSubscriptions_InvalidSourceUri()
         {
-            SubscriptionService subscriptionService = GetServiceForTest();
+            SubscriptionService subscriptionService = GetSubscriptionService();
             List<Subscription> result = await subscriptionService.GetOrgSubscriptions(
                 "ttd/endring-av-navn-v2",
                 "/party/1337",
@@ -107,7 +107,7 @@ namespace Tests.TestingServices
             Assert.True(result.Count == 0);
         }
 
-        private SubscriptionService GetServiceForTest(ISubscriptionRepository repository = null)
+        private static SubscriptionService GetSubscriptionService(ISubscriptionRepository repository = null)
         {
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),

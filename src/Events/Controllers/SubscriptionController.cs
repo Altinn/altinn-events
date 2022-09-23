@@ -23,11 +23,8 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ISubscriptionService _eventsSubscriptionService;
         private readonly IMapper _mapper;
 
-        private const string OrganisationPrefix = "/org/";
-        private const string PersonPrefix = "/person/";
         private const string UserPrefix = "/user/";
         private const string OrgPrefix = "/org/";
-        private const string PartyPrefix = "/party/";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionController"/> class.
