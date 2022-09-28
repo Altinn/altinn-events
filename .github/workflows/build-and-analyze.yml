@@ -6,10 +6,10 @@ on:
     branches: [ main ]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
-jobs:   
-  build-and-test:
-    name: Build and Test
-    if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]' 
+jobs:
+  build:
+    name: Build
+    if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,13 +20,18 @@ jobs:
             6.0.x
       - name: Set inotify instances
         run: echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - name: Build & Test
-        run: |
-           dotnet build Altinn.Platform.Events.sln -v m
-           dotnet test Altinn.Platform.Events.sln -v m
+      - name: Build
+        run: dotnet build Altinn.Platform.Events.sln -v m
+  test:
+    name: Test
+    if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: dotnet test Altinn.Platform.Events.sln -v m
   analyze:
     name: Analyze
-    if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]' 
+    if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]'
     runs-on: windows-latest
     steps:
       - name: Setup .NET
