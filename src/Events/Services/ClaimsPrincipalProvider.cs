@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Security.Claims;
 
 using Altinn.Platform.Events.Services.Interfaces;
