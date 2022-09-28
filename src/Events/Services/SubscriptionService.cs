@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -28,8 +29,12 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<Subscription> CreateSubscription(Subscription eventsSubcrition)
         {
-            Subscription subscription = await _repository.CreateSubscription(eventsSubcrition);
+            Subscription subscription = await _repository.FindSubscription(eventsSubcrition, CancellationToken.None);
+
+            subscription ??= await _repository.CreateSubscription(eventsSubcrition);
+
             await _queue.PushToValidationQueue(JsonSerializer.Serialize(subscription));
+
             return subscription;
         }
 
