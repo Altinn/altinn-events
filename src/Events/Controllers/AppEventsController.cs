@@ -31,31 +31,25 @@ namespace Altinn.Platform.Events.Controllers
     [Route("events/api/v1/app")]
     public class AppEventsController : ControllerBase
     {
-        private readonly IEventsService _eventsService;
-        private readonly IRegisterService _registerService;
-        private readonly IAuthorization _authorizationService;
-        private readonly ILogger _logger;
-        private readonly string _eventsBaseUri;
-        private readonly AccessTokenSettings _accessTokenSettings;
+        private readonly IAppEventsService _eventsService;
         private readonly IMapper _mapper;
+        private readonly ILogger _logger;
+        private readonly AccessTokenSettings _accessTokenSettings;
+        private readonly string _eventsBaseUri;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AppEventsController"/> class
         /// </summary>
         public AppEventsController(
-            IEventsService eventsService,
-            IRegisterService registerService,
-            IAuthorization authorizationService,
+            IAppEventsService eventsService,
             IOptions<GeneralSettings> settings,
             ILogger<AppEventsController> logger,
             IOptions<AccessTokenSettings> accessTokenSettings,
             IMapper mapper)
         {
-            _registerService = registerService;
             _logger = logger;
             _eventsService = eventsService;
             _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
-            _authorizationService = authorizationService;
             _accessTokenSettings = accessTokenSettings.Value;
             _mapper = mapper;
         }
@@ -90,7 +84,6 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 string cloudEventId = await _eventsService.StoreCloudEvent(_mapper.Map<CloudEvent>(cloudEvent));
-                _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
@@ -136,7 +129,7 @@ namespace Altinn.Platform.Events.Controllers
         {
             if (string.IsNullOrEmpty(HttpContext.User.GetOrg()))
             {
-                // Only orgs can do a search based on. Alternative can be a service owner read in scope. Need to be added later
+                // Only orgs can do a search based on a specific app. Alternative can be a service owner read in scope. Need to be added later
                 return StatusCode(401, "Only orgs can call this api");
             }
 
@@ -150,21 +143,19 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem("Size must be a number larger that 0.", null, 400);
             }
 
-            List<string> source = new List<string> { $"%{org}/{app}%" };
+            var source = new List<string> { $"%{org}/{app}%" };
 
-            if ((!string.IsNullOrEmpty(person) || !string.IsNullOrEmpty(unit)) && party <= 0)
+            try
             {
-                try
-                {
-                    party = await _registerService.PartyLookup(unit, person);
-                }
-                catch (PlatformHttpException e)
-                {
-                    return HandlePlatformHttpException(e);
-                }
-            }
+                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
+                SetNextLink(events);
 
-            return await RetrieveAndAuthorizeEvents(after, from, to, party, source, type, size);
+                return events;
+            }
+            catch (PlatformHttpException e)
+            {
+                return HandlePlatformHttpException(e);
+            }
         }
 
         /// <summary>
@@ -214,45 +205,28 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem("Subject must be specified using either query params party or unit or header value person.", null, 400);
             }
 
-            if (party <= 0)
+            try
             {
-                try
-                {
-                    party = await _registerService.PartyLookup(unit, person);
-                }
-                catch (PlatformHttpException e)
-                {
-                    return HandlePlatformHttpException(e);
-                }
+                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
+                SetNextLink(events);
+                return events;
             }
-
-            return await RetrieveAndAuthorizeEvents(after, from, to, party, source, type, size);
+            catch (PlatformHttpException e)
+            {
+                return HandlePlatformHttpException(e);
+            }
         }
 
-        private async Task<ActionResult<List<CloudEvent>>> RetrieveAndAuthorizeEvents(
-            string after,
-            DateTime? from,
-            DateTime? to,
-            int party,
-            List<string> source,
-            List<string> type,
-            int size)
+        private void SetNextLink(List<CloudEvent> events)
         {
-            List<CloudEvent> events = await _eventsService.Get(after, from, to, party, source, type, size);
-
             if (events.Count > 0)
             {
-                events = await _authorizationService.AuthorizeEvents(HttpContext.User, events);
-            }
-
-            if (events.Count > 0)
-            {
-                List<KeyValuePair<string, string>> queryCollection = Request.Query
+                List<KeyValuePair<string, string>> queryCollection = HttpContext.Request.Query
                     .SelectMany(q => q.Value, (col, value) => new KeyValuePair<string, string>(col.Key, value))
                     .Where(q => q.Key != "after")
                     .ToList();
 
-                StringBuilder nextUriBuilder = new StringBuilder($"{_eventsBaseUri}{Request.Path}?after={events.Last().Id}");
+                StringBuilder nextUriBuilder = new StringBuilder($"{_eventsBaseUri}{HttpContext.Request.Path}?after={events.Last().Id}");
 
                 foreach (KeyValuePair<string, string> queryParam in queryCollection)
                 {
@@ -261,8 +235,6 @@ namespace Altinn.Platform.Events.Controllers
 
                 Response.Headers.Add("next", nextUriBuilder.ToString());
             }
-
-            return events;
         }
 
         private ActionResult HandlePlatformHttpException(PlatformHttpException e)
