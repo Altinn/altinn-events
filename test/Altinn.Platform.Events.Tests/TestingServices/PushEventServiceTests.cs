@@ -128,7 +128,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             IAuthorization authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI());
             var service = new PushEventService(
                 queueMock,
-                new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock()),
+                new SubscriptionService(new SubscriptionRepositoryMock(), new QueueServiceMock(), null, null, null, null),
                 authorizationMock,
                 Options.Create(new PlatformSettings
                 {

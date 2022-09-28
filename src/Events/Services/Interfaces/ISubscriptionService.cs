@@ -12,31 +12,32 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <summary>
         /// Operation to create a subscription
         /// </summary>
-        /// <param name="eventsSubcrition">The event subscription</param>
-        public Task<Subscription> CreateSubscription(Subscription eventsSubcrition);
+        /// <param name="eventsSubscription">The event subscription</param>
+        /// <returns>A subscription if creation was successful or an errorr object</returns>
+        public Task<(Subscription Subscription, ServiceError Error)> CreateSubscription(Subscription eventsSubscription);
 
         /// <summary>
         /// Operation to delete a given subscriptions
         /// </summary>
-        public Task DeleteSubscription(int id);
+        public Task<ServiceError> DeleteSubscription(int id);
 
         /// <summary>
         /// Update validation status
         /// </summary>
-        public Task SetValidSubscription(int id);
+        public Task<(Subscription Subscription, ServiceError Error)> SetValidSubscription(int id);
 
         /// <summary>
         /// Get a given subscription
         /// </summary>
         /// <param name="id">The subcription Id</param>
-        public Task<Subscription> GetSubscription(int id);
+        public Task<(Subscription Subscription, ServiceError Error)> GetSubscription(int id);
 
         /// <summary>
         /// Retrieves all subscriptions for the given consumer
         /// </summary>
         /// <param name="consumer">The subscription consumer</param>
         /// <returns>A list of subscriptions</returns>
-        public Task<List<Subscription>> GetAllSubscriptions(string consumer);
+        public Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions(string consumer);
 
         /// <summary>
         /// Get a list of matching org subscriptions
