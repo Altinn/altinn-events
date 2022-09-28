@@ -7,7 +7,7 @@ using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
-
+using Altinn.Platform.Events.Tests.Utils;
 using Moq;
 
 using Xunit;
@@ -109,15 +109,21 @@ namespace Tests.TestingServices
             int subscriptionId = 645187;
             Subscription subscription = new()
             {
-                Id = subscriptionId
+                Id = subscriptionId,
+                SourceFilter = new System.Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test")
             };
+
+            Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
+            claimsPrincipalProviderMock.Setup(
+                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765", "serviceowner"));
 
             _repositoryMock.Setup(
                 s => s.FindSubscription(
                     It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
                 .ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService = GetSubscriptionService(_repositoryMock.Object);
+            SubscriptionService subscriptionService = 
+                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
 
             // Act
             var result = await subscriptionService.CreateSubscription(subscription);
@@ -133,8 +139,13 @@ namespace Tests.TestingServices
             int subscriptionId = 645187;
             Subscription subscription = new()
             {
-                Id = subscriptionId
+                Id = subscriptionId,
+                SourceFilter = new System.Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test")
             };
+
+            Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
+            claimsPrincipalProviderMock.Setup(
+                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765", "serviceowner"));
 
             _repositoryMock.Setup(
                 s => s.FindSubscription(
@@ -146,7 +157,8 @@ namespace Tests.TestingServices
                     It.Is<Subscription>(p => p.Id == subscriptionId)))
                 .ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService = GetSubscriptionService(_repositoryMock.Object);
+            SubscriptionService subscriptionService =
+                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
 
             // Act
             var result = await subscriptionService.CreateSubscription(subscription);
@@ -155,12 +167,14 @@ namespace Tests.TestingServices
             _repositoryMock.VerifyAll();
         }
 
-        private static SubscriptionService GetSubscriptionService(ISubscriptionRepository repository = null)
+        private static SubscriptionService GetSubscriptionService(
+            ISubscriptionRepository repository = null, 
+            IClaimsPrincipalProvider claimsPrincipalProvider = null)
         {
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
                 new QueueServiceMock(),
-                new Mock<IClaimsPrincipalProvider>().Object,
+                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
                 new Mock<IProfile>().Object,
                 new Mock<IAuthorization>().Object,
                 new Mock<IRegisterService>().Object);
