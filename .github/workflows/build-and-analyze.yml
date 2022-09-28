@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 jobs:
   build-and-test:
-    name: Build & Test
+    name: Build and Test
     if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
