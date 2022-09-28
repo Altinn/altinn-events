@@ -37,14 +37,16 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
-            var service = GetPushEventService();
+            QueueServiceMock queueServiceMock = new();
+
+            var service = GetPushEventService(queueServiceMock);
 
             // Act
             await service.Push(cloudEvent);
 
             // Assert
-            Assert.True(QueueServiceMock.OutboundQueue.ContainsKey(cloudEvent.Id));
-            Assert.Equal(2, QueueServiceMock.OutboundQueue[cloudEvent.Id].Count);
+            Assert.True(queueServiceMock.OutboundQueue.ContainsKey(cloudEvent.Id));
+            Assert.Equal(2, queueServiceMock.OutboundQueue[cloudEvent.Id].Count);
         }
 
         /// <summary>
@@ -61,14 +63,15 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
-            var service = GetPushEventService();
+            QueueServiceMock queueServiceMock = new();
+            var service = GetPushEventService(queueServiceMock);
 
             // Act
             await service.Push(cloudEvent);
 
             // Assert
-            Assert.True(QueueServiceMock.OutboundQueue.ContainsKey(cloudEvent.Id));
-            Assert.Single(QueueServiceMock.OutboundQueue[cloudEvent.Id]);
+            Assert.True(queueServiceMock.OutboundQueue.ContainsKey(cloudEvent.Id));
+            Assert.Single(queueServiceMock.OutboundQueue[cloudEvent.Id]);
         }
 
         /// <summary>
@@ -108,17 +111,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.VerifyAll();
         }
 
-        private IPushEvent GetPushEventService(IQueueService queueMock = null, ILogger<IPushEvent> loggerMock = null)
+        private IPushEvent GetPushEventService(IQueueService queueMock, ILogger<IPushEvent> loggerMock = null)
         {
             var services = new ServiceCollection();
             services.AddMemoryCache();
             var serviceProvider = services.BuildServiceProvider();
             var memoryCache = serviceProvider.GetService<IMemoryCache>();
-
-            if (queueMock == null)
-            {
-                queueMock = new QueueServiceMock();
-            }
 
             if (loggerMock == null)
             {
