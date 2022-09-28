@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    name: Build
+    name: Build & Test
     if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -22,11 +22,6 @@ jobs:
         run: echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - name: Build
         run: dotnet build Altinn.Platform.Events.sln -v m
-  test:
-    name: Test
-    if: ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'push') && github.repository_owner == 'Altinn' && github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    steps:
       - name: Test
         run: dotnet test Altinn.Platform.Events.sln -v m
   analyze:
