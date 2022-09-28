@@ -20,8 +20,6 @@ namespace Tests.TestingServices
     public class SubscriptionServiceTest
     {
         private readonly Mock<ISubscriptionRepository> _repositoryMock = new();
-        private readonly QueueServiceMock _queueServiceMock = new();
-        private readonly SubscriptionRepositoryMock _subscriptionRepositoryMock = new();
 
         [Fact]
         public async Task GetOrgSubscriptions_Two_Match()
