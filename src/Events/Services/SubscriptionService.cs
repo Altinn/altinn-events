@@ -67,10 +67,9 @@ namespace Altinn.Platform.Events.Services
                 return (null, new ServiceError(401, errorMessage));
             }
 
-            Subscription subscription = await _repository.CreateSubscription(eventsSubscription);
-            Subscription subscription = await _repository.FindSubscription(eventsSubcrition, CancellationToken.None);
+            Subscription subscription = await _repository.FindSubscription(eventsSubscription, CancellationToken.None);
 
-            subscription ??= await _repository.CreateSubscription(eventsSubcrition);
+            subscription ??= await _repository.CreateSubscription(eventsSubscription);
 
             await _queue.PushToValidationQueue(JsonSerializer.Serialize(subscription));
             return (subscription, null);

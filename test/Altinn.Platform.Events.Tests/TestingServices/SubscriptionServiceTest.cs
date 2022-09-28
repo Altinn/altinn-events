@@ -73,7 +73,7 @@ namespace Tests.TestingServices
             _repositoryMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true))
                 .ReturnsAsync(new List<Subscription>());
 
-            SubscriptionService subscriptionService = GetSubscriptionService(repository: _repoMock.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(repository: _repositoryMock.Object);
 
             await subscriptionService.GetAllSubscriptions("/org/ttd");
 
@@ -86,7 +86,7 @@ namespace Tests.TestingServices
             _repositoryMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), false))
                 .ReturnsAsync(new List<Subscription>());
 
-            SubscriptionService subscriptionService = GetSubscriptionService(repository: _repoMock.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(repository: _repositoryMock.Object);
 
             await subscriptionService.GetOrgSubscriptions("source", "party/1337", null);
 
@@ -119,10 +119,10 @@ namespace Tests.TestingServices
                     It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
                 .ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService = new(_repositoryMock.Object, _queueServiceMock);
+            SubscriptionService subscriptionService = GetSubscriptionService(_repositoryMock.Object);
 
             // Act
-            Subscription result = await subscriptionService.CreateSubscription(subscription);
+            var result = await subscriptionService.CreateSubscription(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
@@ -148,10 +148,10 @@ namespace Tests.TestingServices
                     It.Is<Subscription>(p => p.Id == subscriptionId)))
                 .ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService = new(_repositoryMock.Object, _queueServiceMock);
+            SubscriptionService subscriptionService = GetSubscriptionService(_repositoryMock.Object);
 
             // Act
-            Subscription result = await subscriptionService.CreateSubscription(subscription);
+            var result = await subscriptionService.CreateSubscription(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
