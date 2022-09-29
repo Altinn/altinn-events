@@ -49,23 +49,8 @@ namespace Altinn.Platform.Events.Repository
             await using NpgsqlCommand pgcom = new NpgsqlCommand(insertSubscriptionSql, conn);
             pgcom.Parameters.AddWithValue("sourcefilter", eventsSubscription.SourceFilter.AbsoluteUri);
 
-            if (eventsSubscription.SubjectFilter != null)
-            {
-                pgcom.Parameters.AddWithValue("subjectfilter", eventsSubscription.SubjectFilter);
-            }
-            else
-            {
-                pgcom.Parameters.AddWithValue("subjectfilter", DBNull.Value);
-            }
-
-            if (eventsSubscription.TypeFilter != null)
-            {
-                pgcom.Parameters.AddWithValue("typefilter", eventsSubscription.TypeFilter);
-            }
-            else
-            {
-                pgcom.Parameters.AddWithValue("typefilter", DBNull.Value);
-            }
+            pgcom.Parameters.AddWithNullableString("subjectfilter", eventsSubscription.SubjectFilter);
+            pgcom.Parameters.AddWithNullableString("typefilter", eventsSubscription.TypeFilter);
 
             pgcom.Parameters.AddWithValue("consumer", eventsSubscription.Consumer);
             pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
@@ -88,23 +73,8 @@ namespace Altinn.Platform.Events.Repository
 
             pgcom.Parameters.AddWithValue("sourcefilter", eventsSubscription.SourceFilter.AbsoluteUri);
 
-            if (eventsSubscription.SubjectFilter != null)
-            {
-                pgcom.Parameters.AddWithValue("subjectfilter", eventsSubscription.SubjectFilter);
-            }
-            else
-            {
-                pgcom.Parameters.AddWithValue("subjectfilter", DBNull.Value);
-            }
-
-            if (eventsSubscription.TypeFilter != null)
-            {
-                pgcom.Parameters.AddWithValue("typefilter", eventsSubscription.TypeFilter);
-            }
-            else
-            {
-                pgcom.Parameters.AddWithValue("typefilter", DBNull.Value);
-            }
+            pgcom.Parameters.AddWithNullableString("subjectfilter", eventsSubscription.SubjectFilter);
+            pgcom.Parameters.AddWithNullableString("typefilter", eventsSubscription.TypeFilter);
 
             pgcom.Parameters.AddWithValue("consumer", eventsSubscription.Consumer);
             pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
