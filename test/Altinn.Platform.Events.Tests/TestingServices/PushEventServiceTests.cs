@@ -111,7 +111,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.VerifyAll();
         }
 
-        private IPushEvent GetPushEventService(IQueueService queueMock, ILogger<IPushEvent> loggerMock = null)
+        private static IPushEvent GetPushEventService(IQueueService queueMock, ILogger<IPushEvent> loggerMock = null)
         {
             var services = new ServiceCollection();
             services.AddMemoryCache();
