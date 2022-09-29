@@ -1,9 +1,11 @@
 ﻿#nullable enable
 
+using System;
+
 using Altinn.Platform.Events.Extensions;
 
 using Npgsql;
-using System;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.Extensions;
