@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace Altinn.Platform.Events.Services
 {
     /// <summary>
-    /// Handles events sevice. 
+    /// Handles events sevice.
     /// Notice when saving cloudevent:
     /// - the id for the cloudevent is created by the app
     /// - time is set to null, it will be created in the database
@@ -66,9 +66,17 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, string unit, string person, int size = 50)
         {
-            if (partyId <= 0)
+            if ((!string.IsNullOrEmpty(person) || !string.IsNullOrEmpty(unit)) && partyId <= 0)
             {
-                partyId = await _registerService.PartyLookup(unit, person);
+                try
+                {
+                    partyId = await _registerService.PartyLookup(unit, person);
+                }
+                catch (PlatformHttpException)
+                {
+                    // Flow should not continue if inexpected response from Register.
+                    throw;
+                }
             }
 
             string subject = partyId == 0 ? string.Empty : $"/party/{partyId}";
