@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -68,15 +69,7 @@ namespace Altinn.Platform.Events.Services
         {
             if ((!string.IsNullOrEmpty(person) || !string.IsNullOrEmpty(unit)) && partyId <= 0)
             {
-                try
-                {
-                    partyId = await _registerService.PartyLookup(unit, person);
-                }
-                catch (PlatformHttpException)
-                {
-                    // Flow should not continue if inexpected response from Register.
-                    throw;
-                }
+                partyId = await _registerService.PartyLookup(unit, person);
             }
 
             string subject = partyId == 0 ? string.Empty : $"/party/{partyId}";
