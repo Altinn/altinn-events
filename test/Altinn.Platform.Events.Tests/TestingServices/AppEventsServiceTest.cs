@@ -223,13 +223,38 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             repositoryMock.VerifyAll();
         }
 
+        /// <summary>
+        /// Scenario:
+        ///   Get instances without specifying source
+        /// Expected result:
+        ///   No events are returned
+        /// Success criteria:
+        ///  Register service is not called to lookup party
+        /// </summary>
+        [Fact]
+        public async Task GetAppEvents_NoSubjectInfoAvailable_RegisterLookupIsNotCalled()
+        {
+            // Arrange
+            Mock<IRegisterService> registerMock = new();
+
+            AppEventsService eventsService = GetAppEventService(registerMock: registerMock);
+
+            // Act
+            List<CloudEvent> actual = await eventsService.GetAppEvents("1", null, null, 0, new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, new List<string>() { }, null, null);
+
+            // Assert
+            registerMock.Verify(r => r.PartyLookup(It.Is<string>(s => string.IsNullOrEmpty(s)), It.Is<string>(s => string.IsNullOrEmpty(s))), Times.Never);
+        }
+
         private AppEventsService GetAppEventService(
             ICloudEventRepository repositoryMock = null,
             IQueueService queueMock = null,
+            Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
             Mock<ILogger<IAppEventsService>> loggerMock = null)
         {
             repositoryMock = repositoryMock ?? _repositoryMock;
+            registerMock = registerMock ?? _registerMock;
             queueMock = queueMock ?? _queueMock;
             loggerMock = loggerMock ?? _loggerMock;
 
@@ -246,7 +271,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             return new AppEventsService(
                 repositoryMock,
                 queueMock,
-                _registerMock.Object,
+                registerMock.Object,
                 authorizationMock.Object,
                 _claimsPrincipalProviderMock.Object,
                 loggerMock.Object);
