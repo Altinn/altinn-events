@@ -192,7 +192,8 @@ namespace Altinn.Platform.Events.Repository
                 Consumer = reader.GetValue<string>("consumer"),
                 EndPoint = new Uri(reader.GetValue<string>("endpointurl")),
                 CreatedBy = reader.GetValue<string>("createdby"),
-                Created = reader.GetValue<DateTime>("time").ToUniversalTime()
+                Created = reader.GetValue<DateTime>("time").ToUniversalTime(),
+                Validated = reader.GetValue<bool>("validated")
             };
             return subscription;
         }
