@@ -602,6 +602,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                         services.AddSingleton<ICloudEventRepository, CloudEventRepositoryMock>();
                         services.AddSingleton<ISubscriptionRepository, SubscriptionRepositoryMock>();
 
+                        services.AddSingleton<IQueueService, QueueServiceMock>();
+
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                         services.AddSingleton<ISigningKeysResolver, SigningKeyResolverMock>();

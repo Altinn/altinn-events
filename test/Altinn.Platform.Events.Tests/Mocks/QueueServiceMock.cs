@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -19,7 +17,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         /// <summary>
         /// Queumock for unit test
         /// </summary>
-        public static Dictionary<string, List<CloudEventEnvelope>> OutboundQueue { get; set; }
+        public Dictionary<string, List<CloudEventEnvelope>> OutboundQueue { get; set; }
 
         public Task<PushQueueReceipt> PushToOutboundQueue(string content)
         {
