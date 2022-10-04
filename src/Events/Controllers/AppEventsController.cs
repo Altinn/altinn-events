@@ -215,7 +215,7 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private void ValidateQueryParams(string after, DateTime? from, DateTime? to, int size)
+        private static void ValidateQueryParams(string after, DateTime? from, DateTime? to, int size)
         {
             if (string.IsNullOrEmpty(after) && from == null)
             {
