@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -133,14 +133,13 @@ namespace Altinn.Platform.Events.Controllers
                 return StatusCode(401, "Only orgs can call this api");
             }
 
-            if (string.IsNullOrEmpty(after) && from == null)
+            try
             {
-                return Problem("From or after must be defined.", null, 400);
+                ValidateQueryParams(after, from, to, size);
             }
-
-            if (size < 1)
+            catch (ArgumentException e)
             {
-                return Problem("Size must be a number larger that 0.", null, 400);
+                return Problem(e.Message, null, 400);
             }
 
             var source = new List<string> { $"%{org}/{app}%" };
@@ -190,14 +189,13 @@ namespace Altinn.Platform.Events.Controllers
             [FromQuery] List<string> type,
             [FromQuery] int size = 50)
         {
-            if (string.IsNullOrEmpty(after) && from == null)
+            try
             {
-                return Problem("From or after must be defined.", null, 400);
+                ValidateQueryParams(after, from, to, size);
             }
-
-            if (size < 1)
+            catch (ArgumentException e)
             {
-                return Problem("Size must be a number larger that 0.", null, 400);
+                return Problem(e.Message, null, 400);
             }
 
             if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
@@ -214,6 +212,29 @@ namespace Altinn.Platform.Events.Controllers
             catch (PlatformHttpException e)
             {
                 return HandlePlatformHttpException(e);
+            }
+        }
+
+        private void ValidateQueryParams(string after, DateTime? from, DateTime? to, int size)
+        {
+            if (string.IsNullOrEmpty(after) && from == null)
+            {
+                throw new ArgumentException("From or after must be defined.");
+            }
+
+            if (from != null && from.Value.Kind == DateTimeKind.Unspecified)
+            {
+                throw new ArgumentException("From must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+            }
+
+            if (to != null && to.Value.Kind == DateTimeKind.Unspecified)
+            {
+                throw new ArgumentException("To must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+            }
+
+            if (size < 1)
+            {
+                throw new ArgumentException("Size must be a number larger that 0.");
             }
         }
 
