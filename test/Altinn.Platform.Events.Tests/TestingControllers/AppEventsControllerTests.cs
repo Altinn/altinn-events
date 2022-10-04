@@ -485,7 +485,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.StartsWith("To must specify timezone.", actual.Detail);
             }
 
-
             /// <summary>
             /// Scenario:
             ///   Get events without defined after or from in query.
