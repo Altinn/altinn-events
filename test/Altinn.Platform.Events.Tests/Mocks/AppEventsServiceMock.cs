@@ -91,7 +91,17 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
-        public Task<string> StoreCloudEvent(CloudEvent cloudEvent)
+        public Task<string> SaveToDatabase(CloudEvent cloudEvent)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> PushToInboundQueue(CloudEvent cloudEvent)
+        {
+            throw new NotImplementedException();
+        }
+        
+        public Task<string> SaveAndPushToInboundQueue(CloudEvent cloudEvent)
         {
             throw new NotImplementedException();
         }

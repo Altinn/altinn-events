@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-
-using Altinn.Platform.Events.Exceptions;
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -13,15 +12,16 @@ using Microsoft.Extensions.Logging;
 namespace Altinn.Platform.Events.Services
 {
     /// <summary>
-    /// Handles events sevice.
-    /// Notice when saving cloudevent:
-    /// - the id for the cloudevent is created by the app
-    /// - time is set to null, it will be created in the database
+    /// Handles events service. 
+    /// Notice when saving cloudEvent:
+    /// - the id for the cloudEvent is created by the app
+    /// - time is set by the database when calling StoreAndForward
+    ///   or by the service when calling PushToRegistrationQueue
     /// </summary>
     public class AppEventsService : IAppEventsService
     {
         private readonly ICloudEventRepository _repository;
-        private readonly IQueueService _queue;
+        private readonly IQueueClient _queue;
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         public AppEventsService(
             ICloudEventRepository repository,
-            IQueueService queue,
+            IQueueClient queue,
             IRegisterService registerService,
             IAuthorization authorizationService,
             IClaimsPrincipalProvider claimsPrincipalProvider,
@@ -48,17 +48,38 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> StoreCloudEvent(CloudEvent cloudEvent)
+        public async Task<string> SaveToDatabase(CloudEvent cloudEvent)
+        {
+            cloudEvent = await _repository.Create(cloudEvent);
+
+            return cloudEvent.Id;
+        }
+
+        /// <inheritdoc/>
+        public async Task<string> PushToInboundQueue(CloudEvent cloudEvent)
+        {
+            PushQueueReceipt receipt = await _queue.PushToInboundQueue(JsonSerializer.Serialize(cloudEvent));
+
+            if (!receipt.Success)
+            {
+                _logger.LogError(receipt.Exception, "// EventsService // PushToInboundQueue // Failed to push event {EventId} to queue.", cloudEvent.Id);
+            }
+
+            return cloudEvent.Id;
+        }
+
+        /// <inheritdoc/>
+        public async Task<string> SaveAndPushToInboundQueue(CloudEvent cloudEvent)
         {
             cloudEvent.Id = Guid.NewGuid().ToString();
             cloudEvent.Time = null;
             cloudEvent = await _repository.Create(cloudEvent);
 
-            PushQueueReceipt receipt = await _queue.PushToQueue(JsonSerializer.Serialize(cloudEvent));
+            PushQueueReceipt receipt = await _queue.PushToInboundQueue(JsonSerializer.Serialize(cloudEvent));
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // StoreCloudEvent // Failed to push event {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(receipt.Exception, "// EventsService // SaveAndPushToInboundQueue // Failed to push event {EventId} to queue.", cloudEvent.Id);
             }
 
             return cloudEvent.Id;

@@ -74,7 +74,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(s => s.StoreCloudEvent(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                eventsService.Setup(s => s.SaveAndPushToInboundQueue(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -112,7 +112,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(s => s.StoreCloudEvent(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                eventsService.Setup(s => s.SaveAndPushToInboundQueue(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -179,7 +179,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/app";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(er => er.StoreCloudEvent(It.IsAny<CloudEvent>())).Throws(new Exception());
+                eventsService.Setup(er => er.SaveAndPushToInboundQueue(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));

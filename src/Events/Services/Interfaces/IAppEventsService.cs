@@ -12,11 +12,26 @@ namespace Altinn.Platform.Events.Services.Interfaces
     public interface IAppEventsService
     {
         /// <summary>
-        /// Stores a cloud event document to the events database.
+        /// Store cloud event to the events database.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be stored</param>
         /// <returns>Id for the created document</returns>
-        Task<string> StoreCloudEvent(CloudEvent cloudEvent);
+        Task<string> SaveToDatabase(CloudEvent cloudEvent);
+
+        /// <summary>
+        /// Push cloud event to inbound queue. Should only be attempted after storing event in db.
+        /// </summary>
+        /// <param name="cloudEvent">The cloudEvent to be queued</param>
+        /// <returns>Id for the queued event</returns>
+        Task<string> PushToInboundQueue(CloudEvent cloudEvent);
+
+        /// <summary>
+        /// Stores a cloud event document to the events database and
+        /// forwards to Inbound queue in one operation. 
+        /// </summary>
+        /// <param name="cloudEvent">The cloudEvent to be stored</param>
+        /// <returns>Id for the created document</returns>
+        Task<string> SaveAndPushToInboundQueue(CloudEvent cloudEvent);
 
         /// <summary>
         /// Gets list of cloud event based on query params

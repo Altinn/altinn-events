@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     public class AppEventsServiceTest
     {
         private readonly ICloudEventRepository _repositoryMock;
-        private readonly IQueueService _queueMock;
+        private readonly IQueueClient _queueMock;
         private readonly Mock<IRegisterService> _registerMock;
         private readonly Mock<IAuthorization> _authorizationMock;
         private readonly Mock<IClaimsPrincipalProvider> _claimsPrincipalProviderMock;
@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public AppEventsServiceTest()
         {
             _repositoryMock = new CloudEventRepositoryMock();
-            _queueMock = new QueueServiceMock();
+            _queueMock = new QueueClientMock();
             _registerMock = new();
             _authorizationMock = new();
             _claimsPrincipalProviderMock = new();
@@ -42,20 +42,62 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Store a cloud event in postgres DB.
+        ///   Store a CloudEvent in postgres DB. Push event to events-inbound queue.
         /// Expected result:
         ///   Returns the id of the newly created document.
         /// Success criteria:
         ///   The response is a non-empty string.
         /// </summary>
         [Fact]
-        public async Task Create_EventSuccessfullyStored_IdReturned()
+        public async Task StoreAndPushEvent_EventSuccessfullyStored_IdReturned()
         {
             // Arrange
             AppEventsService eventsService = GetAppEventService();
 
             // Act
-            string actual = await eventsService.StoreCloudEvent(GetCloudEvent());
+            string actual = await eventsService.SaveAndPushToInboundQueue(GetCloudEvent());
+
+            // Assert
+            Assert.NotEmpty(actual);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Push cloud event to events-inbound queue.
+        /// Expected result:
+        ///   Returns the id of the previously created document.
+        /// Success criteria:
+        ///   The response is a non-empty string.
+        /// </summary>
+        [Fact]
+        public async Task PushSavedEvent_EventSuccessfullyPushed_IdReturned()
+        {
+            // Arrange
+            AppEventsService eventsService = GetAppEventService();
+
+            // Act
+            string actual = await eventsService.PushToInboundQueue(GetCloudEvent());
+
+            // Assert
+            Assert.NotEmpty(actual);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Store a CloudEvent in postgres DB.
+        /// Expected result:
+        ///   Returns the id of the newly created document.
+        /// Success criteria:
+        ///   The response is a non-empty string.
+        /// </summary>
+        [Fact]
+        public async Task SaveNewEvent_EventSuccessfullyStored_IdReturned()
+        {
+            // Arrange
+            AppEventsService eventsService = GetAppEventService();
+
+            // Act
+            string actual = await eventsService.SaveToDatabase(GetCloudEvent());
 
             // Assert
             Assert.NotEmpty(actual);
@@ -70,7 +112,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   The response is a non-empty string.
         /// </summary>
         [Fact]
-        public async Task Create_CheckIdCreatedByService_IdReturned()
+        public async Task SaveAndPushNewEvent_CheckIdCreatedByService_IdReturned()
         {
             // Arrange
             AppEventsService eventsService = GetAppEventService();
@@ -79,7 +121,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             item.Id = null;
 
             // Act
-            string actual = await eventsService.StoreCloudEvent(item);
+            string actual = await eventsService.SaveAndPushToInboundQueue(item);
 
             // Assert
             Assert.NotEmpty(actual);
@@ -94,22 +136,48 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///  Error is logged.
         /// </summary>
         [Fact]
-        public async Task Create_PushEventFails_ErrorIsLogged()
+        public async Task SaveAndPushNewEvent_PushEventFails_ErrorIsLogged()
         {
             // Arrange
-            Mock<IQueueService> queueMock = new Mock<IQueueService>();
-            queueMock.Setup(q => q.PushToQueue(It.IsAny<string>())).ReturnsAsync(new PushQueueReceipt { Success = false, Exception = new Exception("The push failed due to something") });
+            Mock<IQueueClient> queueMock = new Mock<IQueueClient>();
+            queueMock.Setup(q => q.PushToInboundQueue(It.IsAny<string>())).ReturnsAsync(new PushQueueReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IAppEventsService>> logger = new Mock<ILogger<IAppEventsService>>();
-
             AppEventsService eventsService = GetAppEventService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act
-            await eventsService.StoreCloudEvent(GetCloudEvent());
+            await eventsService.SaveAndPushToInboundQueue(GetCloudEvent());
 
             // Assert
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
+
+        /// <summary>
+        /// Scenario:
+        ///   Store an event, but push to queue fails.
+        /// Expected result:
+        /// Event is stored and eventId returned.
+        /// Success criteria:
+        ///  Error is logged.
+        /// </summary>
+        [Fact]
+        public async Task PushSavedEvent_PushEventFails_ErrorIsLogged()
+        {
+            // Arrange
+            Mock<IQueueClient> queueMock = new Mock<IQueueClient>();
+            queueMock.Setup(q => q.PushToInboundQueue(It.IsAny<string>())).ReturnsAsync(new PushQueueReceipt { Success = false, Exception = new Exception("The push failed due to something") });
+
+            Mock<ILogger<IAppEventsService>> logger = new Mock<ILogger<IAppEventsService>>();
+            AppEventsService eventsService = GetAppEventService(loggerMock: logger, queueMock: queueMock.Object);
+
+            // Act
+            await eventsService.PushToInboundQueue(GetCloudEvent());
+
+            // Assert
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
+        // TODO: add test SaveNewEvent_SaveToDatabaseFails_ErrorIsLogged() 
 
         /// <summary>
         /// Scenario:
@@ -248,7 +316,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private AppEventsService GetAppEventService(
             ICloudEventRepository repositoryMock = null,
-            IQueueService queueMock = null,
+            IQueueClient queueMock = null,
             Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
             Mock<ILogger<IAppEventsService>> loggerMock = null)

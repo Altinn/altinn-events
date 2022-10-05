@@ -1,21 +1,20 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Models;
-using Altinn.Platform.Events.Services.Interfaces;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
-    public class QueueServiceMock : IQueueService
+    public class QueueClientMock : IQueueClient
     {
-        public QueueServiceMock()
+        public QueueClientMock()
         {
             OutboundQueue = new Dictionary<string, List<CloudEventEnvelope>>();
         }
 
         /// <summary>
-        /// Queumock for unit test
+        /// Queue mock for unit test
         /// </summary>
         public Dictionary<string, List<CloudEventEnvelope>> OutboundQueue { get; set; }
 
@@ -33,7 +32,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.FromResult(new PushQueueReceipt { Success = true });
         }
 
-        public Task<PushQueueReceipt> PushToQueue(string content)
+        public Task<PushQueueReceipt> PushToInboundQueue(string content)
         {
             return Task.FromResult(new PushQueueReceipt { Success = true });
         }

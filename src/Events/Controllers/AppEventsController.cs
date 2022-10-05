@@ -35,6 +35,7 @@ namespace Altinn.Platform.Events.Controllers
         private readonly IMapper _mapper;
         private readonly ILogger _logger;
         private readonly AccessTokenSettings _accessTokenSettings;
+        private readonly QueueStorageSettings _queueStorageSettings;
         private readonly string _eventsBaseUri;
 
         /// <summary>
@@ -43,6 +44,7 @@ namespace Altinn.Platform.Events.Controllers
         public AppEventsController(
             IAppEventsService eventsService,
             IOptions<GeneralSettings> settings,
+            IOptions<QueueStorageSettings> queueStorageSettings,
             ILogger<AppEventsController> logger,
             IOptions<AccessTokenSettings> accessTokenSettings,
             IMapper mapper)
@@ -52,6 +54,7 @@ namespace Altinn.Platform.Events.Controllers
             _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
             _accessTokenSettings = accessTokenSettings.Value;
             _mapper = mapper;
+            _queueStorageSettings = queueStorageSettings.Value;
         }
 
         /// <summary>
@@ -83,7 +86,8 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.StoreCloudEvent(_mapper.Map<CloudEvent>(cloudEvent));
+                string cloudEventId = await _eventsService.SaveAndPushToInboundQueue(_mapper.Map<CloudEvent>(cloudEvent));
+                _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)

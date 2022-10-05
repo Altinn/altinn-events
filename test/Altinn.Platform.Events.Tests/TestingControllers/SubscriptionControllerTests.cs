@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -602,7 +603,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                         services.AddSingleton<ICloudEventRepository, CloudEventRepositoryMock>();
                         services.AddSingleton<ISubscriptionRepository, SubscriptionRepositoryMock>();
 
-                        services.AddSingleton<IQueueService, QueueServiceMock>();
+                        services.AddSingleton<IQueueClient, QueueClientMock>();
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
