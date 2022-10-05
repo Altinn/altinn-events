@@ -133,13 +133,11 @@ namespace Altinn.Platform.Events.Controllers
                 return StatusCode(401, "Only orgs can call this api");
             }
 
-            try
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size);
+
+            if (!isValid)
             {
-                ValidateQueryParams(after, from, to, size);
-            }
-            catch (ArgumentException e)
-            {
-                return Problem(e.Message, null, 400);
+                return Problem(errorMessage, null, 400);
             }
 
             var source = new List<string> { $"%{org}/{app}%" };
@@ -189,13 +187,11 @@ namespace Altinn.Platform.Events.Controllers
             [FromQuery] List<string> type,
             [FromQuery] int size = 50)
         {
-            try
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size);
+
+            if (!isValid)
             {
-                ValidateQueryParams(after, from, to, size);
-            }
-            catch (ArgumentException e)
-            {
-                return Problem(e.Message, null, 400);
+                return Problem(errorMessage, null, 400);
             }
 
             if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
@@ -215,27 +211,29 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private static void ValidateQueryParams(string after, DateTime? from, DateTime? to, int size)
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, DateTime? from, DateTime? to, int size)
         {
             if (string.IsNullOrEmpty(after) && from == null)
             {
-                throw new ArgumentException("From or after must be defined.");
+                return (false, "From or after must be defined.");
             }
 
             if (from != null && from.Value.Kind == DateTimeKind.Unspecified)
             {
-                throw new ArgumentException("From must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+                return (false, "From must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
 
             if (to != null && to.Value.Kind == DateTimeKind.Unspecified)
             {
-                throw new ArgumentException("To must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+                return (false, "To must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
 
             if (size < 1)
             {
-                throw new ArgumentException("Size must be a number larger that 0.");
+                return (false, "Size must be a number larger that 0.");
             }
+
+            return (true, null);
         }
 
         private void SetNextLink(List<CloudEvent> events)
