@@ -225,7 +225,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (to != null && to.Value.Kind == DateTimeKind.Unspecified)
             {
-                return (false, "To must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+                return (false, "The 'To' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
 
             if (size < 1)
