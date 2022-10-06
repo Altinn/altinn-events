@@ -262,7 +262,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForOrg_MissingRequiredFromOrAfterParam_ReturnsBadRequest()
             {
                 // Arrange
-                string expected = "From or after must be defined.";
+                string expected = "The 'From' or 'After' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?size=5";
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
@@ -293,7 +293,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&size=-5";
-                string expected = "Size must be a number larger that 0.";
+                string expected = "The 'Size' parameter must be a number larger that 0.";
 
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
@@ -452,7 +452,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("From must specify timezone.", actual.Detail);
+                Assert.StartsWith("The 'From' parameter must specify timezone.", actual.Detail);
             }
 
             /// <summary>
@@ -482,7 +482,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("To must specify timezone.", actual.Detail);
+                Assert.StartsWith("The 'To' parameter must specify timezone.", actual.Detail);
             }
 
             /// <summary>
@@ -497,7 +497,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_MissingRequiredQueryParam_ReturnsBadRequest()
             {
                 // Arrange   
-                string expected = "From or after must be defined.";
+                string expected = "The 'From' or 'After' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/app/party?size=5";
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
@@ -528,7 +528,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=-5";
-                string expected = "Size must be a number larger that 0.";
+                string expected = "The 'Size' parameter must be a number larger that 0.";
 
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -814,7 +814,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("From must specify timezone.", actual.Detail);
+                Assert.StartsWith("The 'From' parameter must specify timezone.", actual.Detail);
             }
 
             /// <summary>
@@ -844,7 +844,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("To must specify timezone.", actual.Detail);
+                Assert.StartsWith("The 'To' parameter must specify timezone.", actual.Detail);
             }
 
             private HttpClient GetTestClient(IAppEventsService eventsService)

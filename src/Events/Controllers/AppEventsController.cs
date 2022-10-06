@@ -215,12 +215,12 @@ namespace Altinn.Platform.Events.Controllers
         {
             if (string.IsNullOrEmpty(after) && from == null)
             {
-                return (false, "From or after must be defined.");
+                return (false, "The 'From' or 'After' parameter must be defined.");
             }
 
             if (from != null && from.Value.Kind == DateTimeKind.Unspecified)
             {
-                return (false, "From must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+                return (false, "The 'From' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
 
             if (to != null && to.Value.Kind == DateTimeKind.Unspecified)
@@ -230,7 +230,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (size < 1)
             {
-                return (false, "Size must be a number larger that 0.");
+                return (false, "The 'Size' parameter must be a number larger that 0.");
             }
 
             return (true, null);
