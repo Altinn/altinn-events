@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -133,14 +133,11 @@ namespace Altinn.Platform.Events.Controllers
                 return StatusCode(401, "Only orgs can call this api");
             }
 
-            if (string.IsNullOrEmpty(after) && from == null)
-            {
-                return Problem("From or after must be defined.", null, 400);
-            }
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size);
 
-            if (size < 1)
+            if (!isValid)
             {
-                return Problem("Size must be a number larger that 0.", null, 400);
+                return Problem(errorMessage, null, 400);
             }
 
             var source = new List<string> { $"%{org}/{app}%" };
@@ -190,14 +187,11 @@ namespace Altinn.Platform.Events.Controllers
             [FromQuery] List<string> type,
             [FromQuery] int size = 50)
         {
-            if (string.IsNullOrEmpty(after) && from == null)
-            {
-                return Problem("From or after must be defined.", null, 400);
-            }
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size);
 
-            if (size < 1)
+            if (!isValid)
             {
-                return Problem("Size must be a number larger that 0.", null, 400);
+                return Problem(errorMessage, null, 400);
             }
 
             if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
@@ -215,6 +209,31 @@ namespace Altinn.Platform.Events.Controllers
             {
                 return HandlePlatformHttpException(e);
             }
+        }
+
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, DateTime? from, DateTime? to, int size)
+        {
+            if (string.IsNullOrEmpty(after) && from == null)
+            {
+                return (false, "The 'From' or 'After' parameter must be defined.");
+            }
+
+            if (from != null && from.Value.Kind == DateTimeKind.Unspecified)
+            {
+                return (false, "The 'From' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+            }
+
+            if (to != null && to.Value.Kind == DateTimeKind.Unspecified)
+            {
+                return (false, "The 'To' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+            }
+
+            if (size < 1)
+            {
+                return (false, "The 'Size' parameter must be a number larger that 0.");
+            }
+
+            return (true, null);
         }
 
         private void SetNextLink(List<CloudEvent> events)
