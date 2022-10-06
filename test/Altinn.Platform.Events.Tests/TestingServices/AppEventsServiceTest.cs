@@ -154,9 +154,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Store an event, but push to queue fails.
+        ///   Push to Inbound queue fails.
         /// Expected result:
-        /// Event is stored and eventId returned.
+        ///   Error returned to caller.
         /// Success criteria:
         ///  Error is logged.
         /// </summary>
@@ -177,7 +177,31 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
-        // TODO: add test SaveNewEvent_SaveToDatabaseFails_ErrorIsLogged() 
+        /// <summary>
+        /// Scenario:
+        ///   Save cloud event to db fails.
+        /// Expected result:
+        ///   Error returned to caller.
+        /// Success criteria:
+        ///   Error is logged.
+        /// </summary>
+        [Fact]
+        public async Task SaveNewEvent_SaveToDatabaseFails_ErrorIsLogged()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
+            repoMock.Setup(q => q.Create(It.IsAny<CloudEvent>()))
+                .ThrowsAsync(new Exception("// EventsService // SaveToDatabase // Failed to save eventId"));
+
+            Mock<ILogger<IAppEventsService>> logger = new Mock<ILogger<IAppEventsService>>();
+            AppEventsService eventsService = GetAppEventService(loggerMock: logger, repositoryMock: repoMock.Object);
+
+            // Act
+            await eventsService.SaveToDatabase(GetCloudEvent());
+
+            // Assert
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
 
         /// <summary>
         /// Scenario:

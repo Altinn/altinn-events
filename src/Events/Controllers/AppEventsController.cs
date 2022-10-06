@@ -86,7 +86,6 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                // TODO: Call new {baseUrl}/storage/events and /push/inbound endpoints instead of using service directly
                 string cloudEventId = await _eventsService.SaveAndPushToInboundQueue(_mapper.Map<CloudEvent>(cloudEvent));
                 _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);

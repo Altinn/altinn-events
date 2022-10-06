@@ -28,7 +28,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         public Task<CloudEvent> Create(CloudEvent cloudEvent)
         {
             cloudEvent.Time = DateTime.UtcNow; // check the format here! goal 2021-02-12 09:35:20.050893+01
-
+            
             return Task.FromResult(cloudEvent);
         }
 

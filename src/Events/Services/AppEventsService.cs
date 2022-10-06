@@ -15,7 +15,7 @@ namespace Altinn.Platform.Events.Services
     /// Handles events service. 
     /// Notice when saving cloudEvent:
     /// - the id for the cloudEvent is created by the app
-    /// - time is set by the database when calling StoreAndForward
+    /// - time is set by the database when calling SaveAndPushToInboundQueue
     ///   or by the service when calling PushToRegistrationQueue
     /// </summary>
     public class AppEventsService : IAppEventsService
@@ -50,7 +50,14 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> SaveToDatabase(CloudEvent cloudEvent)
         {
-            cloudEvent = await _repository.Create(cloudEvent);
+            try
+            {
+                cloudEvent = await _repository.Create(cloudEvent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "// EventsService // SaveToDatabase // Failed to save eventId {EventId} to queue.", cloudEvent.Id);
+            }
 
             return cloudEvent.Id;
         }
