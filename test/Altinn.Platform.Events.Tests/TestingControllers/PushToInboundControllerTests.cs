@@ -33,19 +33,19 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="EventsStorageController"/>.
+        /// Represents a collection of integration tests of the <see cref="AppEventsController"/>.
         /// </summary>
-        public class EventsStorageControllerTests : IClassFixture<WebApplicationFactory<EventsStorageController>>
+        public class PushToInboundControllerTests : IClassFixture<WebApplicationFactory<PushToInboundController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<EventsStorageController> _factory;
+            private readonly WebApplicationFactory<PushToInboundController> _factory;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="EventsStorageControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsStorageController}"/>.
+            /// Initializes a new instance of the <see cref="AppEventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
             /// </summary>
-            /// <param name="factory">The <see cref="WebApplicationFactory{TEventsStorageController}"/> to use when setting up the test server.</param>
-            public EventsStorageControllerTests(WebApplicationFactory<EventsStorageController> factory)
+            /// <param name="factory">The <see cref="WebApplicationFactory{TAppEventsController}"/> to use when setting up the test server.</param>
+            public PushToInboundControllerTests(WebApplicationFactory<PushToInboundController> factory)
             {
                 _factory = factory;
             }
@@ -62,12 +62,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/storage/events";
+                string requestUri = $"{BasePath}/push/inbound";
                 string responseId = Guid.NewGuid().ToString();
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(s => s.SaveToDatabase(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                eventsService.Setup(s => s.PushToInboundQueue(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -100,12 +100,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_GivenValidCloudEvent_NotAuthorized()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/storage/events";
+                string requestUri = $"{BasePath}/push/inbound";
                 string responseId = Guid.NewGuid().ToString();
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(s => s.SaveToDatabase(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                eventsService.Setup(s => s.PushToInboundQueue(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -135,7 +135,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_InValidCloudEvent_ReturnsStatusBadRequest()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/storage/events";
+                string requestUri = $"{BasePath}/push/inbound";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 cloudEvent.Subject = null;
 
@@ -169,10 +169,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_RepositoryThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/storage/events";
+                string requestUri = $"{BasePath}/push/inbound";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(er => er.SaveToDatabase(It.IsAny<CloudEvent>())).Throws(new Exception());
+                eventsService.Setup(er => er.PushToInboundQueue(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -201,7 +201,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/storage/events";
+                string requestUri = $"{BasePath}/push/inbound";
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
 
                 StringContent content = new StringContent(string.Empty);
@@ -227,7 +227,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_MissingAccessToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/storage/events";
+                string requestUri = $"{BasePath}/push/inbound";
 
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
