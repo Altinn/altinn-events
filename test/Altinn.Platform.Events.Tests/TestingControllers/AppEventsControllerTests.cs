@@ -262,7 +262,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForOrg_MissingRequiredFromOrAfterParam_ReturnsBadRequest()
             {
                 // Arrange
-                string expected = "From or after must be defined.";
+                string expected = "The 'From' or 'After' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?size=5";
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
@@ -292,8 +292,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForOrg_SizeIsLessThanZero_ReturnsBadRequest()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01&size=-5";
-                string expected = "Size must be a number larger that 0.";
+                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&size=-5";
+                string expected = "The 'Size' parameter must be a number larger that 0.";
 
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
@@ -322,7 +322,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForOrg_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01&party=1337";
+                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&party=1337";
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -346,8 +346,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForOrg_ValidRequest_ReturnsListOfEventsAndNextUrl()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01&party=1337";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01&party=1337";
+                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&party=1337";
+                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337";
                 int expectedCount = 2;
 
                 HttpClient client = GetTestClient(new AppEventsServiceMock(1));
@@ -378,8 +378,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForOrg_ValidRequest_ForTTD_ReturnsNextHeaderWithReplacesAfterParameter()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01&party=1337";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01&party=1337";
+                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&party=1337";
+                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337";
                 int expectedCount = 1;
 
                 HttpClient client = GetTestClient(new AppEventsServiceMock(1));
@@ -427,6 +427,66 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
+            ///   Gets the events for org with from as a datetime without timezone.
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async void GetForOrg_FromMissingTimeZone_ReturnsBadRequest()
+            {
+                // Arrange
+                Mock<IAppEventsService> serviceMock = new();
+
+                string requestUri = $"{BasePath}/app/ttd/apps-test?from=2022-07-07T11:00:53.3917";
+                HttpClient client = GetTestClient(serviceMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("The 'From' parameter must specify timezone.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Gets the events for org with To as a datetime without timezone.
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async void GetForOrg_ToMissingTimeZone_ReturnsBadRequest()
+            {
+                // Arrange
+                Mock<IAppEventsService> serviceMock = new();
+
+                string requestUri = $"{BasePath}/app/ttd/apps-test?after=1&to=2022-07-07T11:00:53.3917";
+                HttpClient client = GetTestClient(serviceMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("The 'To' parameter must specify timezone.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
             ///   Get events without defined after or from in query.
             /// Expected result:
             ///   Returns HttpStatus BadRequest.
@@ -437,7 +497,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_MissingRequiredQueryParam_ReturnsBadRequest()
             {
                 // Arrange   
-                string expected = "From or after must be defined.";
+                string expected = "The 'From' or 'After' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/app/party?size=5";
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
@@ -467,8 +527,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_SizeIsLessThanZero_ReturnsBadRequest()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/party?from=2020-01-01&size=-5";
-                string expected = "Size must be a number larger that 0.";
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=-5";
+                string expected = "The 'Size' parameter must be a number larger that 0.";
 
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -497,7 +557,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_MissingSubject_ReturnsBadRequest()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/party?from=2020-01-01&size=5";
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
                 string expected = "Subject must be specified using either query params party or unit or header value person.";
 
                 HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
@@ -551,8 +611,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_ValidRequestParyId_ReturnsListOfEventsAndNextUrl()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/party?from=2020-01-01&party=1337&size=5";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01&party=1337&size=5";
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&party=1337&size=5";
+                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&size=5";
 
                 int expectedCount = 2;
 
@@ -584,8 +644,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_ValidRequestPerson_ReturnsListOfEventsAndNextUrl()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/party?from=2020-01-01&size=5";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01&size=5";
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
+                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&size=5";
 
                 int expectedCount = 2;
 
@@ -619,8 +679,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_ValidRequestPartyIdAndAfter_ReturnsNextHeaderWithReplacesAfterParameter()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01&party=1337&size=5";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01&party=1337&size=5";
+                string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&party=1337&size=5";
+                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&size=5";
 
                 int expectedCount = 1;
 
@@ -652,8 +712,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_ValidRequestParyId_ReturnsListOfEventsAndNextUrlTest()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/party?from=2020-01-01&party=1337&org=ttd&app=endring-av-navn-v2&size=5";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01&party=1337&org=ttd&app=endring-av-navn-v2&size=5";
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&party=1337&org=ttd&app=endring-av-navn-v2&size=5";
+                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&org=ttd&app=endring-av-navn-v2&size=5";
 
                 int expectedCount = 2;
 
@@ -712,7 +772,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetForParty_WildcardApp_ReturnsOk()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/app/party?from=2020-01-01&party=1337&source=https://ttd.apps.altinn.no/ttd/%";
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&party=1337&source=https://ttd.apps.altinn.no/ttd/%";
                 HttpClient client = GetTestClient(new AppEventsServiceMock(1));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
@@ -725,6 +785,66 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Gets the events for party with from as a datetime without timezone.
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async void GetForParty_FromMissingTimeZone_ReturnsBadRequest()
+            {
+                // Arrange
+                Mock<IAppEventsService> serviceMock = new();
+              
+                string requestUri = $"{BasePath}/app/party?from=2022-07-07T11:00:53.3917";
+                HttpClient client = GetTestClient(serviceMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("The 'From' parameter must specify timezone.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Gets the events for party with To as a datetime without timezone.
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async void GetForParty_ToMissingTimeZone_ReturnsBadRequest()
+            {
+                // Arrange
+                Mock<IAppEventsService> serviceMock = new();
+
+                string requestUri = $"{BasePath}/app/party?after=1&to=2022-07-07T11:00:53.3917";
+                HttpClient client = GetTestClient(serviceMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("The 'To' parameter must specify timezone.", actual.Detail);
             }
 
             private HttpClient GetTestClient(IAppEventsService eventsService)
