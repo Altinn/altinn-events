@@ -1,6 +1,6 @@
 name: Label critical PR
 on:
-  pull_request:
+  pull_request_target:
     branches:
       -  main
     types:
