@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     public class AppEventsServiceTest
     {
         private readonly ICloudEventRepository _repositoryMock;
-        private readonly IQueueClient _queueMock;
+        private readonly IEventsQueueClient _queueMock;
         private readonly Mock<IRegisterService> _registerMock;
         private readonly Mock<IAuthorization> _authorizationMock;
         private readonly Mock<IClaimsPrincipalProvider> _claimsPrincipalProviderMock;
@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public AppEventsServiceTest()
         {
             _repositoryMock = new CloudEventRepositoryMock();
-            _queueMock = new QueueClientMock();
+            _queueMock = new EventsQueueClientMock();
             _registerMock = new();
             _authorizationMock = new();
             _claimsPrincipalProviderMock = new();
@@ -139,7 +139,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task SaveAndPushNewEvent_PushEventFails_ErrorIsLogged()
         {
             // Arrange
-            Mock<IQueueClient> queueMock = new Mock<IQueueClient>();
+            Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
             queueMock.Setup(q => q.PushToInboundQueue(It.IsAny<string>())).ReturnsAsync(new PushQueueReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IAppEventsService>> logger = new Mock<ILogger<IAppEventsService>>();
@@ -164,7 +164,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task PushSavedEvent_PushEventFails_ErrorIsLogged()
         {
             // Arrange
-            Mock<IQueueClient> queueMock = new Mock<IQueueClient>();
+            Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
             queueMock.Setup(q => q.PushToInboundQueue(It.IsAny<string>())).ReturnsAsync(new PushQueueReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IAppEventsService>> logger = new Mock<ILogger<IAppEventsService>>();
@@ -340,7 +340,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private AppEventsService GetAppEventService(
             ICloudEventRepository repositoryMock = null,
-            IQueueClient queueMock = null,
+            IEventsQueueClient queueMock = null,
             Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
             Mock<ILogger<IAppEventsService>> loggerMock = null)

@@ -37,7 +37,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
-            QueueClientMock queueClientMock = new();
+            EventsQueueClientMock queueClientMock = new();
             var service = GetPushOutboundService(queueClientMock);
 
             // Act
@@ -62,7 +62,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
-            QueueClientMock queueClientMock = new();
+            EventsQueueClientMock queueClientMock = new();
             var service = GetPushOutboundService(queueClientMock);
 
             // Act
@@ -87,7 +87,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
-            var queueMock = new Mock<IQueueClient>();
+            var queueMock = new Mock<IEventsQueueClient>();
             queueMock.Setup(q => q.PushToOutboundQueue(It.IsAny<string>()))
                     .ReturnsAsync(new PushQueueReceipt { Success = false });
 
@@ -110,7 +110,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.VerifyAll();
         }
 
-        private IPushOutboundService GetPushOutboundService(IQueueClient queueMock = null, ILogger<IPushOutboundService> loggerMock = null)
+        private IPushOutboundService GetPushOutboundService(IEventsQueueClient queueMock = null, ILogger<IPushOutboundService> loggerMock = null)
         {
             var services = new ServiceCollection();
             services.AddMemoryCache();
@@ -125,7 +125,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             IAuthorization authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI());
             var service = new PushOutboundService(
                 queueMock,
-                new SubscriptionService(new SubscriptionRepositoryMock(), new QueueClientMock(), null, null, null, null),
+                new SubscriptionService(new SubscriptionRepositoryMock(), new EventsQueueClientMock(), null, null, null, null),
                 authorizationMock,
                 Options.Create(new PlatformSettings
                 {

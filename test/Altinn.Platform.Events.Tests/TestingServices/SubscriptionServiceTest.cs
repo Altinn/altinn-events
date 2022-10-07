@@ -173,7 +173,7 @@ namespace Tests.TestingServices
         {
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
-                new QueueClientMock(),
+                new EventsQueueClientMock(),
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
                 new Mock<IProfile>().Object,
                 new Mock<IAuthorization>().Object,

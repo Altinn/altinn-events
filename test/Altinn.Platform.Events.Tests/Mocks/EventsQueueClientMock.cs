@@ -6,9 +6,9 @@ using Altinn.Platform.Events.Models;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
-    public class QueueClientMock : IQueueClient
+    public class EventsQueueClientMock : IEventsQueueClient
     {
-        public QueueClientMock()
+        public EventsQueueClientMock()
         {
             OutboundQueue = new Dictionary<string, List<CloudEventEnvelope>>();
         }

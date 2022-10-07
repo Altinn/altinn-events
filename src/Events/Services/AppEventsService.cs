@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Services
     public class AppEventsService : IAppEventsService
     {
         private readonly ICloudEventRepository _repository;
-        private readonly IQueueClient _queue;
+        private readonly IEventsQueueClient _queue;
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         public AppEventsService(
             ICloudEventRepository repository,
-            IQueueClient queue,
+            IEventsQueueClient queue,
             IRegisterService registerService,
             IAuthorization authorizationService,
             IClaimsPrincipalProvider claimsPrincipalProvider,

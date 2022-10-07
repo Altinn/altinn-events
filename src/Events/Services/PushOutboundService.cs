@@ -18,7 +18,7 @@ namespace Altinn.Platform.Events.Services
     /// </summary>
     public class PushOutboundService : IPushOutboundService
     {
-        private readonly IQueueClient _queue;
+        private readonly IEventsQueueClient _queue;
 
         private readonly ISubscriptionService _subscriptionService;
         private readonly IAuthorization _authorizationService;
@@ -35,7 +35,7 @@ namespace Altinn.Platform.Events.Services
         /// Initializes a new instance of the <see cref="PushOutboundService"/> class.
         /// </summary>
         public PushOutboundService(
-            IQueueClient queueService,
+            IEventsQueueClient queueService,
             ISubscriptionService subscriptionService,
             IAuthorization authorizationService,
             IOptions<PlatformSettings> platformSettings,

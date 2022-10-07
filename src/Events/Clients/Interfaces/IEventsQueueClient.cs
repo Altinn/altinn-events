@@ -7,7 +7,7 @@ namespace Altinn.Platform.Events.Clients.Interfaces
     /// <summary>
     /// Interface to interact with the queue
     /// </summary>
-    public interface IQueueClient
+    public interface IEventsQueueClient
     {
         /// <summary>
         /// Pushes the provided content to the queue

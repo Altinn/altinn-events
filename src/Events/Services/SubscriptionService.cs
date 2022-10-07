@@ -17,7 +17,7 @@ namespace Altinn.Platform.Events.Services
     public class SubscriptionService : ISubscriptionService
     {
         private readonly ISubscriptionRepository _repository;
-        private readonly IQueueClient _queue;
+        private readonly IEventsQueueClient _queue;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
         private readonly IProfile _profile;
         private readonly IRegisterService _register;
@@ -32,7 +32,7 @@ namespace Altinn.Platform.Events.Services
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
-        public SubscriptionService(ISubscriptionRepository repository, IQueueClient queue, IClaimsPrincipalProvider claimsPrincipalProvider, IProfile profile, IAuthorization authorization, IRegisterService register)
+        public SubscriptionService(ISubscriptionRepository repository, IEventsQueueClient queue, IClaimsPrincipalProvider claimsPrincipalProvider, IProfile profile, IAuthorization authorization, IRegisterService register)
         {
             _repository = repository;
             _queue = queue;

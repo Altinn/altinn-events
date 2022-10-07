@@ -13,7 +13,7 @@ namespace Altinn.Platform.Events.Clients
     /// The queue service that handles actions related to the queue storage.
     /// </summary>
     [ExcludeFromCodeCoverage]
-    public class QueueClient : IQueueClient
+    public class EventsQueueClient : IEventsQueueClient
     {
         private readonly QueueStorageSettings _settings;
 
@@ -24,10 +24,10 @@ namespace Altinn.Platform.Events.Clients
         private Azure.Storage.Queues.QueueClient _validationQueueClient;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="QueueClient"/> class.
+        /// Initializes a new instance of the <see cref="EventsQueueClient"/> class.
         /// </summary>
         /// <param name="settings">The queue storage settings</param>
-        public QueueClient(IOptions<QueueStorageSettings> settings)
+        public EventsQueueClient(IOptions<QueueStorageSettings> settings)
         {
             _settings = settings.Value;
         }

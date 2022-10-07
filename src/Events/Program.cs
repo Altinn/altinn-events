@@ -238,7 +238,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
-    services.AddSingleton<IQueueClient, QueueClient>();
+    services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
 
     services.AddTransient<IAuthorization, AuthorizationService>();

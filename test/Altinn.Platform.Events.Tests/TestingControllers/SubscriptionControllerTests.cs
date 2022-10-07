@@ -603,7 +603,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                         services.AddSingleton<ICloudEventRepository, CloudEventRepositoryMock>();
                         services.AddSingleton<ISubscriptionRepository, SubscriptionRepositoryMock>();
 
-                        services.AddSingleton<IQueueClient, QueueClientMock>();
+                        services.AddSingleton<IEventsQueueClient, EventsQueueClientMock>();
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
