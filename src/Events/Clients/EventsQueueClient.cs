@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
+using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Clients
@@ -17,11 +18,11 @@ namespace Altinn.Platform.Events.Clients
     {
         private readonly QueueStorageSettings _settings;
 
-        private Azure.Storage.Queues.QueueClient _inboundQueueClient;
+        private QueueClient _inboundQueueClient;
 
-        private Azure.Storage.Queues.QueueClient _outboundQueueClient;
+        private QueueClient _outboundQueueClient;
 
-        private Azure.Storage.Queues.QueueClient _validationQueueClient;
+        private QueueClient _validationQueueClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsQueueClient"/> class.
@@ -37,7 +38,7 @@ namespace Altinn.Platform.Events.Clients
         {
             try
             {
-                Azure.Storage.Queues.QueueClient client = await GetInboundQueueClient();
+                QueueClient client = await GetInboundQueueClient();
                 await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
             }
             catch (Exception e)
@@ -53,7 +54,7 @@ namespace Altinn.Platform.Events.Clients
         {
             try
             {
-                Azure.Storage.Queues.QueueClient client = await GetOutboundQueueClient();
+                QueueClient client = await GetOutboundQueueClient();
                 await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
             }
             catch (Exception e)
@@ -69,7 +70,7 @@ namespace Altinn.Platform.Events.Clients
         {
             try
             {
-                Azure.Storage.Queues.QueueClient client = await GetValidationQueueClient();
+                QueueClient client = await GetValidationQueueClient();
                 await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
             }
             catch (Exception e)
@@ -80,33 +81,33 @@ namespace Altinn.Platform.Events.Clients
             return new PushQueueReceipt { Success = true };
         }
 
-        private async Task<Azure.Storage.Queues.QueueClient> GetInboundQueueClient()
+        private async Task<QueueClient> GetInboundQueueClient()
         {
             if (_inboundQueueClient == null)
             {
-                _inboundQueueClient = new Azure.Storage.Queues.QueueClient(_settings.ConnectionString, _settings.InboundQueueName);
+                _inboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.InboundQueueName);
                 await _inboundQueueClient.CreateIfNotExistsAsync();
             }
 
             return _inboundQueueClient;
         }
 
-        private async Task<Azure.Storage.Queues.QueueClient> GetOutboundQueueClient()
+        private async Task<QueueClient> GetOutboundQueueClient()
         {
             if (_outboundQueueClient == null)
             {
-                _outboundQueueClient = new Azure.Storage.Queues.QueueClient(_settings.ConnectionString, _settings.OutboundQueueName);
+                _outboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.OutboundQueueName);
                 await _outboundQueueClient.CreateIfNotExistsAsync();
             }
 
             return _outboundQueueClient;
         }
 
-        private async Task<Azure.Storage.Queues.QueueClient> GetValidationQueueClient()
+        private async Task<QueueClient> GetValidationQueueClient()
         {
             if (_validationQueueClient == null)
             {
-                _validationQueueClient = new Azure.Storage.Queues.QueueClient(_settings.ConnectionString, _settings.ValidationQueueName);
+                _validationQueueClient = new QueueClient(_settings.ConnectionString, _settings.ValidationQueueName);
                 await _validationQueueClient.CreateIfNotExistsAsync();
             }
 

@@ -25,7 +25,6 @@ namespace Altinn.Platform.Events.Controllers
     {
         private readonly IAppEventsService _eventsService;
         private readonly ILogger _logger;
-        private readonly AccessTokenSettings _accessTokenSettings;
         private readonly IMapper _mapper;
 
         /// <summary>
@@ -39,7 +38,6 @@ namespace Altinn.Platform.Events.Controllers
         {
             _logger = logger;
             _eventsService = eventsService;
-            _accessTokenSettings = accessTokenSettings.Value;
             _mapper = mapper;
         }
 
