@@ -14,12 +14,6 @@ return query
 	SELECT s.id, s.sourcefilter, s.subjectfilter, s.typefilter, s.consumer, s.endpointurl, s.createdby, s.validated, s."time"
 	FROM events.subscription s
   WHERE s.consumer LIKE _consumer
-  AND s.validated = 	
-	  CASE WHEN _includeInvalid THEN 
-		false or s.validated = true
-	  ELSE
-		true
-	  END;
 
 
 END
