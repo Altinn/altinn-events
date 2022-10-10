@@ -4,7 +4,7 @@ using Altinn.Platform.Events.Models;
 namespace Altinn.Platform.Events.Clients.Interfaces
 {
     /// <summary>
-    /// Interface to interact with the queue
+    /// Describes the necessary methods for an implementation of an events queue client.
     /// </summary>
     public interface IEventsQueueClient
     {

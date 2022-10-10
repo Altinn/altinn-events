@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 namespace Altinn.Platform.Events.Clients
 {
     /// <summary>
-    /// The queue service that handles actions related to the queue storage.
+    /// Implementation of the <see ref="IEventsQueueClient"/> using Azure Storage Queues.
     /// </summary>
     [ExcludeFromCodeCoverage]
     public class EventsQueueClient : IEventsQueueClient
