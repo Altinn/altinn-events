@@ -5,7 +5,6 @@ namespace Altinn.Platform.Events.Configuration
     /// <summary>
     /// Configuration object used to hold settings for the queue storage.
     /// </summary>
-    [ExcludeFromCodeCoverage]
     public class QueueStorageSettings
     {
         /// <summary>

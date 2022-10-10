@@ -1,8 +1,5 @@
 using System;
 using System.Threading.Tasks;
-
-using Altinn.Common.AccessToken.Configuration;
-using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using AutoMapper;
@@ -11,14 +8,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
-    /// Provides operations for handling events
+    /// Provides operations for saving and retrieving cloud events from persistent storage.
     /// </summary>
     [Authorize]
     [Route("events/api/v1/storage/events")]
@@ -42,8 +37,9 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Registers a new cloudEvent.
+        /// Saves a cloud event to persistent storage.
         /// </summary>
+        /// <param name="cloudEvent">The cloudEvent to be saved</param>
         /// <returns>The application metadata object.</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
@@ -51,7 +47,6 @@ namespace Altinn.Platform.Events.Controllers
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
@@ -64,7 +59,6 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 string cloudEventId = await _eventsService.SaveToDatabase(_mapper.Map<CloudEvent>(cloudEvent));
-                _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)

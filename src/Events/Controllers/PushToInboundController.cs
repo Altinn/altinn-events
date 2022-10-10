@@ -17,7 +17,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
-    /// Provides operations for handling events
+    /// Provides operations for pushing cloud events to the inbound event queue.
     /// </summary>
     [Authorize]
     [Route("events/api/v1/push/inbound")]
@@ -33,7 +33,6 @@ namespace Altinn.Platform.Events.Controllers
         public PushToInboundController(
             IAppEventsService eventsService,
             ILogger<EventsStorageController> logger,
-            IOptions<AccessTokenSettings> accessTokenSettings,
             IMapper mapper)
         {
             _logger = logger;

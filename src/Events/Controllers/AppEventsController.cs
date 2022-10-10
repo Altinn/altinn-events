@@ -84,7 +84,6 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 string cloudEventId = await _eventsService.SaveAndPushToInboundQueue(_mapper.Map<CloudEvent>(cloudEvent));
-                _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
