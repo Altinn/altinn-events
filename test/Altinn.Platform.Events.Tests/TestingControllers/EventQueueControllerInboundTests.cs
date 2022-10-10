@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -33,19 +32,19 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="AppEventsController"/>.
+        /// Represents a collection of integration tests of the <see cref="EventQueueController"/>.
         /// </summary>
-        public class PushToInboundControllerTests : IClassFixture<WebApplicationFactory<PushToOutboundController>>
+        public class EventQueueControllerInboundTests : IClassFixture<WebApplicationFactory<EventQueueController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<PushToOutboundController> _factory;
+            private readonly WebApplicationFactory<EventQueueController> _factory;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="AppEventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
+            /// Initializes a new instance of the <see cref="EventQueueControllerInboundTests"/> class with the given <see cref="WebApplicationFactory{TEventQueueController}"/>.
             /// </summary>
-            /// <param name="factory">The <see cref="WebApplicationFactory{TAppEventsController}"/> to use when setting up the test server.</param>
-            public PushToInboundControllerTests(WebApplicationFactory<PushToOutboundController> factory)
+            /// <param name="factory">The <see cref="WebApplicationFactory{TEventQueueController}"/> to use when setting up the test server.</param>
+            public EventQueueControllerInboundTests(WebApplicationFactory<EventQueueController> factory)
             {
                 _factory = factory;
             }

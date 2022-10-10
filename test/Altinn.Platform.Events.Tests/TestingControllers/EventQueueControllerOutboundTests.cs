@@ -33,19 +33,19 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="AppEventsController"/>.
+        /// Represents a collection of integration tests of the <see cref="EventQueueController"/>.
         /// </summary>
-        public class PushToOutboundControllerTests : IClassFixture<WebApplicationFactory<PushToOutboundController>>
+        public class EventQueueControllerOutboundTests : IClassFixture<WebApplicationFactory<EventQueueController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<PushToOutboundController> _factory;
+            private readonly WebApplicationFactory<EventQueueController> _factory;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="AppEventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
             /// </summary>
-            /// <param name="factory">The <see cref="WebApplicationFactory{TAppEventsController}"/> to use when setting up the test server.</param>
-            public PushToOutboundControllerTests(WebApplicationFactory<PushToOutboundController> factory)
+            /// <param name="factory">The <see cref="WebApplicationFactory{TEventQueueController}"/> to use when setting up the test server.</param>
+            public EventQueueControllerOutboundTests(WebApplicationFactory<EventQueueController> factory)
             {
                 _factory = factory;
             }

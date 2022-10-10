@@ -13,29 +13,26 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
-    /// Controller responsible for pushing events to subscribers
+    /// Controller responsible for pushing events to internal event queues.
     /// </summary>
     [Route("events/api/v1/push")]
     [ApiController]
-    public class PushToOutboundController : ControllerBase
+    public class EventQueueController : ControllerBase
     {
         private readonly IAppEventsService _eventsService;
         private readonly IPushOutboundService _pushOutboundService;
-        private readonly ILogger _logger;
         private readonly IMapper _mapper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PushToOutboundController"/> class.
+        /// Initializes a new instance of the <see cref="EventQueueController"/> class.
         /// </summary>
-        public PushToOutboundController(
+        public EventQueueController(
             IAppEventsService eventsService,
             IPushOutboundService pushOutboundService,
-            ILogger<PushToOutboundController> logger,
             IMapper mapper)
         {
             _eventsService = eventsService;
             _pushOutboundService = pushOutboundService;
-            _logger = logger;
             _mapper = mapper;
         }
 
@@ -43,8 +40,9 @@ namespace Altinn.Platform.Events.Controllers
         /// Alert push controller about a new event.
         /// </summary>
         /// <remarks>
-        /// This method will then identify any matching subscriptions and authorize if the consumer is authorized
-        /// to receive event. If autorized it will put it on a outbound queue
+        /// This method will then identify any matching subscriptions
+        /// and verify whether the consumer is authorized to receive each event.
+        /// If authorized, the event will be added to the outbound queue.
         /// </remarks>
         /// <returns>Returns the result of the request in the form og a HTTP status code.</returns>
         [Authorize(Policy = "PlatformAccess")]
@@ -70,7 +68,6 @@ namespace Altinn.Platform.Events.Controllers
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
