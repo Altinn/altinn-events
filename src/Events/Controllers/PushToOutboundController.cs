@@ -14,17 +14,16 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Route("events/api/v1/push")]
     [ApiController]
-    public class PushController : ControllerBase
+    public class PushToOutboundController : ControllerBase
     {
-        private readonly IPushEvent _pushEventsService;
+        private readonly IPushOutboundService _pushOutboundService;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PushController"/> class.
+        /// Initializes a new instance of the <see cref="PushToOutboundController"/> class.
         /// </summary>
-        public PushController(
-        IPushEvent pushEventsService)
+        public PushToOutboundController(IPushOutboundService pushOutboundService)
         {
-            _pushEventsService = pushEventsService;
+            _pushOutboundService = pushOutboundService;
         }
 
         /// <summary>
@@ -42,7 +41,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult> Post([FromBody] CloudEvent cloudEvent)
         {
-            await _pushEventsService.Push(cloudEvent);
+            await _pushOutboundService.PushOutbound(cloudEvent);
 
             return Ok();
         }
