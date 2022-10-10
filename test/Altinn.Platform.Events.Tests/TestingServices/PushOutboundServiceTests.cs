@@ -110,7 +110,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.VerifyAll();
         }
 
-        private IPushOutboundService GetPushOutboundService(IEventsQueueClient queueMock = null, ILogger<IPushOutboundService> loggerMock = null)
+        private static IPushOutboundService GetPushOutboundService(IEventsQueueClient queueMock = null, ILogger<IPushOutboundService> loggerMock = null)
         {
             var services = new ServiceCollection();
             services.AddMemoryCache();
