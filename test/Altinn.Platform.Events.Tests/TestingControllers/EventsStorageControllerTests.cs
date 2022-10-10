@@ -90,41 +90,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid CloudEventRequest instance but with a non matching access token.
-            /// Expected result:
-            ///   Returns HttpStatus not authorized
-            /// Success criteria:
-            ///   The request is not authorized
-            /// </summary>
-            [Fact]
-            public async void Post_GivenValidCloudEvent_NotAuthorized()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/storage/events";
-                string responseId = Guid.NewGuid().ToString();
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
-
-                Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(s => s.SaveToDatabase(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
-
-                HttpClient client = GetTestClient(eventsService.Object);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v3"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
             ///   Post a invalid CloudEvent instance.
             /// Expected result:
             ///   Returns HttpStatus BadRequest.
