@@ -35,17 +35,17 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
         /// <summary>
         /// Represents a collection of integration tests of the <see cref="AppEventsController"/>.
         /// </summary>
-        public class PushToInboundControllerTests : IClassFixture<WebApplicationFactory<PushToInboundController>>
+        public class PushToInboundControllerTests : IClassFixture<WebApplicationFactory<PushToOutboundController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<PushToInboundController> _factory;
+            private readonly WebApplicationFactory<PushToOutboundController> _factory;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="AppEventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
             /// </summary>
             /// <param name="factory">The <see cref="WebApplicationFactory{TAppEventsController}"/> to use when setting up the test server.</param>
-            public PushToInboundControllerTests(WebApplicationFactory<PushToInboundController> factory)
+            public PushToInboundControllerTests(WebApplicationFactory<PushToOutboundController> factory)
             {
                 _factory = factory;
             }
@@ -86,40 +86,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 string content = response.Content.ReadAsStringAsync().Result;
                 Assert.Contains(responseId, content);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post a invalid CloudEvent instance.
-            /// Expected result:
-            ///   Returns HttpStatus BadRequest.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async void Post_InValidCloudEvent_ReturnsStatusBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/push/inbound";
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
-                cloudEvent.Subject = null;
-
-                Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-
-                HttpClient client = GetTestClient(eventsService.Object);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "unittest"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             }
 
             /// <summary>
