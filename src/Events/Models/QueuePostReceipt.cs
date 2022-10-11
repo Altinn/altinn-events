@@ -5,7 +5,7 @@ namespace Altinn.Platform.Events.Models
     /// <summary>
     /// Object to hold the receipt for a push queue action.
     /// </summary>
-    public class PushQueueReceipt
+    public class QueuePostReceipt
     {
         /// <summary>
         /// Boolean to indicate if the push was successful.

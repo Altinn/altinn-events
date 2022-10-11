@@ -3,7 +3,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -33,19 +32,19 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="EventQueueController"/>.
+        /// Represents a collection of integration tests of the <see cref="OutboundController"/>.
         /// </summary>
-        public class EventQueueControllerOutboundTests : IClassFixture<WebApplicationFactory<EventQueueController>>
+        public class OutboundControllerTests : IClassFixture<WebApplicationFactory<OutboundController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<EventQueueController> _factory;
+            private readonly WebApplicationFactory<OutboundController> _factory;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="AppEventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
+            /// Initializes a new instance of the <see cref="OutboundControllerTests"/> class with the given <see cref="WebApplicationFactory{TPushController}"/>.
             /// </summary>
-            /// <param name="factory">The <see cref="WebApplicationFactory{TEventQueueController}"/> to use when setting up the test server.</param>
-            public EventQueueControllerOutboundTests(WebApplicationFactory<EventQueueController> factory)
+            /// <param name="factory">The <see cref="WebApplicationFactory{TPushController}"/> to use when setting up the test server.</param>
+            public OutboundControllerTests(WebApplicationFactory<OutboundController> factory)
             {
                 _factory = factory;
             }
@@ -62,12 +61,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/push";
+                string requestUri = $"{BasePath}/outbound";
                 string responseId = Guid.NewGuid().ToString();
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
-                Mock<IPushOutboundService> service = new Mock<IPushOutboundService>();
-                service.Setup(s => s.PushOutbound(It.IsAny<CloudEvent>()));
+                Mock<IOutboundService> service = new Mock<IOutboundService>();
+                service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>()));
 
                 HttpClient client = GetTestClient(service.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -97,10 +96,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_RepositoryThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/push";
+                string requestUri = $"{BasePath}/outbound";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
-                Mock<IPushOutboundService> service = new Mock<IPushOutboundService>();
-                service.Setup(er => er.PushOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
+                Mock<IOutboundService> service = new Mock<IOutboundService>();
+                service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(service.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -129,8 +128,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/push";
-                HttpClient client = GetTestClient(new Mock<IPushOutboundService>().Object);
+                string requestUri = $"{BasePath}/outbound";
+                HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
 
                 StringContent content = new StringContent(string.Empty);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
@@ -155,9 +154,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_MissingAccessToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/push";
+                string requestUri = $"{BasePath}/outbound";
 
-                HttpClient client = GetTestClient(new Mock<IPushOutboundService>().Object);
+                HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
 
                 StringContent content = new StringContent(string.Empty);
@@ -171,13 +170,13 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient(IPushOutboundService pushOutboundService)
+            private HttpClient GetTestClient(IOutboundService outboundService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
                     builder.ConfigureTestServices(services =>
                     {
-                        services.AddSingleton(pushOutboundService);
+                        services.AddSingleton(outboundService);
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();

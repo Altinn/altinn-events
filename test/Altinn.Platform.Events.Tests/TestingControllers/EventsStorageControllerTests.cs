@@ -66,8 +66,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string responseId = Guid.NewGuid().ToString();
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
-                Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(s => s.SaveToDatabase(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                Mock<IInboundService> eventsService = new Mock<IInboundService>();
+                eventsService.Setup(s => s.Save(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -104,7 +104,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 cloudEvent.Subject = null;
 
-                Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
+                Mock<IInboundService> eventsService = new Mock<IInboundService>();
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -136,8 +136,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
-                Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(er => er.SaveToDatabase(It.IsAny<CloudEvent>())).Throws(new Exception());
+                Mock<IInboundService> eventsService = new Mock<IInboundService>();
+                eventsService.Setup(er => er.Save(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -167,7 +167,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
-                HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
+                HttpClient client = GetTestClient(new Mock<IInboundService>().Object);
 
                 StringContent content = new StringContent(string.Empty);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
@@ -194,7 +194,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
 
-                HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
+                HttpClient client = GetTestClient(new Mock<IInboundService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
 
                 StringContent content = new StringContent(string.Empty);
@@ -208,7 +208,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient(IAppEventsService eventsService)
+            private HttpClient GetTestClient(IInboundService eventsService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {

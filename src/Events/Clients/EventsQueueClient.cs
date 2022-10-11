@@ -34,7 +34,7 @@ namespace Altinn.Platform.Events.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<PushQueueReceipt> PushToInboundQueue(string content)
+        public async Task<QueuePostReceipt> PostInbound(string content)
         {
             try
             {
@@ -43,14 +43,14 @@ namespace Altinn.Platform.Events.Clients
             }
             catch (Exception e)
             {
-                return new PushQueueReceipt { Success = false, Exception = e };
+                return new QueuePostReceipt { Success = false, Exception = e };
             }
 
-            return new PushQueueReceipt { Success = true };
+            return new QueuePostReceipt { Success = true };
         }
 
         /// <inheritdoc/>
-        public async Task<PushQueueReceipt> PushToOutboundQueue(string content)
+        public async Task<QueuePostReceipt> PostOutbound(string content)
         {
             try
             {
@@ -59,14 +59,14 @@ namespace Altinn.Platform.Events.Clients
             }
             catch (Exception e)
             {
-                return new PushQueueReceipt { Success = false, Exception = e };
+                return new QueuePostReceipt { Success = false, Exception = e };
             }
 
-            return new PushQueueReceipt { Success = true };
+            return new QueuePostReceipt { Success = true };
         }
 
         /// <inheritdoc/>
-        public async Task<PushQueueReceipt> PushToValidationQueue(string content)
+        public async Task<QueuePostReceipt> PostSubscriptionValidation(string content)
         {
             try
             {
@@ -75,10 +75,10 @@ namespace Altinn.Platform.Events.Clients
             }
             catch (Exception e)
             {
-                return new PushQueueReceipt { Success = false, Exception = e };
+                return new QueuePostReceipt { Success = false, Exception = e };
             }
 
-            return new PushQueueReceipt { Success = true };
+            return new QueuePostReceipt { Success = true };
         }
 
         private async Task<QueueClient> GetInboundQueueClient()

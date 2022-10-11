@@ -9,14 +9,14 @@ namespace Altinn.Platform.Events.Services.Interfaces
     /// <summary>
     /// Interface to talk to the events service
     /// </summary>
-    public interface IAppEventsService
+    public interface IInboundService
     {
         /// <summary>
         /// Save cloud event to persistent storage.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be saved</param>
         /// <returns>Id for the created document</returns>
-        Task<string> SaveToDatabase(CloudEvent cloudEvent);
+        Task<string> Save(CloudEvent cloudEvent);
 
         /// <summary>
         /// Push cloud event to inbound queue.
@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be queued</param>
         /// <returns>Id for the queued event</returns>
-        Task<string> PushToInboundQueue(CloudEvent cloudEvent);
+        Task<string> PostInbound(CloudEvent cloudEvent);
 
         /// <summary>
         /// Save a cloud event to persistent storage and
@@ -32,7 +32,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be stored</param>
         /// <returns>Id for the cloudEvent in persistent storage</returns>
-        Task<string> SaveAndPushToInboundQueue(CloudEvent cloudEvent);
+        Task<string> SaveAndPostInbound(CloudEvent cloudEvent);
 
         /// <summary>
         /// Gets list of cloud events based on query params

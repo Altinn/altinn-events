@@ -19,9 +19,9 @@ using Xunit;
 namespace Altinn.Platform.Events.Tests.TestingServices
 {
     /// <summary>
-    /// Represents a collection of integration tests of the <see cref="PushOutboundService"/>.
+    /// Represents a collection of integration tests of the <see cref="OutboundService"/>.
     /// </summary>
-    public class PushOutboundServiceTests
+    public class OutboundServiceTests
     {
         /// <summary>
         /// Scenario:
@@ -38,10 +38,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
             EventsQueueClientMock queueClientMock = new();
-            var service = GetPushOutboundService(queueClientMock);
+            var service = GetOutboundService(queueClientMock);
 
             // Act
-            await service.PushOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent);
 
             // Assert
             Assert.True(queueClientMock.OutboundQueue.ContainsKey(cloudEvent.Id));
@@ -63,10 +63,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
             EventsQueueClientMock queueClientMock = new();
-            var service = GetPushOutboundService(queueClientMock);
+            var service = GetOutboundService(queueClientMock);
 
             // Act
-            await service.PushOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent);
 
             // Assert
             Assert.True(queueClientMock.OutboundQueue.ContainsKey(cloudEvent.Id));
@@ -88,29 +88,29 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
             var queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.PushToOutboundQueue(It.IsAny<string>()))
-                    .ReturnsAsync(new PushQueueReceipt { Success = false });
+            queueMock.Setup(q => q.PostOutbound(It.IsAny<string>()))
+                    .ReturnsAsync(new QueuePostReceipt { Success = false });
 
-            var loggerMock = new Mock<ILogger<IPushOutboundService>>();
+            var loggerMock = new Mock<ILogger<IOutboundService>>();
 
-            var service = GetPushOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object);
+            var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object);
 
             // Act
-            await service.PushOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent);
 
             // Assert
             loggerMock.Verify(
                x => x.Log(
                    LogLevel.Error,
                    It.IsAny<EventId>(),
-                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// EventsService // PushToOutboundQueue // Failed to push event envelope", StringComparison.InvariantCultureIgnoreCase)),
+                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// EventsService // PostOutbound // Failed to push event envelope", StringComparison.InvariantCultureIgnoreCase)),
                    It.IsAny<Exception>(),
                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                Times.Once);
             queueMock.VerifyAll();
         }
 
-        private static IPushOutboundService GetPushOutboundService(IEventsQueueClient queueMock = null, ILogger<IPushOutboundService> loggerMock = null)
+        private static IOutboundService GetOutboundService(IEventsQueueClient queueMock = null, ILogger<IOutboundService> loggerMock = null)
         {
             var services = new ServiceCollection();
             services.AddMemoryCache();
@@ -119,11 +119,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             if (loggerMock == null)
             {
-                loggerMock = new Mock<ILogger<IPushOutboundService>>().Object;
+                loggerMock = new Mock<ILogger<IOutboundService>>().Object;
             }
 
             IAuthorization authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI());
-            var service = new PushOutboundService(
+            var service = new OutboundService(
                 queueMock,
                 new SubscriptionService(new SubscriptionRepositoryMock(), new EventsQueueClientMock(), null, null, null, null),
                 authorizationMock,

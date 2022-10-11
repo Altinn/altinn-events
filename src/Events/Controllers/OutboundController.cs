@@ -7,7 +7,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
@@ -15,24 +14,24 @@ namespace Altinn.Platform.Events.Controllers
     /// <summary>
     /// Controller responsible for pushing events to internal event queues.
     /// </summary>
-    [Route("events/api/v1/push")]
+    [Route("events/api/v1/outbound")]
     [ApiController]
-    public class EventQueueController : ControllerBase
+    public class OutboundController : ControllerBase
     {
-        private readonly IAppEventsService _eventsService;
-        private readonly IPushOutboundService _pushOutboundService;
+        private readonly IInboundService _eventsService;
+        private readonly IOutboundService _outboundService;
         private readonly IMapper _mapper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventQueueController"/> class.
+        /// Initializes a new instance of the <see cref="OutboundController"/> class.
         /// </summary>
-        public EventQueueController(
-            IAppEventsService eventsService,
-            IPushOutboundService pushOutboundService,
+        public OutboundController(
+            IInboundService eventsService,
+            IOutboundService outboundService,
             IMapper mapper)
         {
             _eventsService = eventsService;
-            _pushOutboundService = pushOutboundService;
+            _outboundService = outboundService;
             _mapper = mapper;
         }
 
@@ -52,7 +51,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult> Post([FromBody] CloudEvent cloudEvent)
         {
-            await _pushOutboundService.PushOutbound(cloudEvent);
+            await _outboundService.PostOutbound(cloudEvent);
 
             return Ok();
         }
@@ -71,7 +70,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
-            string cloudEventId = await _eventsService.PushToInboundQueue(_mapper.Map<CloudEvent>(cloudEvent));
+            string cloudEventId = await _eventsService.PostInbound(_mapper.Map<CloudEvent>(cloudEvent));
 
             return Created(cloudEvent.Subject, cloudEventId);
         }

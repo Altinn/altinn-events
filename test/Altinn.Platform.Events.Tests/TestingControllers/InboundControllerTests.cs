@@ -32,19 +32,19 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="EventQueueController"/>.
+        /// Represents a collection of integration tests of the <see cref="InboundController"/>.
         /// </summary>
-        public class EventQueueControllerInboundTests : IClassFixture<WebApplicationFactory<EventQueueController>>
+        public class PushControllerInboundTests : IClassFixture<WebApplicationFactory<InboundController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<EventQueueController> _factory;
+            private readonly WebApplicationFactory<InboundController> _factory;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="EventQueueControllerInboundTests"/> class with the given <see cref="WebApplicationFactory{TEventQueueController}"/>.
+            /// Initializes a new instance of the <see cref="PushControllerInboundTests"/> class with the given <see cref="WebApplicationFactory{TPushController}"/>.
             /// </summary>
-            /// <param name="factory">The <see cref="WebApplicationFactory{TEventQueueController}"/> to use when setting up the test server.</param>
-            public EventQueueControllerInboundTests(WebApplicationFactory<EventQueueController> factory)
+            /// <param name="factory">The <see cref="WebApplicationFactory{TPushController}"/> to use when setting up the test server.</param>
+            public PushControllerInboundTests(WebApplicationFactory<InboundController> factory)
             {
                 _factory = factory;
             }
@@ -61,12 +61,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/push/inbound";
+                string requestUri = $"{BasePath}/inbound";
                 string responseId = Guid.NewGuid().ToString();
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
-                Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(s => s.PushToInboundQueue(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                Mock<IInboundService> eventsService = new Mock<IInboundService>();
+                eventsService.Setup(s => s.PostInbound(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -99,10 +99,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_RepositoryThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/push/inbound";
+                string requestUri = $"{BasePath}/inbound";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
-                Mock<IAppEventsService> eventsService = new Mock<IAppEventsService>();
-                eventsService.Setup(er => er.PushToInboundQueue(It.IsAny<CloudEvent>())).Throws(new Exception());
+                Mock<IInboundService> eventsService = new Mock<IInboundService>();
+                eventsService.Setup(er => er.PostInbound(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -131,8 +131,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/push/inbound";
-                HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
+                string requestUri = $"{BasePath}/inbound";
+                HttpClient client = GetTestClient(new Mock<IInboundService>().Object);
 
                 StringContent content = new StringContent(string.Empty);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
@@ -157,9 +157,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_MissingAccessToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/push/inbound";
+                string requestUri = $"{BasePath}/inbound";
 
-                HttpClient client = GetTestClient(new Mock<IAppEventsService>().Object);
+                HttpClient client = GetTestClient(new Mock<IInboundService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
 
                 StringContent content = new StringContent(string.Empty);
@@ -173,7 +173,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient(IAppEventsService eventsService)
+            private HttpClient GetTestClient(IInboundService eventsService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {

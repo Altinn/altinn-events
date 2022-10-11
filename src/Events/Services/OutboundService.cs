@@ -16,7 +16,7 @@ namespace Altinn.Platform.Events.Services
     /// <summary>
     /// An implementation of the push service
     /// </summary>
-    public class PushOutboundService : IPushOutboundService
+    public class OutboundService : IOutboundService
     {
         private readonly IEventsQueueClient _queue;
 
@@ -29,18 +29,18 @@ namespace Altinn.Platform.Events.Services
         private readonly MemoryCacheEntryOptions _partySubscriptioncacheEntryOptions;
         private readonly MemoryCacheEntryOptions _orgAuthorizationEntryOptions;
 
-        private readonly ILogger<IPushOutboundService> _logger;
+        private readonly ILogger<IOutboundService> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PushOutboundService"/> class.
+        /// Initializes a new instance of the <see cref="OutboundService"/> class.
         /// </summary>
-        public PushOutboundService(
+        public OutboundService(
             IEventsQueueClient queueService,
             ISubscriptionService subscriptionService,
             IAuthorization authorizationService,
             IOptions<PlatformSettings> platformSettings,
             IMemoryCache memoryCache,
-            ILogger<IPushOutboundService> logger)
+            ILogger<IOutboundService> logger)
         {
             _queue = queueService;
             _subscriptionService = subscriptionService;
@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task PushOutbound(CloudEvent cloudEvent)
+        public async Task PostOutbound(CloudEvent cloudEvent)
         {
             string sourceFilter = GetSourceFilter(cloudEvent.Source);
 
@@ -80,13 +80,13 @@ namespace Altinn.Platform.Events.Services
 
         private async Task PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
         {
-            PushQueueReceipt receipt = await _queue.PushToOutboundQueue(JsonSerializer.Serialize(cloudEventEnvelope));
+            QueuePostReceipt receipt = await _queue.PostOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
             string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
             int subscriptionId = cloudEventEnvelope.SubscriptionId;
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // PushToOutboundQueue // Failed to push event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
+                _logger.LogError(receipt.Exception, "// EventsService // PostOutbound // Failed to push event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
             }
         }
 

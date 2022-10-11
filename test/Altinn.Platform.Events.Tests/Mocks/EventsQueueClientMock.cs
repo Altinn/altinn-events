@@ -18,7 +18,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         /// </summary>
         public Dictionary<string, List<CloudEventEnvelope>> OutboundQueue { get; set; }
 
-        public Task<PushQueueReceipt> PushToOutboundQueue(string content)
+        public Task<QueuePostReceipt> PostOutbound(string content)
         {
             CloudEventEnvelope cloudEventEnvelope = JsonSerializer.Deserialize<CloudEventEnvelope>(content);
 
@@ -29,17 +29,17 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
             OutboundQueue[cloudEventEnvelope.CloudEvent.Id].Add(cloudEventEnvelope);
 
-            return Task.FromResult(new PushQueueReceipt { Success = true });
+            return Task.FromResult(new QueuePostReceipt { Success = true });
         }
 
-        public Task<PushQueueReceipt> PushToInboundQueue(string content)
+        public Task<QueuePostReceipt> PostInbound(string content)
         {
-            return Task.FromResult(new PushQueueReceipt { Success = true });
+            return Task.FromResult(new QueuePostReceipt { Success = true });
         }
 
-        public Task<PushQueueReceipt> PushToValidationQueue(string content)
+        public Task<QueuePostReceipt> PostSubscriptionValidation(string content)
         {
-            return Task.FromResult(new PushQueueReceipt { Success = true });
+            return Task.FromResult(new QueuePostReceipt { Success = true });
         }
     }
 }

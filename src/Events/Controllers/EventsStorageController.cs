@@ -19,7 +19,7 @@ namespace Altinn.Platform.Events.Controllers
     [Route("events/api/v1/storage/events")]
     public class EventsStorageController : ControllerBase
     {
-        private readonly IAppEventsService _eventsService;
+        private readonly IInboundService _inboundService;
         private readonly ILogger _logger;
         private readonly IMapper _mapper;
 
@@ -27,12 +27,12 @@ namespace Altinn.Platform.Events.Controllers
         /// Initializes a new instance of the <see cref="EventsStorageController"/> class
         /// </summary>
         public EventsStorageController(
-            IAppEventsService eventsService,
+            IInboundService inboundService,
             ILogger<EventsStorageController> logger,
             IMapper mapper)
         {
             _logger = logger;
-            _eventsService = eventsService;
+            _inboundService = inboundService;
             _mapper = mapper;
         }
 
@@ -58,13 +58,13 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.SaveToDatabase(_mapper.Map<CloudEvent>(cloudEvent));
+                string cloudEventId = await _inboundService.Save(_mapper.Map<CloudEvent>(cloudEvent));
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Unable to store cloud event in database.");
-                return StatusCode(500, $"Unable to store cloud event in database.");
+                _logger.LogError(e, "Unable to save cloud event to storage.");
+                return StatusCode(500, $"Unable to save cloud event to storage.");
             }
         }
     }
