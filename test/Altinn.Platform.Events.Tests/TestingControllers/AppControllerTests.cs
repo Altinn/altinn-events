@@ -37,21 +37,21 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="AppEventsController"/>.
+        /// Represents a collection of integration tests of the <see cref="AppController"/>.
         /// </summary>
-        public class AppEventsControllerTests : IClassFixture<WebApplicationFactory<AppEventsController>>
+        public class AppControllerTests : IClassFixture<WebApplicationFactory<AppController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<AppEventsController> _factory;
+            private readonly WebApplicationFactory<AppController> _factory;
 
             private readonly JsonSerializerOptions _options;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="AppEventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
+            /// Initializes a new instance of the <see cref="AppControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
             /// </summary>
             /// <param name="factory">The <see cref="WebApplicationFactory{TAppEventsController}"/> to use when setting up the test server.</param>
-            public AppEventsControllerTests(WebApplicationFactory<AppEventsController> factory)
+            public AppControllerTests(WebApplicationFactory<AppController> factory)
             {
                 _factory = factory;
                 _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };

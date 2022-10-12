@@ -14,7 +14,7 @@ using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Events.Functions.Services
+namespace Altinn.Platform.Events.Functions.Clients
 {
     /// <summary>
     /// Handles PushEvents service
@@ -25,7 +25,6 @@ namespace Altinn.Platform.Events.Functions.Services
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
-        private readonly PlatformSettings _platformSettings;
         private readonly ILogger<IOutboundClient> _logger;
 
         /// <summary>
@@ -39,9 +38,9 @@ namespace Altinn.Platform.Events.Functions.Services
             IOptions<KeyVaultSettings> keyVaultSettings,
             ILogger<IOutboundClient> logger)
         {
-            _platformSettings = eventsConfig.Value;
+            var platformSettings = eventsConfig.Value;
+            httpClient.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
             _keyVaultSettings = keyVaultSettings.Value;
-            httpClient.BaseAddress = new Uri(_platformSettings.ApiEventsEndpoint);
             _client = httpClient;
             _accessTokenGenerator = accessTokenGenerator;
             _keyVaultService = keyVaultService;
@@ -66,7 +65,7 @@ namespace Altinn.Platform.Events.Functions.Services
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"// Post outbound event with id {item.Id} failed with statuscode {response.StatusCode}");
-                    throw new Exception($"// Post outbound event with id {item.Id} failed with statuscode {response.StatusCode}");
+                    throw new HttpRequestException($"// Post outbound event with id {item.Id} failed with statuscode {response.StatusCode}");
                 }
             }
             catch (Exception e)

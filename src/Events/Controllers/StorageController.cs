@@ -17,18 +17,18 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Authorize]
     [Route("events/api/v1/storage/events")]
-    public class EventsStorageController : ControllerBase
+    public class StorageController : ControllerBase
     {
         private readonly IInboundService _inboundService;
         private readonly ILogger _logger;
         private readonly IMapper _mapper;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventsStorageController"/> class
+        /// Initializes a new instance of the <see cref="StorageController"/> class
         /// </summary>
-        public EventsStorageController(
+        public StorageController(
             IInboundService inboundService,
-            ILogger<EventsStorageController> logger,
+            ILogger<StorageController> logger,
             IMapper mapper)
         {
             _logger = logger;

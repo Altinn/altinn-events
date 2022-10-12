@@ -1,5 +1,6 @@
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions;
+using Altinn.Platform.Events.Functions.Clients;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Factories;

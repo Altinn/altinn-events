@@ -33,19 +33,19 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="EventsStorageController"/>.
+        /// Represents a collection of integration tests of the <see cref="StorageController"/>.
         /// </summary>
-        public class EventsStorageControllerTests : IClassFixture<WebApplicationFactory<EventsStorageController>>
+        public class StorageControllerTests : IClassFixture<WebApplicationFactory<StorageController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<EventsStorageController> _factory;
+            private readonly WebApplicationFactory<StorageController> _factory;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="EventsStorageControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsStorageController}"/>.
+            /// Initializes a new instance of the <see cref="StorageControllerTests"/> class with the given <see cref="WebApplicationFactory{TStorageController}"/>.
             /// </summary>
-            /// <param name="factory">The <see cref="WebApplicationFactory{TEventsStorageController}"/> to use when setting up the test server.</param>
-            public EventsStorageControllerTests(WebApplicationFactory<EventsStorageController> factory)
+            /// <param name="factory">The <see cref="WebApplicationFactory{TStorageController}"/> to use when setting up the test server.</param>
+            public StorageControllerTests(WebApplicationFactory<StorageController> factory)
             {
                 _factory = factory;
             }
