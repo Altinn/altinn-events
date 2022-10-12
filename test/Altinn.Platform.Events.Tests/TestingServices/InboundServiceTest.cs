@@ -170,10 +170,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<ILogger<IInboundService>> logger = new Mock<ILogger<IInboundService>>();
             InboundService eventsService = GetInboundService(loggerMock: logger, queueMock: queueMock.Object);
 
-            // Act
-            await eventsService.PostInbound(GetCloudEvent());
-
-            // Assert
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => eventsService.PostInbound(GetCloudEvent()));
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 

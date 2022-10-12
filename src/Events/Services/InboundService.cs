@@ -71,6 +71,7 @@ namespace Altinn.Platform.Events.Services
             if (!receipt.Success)
             {
                 _logger.LogError(receipt.Exception, "// InboundService // PostInbound // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
+                throw receipt.Exception;
             }
 
             return cloudEvent.Id;

@@ -27,8 +27,9 @@ namespace Altinn.Platform.Events.Services.Interfaces
         Task<string> PostInbound(CloudEvent cloudEvent);
 
         /// <summary>
-        /// Save a cloud event to persistent storage and
-        /// pushes to Inbound events queue in one operation. 
+        /// [DEPRECATED] Save a cloud event to persistent storage and
+        /// pushes to Inbound events queue in one operation.
+        /// Id will be assigned a new guid in string format.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be stored</param>
         /// <returns>Id for the cloudEvent in persistent storage</returns>

@@ -116,7 +116,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+                Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
             }
 
             /// <summary>

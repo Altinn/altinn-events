@@ -36,14 +36,20 @@ namespace Altinn.Platform.Events.Controllers
         [HttpPost]
         [Consumes("application/json")]
         [SwaggerResponse(201, Type = typeof(Guid))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
-            string cloudEventId = await _inboundService.PostInbound(cloudEvent);
+            try
+            {
+                string cloudEventId = await _inboundService.PostInbound(cloudEvent);
 
-            return Created(cloudEvent.Subject, cloudEventId);
+                return Created(cloudEvent.Subject, cloudEventId);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(503, $"Temporarily unable to send cloudEventId ${cloudEvent?.Id} to events-inbound queue. Error: {e.Message}");
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -48,31 +49,20 @@ namespace Altinn.Platform.Events.Controllers
         [HttpPost]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
         public async Task<ActionResult> Post([FromBody] CloudEvent cloudEvent)
         {
-            await _outboundService.PostOutbound(cloudEvent);
+            try
+            {
+                await _outboundService.PostOutbound(cloudEvent);
 
-            return Ok();
-        }
-
-        /// <summary>
-        /// Push a previously registered cloudEvent to the inbound events queue
-        /// and further processing by the EventsInbound Azure function
-        /// </summary>
-        /// <returns>The application metadata object.</returns>
-        [Authorize(Policy = "PlatformAccess")]
-        [HttpPost("inbound")]
-        [Consumes("application/json")]
-        [SwaggerResponse(201, Type = typeof(Guid))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
-        {
-            string cloudEventId = await _eventsService.PostInbound(_mapper.Map<CloudEvent>(cloudEvent));
-
-            return Created(cloudEvent.Subject, cloudEventId);
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return StatusCode(503, $"Temporarily unable to send cloudEventId ${cloudEvent?.Id} to events-outbound queue. Error: {e.Message}");
+            }
         }
     }
 }
