@@ -34,7 +34,7 @@ namespace Altinn.Platform.Events.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<QueuePostReceipt> PostInbound(string content)
+        public async Task<QueuePostReceipt> EnqueueInbound(string content)
         {
             try
             {
@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<QueuePostReceipt> PostOutbound(string content)
+        public async Task<QueuePostReceipt> EnqueueOutbound(string content)
         {
             try
             {
@@ -66,7 +66,7 @@ namespace Altinn.Platform.Events.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<QueuePostReceipt> PostSubscriptionValidation(string content)
+        public async Task<QueuePostReceipt> EnqueueSubscriptionValidation(string content)
         {
             try
             {

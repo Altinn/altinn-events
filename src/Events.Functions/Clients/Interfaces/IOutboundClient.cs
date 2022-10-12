@@ -9,9 +9,9 @@ namespace Altinn.Platform.Events.Functions.Clients.Interfaces
     public interface IOutboundClient
     {
         /// <summary>
-        /// Push cloudevent
+        /// Send cloudEvent for outbound processing.
         /// </summary>
-        /// <param name="item">CloudEvent to push</param>
+        /// <param name="item">CloudEvent to send</param>
          Task PostOutbound(CloudEvent item);
     }
 }

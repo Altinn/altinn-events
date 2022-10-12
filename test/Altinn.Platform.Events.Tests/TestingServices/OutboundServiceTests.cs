@@ -88,7 +88,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
             var queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.PostOutbound(It.IsAny<string>()))
+            queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
                     .ReturnsAsync(new QueuePostReceipt { Success = false });
 
             var loggerMock = new Mock<ILogger<IOutboundService>>();
@@ -103,7 +103,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                x => x.Log(
                    LogLevel.Error,
                    It.IsAny<EventId>(),
-                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// EventsService // PostOutbound // Failed to push event envelope", StringComparison.InvariantCultureIgnoreCase)),
+                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// EventsService // EnqueueOutbound // Failed to push event envelope", StringComparison.InvariantCultureIgnoreCase)),
                    It.IsAny<Exception>(),
                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                Times.Once);

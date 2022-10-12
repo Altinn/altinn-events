@@ -65,11 +65,11 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> PostInbound(CloudEvent cloudEvent)
         {
-            QueuePostReceipt receipt = await _queue.PostInbound(JsonSerializer.Serialize(cloudEvent));
+            QueuePostReceipt receipt = await _queue.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // PostInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(receipt.Exception, "// EventsService // EnqueueInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
             }
 
             return cloudEvent.Id;
@@ -82,7 +82,7 @@ namespace Altinn.Platform.Events.Services
             cloudEvent.Time = null;
             cloudEvent = await _repository.Create(cloudEvent);
 
-            QueuePostReceipt receipt = await _queue.PostInbound(JsonSerializer.Serialize(cloudEvent));
+            QueuePostReceipt receipt = await _queue.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
 
             if (!receipt.Success)
             {

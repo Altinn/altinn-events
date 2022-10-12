@@ -140,7 +140,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.PostInbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
+            queueMock.Setup(q => q.EnqueueInbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IInboundService>> logger = new Mock<ILogger<IInboundService>>();
             InboundService eventsService = GetAppEventService(loggerMock: logger, queueMock: queueMock.Object);
@@ -165,7 +165,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.PostInbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
+            queueMock.Setup(q => q.EnqueueInbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IInboundService>> logger = new Mock<ILogger<IInboundService>>();
             InboundService eventsService = GetAppEventService(loggerMock: logger, queueMock: queueMock.Object);

@@ -80,13 +80,13 @@ namespace Altinn.Platform.Events.Services
 
         private async Task PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
         {
-            QueuePostReceipt receipt = await _queue.PostOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
+            QueuePostReceipt receipt = await _queue.EnqueueOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
             string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
             int subscriptionId = cloudEventEnvelope.SubscriptionId;
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // PostOutbound // Failed to push event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
+                _logger.LogError(receipt.Exception, "// EventsService // EnqueueOutbound // Failed to push event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
             }
         }
 

@@ -13,20 +13,20 @@ namespace Altinn.Platform.Events.Clients.Interfaces
         /// </summary>
         /// <param name="content">The content to push to the queue in string format</param>
         /// <returns>Returns a queue receipt</returns>
-        public Task<QueuePostReceipt> PostInbound(string content);
+        public Task<QueuePostReceipt> EnqueueInbound(string content);
 
         /// <summary>
         /// Pushes the provided content to the outbound queue
         /// </summary>
         /// <param name="content">The content to push to the queue in string format</param>
         /// <returns>Returns a queue receipt</returns>
-        public Task<QueuePostReceipt> PostOutbound(string content);
+        public Task<QueuePostReceipt> EnqueueOutbound(string content);
 
         /// <summary>
         /// Pushes the provided content to the validation queue
         /// </summary>
         /// <param name="content">The content to push to the validation queue in string format</param>
         /// <returns>Returns a queue receipt</returns>
-        public Task<QueuePostReceipt> PostSubscriptionValidation(string content);
+        public Task<QueuePostReceipt> EnqueueSubscriptionValidation(string content);
     }
 }
