@@ -32,19 +32,19 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
     public partial class IntegrationTests
     {
         /// <summary>
-        /// Represents a collection of integration tests of the <see cref="OutboundController"/>.
+        /// Represents a collection of integration tests of the <see cref="PushController"/>.
         /// </summary>
-        public class OutboundControllerTests : IClassFixture<WebApplicationFactory<OutboundController>>
+        public class PushControllerTests : IClassFixture<WebApplicationFactory<PushController>>
         {
             private const string BasePath = "/events/api/v1";
 
-            private readonly WebApplicationFactory<OutboundController> _factory;
+            private readonly WebApplicationFactory<PushController> _factory;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="OutboundControllerTests"/> class with the given <see cref="WebApplicationFactory{TOutboundController}"/>.
+            /// Initializes a new instance of the <see cref="PushControllerTests"/> class with the given <see cref="WebApplicationFactory{TPushController}"/>.
             /// </summary>
             /// <param name="factory">The <see cref="WebApplicationFactory{TPushController}"/> to use when setting up the test server.</param>
-            public OutboundControllerTests(WebApplicationFactory<OutboundController> factory)
+            public PushControllerTests(WebApplicationFactory<PushController> factory)
             {
                 _factory = factory;
             }
@@ -61,7 +61,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/outbound";
+                string requestUri = $"{BasePath}/push";
                 string responseId = Guid.NewGuid().ToString();
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
@@ -96,7 +96,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_RepositoryThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/outbound";
+                string requestUri = $"{BasePath}/push";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
                 service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
@@ -113,7 +113,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
             }
 
             /// <summary>
@@ -128,7 +128,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/outbound";
+                string requestUri = $"{BasePath}/push";
                 HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
 
                 StringContent content = new StringContent(string.Empty);
@@ -154,7 +154,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void Post_MissingAccessToken_ReturnsForbidden()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/outbound";
+                string requestUri = $"{BasePath}/push";
 
                 HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
