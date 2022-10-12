@@ -53,7 +53,7 @@ namespace Altinn.Platform.Events.Functions.Clients
             StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
             try
             {
-                string endpointUrl = "outbound";
+                string endpointUrl = "push";
 
                 string certBase64 = await _keyVaultService.GetCertificateAsync(_keyVaultSettings.KeyVaultURI, _keyVaultSettings.PlatformCertSecretId);
                 string accessToken = _accessTokenGenerator.GenerateAccessToken(
