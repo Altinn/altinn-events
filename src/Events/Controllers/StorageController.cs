@@ -48,7 +48,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
+        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
             if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) || string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
             string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
