@@ -103,7 +103,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                x => x.Log(
                    LogLevel.Error,
                    It.IsAny<EventId>(),
-                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// EventsService // EnqueueOutbound // Failed to push event envelope", StringComparison.InvariantCultureIgnoreCase)),
+                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// OutboundService // EnqueueOutbound // Failed to send event envelope", StringComparison.InvariantCultureIgnoreCase)),
                    It.IsAny<Exception>(),
                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                Times.Once);

@@ -18,7 +18,7 @@ namespace Altinn.Platform.Events.Services
     /// </summary>
     public class OutboundService : IOutboundService
     {
-        private readonly IEventsQueueClient _queue;
+        private readonly IEventsQueueClient _queueClient;
 
         private readonly ISubscriptionService _subscriptionService;
         private readonly IAuthorization _authorizationService;
@@ -35,14 +35,14 @@ namespace Altinn.Platform.Events.Services
         /// Initializes a new instance of the <see cref="OutboundService"/> class.
         /// </summary>
         public OutboundService(
-            IEventsQueueClient queueService,
+            IEventsQueueClient queueClient,
             ISubscriptionService subscriptionService,
             IAuthorization authorizationService,
             IOptions<PlatformSettings> platformSettings,
             IMemoryCache memoryCache,
             ILogger<IOutboundService> logger)
         {
-            _queue = queueService;
+            _queueClient = queueClient;
             _subscriptionService = subscriptionService;
             _authorizationService = authorizationService;
             _platformSettings = platformSettings.Value;
@@ -80,13 +80,13 @@ namespace Altinn.Platform.Events.Services
 
         private async Task PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
         {
-            QueuePostReceipt receipt = await _queue.EnqueueOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
+            QueuePostReceipt receipt = await _queueClient.EnqueueOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
             string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
             int subscriptionId = cloudEventEnvelope.SubscriptionId;
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // EnqueueOutbound // Failed to push event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
+                _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
             }
         }
 

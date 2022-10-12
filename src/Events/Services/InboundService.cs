@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Services
     public class InboundService : IInboundService
     {
         private readonly ICloudEventRepository _repository;
-        private readonly IEventsQueueClient _queue;
+        private readonly IEventsQueueClient _queueClient;
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
@@ -33,14 +33,14 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         public InboundService(
             ICloudEventRepository repository,
-            IEventsQueueClient queue,
+            IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
             IClaimsPrincipalProvider claimsPrincipalProvider,
             ILogger<IInboundService> logger)
         {
             _repository = repository;
-            _queue = queue;
+            _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
             _claimsPrincipalProvider = claimsPrincipalProvider;
@@ -56,7 +56,8 @@ namespace Altinn.Platform.Events.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "// EventsService // Save // Failed to save eventId {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(ex, "// InboundService // Save // Failed to save eventId {EventId} to storage.", cloudEvent.Id);
+                throw;
             }
 
             return cloudEvent.Id;
@@ -65,11 +66,11 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> PostInbound(CloudEvent cloudEvent)
         {
-            QueuePostReceipt receipt = await _queue.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
+            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // EnqueueInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(receipt.Exception, "// InboundService // PostInbound // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
             }
 
             return cloudEvent.Id;
@@ -82,11 +83,11 @@ namespace Altinn.Platform.Events.Services
             cloudEvent.Time = null;
             cloudEvent = await _repository.Create(cloudEvent);
 
-            QueuePostReceipt receipt = await _queue.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
+            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // SaveAndPostInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(receipt.Exception, "// InboundService // SaveAndPostInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
             }
 
             return cloudEvent.Id;

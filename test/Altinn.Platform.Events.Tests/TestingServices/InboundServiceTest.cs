@@ -52,7 +52,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task StoreAndPushEvent_EventSuccessfullyStored_IdReturned()
         {
             // Arrange
-            InboundService eventsService = GetAppEventService();
+            InboundService eventsService = GetInboundService();
 
             // Act
             string actual = await eventsService.SaveAndPostInbound(GetCloudEvent());
@@ -73,7 +73,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task PushSavedEvent_EventSuccessfullyPushed_IdReturned()
         {
             // Arrange
-            InboundService eventsService = GetAppEventService();
+            InboundService eventsService = GetInboundService();
 
             // Act
             string actual = await eventsService.PostInbound(GetCloudEvent());
@@ -94,7 +94,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task SaveNewEvent_EventSuccessfullyStored_IdReturned()
         {
             // Arrange
-            InboundService eventsService = GetAppEventService();
+            InboundService eventsService = GetInboundService();
 
             // Act
             string actual = await eventsService.Save(GetCloudEvent());
@@ -115,7 +115,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task SaveAndPushNewEvent_CheckIdCreatedByService_IdReturned()
         {
             // Arrange
-            InboundService eventsService = GetAppEventService();
+            InboundService eventsService = GetInboundService();
 
             CloudEvent item = GetCloudEvent();
             item.Id = null;
@@ -143,7 +143,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.Setup(q => q.EnqueueInbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IInboundService>> logger = new Mock<ILogger<IInboundService>>();
-            InboundService eventsService = GetAppEventService(loggerMock: logger, queueMock: queueMock.Object);
+            InboundService eventsService = GetInboundService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act
             await eventsService.SaveAndPostInbound(GetCloudEvent());
@@ -168,7 +168,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.Setup(q => q.EnqueueInbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IInboundService>> logger = new Mock<ILogger<IInboundService>>();
-            InboundService eventsService = GetAppEventService(loggerMock: logger, queueMock: queueMock.Object);
+            InboundService eventsService = GetInboundService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act
             await eventsService.PostInbound(GetCloudEvent());
@@ -191,15 +191,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
             repoMock.Setup(q => q.Create(It.IsAny<CloudEvent>()))
-                .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
+                .ThrowsAsync(new Exception("// InboundService // Save // Failed to save eventId"));
 
             Mock<ILogger<IInboundService>> logger = new Mock<ILogger<IInboundService>>();
-            InboundService eventsService = GetAppEventService(loggerMock: logger, repositoryMock: repoMock.Object);
+            InboundService inboundService = GetInboundService(loggerMock: logger, repositoryMock: repoMock.Object);
 
-            // Act
-            await eventsService.Save(GetCloudEvent());
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => inboundService.Save(GetCloudEvent()));
 
-            // Assert
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
@@ -218,7 +217,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             int expectedCount = 1;
             string expectedSubject = "/party/54321";
 
-            InboundService eventsService = GetAppEventService(repositoryMock: new CloudEventRepositoryMock(2));
+            InboundService eventsService = GetInboundService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
             List<CloudEvent> actual = await eventsService.GetAppEvents(string.Empty, new DateTime(2020, 06, 17), null, 54321, new List<string>() { }, new List<string>() { }, null, null);
@@ -241,7 +240,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             int expectedCount = 3;
-            InboundService eventsService = GetAppEventService(repositoryMock: new CloudEventRepositoryMock(2));
+            InboundService eventsService = GetInboundService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
             List<CloudEvent> actual = await eventsService.GetAppEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, 0, new List<string>() { }, new List<string>() { }, null, null);
@@ -274,7 +273,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 It.IsAny<int>())) // size
                 .ReturnsAsync(new List<CloudEvent>());
 
-            InboundService eventsService = GetAppEventService(repositoryMock: repositoryMock.Object);
+            InboundService eventsService = GetInboundService(repositoryMock: repositoryMock.Object);
 
             // Act
             List<CloudEvent> actual = await eventsService.GetAppEvents(null, null, null, partyId, new List<string>() { "https://ttd.apps.tt02.altinn.no/ttd/apps-test/" }, new List<string>() { "instance.completed" }, null, null);
@@ -306,7 +305,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 It.IsAny<int>())) // size
                 .ReturnsAsync(new List<CloudEvent>());
 
-            InboundService eventsService = GetAppEventService(repositoryMock: repositoryMock.Object);
+            InboundService eventsService = GetInboundService(repositoryMock: repositoryMock.Object);
 
             // Act
             List<CloudEvent> actual = await eventsService.GetAppEvents(null, null, null, 0, new List<string>(), new List<string>(), null, null);
@@ -329,7 +328,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             Mock<IRegisterService> registerMock = new();
 
-            InboundService eventsService = GetAppEventService(registerMock: registerMock);
+            InboundService eventsService = GetInboundService(registerMock: registerMock);
 
             // Act
             List<CloudEvent> actual = await eventsService.GetAppEvents("1", null, null, 0, new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, new List<string>() { }, null, null);
@@ -338,7 +337,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             registerMock.Verify(r => r.PartyLookup(It.Is<string>(s => string.IsNullOrEmpty(s)), It.Is<string>(s => string.IsNullOrEmpty(s))), Times.Never);
         }
 
-        private InboundService GetAppEventService(
+        private InboundService GetInboundService(
             ICloudEventRepository repositoryMock = null,
             IEventsQueueClient queueMock = null,
             Mock<IRegisterService> registerMock = null,

@@ -90,40 +90,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a invalid CloudEvent instance.
-            /// Expected result:
-            ///   Returns HttpStatus BadRequest.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async void Post_InValidCloudEvent_ReturnsStatusBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/storage/events";
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
-                cloudEvent.Subject = null;
-
-                Mock<IInboundService> eventsService = new Mock<IInboundService>();
-
-                HttpClient client = GetTestClient(eventsService.Object);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "unittest"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
             ///   Post a valid cloud event, unexpected error when storing document
             /// Expected result:
             ///   Returns HttpStatus Internal Server Error.
@@ -151,7 +117,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+                Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
             }
 
             /// <summary>

@@ -47,15 +47,10 @@ namespace Altinn.Platform.Events.Controllers
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
-            if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) || string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
-            string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
-            {
-                return Problem("Missing parameter values: source, subject, type, id or time cannot be null", null, 400);
-            }
-
             try
             {
                 string cloudEventId = await _inboundService.Save(_mapper.Map<CloudEvent>(cloudEvent));
@@ -63,8 +58,9 @@ namespace Altinn.Platform.Events.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Unable to save cloud event to storage.");
-                return StatusCode(500, $"Unable to save cloud event to storage.");
+                var msg = $"Temporarily unable to save cloud event to storage, please try again.";
+                _logger.LogError(e, msg);
+                return StatusCode(503, msg);
             }
         }
     }
