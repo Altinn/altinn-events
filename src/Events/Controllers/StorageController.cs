@@ -21,19 +21,16 @@ namespace Altinn.Platform.Events.Controllers
     {
         private readonly IInboundService _inboundService;
         private readonly ILogger _logger;
-        private readonly IMapper _mapper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageController"/> class
         /// </summary>
         public StorageController(
             IInboundService inboundService,
-            ILogger<StorageController> logger,
-            IMapper mapper)
+            ILogger<StorageController> logger)
         {
             _logger = logger;
             _inboundService = inboundService;
-            _mapper = mapper;
         }
 
         /// <summary>
@@ -53,7 +50,7 @@ namespace Altinn.Platform.Events.Controllers
         {
             try
             {
-                string cloudEventId = await _inboundService.Save(_mapper.Map<CloudEvent>(cloudEvent));
+                string cloudEventId = await _inboundService.Save(cloudEvent);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
