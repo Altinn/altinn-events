@@ -2,13 +2,10 @@ using System;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
-using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -19,21 +16,14 @@ namespace Altinn.Platform.Events.Controllers
     [ApiController]
     public class OutboundController : ControllerBase
     {
-        private readonly IInboundService _eventsService;
         private readonly IOutboundService _outboundService;
-        private readonly IMapper _mapper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OutboundController"/> class.
         /// </summary>
-        public OutboundController(
-            IInboundService eventsService,
-            IOutboundService outboundService,
-            IMapper mapper)
+        public OutboundController(IOutboundService outboundService)
         {
-            _eventsService = eventsService;
             _outboundService = outboundService;
-            _mapper = mapper;
         }
 
         /// <summary>
