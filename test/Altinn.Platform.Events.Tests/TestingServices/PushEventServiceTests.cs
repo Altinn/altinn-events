@@ -25,11 +25,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     {
         /// <summary>
         /// Scenario:
-        ///   Push an event. Two subscriptions are matching and is authorized
+        ///   Push an event. Three subscriptions are matching and is authorized
         /// Expected result:
-        ///   The event are pushed to two different subscribers
+        ///   The event are pushed to three different subscribers
         /// Success criteria:
-        ///   The event is pushed to two subscribers
+        ///   The event is pushed to three subscribers
         /// </summary>
         [Fact]
         public async void Push_TwoMatchingAndValidSubscriptions_AddedToqueue()
@@ -46,7 +46,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.True(queueServiceMock.OutboundQueue.ContainsKey(cloudEvent.Id));
-            Assert.Equal(2, queueServiceMock.OutboundQueue[cloudEvent.Id].Count);
+            Assert.Equal(3, queueServiceMock.OutboundQueue[cloudEvent.Id].Count);
         }
 
         /// <summary>

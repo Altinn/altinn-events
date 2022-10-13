@@ -67,7 +67,12 @@ namespace Altinn.Platform.Events.Tests.Mocks
             }
         }
 
-        public Task<List<Subscription>> GetSubscriptionsExcludeOrg(string source, string subject, string type)
+        public Task SetValidSubscription(int id)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct)
         {
             string subscriptionsPath = Path.Combine(GetSubscriptionPath(), "1.json");
             List<Subscription> subscriptions = null;
@@ -82,26 +87,15 @@ namespace Altinn.Platform.Events.Tests.Mocks
             }
 
             return Task.FromResult(subscriptions.Where(s =>
-                                !s.Consumer.StartsWith("/org/") &&
-                                s.SourceFilter.Equals(source) &&
+                                source.StartsWith(s.SourceFilter.ToString()) &&
                                 subject.Equals(subject) &&
                                 (string.IsNullOrEmpty(s.TypeFilter) || type.Equals(s.TypeFilter))).ToList());
-        }
-
-        public Task SetValidSubscription(int id)
-        {
-            return Task.CompletedTask;
         }
 
         private static string GetSubscriptionPath()
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AppEventsServiceMock).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "subscriptions");
-        }
-
-        public Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct)
-        {
-            throw new NotImplementedException();
         }
     }
 }
