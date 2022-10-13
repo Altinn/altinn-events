@@ -7,7 +7,8 @@ using Altinn.Platform.Events.Models;
 namespace Altinn.Platform.Events.Services.Interfaces
 {
     /// <summary>
-    /// Interface to talk to the events service
+    /// Interface to the InboundService, used for saving events to database storage
+    /// and posting to the events-inbound queue.
     /// </summary>
     public interface IInboundService
     {
@@ -27,12 +28,13 @@ namespace Altinn.Platform.Events.Services.Interfaces
         Task<string> PostInbound(CloudEvent cloudEvent);
 
         /// <summary>
-        /// [DEPRECATED] Save a cloud event to persistent storage and
+        /// Save a cloud event to persistent storage and
         /// pushes to Inbound events queue in one operation.
         /// Id will be assigned a new guid in string format.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be stored</param>
         /// <returns>Id for the cloudEvent in persistent storage</returns>
+        [Obsolete("This function has been split in two and will be removed soon.")]
         Task<string> SaveAndPostInbound(CloudEvent cloudEvent);
 
         /// <summary>
