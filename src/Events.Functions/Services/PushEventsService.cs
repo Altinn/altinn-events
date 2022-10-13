@@ -6,7 +6,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
-using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
@@ -14,33 +13,34 @@ using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Events.Functions.Clients
+namespace Altinn.Platform.Events.Functions.Services
 {
     /// <summary>
     /// Handles PushEvents service
     /// </summary>
-    public class OutboundClient : IOutboundClient
+    public class PushEventsService : IPushEventsService
     {
         private readonly HttpClient _client;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
-        private readonly ILogger<IOutboundClient> _logger;
+        private readonly PlatformSettings _platformSettings;
+        private readonly ILogger<IPushEventsService> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OutboundClient"/> class.
+        /// Initializes a new instance of the <see cref="PushEventsService"/> class.
         /// </summary>
-        public OutboundClient(
+        public PushEventsService(
             HttpClient httpClient,
             IAccessTokenGenerator accessTokenGenerator,
             IKeyVaultService keyVaultService,
             IOptions<PlatformSettings> eventsConfig,
             IOptions<KeyVaultSettings> keyVaultSettings,
-            ILogger<IOutboundClient> logger)
+            ILogger<IPushEventsService> logger)
         {
-            var platformSettings = eventsConfig.Value;
-            httpClient.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
+            _platformSettings = eventsConfig.Value;
             _keyVaultSettings = keyVaultSettings.Value;
+            httpClient.BaseAddress = new Uri(_platformSettings.ApiEventsEndpoint);
             _client = httpClient;
             _accessTokenGenerator = accessTokenGenerator;
             _keyVaultService = keyVaultService;
@@ -48,7 +48,7 @@ namespace Altinn.Platform.Events.Functions.Clients
         }
 
         /// <inheritdoc/>
-        public async Task PostOutbound(CloudEvent item)
+        public async Task SendToPushController(CloudEvent item)
         {
             StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
             try
@@ -64,14 +64,14 @@ namespace Altinn.Platform.Events.Functions.Clients
                 HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    _logger.LogError($"// Post outbound event with id {item.Id} failed with statuscode {response.StatusCode}");
-                    throw new HttpRequestException($"// Post outbound event with id {item.Id} failed with statuscode {response.StatusCode}");
+                    _logger.LogError($"// Push event with id {item.Id} failed with statuscode {response.StatusCode}");
+                    throw new Exception($"// Push event with id {item.Id} failed with statuscode {response.StatusCode}");
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, $"// Post outbound event with id {item.Id} failed with errormessage {e.Message}");
-                throw;
+                _logger.LogError(e, $"// Push event with id {item.Id} failed with errormessage {e.Message}");
+                throw e;
             }
         }
     }

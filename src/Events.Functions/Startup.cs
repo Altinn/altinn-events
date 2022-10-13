@@ -1,7 +1,5 @@
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions;
-using Altinn.Platform.Events.Functions.Clients;
-using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Factories;
 using Altinn.Platform.Events.Functions.Services;
@@ -41,7 +39,7 @@ namespace Altinn.Platform.Events.Functions
             builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
             builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
             builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
-            builder.Services.AddHttpClient<IOutboundClient, OutboundClient>();
+            builder.Services.AddHttpClient<IPushEventsService, PushEventsService>();
             builder.Services.AddHttpClient<IWebhookService, WebhookService>();
             builder.Services.AddHttpClient<IValidateSubscriptionService, ValidateSubscriptionService>();
         }

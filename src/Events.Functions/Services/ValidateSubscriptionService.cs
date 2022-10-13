@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
-using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
@@ -23,7 +22,7 @@ namespace Altinn.Platform.Events.Functions.Services
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
         private readonly PlatformSettings _platformSettings;
-        private readonly ILogger<IOutboundClient> _logger;
+        private readonly ILogger<IPushEventsService> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ValidateSubscriptionService"/> class.
@@ -34,7 +33,7 @@ namespace Altinn.Platform.Events.Functions.Services
         IKeyVaultService keyVaultService,
         IOptions<PlatformSettings> eventsConfig,
         IOptions<KeyVaultSettings> keyVaultSettings,
-        ILogger<IOutboundClient> logger)
+        ILogger<IPushEventsService> logger)
         {
             _platformSettings = eventsConfig.Value;
             _keyVaultSettings = keyVaultSettings.Value;
