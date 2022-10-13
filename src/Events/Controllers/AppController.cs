@@ -57,7 +57,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Inserts a new event.
         /// </summary>
-        /// <returns>The application metadata object.</returns>
+        /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
         [Consumes("application/json")]

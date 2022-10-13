@@ -11,7 +11,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
-    /// Controller responsible for pushing events to internal event queues.
+    /// Controller responsible for posting events to events-inbound queue.
     /// </summary>
     [Route("events/api/v1/inbound")]
     [ApiController]
@@ -31,7 +31,7 @@ namespace Altinn.Platform.Events.Controllers
         /// Post a previously registered cloudEvent to the inbound events queue
         /// and further processing by the EventsInbound Azure function
         /// </summary>
-        /// <returns>The application metadata object.</returns>
+        /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
         [Consumes("application/json")]

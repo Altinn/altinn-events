@@ -37,7 +37,7 @@ namespace Altinn.Platform.Events.Controllers
         /// Saves a cloud event to persistent storage.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be saved</param>
-        /// <returns>The application metadata object.</returns>
+        /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
         [Consumes("application/json")]
