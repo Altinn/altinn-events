@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using Microsoft.Extensions.Caching.Memory;
@@ -20,13 +22,12 @@ namespace Altinn.Platform.Events.Services
     {
         private readonly IQueueService _queue;
 
-        private readonly ISubscriptionService _subscriptionService;
+        private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IAuthorization _authorizationService;
         private readonly PlatformSettings _platformSettings;
 
         private readonly IMemoryCache _memoryCache;
-        private readonly MemoryCacheEntryOptions _orgSubscriptioncacheEntryOptions;
-        private readonly MemoryCacheEntryOptions _partySubscriptioncacheEntryOptions;
+        private readonly MemoryCacheEntryOptions _subscriptionCacheEntryOptions;
         private readonly MemoryCacheEntryOptions _orgAuthorizationEntryOptions;
 
         private readonly ILogger<IPushEvent> _logger;
@@ -36,27 +37,23 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         public PushEventService(
             IQueueService queueService,
-            ISubscriptionService subscriptionService,
+            ISubscriptionRepository repository,
             IAuthorization authorizationService,
             IOptions<PlatformSettings> platformSettings,
             IMemoryCache memoryCache,
             ILogger<IPushEvent> logger)
         {
             _queue = queueService;
-            _subscriptionService = subscriptionService;
+            _subscriptionRepository = repository;
             _authorizationService = authorizationService;
             _platformSettings = platformSettings.Value;
             _memoryCache = memoryCache;
             _logger = logger;
 
-            _orgSubscriptioncacheEntryOptions = new MemoryCacheEntryOptions()
+            _subscriptionCacheEntryOptions = new MemoryCacheEntryOptions()
                 .SetPriority(CacheItemPriority.High)
                 .SetAbsoluteExpiration(
                     new TimeSpan(0, 0, _platformSettings.SubscriptionCachingLifetimeInSeconds));
-            _partySubscriptioncacheEntryOptions = new MemoryCacheEntryOptions()
-              .SetPriority(CacheItemPriority.Normal)
-              .SetAbsoluteExpiration(
-                  new TimeSpan(0, 0, _platformSettings.SubscriptionCachingLifetimeInSeconds));
             _orgAuthorizationEntryOptions = new MemoryCacheEntryOptions()
               .SetPriority(CacheItemPriority.High)
               .SetAbsoluteExpiration(
@@ -65,17 +62,9 @@ namespace Altinn.Platform.Events.Services
 
         /// <inheritdoc/>
         public async Task Push(CloudEvent cloudEvent)
-        {
-            string sourceFilter = GetSourceFilter(cloudEvent.Source);
-
-            if (!string.IsNullOrEmpty(sourceFilter))
-            {
-                List<Subscription> orgSubscriptions = await GetOrgSubscriptions(sourceFilter, cloudEvent.Subject, cloudEvent.Type);
-                await AuthorizeAndPush(cloudEvent, orgSubscriptions);
-
-                List<Subscription> subscriptions = await GetSubscriptionExcludeOrgs(sourceFilter, cloudEvent.Subject, cloudEvent.Type);
-                await AuthorizeAndPush(cloudEvent, subscriptions);
-            }
+        {            
+                List<Subscription> subscriptions = await GetSubscriptions(cloudEvent.Source.ToString(), cloudEvent.Subject, cloudEvent.Type);
+                await AuthorizeAndPush(cloudEvent, subscriptions);            
         }
 
         private async Task PushToConsumer(CloudEventEnvelope cloudEventEnvelope)
@@ -87,18 +76,6 @@ namespace Altinn.Platform.Events.Services
             if (!receipt.Success)
             {
                 _logger.LogError(receipt.Exception, "// EventsService // StoreCloudEvent // Failed to push event envelope {EventId} to comsumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
-            }
-        }
-
-        private string GetSourceFilter(Uri source)
-        {
-            if (source.DnsSafeHost.Contains(_platformSettings.AppsDomain))
-            {
-                return source.OriginalString.Substring(0, source.OriginalString.IndexOf(source.Segments[3]) - 1);
-            }
-            else
-            {
-                return string.Empty;
             }
         }
 
@@ -134,39 +111,28 @@ namespace Altinn.Platform.Events.Services
             return isAuthorized;
         }
 
-        private async Task<List<Subscription>> GetOrgSubscriptions(string sourceFilter, string subject, string type)
+        private async Task<List<Subscription>> GetSubscriptions(string sourceFilter, string subject, string type)
         {
-            string cacheKey = GetOrgAppSubscriptionCacheKey(sourceFilter, subject, type);
-            List<Subscription> orgSubscriptions;
+            sourceFilter = sourceFilter.ToLower();
+            subject = subject.ToLower();
+            type = type.ToLower();
 
-            if (!_memoryCache.TryGetValue(cacheKey, out orgSubscriptions))
+            string cacheKey = GetSubscriptionCacheKey(sourceFilter, subject, type);
+
+            List<Subscription> subscriptions;
+
+            if (!_memoryCache.TryGetValue(cacheKey, out subscriptions))
             {
-                orgSubscriptions = await _subscriptionService.GetOrgSubscriptions(
-                sourceFilter,
-                subject,
-                type);
+                subscriptions = await _subscriptionRepository.GetSubscriptions(
+                      sourceFilter,
+                      subject,
+                      type,
+                      CancellationToken.None);
 
-                _memoryCache.Set(cacheKey, orgSubscriptions, _orgSubscriptioncacheEntryOptions);
+                _memoryCache.Set(cacheKey, subscriptions, _subscriptionCacheEntryOptions);
             }
 
-            return orgSubscriptions;
-        }
-
-        private async Task<List<Subscription>> GetSubscriptionExcludeOrgs(string sourceFilter, string subject, string type)
-        {
-            string cacheKey = GetPartyAppSubscriptionCacheKey(sourceFilter, subject, type);
-            List<Subscription> orgSubscriptions;
-
-            if (!_memoryCache.TryGetValue(cacheKey, out orgSubscriptions))
-            {
-                orgSubscriptions = await _subscriptionService.GetSubscriptions(
-                sourceFilter,
-                subject,
-                type);
-                _memoryCache.Set(cacheKey, orgSubscriptions, _partySubscriptioncacheEntryOptions);
-            }
-
-            return orgSubscriptions;
+            return subscriptions;
         }
 
         private static CloudEventEnvelope MapToEnvelope(CloudEvent cloudEvent, Subscription subscription)
@@ -183,24 +149,14 @@ namespace Altinn.Platform.Events.Services
             return cloudEventEnvelope;
         }
 
-        private static string GetOrgAppSubscriptionCacheKey(string source, string subject, string type)
+        private static string GetSubscriptionCacheKey(string source, string subject, string type)
         {
             if (source == null)
             {
                 return null;
             }
 
-            return "orgsubscription:so:" + source + "su:" + subject + "ty:" + type;
-        }
-
-        private static string GetPartyAppSubscriptionCacheKey(string source, string subject, string type)
-        {
-            if (source == null)
-            {
-                return null;
-            }
-
-            return "partysubscription:so:" + source + "su:" + subject + "ty:" + type;
+            return "subscription:so:" + source + "su:" + subject + "ty:" + type;
         }
 
         private static string GetAltinnAppAuthorizationCacheKey(string sourceFilter, string consumer)
@@ -212,5 +168,18 @@ namespace Altinn.Platform.Events.Services
 
             return "authorizationdecision:so:" + sourceFilter + "co:" + consumer;
         }
+
+        private string GetSourceFilter(Uri source)
+        {
+            if (source.DnsSafeHost.Contains(_platformSettings.AppsDomain))
+            {
+                return source.OriginalString.Substring(0, source.OriginalString.IndexOf(source.Segments[3]) - 1);
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
+
     }
 }

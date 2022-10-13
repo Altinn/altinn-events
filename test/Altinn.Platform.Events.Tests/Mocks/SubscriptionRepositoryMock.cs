@@ -98,5 +98,10 @@ namespace Altinn.Platform.Events.Tests.Mocks
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AppEventsServiceMock).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "subscriptions");
         }
+
+        public Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

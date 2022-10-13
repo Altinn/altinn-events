@@ -115,22 +115,6 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<Subscription>> GetOrgSubscriptions(string source, string subject, string type)
-        {
-            List<Subscription> searchresult = await _repository.GetSubscriptionsByConsumer("/org/%", false);
-            return searchresult.Where(s =>
-                CheckIfSourceURIPathSegmentsMatch(source, s.SourceFilter) &&
-                (s.SubjectFilter == null || s.SubjectFilter.Equals(subject)) &&
-                (s.TypeFilter == null || s.TypeFilter.Equals(type))).ToList();
-        }
-
-        /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptions(string source, string subject, string type)
-        {
-            return await _repository.GetSubscriptionsExcludeOrg(source, subject, type);
-        }
-
-        /// <inheritdoc/>
         public async Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions(string consumer)
         {
             var subscriptions = await _repository.GetSubscriptionsByConsumer(consumer, true);
@@ -150,33 +134,6 @@ namespace Altinn.Platform.Events.Services
             await _repository.SetValidSubscription(id);
 
             return (subscription, null);
-        }
-
-        private static bool CheckIfSourceURIPathSegmentsMatch(string source, Uri sourceFilter)
-        {
-            Uri sourceUri;
-
-            if (!Uri.TryCreate(source, UriKind.Absolute, out sourceUri))
-            {
-                return false;
-            }
-
-            if (!sourceUri.Scheme.Equals(sourceFilter.Scheme) ||
-                !sourceUri.Host.Equals(sourceFilter.Host) ||
-                sourceFilter.Segments.Length > sourceUri.Segments.Length)
-            {
-                return false;
-            }
-
-            foreach (var segments in sourceUri.Segments.Zip(sourceFilter.Segments, (s1, s2) => new { S1 = s1, S2 = s2 }))
-            {
-                if (!segments.S1.Equals(segments.S2))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         /// <summary>

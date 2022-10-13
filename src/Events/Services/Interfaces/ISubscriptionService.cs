@@ -38,21 +38,5 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <param name="consumer">The subscription consumer</param>
         /// <returns>A list of subscriptions</returns>
         public Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions(string consumer);
-
-        /// <summary>
-        /// Get a list of matching org subscriptions
-        /// </summary>
-        /// <param name="source">The subcription Source</param>
-        /// <param name="subject">The subcription Subject</param>
-        /// <param name="type">The subcription Type</param>
-        public Task<List<Subscription>> GetOrgSubscriptions(string source, string subject, string type);
-
-        /// <summary>
-        /// Get a list of matching subscriptions, orgs excluded
-        /// </summary>
-        /// <param name="source">The subcription Source</param>
-        /// <param name="subject">The subcription Subject</param>
-        /// <param name="type">The subcription Type</param>
-        public Task<List<Subscription>> GetSubscriptions(string source, string subject, string type);
     }
 }
