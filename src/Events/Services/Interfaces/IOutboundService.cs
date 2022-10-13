@@ -10,7 +10,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
     public interface IOutboundService
     {
         /// <summary>
-        /// Deliver inbound cloudEvent to each matching subscriber.
+        /// Deliver outbound cloudEvent to each matching subscriber.
         /// </summary>
         Task PostOutbound(CloudEvent cloudEvent);
     }
