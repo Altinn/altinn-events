@@ -180,6 +180,5 @@ namespace Altinn.Platform.Events.Services
                 return string.Empty;
             }
         }
-
     }
 }

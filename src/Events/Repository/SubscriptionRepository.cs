@@ -107,7 +107,7 @@ namespace Altinn.Platform.Events.Repository
                 }
             };
 
-            await pgcom.PrepareAsync();
+            await pgcom.PrepareAsync(ct);
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync(ct))
             {
                 while (await reader.ReadAsync(ct))
