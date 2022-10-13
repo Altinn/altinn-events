@@ -17,14 +17,14 @@ namespace Altinn.Platform.Events.Controllers
     [ApiController]
     public class InboundController : ControllerBase
     {
-        private readonly IInboundService _inboundService;
+        private readonly IEventsService _eventsService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InboundController"/> class.
         /// </summary>
-        public InboundController(IInboundService inboundService)
+        public InboundController(IEventsService eventsService)
         {
-            _inboundService = inboundService;
+            _eventsService = eventsService;
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Altinn.Platform.Events.Controllers
         {
             try
             {
-                string cloudEventId = await _inboundService.PostInbound(cloudEvent);
+                string cloudEventId = await _eventsService.PostInbound(cloudEvent);
 
                 return Created(cloudEvent.Subject, cloudEventId);
             }

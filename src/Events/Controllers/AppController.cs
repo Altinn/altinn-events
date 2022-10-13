@@ -31,7 +31,7 @@ namespace Altinn.Platform.Events.Controllers
     [Route("events/api/v1/app")]
     public class AppController : ControllerBase
     {
-        private readonly IInboundService _inboundService;
+        private readonly IEventsService _eventsService;
         private readonly IMapper _mapper;
         private readonly ILogger _logger;
         private readonly AccessTokenSettings _accessTokenSettings;
@@ -41,14 +41,14 @@ namespace Altinn.Platform.Events.Controllers
         /// Initializes a new instance of the <see cref="AppController"/> class
         /// </summary>
         public AppController(
-            IInboundService inboundService,
+            IEventsService eventsService,
             IOptions<GeneralSettings> settings,
             ILogger<AppController> logger,
             IOptions<AccessTokenSettings> accessTokenSettings,
             IMapper mapper)
         {
             _logger = logger;
-            _inboundService = inboundService;
+            _eventsService = eventsService;
             _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
             _accessTokenSettings = accessTokenSettings.Value;
             _mapper = mapper;
@@ -83,7 +83,7 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _inboundService.SaveAndPostInbound(_mapper.Map<CloudEvent>(cloudEvent));
+                string cloudEventId = await _eventsService.SaveAndPostInbound(_mapper.Map<CloudEvent>(cloudEvent));
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
@@ -144,7 +144,7 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                List<CloudEvent> events = await _inboundService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
+                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
                 SetNextLink(events);
 
                 return events;
@@ -201,7 +201,7 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                List<CloudEvent> events = await _inboundService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
+                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
                 SetNextLink(events);
                 return events;
             }

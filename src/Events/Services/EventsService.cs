@@ -18,7 +18,7 @@ namespace Altinn.Platform.Events.Services
     /// - time is set by the database when calling SaveAndPostInbound
     ///   or by the service when calling PushToRegistrationQueue
     /// </summary>
-    public class InboundService : IInboundService
+    public class EventsService : IEventsService
     {
         private readonly ICloudEventRepository _repository;
         private readonly IEventsQueueClient _queueClient;
@@ -26,18 +26,18 @@ namespace Altinn.Platform.Events.Services
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
-        private readonly ILogger<IInboundService> _logger;
+        private readonly ILogger<IEventsService> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="InboundService"/> class.
+        /// Initializes a new instance of the <see cref="EventsService"/> class.
         /// </summary>
-        public InboundService(
+        public EventsService(
             ICloudEventRepository repository,
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
             IClaimsPrincipalProvider claimsPrincipalProvider,
-            ILogger<IInboundService> logger)
+            ILogger<IEventsService> logger)
         {
             _repository = repository;
             _queueClient = queueClient;
@@ -56,7 +56,7 @@ namespace Altinn.Platform.Events.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "// InboundService // Save // Failed to save eventId {EventId} to storage.", cloudEvent.Id);
+                _logger.LogError(ex, "// EventsService // Save // Failed to save eventId {EventId} to storage.", cloudEvent.Id);
                 throw;
             }
 
@@ -70,7 +70,7 @@ namespace Altinn.Platform.Events.Services
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// InboundService // PostInbound // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(receipt.Exception, "// EventsService // PostInbound // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
                 throw receipt.Exception;
             }
 
@@ -88,7 +88,7 @@ namespace Altinn.Platform.Events.Services
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// InboundService // SaveAndPostInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(receipt.Exception, "// EventsService // SaveAndPostInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
             }
 
             return cloudEvent.Id;

@@ -65,7 +65,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string responseId = Guid.NewGuid().ToString();
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
-                Mock<IInboundService> eventsService = new Mock<IInboundService>();
+                Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(s => s.PostInbound(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
@@ -101,7 +101,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/inbound";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
-                Mock<IInboundService> eventsService = new Mock<IInboundService>();
+                Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(er => er.PostInbound(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
@@ -132,7 +132,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/inbound";
-                HttpClient client = GetTestClient(new Mock<IInboundService>().Object);
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
 
                 StringContent content = new StringContent(string.Empty);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
@@ -159,7 +159,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/inbound";
 
-                HttpClient client = GetTestClient(new Mock<IInboundService>().Object);
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
 
                 StringContent content = new StringContent(string.Empty);
@@ -173,7 +173,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient(IInboundService eventsService)
+            private HttpClient GetTestClient(IEventsService eventsService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {

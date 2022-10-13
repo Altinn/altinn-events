@@ -7,10 +7,10 @@ using Altinn.Platform.Events.Models;
 namespace Altinn.Platform.Events.Services.Interfaces
 {
     /// <summary>
-    /// Interface to the InboundService, used for saving events to database storage
+    /// Interface to the EventsService, used for saving events to database storage
     /// and posting to the events-inbound queue.
     /// </summary>
-    public interface IInboundService
+    public interface IEventsService
     {
         /// <summary>
         /// Save cloud event to persistent storage.

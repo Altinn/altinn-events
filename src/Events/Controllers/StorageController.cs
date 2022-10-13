@@ -19,18 +19,18 @@ namespace Altinn.Platform.Events.Controllers
     [Route("events/api/v1/storage/events")]
     public class StorageController : ControllerBase
     {
-        private readonly IInboundService _inboundService;
+        private readonly IEventsService _eventsService;
         private readonly ILogger _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageController"/> class
         /// </summary>
         public StorageController(
-            IInboundService inboundService,
+            IEventsService eventsService,
             ILogger<StorageController> logger)
         {
             _logger = logger;
-            _inboundService = inboundService;
+            _eventsService = eventsService;
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Controllers
         {
             try
             {
-                string cloudEventId = await _inboundService.Save(cloudEvent);
+                string cloudEventId = await _eventsService.Save(cloudEvent);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
