@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Threading.Tasks;
+using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Azure.WebJobs;
@@ -12,14 +13,14 @@ namespace Altinn.Platform.Events.Functions
     /// </summary>
     public class EventsInbound
     {
-        private readonly IPushEventsService _pushEventsService;
+        private readonly IOutboundClient _outboundClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsInbound"/> class.
         /// </summary>
-        public EventsInbound(IPushEventsService pushEventsService)
+        public EventsInbound(IOutboundClient outboundClient)
         {
-            _pushEventsService = pushEventsService;
+            _outboundClient = outboundClient;
         }
 
         /// <summary>
@@ -31,7 +32,7 @@ namespace Altinn.Platform.Events.Functions
 #pragma warning restore IDE0060 // Remove unused parameter
         {
             CloudEvent cloudEvent = JsonSerializer.Deserialize<CloudEvent>(item);
-            await _pushEventsService.SendToPushController(cloudEvent);
+            await _outboundClient.PostOutbound(cloudEvent);
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
+using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
@@ -13,34 +14,33 @@ using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Events.Functions.Services
+namespace Altinn.Platform.Events.Functions.Clients
 {
     /// <summary>
-    /// Handles PushEvents service
+    /// Client used to send cloudEvents to events-inbound queue.
     /// </summary>
-    public class PushEventsService : IPushEventsService
+    public class InboundClient : IInboundClient
     {
         private readonly HttpClient _client;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
-        private readonly PlatformSettings _platformSettings;
-        private readonly ILogger<IPushEventsService> _logger;
+        private readonly ILogger<IInboundClient> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PushEventsService"/> class.
+        /// Initializes a new instance of the <see cref="InboundClient"/> class.
         /// </summary>
-        public PushEventsService(
+        public InboundClient(
             HttpClient httpClient,
             IAccessTokenGenerator accessTokenGenerator,
             IKeyVaultService keyVaultService,
             IOptions<PlatformSettings> eventsConfig,
             IOptions<KeyVaultSettings> keyVaultSettings,
-            ILogger<IPushEventsService> logger)
+            ILogger<IInboundClient> logger)
         {
-            _platformSettings = eventsConfig.Value;
+            var platformSettings = eventsConfig.Value;
+            httpClient.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
             _keyVaultSettings = keyVaultSettings.Value;
-            httpClient.BaseAddress = new Uri(_platformSettings.ApiEventsEndpoint);
             _client = httpClient;
             _accessTokenGenerator = accessTokenGenerator;
             _keyVaultService = keyVaultService;
@@ -48,12 +48,12 @@ namespace Altinn.Platform.Events.Functions.Services
         }
 
         /// <inheritdoc/>
-        public async Task SendToPushController(CloudEvent item)
+        public async Task PostInbound(CloudEvent item)
         {
             StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
             try
             {
-                string endpointUrl = "push";
+                string endpointUrl = "inbound";
 
                 string certBase64 = await _keyVaultService.GetCertificateAsync(_keyVaultSettings.KeyVaultURI, _keyVaultSettings.PlatformCertSecretId);
                 string accessToken = _accessTokenGenerator.GenerateAccessToken(
@@ -61,17 +61,18 @@ namespace Altinn.Platform.Events.Functions.Services
                     "events",
                     new X509Certificate2(Convert.FromBase64String(certBase64), (string)null, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
 
-                HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
+                HttpResponseMessage response = await _client.PutAsync(endpointUrl, httpContent, accessToken);
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    _logger.LogError($"// Push event with id {item.Id} failed with statuscode {response.StatusCode}");
-                    throw new Exception($"// Push event with id {item.Id} failed with statuscode {response.StatusCode}");
+                    var msg = $"// PostInbound with cloudEvent Id {item.Id} failed, status code: {response.StatusCode}";
+                    _logger.LogError(msg);
+                    throw new HttpRequestException(msg);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, $"// Push event with id {item.Id} failed with errormessage {e.Message}");
-                throw e;
+                _logger.LogError(e, $"// PostInbound with cloudEvent Id {item.Id} failed, error message: {e.Message}");
+                throw;
             }
         }
     }
