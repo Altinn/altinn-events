@@ -1,0 +1,4 @@
+# Labels for pull requests
+
+review/db-migration:
+  - 'src/Events/Migration/**'
