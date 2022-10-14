@@ -7,11 +7,11 @@ namespace Altinn.Platform.Events.Services.Interfaces
     /// <summary>
     /// Defines the methods required for an implementation of the push service.
     /// </summary>
-    public interface IPushEvent
+    public interface IOutboundService
     {
         /// <summary>
-        /// Push a event to all consumer subcribing to source and/or subject
+        /// Deliver outbound cloudEvent to each matching subscriber.
         /// </summary>
-        Task Push(CloudEvent cloudEvent);
+        Task PostOutbound(CloudEvent cloudEvent);
     }
 }

@@ -1,25 +1,24 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Models;
-using Altinn.Platform.Events.Services.Interfaces;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
-    public class QueueServiceMock : IQueueService
+    public class EventsQueueClientMock : IEventsQueueClient
     {
-        public QueueServiceMock()
+        public EventsQueueClientMock()
         {
             OutboundQueue = new Dictionary<string, List<CloudEventEnvelope>>();
         }
 
         /// <summary>
-        /// Queumock for unit test
+        /// Queue mock for unit test
         /// </summary>
         public Dictionary<string, List<CloudEventEnvelope>> OutboundQueue { get; set; }
 
-        public Task<PushQueueReceipt> PushToOutboundQueue(string content)
+        public Task<QueuePostReceipt> EnqueueOutbound(string content)
         {
             CloudEventEnvelope cloudEventEnvelope = JsonSerializer.Deserialize<CloudEventEnvelope>(content);
 
@@ -30,17 +29,17 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
             OutboundQueue[cloudEventEnvelope.CloudEvent.Id].Add(cloudEventEnvelope);
 
-            return Task.FromResult(new PushQueueReceipt { Success = true });
+            return Task.FromResult(new QueuePostReceipt { Success = true });
         }
 
-        public Task<PushQueueReceipt> PushToQueue(string content)
+        public Task<QueuePostReceipt> EnqueueInbound(string content)
         {
-            return Task.FromResult(new PushQueueReceipt { Success = true });
+            return Task.FromResult(new QueuePostReceipt { Success = true });
         }
 
-        public Task<PushQueueReceipt> PushToValidationQueue(string content)
+        public Task<QueuePostReceipt> EnqueueSubscriptionValidation(string content)
         {
-            return Task.FromResult(new PushQueueReceipt { Success = true });
+            return Task.FromResult(new QueuePostReceipt { Success = true });
         }
     }
 }

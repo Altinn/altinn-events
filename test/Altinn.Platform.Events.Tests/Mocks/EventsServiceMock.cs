@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -14,12 +13,12 @@ using Newtonsoft.Json;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
-    public class AppEventsServiceMock : IAppEventsService
+    public class EventsServiceMock : IEventsService
     {
         private readonly int _eventsCollection;
         private readonly Dictionary<string, int> _partyLookup;
 
-        public AppEventsServiceMock(int eventsCollection = 1)
+        public EventsServiceMock(int eventsCollection = 1)
         {
             _eventsCollection = eventsCollection;
             _partyLookup = new()
@@ -91,7 +90,17 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
-        public Task<string> StoreCloudEvent(CloudEvent cloudEvent)
+        public Task<string> Save(CloudEvent cloudEvent)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> PostInbound(CloudEvent cloudEvent)
+        {
+            throw new NotImplementedException();
+        }
+        
+        public Task<string> SaveAndPostInbound(CloudEvent cloudEvent)
         {
             throw new NotImplementedException();
         }
@@ -103,7 +112,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
         private static string GetEventsPath()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AppEventsServiceMock).Assembly.Location).LocalPath);
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(EventsServiceMock).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "events");
         }
     }

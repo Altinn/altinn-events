@@ -2,22 +2,19 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
-using Altinn.Platform.Events.Services.Interfaces;
-
 using Azure.Storage.Queues;
-
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Events.Services
+namespace Altinn.Platform.Events.Clients
 {
     /// <summary>
-    /// The queue service that handles actions related to the queue storage.
+    /// Implementation of the <see ref="IEventsQueueClient"/> using Azure Storage Queues.
     /// </summary>
     [ExcludeFromCodeCoverage]
-    public class QueueService : IQueueService
+    public class EventsQueueClient : IEventsQueueClient
     {
         private readonly QueueStorageSettings _settings;
 
@@ -28,16 +25,16 @@ namespace Altinn.Platform.Events.Services
         private QueueClient _validationQueueClient;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="QueueService"/> class.
+        /// Initializes a new instance of the <see cref="EventsQueueClient"/> class.
         /// </summary>
         /// <param name="settings">The queue storage settings</param>
-        public QueueService(IOptions<QueueStorageSettings> settings)
+        public EventsQueueClient(IOptions<QueueStorageSettings> settings)
         {
             _settings = settings.Value;
         }
 
         /// <inheritdoc/>
-        public async Task<PushQueueReceipt> PushToQueue(string content)
+        public async Task<QueuePostReceipt> EnqueueInbound(string content)
         {
             try
             {
@@ -46,14 +43,14 @@ namespace Altinn.Platform.Events.Services
             }
             catch (Exception e)
             {
-                return new PushQueueReceipt { Success = false, Exception = e };
+                return new QueuePostReceipt { Success = false, Exception = e };
             }
 
-            return new PushQueueReceipt { Success = true };
+            return new QueuePostReceipt { Success = true };
         }
 
         /// <inheritdoc/>
-        public async Task<PushQueueReceipt> PushToOutboundQueue(string content)
+        public async Task<QueuePostReceipt> EnqueueOutbound(string content)
         {
             try
             {
@@ -62,14 +59,14 @@ namespace Altinn.Platform.Events.Services
             }
             catch (Exception e)
             {
-                return new PushQueueReceipt { Success = false, Exception = e };
+                return new QueuePostReceipt { Success = false, Exception = e };
             }
 
-            return new PushQueueReceipt { Success = true };
+            return new QueuePostReceipt { Success = true };
         }
 
         /// <inheritdoc/>
-        public async Task<PushQueueReceipt> PushToValidationQueue(string content)
+        public async Task<QueuePostReceipt> EnqueueSubscriptionValidation(string content)
         {
             try
             {
@@ -78,10 +75,10 @@ namespace Altinn.Platform.Events.Services
             }
             catch (Exception e)
             {
-                return new PushQueueReceipt { Success = false, Exception = e };
+                return new QueuePostReceipt { Success = false, Exception = e };
             }
 
-            return new PushQueueReceipt { Success = true };
+            return new QueuePostReceipt { Success = true };
         }
 
         private async Task<QueueClient> GetInboundQueueClient()

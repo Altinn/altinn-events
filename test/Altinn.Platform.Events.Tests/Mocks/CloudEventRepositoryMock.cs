@@ -28,7 +28,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         public Task<CloudEvent> Create(CloudEvent cloudEvent)
         {
             cloudEvent.Time = DateTime.UtcNow; // check the format here! goal 2021-02-12 09:35:20.050893+01
-
+            
             return Task.FromResult(cloudEvent);
         }
 
@@ -91,7 +91,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
         private static string GetEventsPath()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AppEventsServiceMock).Assembly.Location).LocalPath);
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(EventsServiceMock).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "events");
         }
     }

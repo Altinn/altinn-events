@@ -61,7 +61,7 @@ namespace Altinn.Platform.Events.Functions.Services
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
-                    throw new Exception($"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
+                    throw new HttpRequestException($"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
                 }
             }
             catch (Exception e)
