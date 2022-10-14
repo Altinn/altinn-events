@@ -34,17 +34,17 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
         /// <summary>
         /// Represents a collection of integration tests of the <see cref="InboundController"/>.
         /// </summary>
-        public class PushControllerInboundTests : IClassFixture<WebApplicationFactory<InboundController>>
+        public class InboundControllerTests : IClassFixture<WebApplicationFactory<InboundController>>
         {
             private const string BasePath = "/events/api/v1";
 
             private readonly WebApplicationFactory<InboundController> _factory;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="PushControllerInboundTests"/> class with the given <see cref="WebApplicationFactory{TPushController}"/>.
+            /// Initializes a new instance of the <see cref="InboundControllerTests"/> class with the given <see cref="WebApplicationFactory{TPushController}"/>.
             /// </summary>
             /// <param name="factory">The <see cref="WebApplicationFactory{TPushController}"/> to use when setting up the test server.</param>
-            public PushControllerInboundTests(WebApplicationFactory<InboundController> factory)
+            public InboundControllerTests(WebApplicationFactory<InboundController> factory)
             {
                 _factory = factory;
             }
