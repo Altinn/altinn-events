@@ -82,6 +82,36 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         /// <summary>
+        /// Scenario: Subscription Repository finds a single match for an outbound event
+        /// Expected result: Consumer is not authorized against the event source 
+        /// Success criteria: QueueClient is never called to send the outbound event
+        /// </summary>
+        [Fact]
+        public async void PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Subscription>() { new Subscription { Consumer = "/org/nav" } });
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()));
+
+            var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent);
+
+            // Assert
+            repositoryMock.VerifyAll();
+
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
+        }
+
+        /// <summary>
         /// Scenario:
         ///   Push an event. Three subscriptions are matching and is authorized
         /// Expected result:
