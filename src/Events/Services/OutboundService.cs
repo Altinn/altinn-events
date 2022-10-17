@@ -75,18 +75,6 @@ namespace Altinn.Platform.Events.Services
             await AuthorizeAndPush(cloudEvent, subscriptions);
         }
 
-        private async Task PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
-        {
-            QueuePostReceipt receipt = await _queueClient.EnqueueOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
-            string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
-            int subscriptionId = cloudEventEnvelope.SubscriptionId;
-
-            if (!receipt.Success)
-            {
-                _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
-            }
-        }
-
         private async Task AuthorizeAndPush(CloudEvent cloudEvent, List<Subscription> subscriptions)
         {
             foreach (Subscription subscription in subscriptions)
@@ -101,6 +89,18 @@ namespace Altinn.Platform.Events.Services
             {
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
                 await PushToOutboundQueue(cloudEventEnvelope);
+            }
+        }
+
+        private async Task PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
+        {
+            QueuePostReceipt receipt = await _queueClient.EnqueueOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
+            string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
+            int subscriptionId = cloudEventEnvelope.SubscriptionId;
+
+            if (!receipt.Success)
+            {
+                _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
             }
         }
 
