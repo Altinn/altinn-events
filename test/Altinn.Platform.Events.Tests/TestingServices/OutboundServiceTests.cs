@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             string expectedSimplified = "urn:testing-events:test-source";
-           
+
             CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), "/party/1337/", "app.instance.process.completed");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
@@ -80,7 +80,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             repositoryMock.Verify(r => r.GetSubscriptions(It.Is<string>(s => s.Equals(expectedSimplified)), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()));
         }
-
 
         /// <summary>
         /// Scenario:
