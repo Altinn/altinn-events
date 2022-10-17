@@ -63,7 +63,6 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task PostOutbound(CloudEvent cloudEvent)
         {
-
             List<Subscription> subscriptions = await GetSubscriptions(cloudEvent.Source.ToString(), cloudEvent.Subject, cloudEvent.Type);
             await AuthorizeAndPush(cloudEvent, subscriptions);        
         }

@@ -44,8 +44,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            Assert.True(queueServiceMock.OutboundQueue.ContainsKey(cloudEvent.Id));
-            Assert.Equal(3, queueServiceMock.OutboundQueue[cloudEvent.Id].Count);
+            Assert.True(queueClientMock.OutboundQueue.ContainsKey(cloudEvent.Id));
+            Assert.Equal(3, queueClientMock.OutboundQueue[cloudEvent.Id].Count);
         }
 
         /// <summary>
