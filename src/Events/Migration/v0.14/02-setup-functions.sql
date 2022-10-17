@@ -26,7 +26,7 @@ return query
   WHERE (s.subjectfilter is NULL OR s.subjectfilter = subject)
   AND s.sourcefilter = source
   AND (s.typefilter is NULL OR s.typefilter = type)
-  AND s.validated = true;
+  AND s.validated;
 
 END;
 $BODY$;
