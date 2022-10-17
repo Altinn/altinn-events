@@ -11,37 +11,33 @@ using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Events.Functions.Services
+namespace Altinn.Platform.Events.Functions.Clients
 {
     /// <summary>
     /// Service to validate subscription
     /// </summary>
-    public class ValidateSubscriptionService : IValidateSubscriptionService
+    public class ValidateSubscriptionClient : SecureClientBase, IValidateSubscriptionClient
     {
         private readonly HttpClient _client;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
-        private readonly PlatformSettings _platformSettings;
         private readonly ILogger<IOutboundClient> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ValidateSubscriptionService"/> class.
+        /// Initializes a new instance of the <see cref="ValidateSubscriptionClient"/> class.
         /// </summary>
-        public ValidateSubscriptionService(
-        HttpClient httpClient,
-        IAccessTokenGenerator accessTokenGenerator,
-        IKeyVaultService keyVaultService,
-        IOptions<PlatformSettings> eventsConfig,
-        IOptions<KeyVaultSettings> keyVaultSettings,
-        ILogger<IOutboundClient> logger)
+        public ValidateSubscriptionClient(
+            HttpClient httpClient,
+            IAccessTokenGenerator accessTokenGenerator,
+            IKeyVaultService keyVaultService,
+            IOptions<PlatformSettings> eventsConfig,
+            IOptions<KeyVaultSettings> keyVaultSettings,
+            ILogger<IOutboundClient> logger)
+            : base(httpClient, accessTokenGenerator, keyVaultService, keyVaultSettings)
         {
-            _platformSettings = eventsConfig.Value;
-            _keyVaultSettings = keyVaultSettings.Value;
-            httpClient.BaseAddress = new Uri(_platformSettings.ApiEventsEndpoint);
-            _client = httpClient;
-            _accessTokenGenerator = accessTokenGenerator;
-            _keyVaultService = keyVaultService;
+            var platformSettings = eventsConfig.Value;
+            Client.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
             _logger = logger;
         }
 
@@ -51,12 +47,8 @@ namespace Altinn.Platform.Events.Functions.Services
             try
             {
                 string endpointUrl = "subscriptions/validate/" + subscriptionId;
-               
-                string certBase64 = await _keyVaultService.GetCertificateAsync(_keyVaultSettings.KeyVaultURI, _keyVaultSettings.PlatformCertSecretId);
-                string accessToken = _accessTokenGenerator.GenerateAccessToken(
-                    "platform",
-                    "events",
-                    new X509Certificate2(Convert.FromBase64String(certBase64), (string)null, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
+
+                var accessToken = await GenerateAccessToken("platform", "events");
 
                 HttpResponseMessage response = await _client.PutAsync(endpointUrl, null, accessToken);
                 if (response.StatusCode != HttpStatusCode.OK)
@@ -68,7 +60,7 @@ namespace Altinn.Platform.Events.Functions.Services
             catch (Exception e)
             {
                 _logger.LogError(e, $"// Validate subscription with id {subscriptionId} failed with errormessage {e.Message}");
-                throw e;
+                throw;
             }
         }
     }

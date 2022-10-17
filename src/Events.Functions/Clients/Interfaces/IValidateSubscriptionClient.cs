@@ -1,14 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace Altinn.Platform.Events.Functions.Services.Interfaces
+namespace Altinn.Platform.Events.Functions.Clients.Interfaces
 {
     /// <summary>
     /// Interface for validate subscription
     /// </summary>
-    public interface IValidateSubscriptionService
+    public interface IValidateSubscriptionClient
     {
         /// <summary>
         /// Validates a subscription

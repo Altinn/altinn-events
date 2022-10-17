@@ -19,12 +19,8 @@ namespace Altinn.Platform.Events.Functions.Clients
     /// <summary>
     /// Events Storage REST API client
     /// </summary>
-    public class EventsStorageClient : IEventsStorageClient
+    public class EventsStorageClient : SecureClientBase, IEventsStorageClient
     {
-        private readonly HttpClient _client;
-        private readonly IAccessTokenGenerator _accessTokenGenerator;
-        private readonly IKeyVaultService _keyVaultService;
-        private readonly KeyVaultSettings _keyVaultSettings;
         private readonly ILogger<IOutboundClient> _logger;
 
         /// <summary>
@@ -36,14 +32,11 @@ namespace Altinn.Platform.Events.Functions.Clients
             IKeyVaultService keyVaultService,
             IOptions<PlatformSettings> eventsConfig,
             IOptions<KeyVaultSettings> keyVaultSettings,
-            ILogger<IOutboundClient> logger)
+            ILogger<IOutboundClient> logger) 
+            : base(httpClient, accessTokenGenerator, keyVaultService, keyVaultSettings)
         {
             var platformSettings = eventsConfig.Value;
-            httpClient.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
-            _keyVaultSettings = keyVaultSettings.Value;
-            _client = httpClient;
-            _accessTokenGenerator = accessTokenGenerator;
-            _keyVaultService = keyVaultService;
+            Client.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
             _logger = logger;
         }
 
@@ -55,13 +48,9 @@ namespace Altinn.Platform.Events.Functions.Clients
             {
                 string endpointUrl = "storage/events";
 
-                string certBase64 = await _keyVaultService.GetCertificateAsync(_keyVaultSettings.KeyVaultURI, _keyVaultSettings.PlatformCertSecretId);
-                string accessToken = _accessTokenGenerator.GenerateAccessToken(
-                    "platform",
-                    "events",
-                    new X509Certificate2(Convert.FromBase64String(certBase64), (string)null, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
+                var accessToken = await GenerateAccessToken("platform", "events");
 
-                HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
+                HttpResponseMessage response = await Client.PostAsync(endpointUrl, httpContent, accessToken);
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     var msg = $"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {response.StatusCode}";

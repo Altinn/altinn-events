@@ -19,12 +19,8 @@ namespace Altinn.Platform.Events.Functions.Clients
     /// <summary>
     /// Client used to send cloudEvents to events-inbound queue.
     /// </summary>
-    public class InboundClient : IInboundClient
+    public class InboundClient : SecureClientBase, IInboundClient
     {
-        private readonly HttpClient _client;
-        private readonly IAccessTokenGenerator _accessTokenGenerator;
-        private readonly IKeyVaultService _keyVaultService;
-        private readonly KeyVaultSettings _keyVaultSettings;
         private readonly ILogger<IInboundClient> _logger;
 
         /// <summary>
@@ -37,13 +33,10 @@ namespace Altinn.Platform.Events.Functions.Clients
             IOptions<PlatformSettings> eventsConfig,
             IOptions<KeyVaultSettings> keyVaultSettings,
             ILogger<IInboundClient> logger)
+            : base(httpClient, accessTokenGenerator, keyVaultService, keyVaultSettings)
         {
             var platformSettings = eventsConfig.Value;
-            httpClient.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
-            _keyVaultSettings = keyVaultSettings.Value;
-            _client = httpClient;
-            _accessTokenGenerator = accessTokenGenerator;
-            _keyVaultService = keyVaultService;
+            Client.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
             _logger = logger;
         }
 
@@ -55,13 +48,9 @@ namespace Altinn.Platform.Events.Functions.Clients
             {
                 string endpointUrl = "inbound";
 
-                string certBase64 = await _keyVaultService.GetCertificateAsync(_keyVaultSettings.KeyVaultURI, _keyVaultSettings.PlatformCertSecretId);
-                string accessToken = _accessTokenGenerator.GenerateAccessToken(
-                    "platform",
-                    "events",
-                    new X509Certificate2(Convert.FromBase64String(certBase64), (string)null, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
+                var accessToken = await GenerateAccessToken("platform", "events");
 
-                HttpResponseMessage response = await _client.PutAsync(endpointUrl, httpContent, accessToken);
+                HttpResponseMessage response = await Client.PutAsync(endpointUrl, httpContent, accessToken);
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     var msg = $"// PostInbound with cloudEvent Id {item.Id} failed, status code: {response.StatusCode}";
