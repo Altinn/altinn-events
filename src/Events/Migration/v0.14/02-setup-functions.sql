@@ -24,7 +24,7 @@ return query
 	SELECT s.id, s.sourcefilter, s.subjectfilter, s.typefilter, s.consumer, s.endpointurl, s.createdby, s.validated, s."time"
 	FROM events.subscription s
   WHERE (s.subjectfilter is NULL OR s.subjectfilter = subject)
-  AND position(s.sourcefilter in source) = 1
+  AND s.sourcefilter = source
   AND (s.typefilter is NULL OR s.typefilter = type)
   AND s.validated = true;
 
