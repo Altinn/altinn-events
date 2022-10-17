@@ -29,21 +29,21 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Authorize]
     [Route("events/api/v1/app")]
-    public class AppEventsController : ControllerBase
+    public class AppController : ControllerBase
     {
-        private readonly IAppEventsService _eventsService;
+        private readonly IEventsService _eventsService;
         private readonly IMapper _mapper;
         private readonly ILogger _logger;
         private readonly AccessTokenSettings _accessTokenSettings;
         private readonly string _eventsBaseUri;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AppEventsController"/> class
+        /// Initializes a new instance of the <see cref="AppController"/> class
         /// </summary>
-        public AppEventsController(
-            IAppEventsService eventsService,
+        public AppController(
+            IEventsService eventsService,
             IOptions<GeneralSettings> settings,
-            ILogger<AppEventsController> logger,
+            ILogger<AppController> logger,
             IOptions<AccessTokenSettings> accessTokenSettings,
             IMapper mapper)
         {
@@ -57,7 +57,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Inserts a new event.
         /// </summary>
-        /// <returns>The application metadata object.</returns>
+        /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
         [Consumes("application/json")]
@@ -83,13 +83,13 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.StoreCloudEvent(_mapper.Map<CloudEvent>(cloudEvent));
+                string cloudEventId = await _eventsService.SaveAndPostInbound(_mapper.Map<CloudEvent>(cloudEvent));
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Unable to store cloud event in database.");
-                return StatusCode(500, $"Unable to store cloud event in database.");
+                _logger.LogError(e, "Unable to save cloud event to storage.");
+                return StatusCode(500, $"Unable to save cloud event to storage.");
             }
         }
 
@@ -264,7 +264,7 @@ namespace Altinn.Platform.Events.Controllers
             }
             else
             {
-                _logger.LogError(e, "// AppEventsController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
+                _logger.LogError(e, "// AppController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
                 return Problem(e.Message, statusCode: 500);
             }
         }

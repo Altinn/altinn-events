@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-
-using Altinn.Platform.Events.Exceptions;
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -13,34 +12,35 @@ using Microsoft.Extensions.Logging;
 namespace Altinn.Platform.Events.Services
 {
     /// <summary>
-    /// Handles events sevice.
-    /// Notice when saving cloudevent:
-    /// - the id for the cloudevent is created by the app
-    /// - time is set to null, it will be created in the database
+    /// Handles events service. 
+    /// Notice when saving cloudEvent:
+    /// - the id for the cloudEvent is created by the app
+    /// - time is set by the database when calling SaveAndPostInbound
+    ///   or by the service when calling PushToRegistrationQueue
     /// </summary>
-    public class AppEventsService : IAppEventsService
+    public class EventsService : IEventsService
     {
         private readonly ICloudEventRepository _repository;
-        private readonly IQueueService _queue;
+        private readonly IEventsQueueClient _queueClient;
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
-        private readonly ILogger<IAppEventsService> _logger;
+        private readonly ILogger<IEventsService> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AppEventsService"/> class.
+        /// Initializes a new instance of the <see cref="EventsService"/> class.
         /// </summary>
-        public AppEventsService(
+        public EventsService(
             ICloudEventRepository repository,
-            IQueueService queue,
+            IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
             IClaimsPrincipalProvider claimsPrincipalProvider,
-            ILogger<IAppEventsService> logger)
+            ILogger<IEventsService> logger)
         {
             _repository = repository;
-            _queue = queue;
+            _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
             _claimsPrincipalProvider = claimsPrincipalProvider;
@@ -48,17 +48,47 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> StoreCloudEvent(CloudEvent cloudEvent)
+        public async Task<string> Save(CloudEvent cloudEvent)
+        {
+            try
+            {
+                cloudEvent = await _repository.Create(cloudEvent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "// EventsService // Save // Failed to save eventId {EventId} to storage.", cloudEvent.Id);
+                throw;
+            }
+
+            return cloudEvent.Id;
+        }
+
+        /// <inheritdoc/>
+        public async Task<string> PostInbound(CloudEvent cloudEvent)
+        {
+            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
+
+            if (!receipt.Success)
+            {
+                _logger.LogError(receipt.Exception, "// EventsService // PostInbound // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
+                throw receipt.Exception;
+            }
+
+            return cloudEvent.Id;
+        }
+
+        /// <inheritdoc/>
+        public async Task<string> SaveAndPostInbound(CloudEvent cloudEvent)
         {
             cloudEvent.Id = Guid.NewGuid().ToString();
             cloudEvent.Time = null;
             cloudEvent = await _repository.Create(cloudEvent);
 
-            PushQueueReceipt receipt = await _queue.PushToQueue(JsonSerializer.Serialize(cloudEvent));
+            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // StoreCloudEvent // Failed to push event {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(receipt.Exception, "// EventsService // SaveAndPostInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
             }
 
             return cloudEvent.Id;

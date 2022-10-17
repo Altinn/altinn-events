@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Altinn.Platform.Events.Configuration
 {
     /// <summary>
@@ -11,7 +13,7 @@ namespace Altinn.Platform.Events.Configuration
         public string ConnectionString { get; set; }
 
         /// <summary>
-        /// Name of the queue to push incomming events to.
+        /// Name of the queue to push incoming events to, after persisting to db.
         /// </summary>
         public string InboundQueueName { get; set; }
 

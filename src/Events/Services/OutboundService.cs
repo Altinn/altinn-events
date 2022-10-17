@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -18,9 +18,9 @@ namespace Altinn.Platform.Events.Services
     /// <summary>
     /// An implementation of the push service
     /// </summary>
-    public class PushEventService : IPushEvent
+    public class OutboundService : IOutboundService
     {
-        private readonly IQueueService _queue;
+        private readonly IEventsQueueClient _queueClient;
 
         private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IAuthorization _authorizationService;
@@ -30,20 +30,20 @@ namespace Altinn.Platform.Events.Services
         private readonly MemoryCacheEntryOptions _subscriptionCacheEntryOptions;
         private readonly MemoryCacheEntryOptions _orgAuthorizationEntryOptions;
 
-        private readonly ILogger<IPushEvent> _logger;
+        private readonly ILogger<IOutboundService> _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PushEventService"/> class.
-        /// </summary>
-        public PushEventService(
-            IQueueService queueService,
+        /// Initializes a new instance of the <see cref="OutboundService"/> class.
+        /// </summary>      
+        public OutboundService(
+            IEventsQueueClient queueClient,
             ISubscriptionRepository repository,
             IAuthorization authorizationService,
             IOptions<PlatformSettings> platformSettings,
             IMemoryCache memoryCache,
-            ILogger<IPushEvent> logger)
+            ILogger<IOutboundService> logger)
         {
-            _queue = queueService;
+            _queueClient = queueClient;
             _subscriptionRepository = repository;
             _authorizationService = authorizationService;
             _platformSettings = platformSettings.Value;
@@ -61,21 +61,22 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task Push(CloudEvent cloudEvent)
-        {            
-                List<Subscription> subscriptions = await GetSubscriptions(cloudEvent.Source.ToString(), cloudEvent.Subject, cloudEvent.Type);
-                await AuthorizeAndPush(cloudEvent, subscriptions);            
+        public async Task PostOutbound(CloudEvent cloudEvent)
+        {
+
+            List<Subscription> subscriptions = await GetSubscriptions(cloudEvent.Source.ToString(), cloudEvent.Subject, cloudEvent.Type);
+            await AuthorizeAndPush(cloudEvent, subscriptions);        
         }
 
-        private async Task PushToConsumer(CloudEventEnvelope cloudEventEnvelope)
+        private async Task PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
         {
-            PushQueueReceipt receipt = await _queue.PushToOutboundQueue(JsonSerializer.Serialize(cloudEventEnvelope));
+            QueuePostReceipt receipt = await _queueClient.EnqueueOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
             string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
             int subscriptionId = cloudEventEnvelope.SubscriptionId;
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // StoreCloudEvent // Failed to push event envelope {EventId} to comsumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
+                _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
             }
         }
 
@@ -92,7 +93,7 @@ namespace Altinn.Platform.Events.Services
             if (await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer))
             {
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
-                await PushToConsumer(cloudEventEnvelope);
+                await PushToOutboundQueue(cloudEventEnvelope);
             }
         }
 

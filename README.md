@@ -15,6 +15,7 @@ These instructions will get you a copy of the events component up and running on
 3. Newest [Git](https://git-scm.com/downloads)
 4. [Docker CE](https://www.docker.com/get-docker)
 5. Solution is cloned
+6. PostgreSQL is installed locally (see [handbook](https://docs.altinn.studio/community/contributing/handbook/postgres/))
 
 
 ## Running the events component
