@@ -25,7 +25,6 @@ namespace Altinn.Platform.Events.Functions.Clients
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
-        private readonly PlatformSettings _platformSettings;
         private readonly ILogger<IOutboundClient> _logger;
 
         /// <summary>
@@ -39,9 +38,9 @@ namespace Altinn.Platform.Events.Functions.Clients
             IOptions<KeyVaultSettings> keyVaultSettings,
             ILogger<IOutboundClient> logger)
         {
-            _platformSettings = eventsConfig.Value;
+            var platformSettings = eventsConfig.Value;
+            httpClient.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
             _keyVaultSettings = keyVaultSettings.Value;
-            httpClient.BaseAddress = new Uri(_platformSettings.ApiEventsEndpoint);
             _client = httpClient;
             _accessTokenGenerator = accessTokenGenerator;
             _keyVaultService = keyVaultService;
@@ -49,9 +48,9 @@ namespace Altinn.Platform.Events.Functions.Clients
         }
 
         /// <inheritdoc/>
-        public async Task SaveCloudEvent(CloudEvent item)
+        public async Task SaveCloudEvent(CloudEvent cloudEvent)
         {
-            StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
+            StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
             try
             {
                 string endpointUrl = "storage/events";
@@ -65,14 +64,14 @@ namespace Altinn.Platform.Events.Functions.Clients
                 HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    var msg = $"// SaveCloudEvent with id {item.Id} failed with status code {response.StatusCode}";
+                    var msg = $"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {response.StatusCode}";
                     _logger.LogError(msg);
                     throw new HttpRequestException(msg);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, $"// SaveCloudEvent with id {item.Id} failed with error message {e.Message}");
+                _logger.LogError(e, $"// SaveCloudEvent with id {cloudEvent.Id} failed with error message {e.Message}");
                 throw;
             }
         }
