@@ -35,7 +35,7 @@ namespace Altinn.Platform.Events.Services
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OutboundService"/> class.
-        /// </summary>      
+        /// </summary>
         public OutboundService(
             IEventsQueueClient queueClient,
             ISubscriptionRepository repository,
