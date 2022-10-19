@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
@@ -18,10 +17,6 @@ namespace Altinn.Platform.Events.Functions.Clients
     /// </summary>
     public class ValidateSubscriptionClient : SecureClientBase, IValidateSubscriptionClient
     {
-        private readonly HttpClient _client;
-        private readonly IAccessTokenGenerator _accessTokenGenerator;
-        private readonly IKeyVaultService _keyVaultService;
-        private readonly KeyVaultSettings _keyVaultSettings;
         private readonly ILogger<IOutboundClient> _logger;
 
         /// <summary>
@@ -50,7 +45,7 @@ namespace Altinn.Platform.Events.Functions.Clients
 
                 var accessToken = await GenerateAccessToken("platform", "events");
 
-                HttpResponseMessage response = await _client.PutAsync(endpointUrl, null, accessToken);
+                HttpResponseMessage response = await Client.PutAsync(endpointUrl, null, accessToken);
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.LogError($"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
