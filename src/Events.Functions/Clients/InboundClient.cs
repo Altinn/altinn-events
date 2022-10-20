@@ -44,24 +44,17 @@ namespace Altinn.Platform.Events.Functions.Clients
         public async Task PostInbound(CloudEvent item)
         {
             StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
-            try
-            {
-                string endpointUrl = "inbound";
 
-                var accessToken = await GenerateAccessToken("platform", "events");
+            string endpointUrl = "inbound";
 
-                HttpResponseMessage response = await Client.PutAsync(endpointUrl, httpContent, accessToken);
-                if (response.StatusCode != HttpStatusCode.OK)
-                {
-                    var msg = $"// PostInbound with cloudEvent Id {item.Id} failed, status code: {response.StatusCode}";
-                    _logger.LogError(msg);
-                    throw new HttpRequestException(msg);
-                }
-            }
-            catch (Exception e)
+            var accessToken = await GenerateAccessToken("platform", "events");
+
+            HttpResponseMessage response = await Client.PutAsync(endpointUrl, httpContent, accessToken);
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                _logger.LogError(e, $"// PostInbound with cloudEvent Id {item.Id} failed, error message: {e.Message}");
-                throw;
+                var msg = $"// PostInbound with cloudEvent Id {item.Id} failed, status code: {response.StatusCode}";
+                _logger.LogError(msg);
+                throw new HttpRequestException(msg);
             }
         }
     }

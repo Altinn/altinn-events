@@ -39,23 +39,15 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// <inheritdoc/>
         public async Task ValidateSubscription(int subscriptionId)
         {
-            try
-            {
-                string endpointUrl = "subscriptions/validate/" + subscriptionId;
+            var accessToken = await GenerateAccessToken("platform", "events");
 
-                var accessToken = await GenerateAccessToken("platform", "events");
+            string endpointUrl = "subscriptions/validate/" + subscriptionId;
 
-                HttpResponseMessage response = await Client.PutAsync(endpointUrl, null, accessToken);
-                if (response.StatusCode != HttpStatusCode.OK)
-                {
-                    _logger.LogError($"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
-                    throw new HttpRequestException($"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
-                }
-            }
-            catch (Exception e)
+            HttpResponseMessage response = await Client.PutAsync(endpointUrl, null, accessToken);
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                _logger.LogError(e, $"// Validate subscription with id {subscriptionId} failed with errormessage {e.Message}");
-                throw;
+                _logger.LogError($"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
+                throw new HttpRequestException($"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
             }
         }
     }

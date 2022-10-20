@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -44,24 +43,17 @@ namespace Altinn.Platform.Events.Functions.Clients
         public async Task SaveCloudEvent(CloudEvent cloudEvent)
         {
             StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
-            try
-            {
-                string endpointUrl = "storage/events";
 
-                var accessToken = await GenerateAccessToken("platform", "events");
+            var accessToken = await GenerateAccessToken("platform", "events");
 
-                HttpResponseMessage response = await Client.PostAsync(endpointUrl, httpContent, accessToken);
-                if (response.StatusCode != HttpStatusCode.OK)
-                {
-                    var msg = $"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {response.StatusCode}";
-                    _logger.LogError(msg);
-                    throw new HttpRequestException(msg);
-                }
-            }
-            catch (Exception e)
+            string endpointUrl = "storage/events";
+
+            HttpResponseMessage response = await Client.PostAsync(endpointUrl, httpContent, accessToken);
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                _logger.LogError(e, $"// SaveCloudEvent with id {cloudEvent.Id} failed with error message {e.Message}");
-                throw;
+                var msg = $"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {response.StatusCode}";
+                _logger.LogError(msg);
+                throw new HttpRequestException(msg);
             }
         }
     }

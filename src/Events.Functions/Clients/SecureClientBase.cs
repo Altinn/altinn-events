@@ -1,10 +1,12 @@
 using System;
 using System.Net.Http;
+using System.Reflection.Metadata;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Functions.Clients;
@@ -30,7 +32,7 @@ public class SecureClientBase
     protected IKeyVaultService KeyVaultService { get; }
 
     /// <summary>
-    /// KeyValue settings
+    /// KeyVault settings
     /// </summary>
     protected KeyVaultSettings KeyVaultSettings { get; }
 
@@ -56,11 +58,13 @@ public class SecureClientBase
     protected async Task<string> GenerateAccessToken(string issuer, string app)
     {
         string certBase64 =
-            await KeyVaultService.GetCertificateAsync(KeyVaultSettings.KeyVaultURI, KeyVaultSettings.PlatformCertSecretId);
+            await KeyVaultService.GetCertificateAsync(
+                KeyVaultSettings.KeyVaultURI,
+                KeyVaultSettings.PlatformCertSecretId);
         string accessToken = AccessTokenGenerator.GenerateAccessToken(issuer, app, new X509Certificate2(
-                Convert.FromBase64String(certBase64), 
-                (string)null,
-                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
+            Convert.FromBase64String(certBase64),
+            (string)null,
+            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
         return accessToken;
     }
 }

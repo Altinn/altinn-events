@@ -44,23 +44,18 @@ namespace Altinn.Platform.Events.Functions.Clients
         public async Task PostOutbound(CloudEvent item)
         {
             StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
-            try
-            {
-                string endpointUrl = "push";
 
-                var accessToken = await GenerateAccessToken("platform", "events");
+            string endpointUrl = "push";
 
-                HttpResponseMessage response = await Client.PostAsync(endpointUrl, httpContent, accessToken);
-                if (response.StatusCode != HttpStatusCode.OK)
-                {
-                    _logger.LogError($"// Post outbound event with id {item.Id} failed with status code {response.StatusCode}");
-                    throw new HttpRequestException($"// Post outbound event with id {item.Id} failed with status code {response.StatusCode}");
-                }
-            }
-            catch (Exception e)
+            var accessToken = await GenerateAccessToken("platform", "events");
+
+            HttpResponseMessage response = await Client.PostAsync(endpointUrl, httpContent, accessToken);
+            if (response.StatusCode != HttpStatusCode.OK)
             {
-                _logger.LogError(e, $"// Post outbound event with id {item.Id} failed with error message {e.Message}");
-                throw;
+                _logger.LogError(
+                    $"// Post outbound event with id {item.Id} failed with status code {response.StatusCode}");
+                throw new HttpRequestException(
+                    $"// Post outbound event with id {item.Id} failed with status code {response.StatusCode}");
             }
         }
     }
