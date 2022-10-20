@@ -1,1 +1,0 @@
-﻿drop function if exists events.getsubscriptionsbyconsumer(_consumer character varying);
