@@ -11,6 +11,7 @@ using Altinn.Platform.Events.Models;
 using Microsoft.Extensions.Options;
 
 using Npgsql;
+
 using NpgsqlTypes;
 
 namespace Altinn.Platform.Events.Repository
@@ -26,7 +27,7 @@ namespace Altinn.Platform.Events.Repository
         private readonly string getSubscriptionSql = "select * from events.getsubscription(@_id)";
         private readonly string deleteSubscription = "call events.deletesubscription(@_id)";
         private readonly string setValidSubscription = "call events.setvalidsubscription(@_id)";
-        private readonly string getSubscriptionsExcludeOrgsSql = "select * from events.getsubscriptionsexcludeorgs(@source, @subject, @type)";
+        private readonly string getSubscriptionsSql = "select * from events.getsubscriptions($1, $2, $3)";
         private readonly string getSubscriptionByConsumerSql = "select * from events.getsubscriptionsbyconsumer(@_consumer, @_includeInvalid)";
         private readonly string connectionString;
 
@@ -90,6 +91,35 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
+        public async Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct)
+        {
+            List<Subscription> searchResult = new List<Subscription>();
+
+            await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using NpgsqlCommand pgcom = new NpgsqlCommand(getSubscriptionsSql, conn)            
+            {
+                Parameters =
+                {
+                    new() { Value = source },
+                    new() { Value = subject },
+                    new() { Value = type }
+                }
+            };
+
+            await pgcom.PrepareAsync(ct);
+            await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync(ct))
+            {
+                while (await reader.ReadAsync(ct))
+                {
+                    searchResult.Add(GetSubscription(reader));
+                }
+            }
+
+            return searchResult;
+        }
+
+        /// <inheritdoc/>
         public async Task DeleteSubscription(int id)
         {
             await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
@@ -133,30 +163,6 @@ namespace Altinn.Platform.Events.Repository
             }
 
             return subscription;
-        }
-
-        /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptionsExcludeOrg(string source, string subject, string type)
-        {
-            List<Subscription> searchResult = new List<Subscription>();
-
-            await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
-            await conn.OpenAsync();
-
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(getSubscriptionsExcludeOrgsSql, conn);
-            pgcom.Parameters.AddWithValue("source", NpgsqlDbType.Varchar, source);
-            pgcom.Parameters.AddWithValue("subject", NpgsqlDbType.Varchar, subject);
-            pgcom.Parameters.AddWithValue("type", NpgsqlDbType.Varchar, type);
-
-            await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
-            {
-                while (await reader.ReadAsync())
-                {
-                    searchResult.Add(GetSubscription(reader));
-                }
-            }
-
-            return searchResult;
         }
 
         /// <inheritdoc/>

@@ -39,9 +39,9 @@ namespace Altinn.Platform.Events.Repository
         Task SetValidSubscription(int id);
 
         /// <summary>
-        /// Gets subscriptions by source excluding orgs
+        /// Gets subscriptions by source, subject and type of a cloud event
         /// </summary>
-        Task<List<Subscription>> GetSubscriptionsExcludeOrg(string source, string subject, string type);
+        Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct);
 
         /// <summary>
         /// Gets subscriptions for a given consumer
