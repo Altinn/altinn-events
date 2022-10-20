@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Functions
     {
         private readonly IWebhookService _webhookService;
         private readonly PlatformSettings _platformSettings;
-        private readonly IValidateSubscriptionClient _validateSubscriptionClient;
+        private readonly IEventsClient _eventsClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionValidation"/> class.
@@ -28,11 +28,11 @@ namespace Altinn.Platform.Events.Functions
         public SubscriptionValidation(
             IWebhookService webhookService,
             IOptions<PlatformSettings> eventsConfig,
-            IValidateSubscriptionClient validateSubscriptionClient)
+            IEventsClient eventsClient)
         {
             _platformSettings = eventsConfig.Value;
             _webhookService = webhookService;
-            _validateSubscriptionClient = validateSubscriptionClient;
+            _eventsClient = eventsClient;
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Altinn.Platform.Events.Functions
             Subscription subscription = JsonSerializer.Deserialize<Subscription>(item);
             CloudEventEnvelope cloudEventEnvelope = CreateValidateEvent(subscription);
             await _webhookService.Send(cloudEventEnvelope);
-            await _validateSubscriptionClient.ValidateSubscription(cloudEventEnvelope.SubscriptionId);
+            await _eventsClient.ValidateSubscription(cloudEventEnvelope.SubscriptionId);
         }
 
         private CloudEventEnvelope CreateValidateEvent(Subscription subscription)

@@ -15,18 +15,14 @@ namespace Altinn.Platform.Events.Functions
     /// </summary>
     public class EventsRegistration
     {
-        private readonly IEventsStorageClient _eventsStorageClient;
-        private readonly IInboundClient _inboundQueueClient;
+        private readonly IEventsClient _eventsClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsInbound"/> class.
         /// </summary>
-        public EventsRegistration(
-            IEventsStorageClient eventsStorageClient,
-            IInboundClient inboundQueueClient)
+        public EventsRegistration(IEventsClient eventsClient)
         {
-            _eventsStorageClient = eventsStorageClient;
-            _inboundQueueClient = inboundQueueClient;
+            _eventsClient = eventsClient;
         }
 
         /// <summary>
@@ -46,8 +42,8 @@ namespace Altinn.Platform.Events.Functions
                 returned to events-registration queue for retry handling.
                 */
 
-                await _eventsStorageClient.SaveCloudEvent(cloudEvent);
-                await _inboundQueueClient.PostInbound(cloudEvent);
+                await _eventsClient.SaveCloudEvent(cloudEvent);
+                await _eventsClient.PostInbound(cloudEvent);
             }
     }
 }
