@@ -4,7 +4,7 @@ using Altinn.Platform.Events.Functions.Models;
 namespace Altinn.Platform.Events.Functions.Clients.Interfaces
 {
     /// <summary>
-    /// Interface to handle services exposed in Platform Events Push
+    /// Interface to Events Inbound queue API
     /// </summary>
     public interface IInboundClient
     {

@@ -4,7 +4,7 @@ using Altinn.Platform.Events.Functions.Models;
 namespace Altinn.Platform.Events.Functions.Clients.Interfaces
 {
     /// <summary>
-    /// Interface to handle services exposed in Platform Events Push
+    /// Interface to Events Storage API
     /// </summary>
     public interface IEventsStorageClient
     {

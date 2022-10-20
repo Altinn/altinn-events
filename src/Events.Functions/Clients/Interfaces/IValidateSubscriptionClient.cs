@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 namespace Altinn.Platform.Events.Functions.Clients.Interfaces
 {
     /// <summary>
-    /// Interface for validate subscription
+    /// Interface to Events Subscription validation API
     /// </summary>
     public interface IValidateSubscriptionClient
     {
