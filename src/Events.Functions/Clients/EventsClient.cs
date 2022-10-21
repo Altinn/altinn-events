@@ -35,23 +35,6 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// Initializes a new instance of the <see cref="EventsClient"/> class.
         /// </summary>
         public EventsClient(
-            HttpClient client,
-            IAccessTokenGenerator accessTokenGenerator,
-            IKeyVaultService keyVaultService,
-            IOptions<KeyVaultSettings> keyVaultSettings,
-            ILogger<IEventsClient> logger)
-        {
-            _client = client;
-            _accessTokenGenerator = accessTokenGenerator;
-            _keyVaultService = keyVaultService;
-            _keyVaultSettings = keyVaultSettings.Value;
-            _logger = logger;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EventsClient"/> class.
-        /// </summary>
-        public EventsClient(
             HttpClient httpClient,
             IAccessTokenGenerator accessTokenGenerator,
             IKeyVaultService keyVaultService,
