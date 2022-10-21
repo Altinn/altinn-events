@@ -18,19 +18,18 @@ namespace Altinn.Platform.Events.Functions.Clients.Interfaces
         /// <summary>
         /// Send cloudEvent for outbound processing.
         /// </summary>
-        /// <param name="item">CloudEvent to send</param>
-        Task PostInbound(CloudEvent item);
+        /// <param name="cloudEvent">CloudEvent to send</param>
+        Task PostInbound(CloudEvent cloudEvent);
 
         /// <summary>
         /// Send cloudEvent for outbound processing.
         /// </summary>
-        /// <param name="item">CloudEvent to send</param>
-        Task PostOutbound(CloudEvent item);
+        /// <param name="cloudEvent">CloudEvent to send</param>
+        Task PostOutbound(CloudEvent cloudEvent);
 
         /// <summary>
-        /// Validates a subscription
+        /// Set a subscription as valid
         /// </summary>
-        /// <returns></returns>
         public Task ValidateSubscription(int subscriptionId);
     }
 }

@@ -73,13 +73,13 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// Generate a fresh access token using the client certificate
         /// </summary>
         /// <returns></returns>
-        protected async Task<string> GenerateAccessToken(string issuer, string app)
+        protected async Task<string> GenerateAccessToken()
         {
             string certBase64 =
                 await _keyVaultService.GetCertificateAsync(
                     _keyVaultSettings.KeyVaultURI,
                     _keyVaultSettings.PlatformCertSecretId);
-            string accessToken = _accessTokenGenerator.GenerateAccessToken(issuer, app, new X509Certificate2(
+            string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events", new X509Certificate2(
                 Convert.FromBase64String(certBase64),
                 (string)null,
                 X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
@@ -91,7 +91,7 @@ namespace Altinn.Platform.Events.Functions.Clients
         {
             StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
 
-            var accessToken = await GenerateAccessToken("platform", "events");
+            var accessToken = await GenerateAccessToken();
 
             string endpointUrl = "storage/events";
 
@@ -105,46 +105,46 @@ namespace Altinn.Platform.Events.Functions.Clients
         }
 
         /// <inheritdoc/>
-        public async Task PostInbound(CloudEvent item)
+        public async Task PostInbound(CloudEvent cloudEvent)
         {
-            StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
+            StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
 
             string endpointUrl = "inbound";
 
-            var accessToken = await GenerateAccessToken("platform", "events");
+            var accessToken = await GenerateAccessToken();
 
             HttpResponseMessage response = await _client.PutAsync(endpointUrl, httpContent, accessToken);
             if (response.StatusCode != HttpStatusCode.OK)
             {
-                var msg = $"// PostInbound with cloudEvent Id {item.Id} failed, status code: {response.StatusCode}";
+                var msg = $"// PostInbound with cloudEvent Id {cloudEvent.Id} failed, status code: {response.StatusCode}";
                 _logger.LogError(msg);
                 throw new HttpRequestException(msg);
             }
         }
 
         /// <inheritdoc/>
-        public async Task PostOutbound(CloudEvent item)
+        public async Task PostOutbound(CloudEvent cloudEvent)
         {
-            StringContent httpContent = new(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
+            StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
 
             string endpointUrl = "push";
 
-            var accessToken = await GenerateAccessToken("platform", "events");
+            var accessToken = await GenerateAccessToken();
 
             HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 _logger.LogError(
-                    $"// Post outbound event with id {item.Id} failed with status code {response.StatusCode}");
+                    $"// Post outbound event with id {cloudEvent.Id} failed with status code {response.StatusCode}");
                 throw new HttpRequestException(
-                    $"// Post outbound event with id {item.Id} failed with status code {response.StatusCode}");
+                    $"// Post outbound event with id {cloudEvent.Id} failed with status code {response.StatusCode}");
             }
         }
 
         /// <inheritdoc/>
         public async Task ValidateSubscription(int subscriptionId)
         {
-            var accessToken = await GenerateAccessToken("platform", "events");
+            var accessToken = await GenerateAccessToken();
 
             string endpointUrl = "subscriptions/validate/" + subscriptionId;
 
