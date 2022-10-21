@@ -40,15 +40,15 @@ namespace Altinn.Platform.Events.Functions.Services
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     string reason = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"// WebhookService // Send // Failed to send cloudevent, subscriptionId: {envelope.SubscriptionId}. Response {response}. \n Reason {reason}.");
+                    _logger.LogError($"// WebhookService // Send // Failed to send cloud event id {envelope.CloudEvent.Id}, subscriptionId: {envelope.SubscriptionId}. \nReason: {reason} \nResponse: {response}");
 
-                    throw new Exception(reason);
+                    throw new HttpRequestException(reason);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, $"// Send to webhook with subscriptionId: {envelope.SubscriptionId} failed with errormessage {e.Message}");
-                throw e;
+                _logger.LogError(e, $"// Send to webhook with subscriptionId: {envelope.SubscriptionId} failed with error message {e.Message}");
+                throw;
             }
         }
 
