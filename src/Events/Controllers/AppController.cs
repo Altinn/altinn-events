@@ -68,10 +68,9 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
-            if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) || string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
-            string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
+            if (!cloudEvent.ValidateRequiredProperties())
             {
-                return Problem("Missing parameter values: source, subject, type, id or time cannot be null", null, 400);
+                return Problem("Missing parameter values: source, subject and type cannot be null", null, 400);
             }
 
             var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];

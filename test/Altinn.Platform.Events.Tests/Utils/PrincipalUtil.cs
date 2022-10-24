@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.Tests.Utils
         public static readonly string AltinnCoreClaimTypesOrg = "urn:altinn:org";
         public static readonly string AltinnCoreClaimTypesOrgNumber = "urn:altinn:orgNumber";
 
-        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string scope)
+        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber)
         {
             string issuer = "www.altinn.no";
 
@@ -27,7 +27,6 @@ namespace Altinn.Platform.Events.Tests.Utils
             claims.Add(new Claim(AltinnCoreClaimTypesOrgNumber, orgNumber.ToString(), ClaimValueTypes.Integer32, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticationLevel, "3", ClaimValueTypes.Integer32, issuer));
-            claims.Add(new Claim("urn:altinn:scope", scope, ClaimValueTypes.String, "maskinporten"));
 
             ClaimsIdentity identity = new ClaimsIdentity("mock-org");
             identity.AddClaims(claims);
@@ -52,12 +51,30 @@ namespace Altinn.Platform.Events.Tests.Utils
             return new ClaimsPrincipal(identity);
         }
 
-        public static string GetOrgToken(string org, string orgNumber = "991825827", string scope = "altinn:appdeploy")
+        public static ClaimsPrincipal GetClaimsPrincipal(string scope)
         {
-            ClaimsPrincipal principal = GetClaimsPrincipal(org, orgNumber, scope);
+            List<Claim> claims = new List<Claim>();
+            claims.Add(new Claim("urn:altinn:scope", scope, ClaimValueTypes.String, "maskinporten"));
+
+            ClaimsIdentity identity = new ClaimsIdentity("mock-org");
+            identity.AddClaims(claims);
+
+            return new ClaimsPrincipal(identity);
+        }
+
+        public static string GetOrgToken(string org, string orgNumber = "991825827")
+        {
+            ClaimsPrincipal principal = GetClaimsPrincipal(org, orgNumber);
 
             string token = JwtTokenMock.GenerateToken(principal, new TimeSpan(1, 1, 1));
 
+            return token;
+        }
+
+        public static string GetTokenWithScope(string scope)
+        {
+            var principal = GetClaimsPrincipal(scope);
+            string token = JwtTokenMock.GenerateToken(principal, new TimeSpan(1, 1, 1));
             return token;
         }
 

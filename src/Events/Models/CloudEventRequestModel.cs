@@ -69,5 +69,20 @@ namespace Altinn.Platform.Events.Models
         {
             return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
         }
+
+        /// <summary>
+        /// Validated required properties Source, SpecVersion, Type and Subject
+        /// </summary>
+        /// <returns>A boolean indicating whether all required fields have a value</returns>
+        public bool ValidateRequiredProperties()
+        {
+            if (string.IsNullOrEmpty(Source.OriginalString) || string.IsNullOrEmpty(SpecVersion) ||
+       string.IsNullOrEmpty(Type) || string.IsNullOrEmpty(Subject))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }
