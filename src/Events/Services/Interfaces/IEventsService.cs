@@ -20,22 +20,19 @@ namespace Altinn.Platform.Events.Services.Interfaces
         Task<string> Save(CloudEvent cloudEvent);
 
         /// <summary>
+        /// Push cloud event to registration queue.
+        /// </summary>
+        /// <param name="cloudEvent">The cloudEvent to be queued</param>
+        /// <returns>Id for the queued event</returns>
+        Task<string> PostRegistration(CloudEvent cloudEvent);
+
+        /// <summary>
         /// Push cloud event to inbound queue.
         /// Should only be attempted after saving to persistent storage. 
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be queued</param>
         /// <returns>Id for the queued event</returns>
         Task<string> PostInbound(CloudEvent cloudEvent);
-
-        /// <summary>
-        /// Save a cloud event to persistent storage and
-        /// pushes to Inbound events queue in one operation.
-        /// Id will be assigned a new guid in string format.
-        /// </summary>
-        /// <param name="cloudEvent">The cloudEvent to be stored</param>
-        /// <returns>Id for the cloudEvent in persistent storage</returns>
-        [Obsolete("This function has been split in two and will be removed soon.")]
-        Task<string> SaveAndPostInbound(CloudEvent cloudEvent);
 
         /// <summary>
         /// Gets list of cloud events based on query params

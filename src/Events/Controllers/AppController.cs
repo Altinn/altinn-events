@@ -68,8 +68,9 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
-            if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) || string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
-            string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
+            if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) ||
+                string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
+                string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
             {
                 return Problem("Missing parameter values: source, subject, type, id or time cannot be null", null, 400);
             }
@@ -83,13 +84,14 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.SaveAndPostInbound(_mapper.Map<CloudEvent>(cloudEvent));
+                string cloudEventId = await _eventsService.PostRegistration(_mapper.Map<CloudEvent>(cloudEvent));
+                _logger.LogInformation("Cloud Event successfully registered with id: {cloudEventId}", cloudEventId);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Unable to save cloud event to storage.");
-                return StatusCode(500, $"Unable to save cloud event to storage.");
+                _logger.LogError(e, "Unable to register cloud event in queue.");
+                return StatusCode(500, $"Unable to register cloud event in queue.");
             }
         }
 
