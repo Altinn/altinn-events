@@ -79,7 +79,7 @@ namespace Altinn.Platform.Events.Functions.Clients
             string endpointUrl = "storage/events";
 
             HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
-            if (response.StatusCode != HttpStatusCode.OK)
+            if (!response.IsSuccessStatusCode)
             {
                 var msg = $"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {response.StatusCode}";
                 _logger.LogError(msg);
@@ -96,8 +96,8 @@ namespace Altinn.Platform.Events.Functions.Clients
 
             var accessToken = await GenerateAccessToken();
 
-            HttpResponseMessage response = await _client.PutAsync(endpointUrl, httpContent, accessToken);
-            if (response.StatusCode != HttpStatusCode.OK)
+            HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
+            if (!response.IsSuccessStatusCode)
             {
                 var msg = $"// PostInbound with cloudEvent Id {cloudEvent.Id} failed, status code: {response.StatusCode}";
                 _logger.LogError(msg);
