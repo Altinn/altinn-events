@@ -68,7 +68,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
-            if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) ||
+            if (string.IsNullOrEmpty(cloudEvent.Source?.OriginalString) ||
                 string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
                 string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
             {

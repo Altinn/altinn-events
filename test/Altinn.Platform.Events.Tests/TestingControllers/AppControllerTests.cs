@@ -166,6 +166,74 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
+            ///   Post a invalid CloudEvent instance.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest.
+            /// Success criteria:
+            ///   The response has correct status.
+            /// </summary>
+            [Fact]
+            public async void Post_CloudEventMissingSource_ReturnsStatusBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                cloudEvent.Source = null;
+
+                Mock<IEventsService> eventsService = new Mock<IEventsService>();
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "unittest"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a invalid CloudEvent instance.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest.
+            /// Success criteria:
+            ///   The response has correct status.
+            /// </summary>
+            [Fact]
+            public async void Post_CloudEventOrgDoesNotMatch_ReturnsStatusBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                CloudEventRequestModel cloudEvent = GetCloudEventRequest("skd");
+                cloudEvent.Source = null;
+
+                Mock<IEventsService> eventsService = new Mock<IEventsService>();
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "unittest"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
             ///   Post a valid cloud event, unexpected error when storing document
             /// Expected result:
             ///   Returns HttpStatus Internal Server Error.
@@ -865,13 +933,13 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 return client;
             }
 
-            private static CloudEventRequestModel GetCloudEventRequest()
+            private static CloudEventRequestModel GetCloudEventRequest(string org = "ttd")
             {
                 CloudEventRequestModel cloudEvent = new CloudEventRequestModel
                 {
                     SpecVersion = "1.0",
                     Type = "instance.created",
-                    Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/232243423"),
+                    Source = new Uri($"https://{org}.apps.altinn.no/{org}/endring-av-navn-v2/232243423"),
                     Subject = "/party/456456",
                     Data = "something/extra",
                 };
