@@ -15,7 +15,6 @@ namespace Altinn.Platform.Events.Controllers
     /// <summary>
     /// Provides operations for saving and retrieving cloud events from persistent storage.
     /// </summary>
-    [Authorize]
     [Route("events/api/v1/storage/events")]
     public class StorageController : ControllerBase
     {
