@@ -212,7 +212,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/app";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest("skd");
-                cloudEvent.Source = null;
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
 
@@ -229,7 +228,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             }
 
             /// <summary>
