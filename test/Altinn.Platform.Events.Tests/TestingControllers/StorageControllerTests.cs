@@ -70,7 +70,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 eventsService.Setup(s => s.Save(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
                     Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
@@ -106,7 +105,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 eventsService.Setup(er => er.Save(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
                     Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
