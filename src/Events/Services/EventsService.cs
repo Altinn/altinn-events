@@ -68,7 +68,7 @@ namespace Altinn.Platform.Events.Services
         public async Task<string> PostRegistration(CloudEvent cloudEvent)
         {
             cloudEvent.Id = Guid.NewGuid().ToString();
-            cloudEvent.Time = DateTime.UtcNow; // assign timestamp on initial receipt
+            cloudEvent.Time ??= DateTime.UtcNow;
 
             QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(JsonSerializer.Serialize(cloudEvent));
 

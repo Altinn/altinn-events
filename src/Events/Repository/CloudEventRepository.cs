@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Repository
     [ExcludeFromCodeCoverage]
     public class CloudEventRepository : ICloudEventRepository
     {
-        private readonly string insertEventSql = "select events.insertevent(@id, @source, @subject, @type, @cloudevent)";
+        private readonly string insertEventSql = "select events.inserteventV2(@id, @source, @subject, @type, @time, @cloudevent)";
         private readonly string getEventSql = "select events.get(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
         private readonly string _connectionString;
 
@@ -45,6 +45,7 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("source", cloudEvent.Source.OriginalString);
             pgcom.Parameters.AddWithValue("subject", cloudEvent.Subject);
             pgcom.Parameters.AddWithValue("type", cloudEvent.Type);
+            pgcom.Parameters.AddWithValue("time", cloudEvent.Time.Value.ToUniversalTime());
             pgcom.Parameters.Add(new NpgsqlParameter("cloudevent", cloudEvent.Serialize()) { Direction = System.Data.ParameterDirection.InputOutput });
 
             await pgcom.ExecuteNonQueryAsync();

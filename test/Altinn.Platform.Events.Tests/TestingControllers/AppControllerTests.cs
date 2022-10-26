@@ -132,14 +132,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a invalid CloudEvent instance.
+            ///   Post an invalid CloudEvent instance.
             /// Expected result:
             ///   Returns HttpStatus BadRequest.
             /// Success criteria:
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_InValidCloudEvent_ReturnsStatusBadRequest()
+            public async void Post_CloudEventMissingSubject_ReturnsStatusBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";

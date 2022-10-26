@@ -22,6 +22,12 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <summary>
         /// Push cloud event to registration queue.
         /// </summary>
+        /// <remarks>
+        /// "time" is an optional Cloud Event property, according to the official spec.
+        /// From the spec docs:
+        ///   https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#notational-conventions
+        ///   As an Intermediary, we SHOULD forward OPTIONAL attributes
+        /// </remarks>
         /// <param name="cloudEvent">The cloudEvent to be queued</param>
         /// <returns>Id for the queued event</returns>
         Task<string> PostRegistration(CloudEvent cloudEvent);
