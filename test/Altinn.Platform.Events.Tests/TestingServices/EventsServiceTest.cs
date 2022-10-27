@@ -100,7 +100,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             item.Id = null;
 
             // Act
-            string actual = await eventsService.PostRegistration(item);
+            string actual = await eventsService.RegisterNew(item);
 
             // Assert
             Assert.NotEmpty(actual);
@@ -125,7 +125,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act
-            await eventsService.PostRegistration(GetCloudEvent());
+            await eventsService.RegisterNew(GetCloudEvent());
 
             // Assert
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);

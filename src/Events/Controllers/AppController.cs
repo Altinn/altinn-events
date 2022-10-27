@@ -85,7 +85,7 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.PostRegistration(_mapper.Map<CloudEvent>(cloudEvent));
+                string cloudEventId = await _eventsService.RegisterNew(_mapper.Map<CloudEvent>(cloudEvent));
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)

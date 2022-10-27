@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> PostRegistration(CloudEvent cloudEvent)
+        public async Task<string> RegisterNew(CloudEvent cloudEvent)
         {
             cloudEvent.Id = Guid.NewGuid().ToString();
             cloudEvent.Time ??= DateTime.UtcNow;
@@ -73,7 +73,7 @@ namespace Altinn.Platform.Events.Services
 
             if (!receipt.Success)
             {
-                _logger.LogError(receipt.Exception, "// EventsService // PostRegistration // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
+                _logger.LogError(receipt.Exception, "// EventsService // RegisterNew // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
             }
 
             return cloudEvent.Id;

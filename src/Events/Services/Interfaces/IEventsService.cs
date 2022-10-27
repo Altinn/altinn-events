@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         Task<string> Save(CloudEvent cloudEvent);
 
         /// <summary>
-        /// Push cloud event to registration queue.
+        /// Assign Id and Time values and post cloud event to registration queue.
         /// </summary>
         /// <remarks>
         /// "time" is an optional Cloud Event property, according to the official spec.
@@ -30,7 +30,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// </remarks>
         /// <param name="cloudEvent">The cloudEvent to be queued</param>
         /// <returns>Id for the queued event</returns>
-        Task<string> PostRegistration(CloudEvent cloudEvent);
+        Task<string> RegisterNew(CloudEvent cloudEvent);
 
         /// <summary>
         /// Push cloud event to inbound queue.

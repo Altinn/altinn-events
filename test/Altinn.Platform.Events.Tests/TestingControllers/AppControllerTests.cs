@@ -74,7 +74,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(s => s.PostRegistration(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                eventsService.Setup(s => s.RegisterNew(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -112,7 +112,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(s => s.PostRegistration(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                eventsService.Setup(s => s.RegisterNew(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -246,7 +246,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/app";
                 CloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(er => er.PostRegistration(It.IsAny<CloudEvent>())).Throws(new Exception());
+                eventsService.Setup(er => er.RegisterNew(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
