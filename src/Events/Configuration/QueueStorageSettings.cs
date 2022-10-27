@@ -13,6 +13,11 @@ namespace Altinn.Platform.Events.Configuration
         public string ConnectionString { get; set; }
 
         /// <summary>
+        /// Name of the queue to push incoming events to, before persisting to db.
+        /// </summary>
+        public string RegistrationQueueName { get; set; }
+
+        /// <summary>
         /// Name of the queue to push incoming events to, after persisting to db.
         /// </summary>
         public string InboundQueueName { get; set; }

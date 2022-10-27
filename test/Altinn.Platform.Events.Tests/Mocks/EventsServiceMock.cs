@@ -95,6 +95,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
             throw new NotImplementedException();
         }
 
+        public Task<string> RegisterNew(CloudEvent cloudEvent)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<string> PostInbound(CloudEvent cloudEvent)
         {
             throw new NotImplementedException();

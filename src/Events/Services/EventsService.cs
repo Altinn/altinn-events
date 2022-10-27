@@ -64,6 +64,23 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
+        public async Task<string> RegisterNew(CloudEvent cloudEvent)
+        {
+            cloudEvent.Id = Guid.NewGuid().ToString();
+            cloudEvent.Time ??= DateTime.UtcNow;
+
+            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(JsonSerializer.Serialize(cloudEvent));
+
+            if (!receipt.Success)
+            {
+                _logger.LogError(receipt.Exception, "// EventsService // RegisterNew // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
+                throw receipt.Exception;
+            }
+
+            return cloudEvent.Id;
+        }
+
+        /// <inheritdoc/>
         public async Task<string> PostInbound(CloudEvent cloudEvent)
         {
             QueuePostReceipt receipt = await _queueClient.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
@@ -72,23 +89,6 @@ namespace Altinn.Platform.Events.Services
             {
                 _logger.LogError(receipt.Exception, "// EventsService // PostInbound // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
                 throw receipt.Exception;
-            }
-
-            return cloudEvent.Id;
-        }
-
-        /// <inheritdoc/>
-        public async Task<string> SaveAndPostInbound(CloudEvent cloudEvent)
-        {
-            cloudEvent.Id = Guid.NewGuid().ToString();
-            cloudEvent.Time = null;
-            cloudEvent = await _repository.Create(cloudEvent);
-
-            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
-
-            if (!receipt.Success)
-            {
-                _logger.LogError(receipt.Exception, "// EventsService // SaveAndPostInbound // Failed to push event {EventId} to queue.", cloudEvent.Id);
             }
 
             return cloudEvent.Id;

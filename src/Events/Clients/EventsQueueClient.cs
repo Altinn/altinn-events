@@ -18,6 +18,8 @@ namespace Altinn.Platform.Events.Clients
     {
         private readonly QueueStorageSettings _settings;
 
+        private QueueClient _registrationQueueClient;
+
         private QueueClient _inboundQueueClient;
 
         private QueueClient _outboundQueueClient;
@@ -31,6 +33,22 @@ namespace Altinn.Platform.Events.Clients
         public EventsQueueClient(IOptions<QueueStorageSettings> settings)
         {
             _settings = settings.Value;
+        }
+
+        /// <inheritdoc/>
+        public async Task<QueuePostReceipt> EnqueueRegistration(string content)
+        {
+            try
+            {
+                QueueClient client = await GetRegistrationQueueClient();
+                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
+            }
+            catch (Exception e)
+            {
+                return new QueuePostReceipt { Success = false, Exception = e };
+            }
+
+            return new QueuePostReceipt { Success = true };
         }
 
         /// <inheritdoc/>
@@ -79,6 +97,17 @@ namespace Altinn.Platform.Events.Clients
             }
 
             return new QueuePostReceipt { Success = true };
+        }
+
+        private async Task<QueueClient> GetRegistrationQueueClient()
+        {
+            if (_registrationQueueClient == null)
+            {
+                _registrationQueueClient = new QueueClient(_settings.ConnectionString, _settings.RegistrationQueueName);
+                await _registrationQueueClient.CreateIfNotExistsAsync();
+            }
+
+            return _registrationQueueClient;
         }
 
         private async Task<QueueClient> GetInboundQueueClient()
