@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION events.insertevent(
 	source character varying,
 	subject character varying,
 	type character varying,
-	time timestamptz,
+	"time" timestamptz,
 	cloudevent INOUT text)
     LANGUAGE 'plpgsql'
     
