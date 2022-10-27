@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.Add(new NpgsqlParameter("cloudevent", cloudEvent.Serialize()) { Direction = System.Data.ParameterDirection.InputOutput });
 
             await pgcom.ExecuteNonQueryAsync();
-            string output = (string)pgcom.Parameters["cloudevent"].Value;
+            string output = (string)pgcom.Parameters[5].Value;
             cloudEvent = DeserializeAndConvertTime(output);
 
             return cloudEvent;
