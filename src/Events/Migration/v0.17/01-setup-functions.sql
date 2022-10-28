@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS events.insertevent(character varying, character varying, character varying, character varying, timestamptz, text);
+
 CREATE OR REPLACE PROCEDURE events.insertevent(
 	id character varying,
 	source character varying,
