@@ -3,19 +3,26 @@ CREATE OR REPLACE FUNCTION events.insertevent(
 	source character varying,
 	subject character varying,
 	type character varying,
-	"time" timestamptz,
 	cloudevent INOUT text)
     LANGUAGE 'plpgsql'
     
 AS $BODY$
-	DECLARE storedCloudEvent text;
+  DECLARE currentTime timestamptz;
+  DECLARE currentTimeString character varying;
+  DECLARE finalCloudEvent text;
 
   BEGIN
-	INSERT INTO events.events(id, source, subject, type, "time", cloudevent)
-	  VALUES ($1, $2, $3, $4, $5, $6);
+    SET TIME ZONE UTC;
+    currentTime := NOW();
+    currentTimeString :=  to_char(currentTime, 'YYYY-MM-DD"T"HH24:MI:SS.USOF');
 
-	SELECT storedCloudEvent
-	INTO cloudevent;
+  finalCloudEvent:= substring($5 from 1 for length($5) -1)  || ',"time": "' || currentTimeString || '"}';
+
+  INSERT INTO events.events(id, source, subject, type, "time", cloudevent)
+	  VALUES ($1, $2, $3, $4, currentTime,  finalCloudEvent);
+
+  SELECT finalCloudEvent
+  INTO cloudevent;
+
   END;
-
 $BODY$;
