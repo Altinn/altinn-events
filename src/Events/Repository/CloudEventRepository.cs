@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Repository
     [ExcludeFromCodeCoverage]
     public class CloudEventRepository : ICloudEventRepository
     {
-        private readonly string insertEventSql = "select events.insertevent(@id, @source, @subject, @type, @time, @cloudevent)";
+        private readonly string insertEventSql = "call events.insertevent(@id, @source, @subject, @type, @time, @cloudevent)";
         private readonly string getEventSql = "select events.get(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
         private readonly string _connectionString;
 
