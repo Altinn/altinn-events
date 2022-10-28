@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION events.insertevent(
+CREATE OR REPLACE PROCEDURE events.insertevent(
 	id character varying,
 	source character varying,
 	subject character varying,
