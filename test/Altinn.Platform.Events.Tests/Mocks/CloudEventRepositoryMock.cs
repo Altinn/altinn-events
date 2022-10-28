@@ -25,7 +25,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEvent> Create(CloudEvent cloudEvent)
+        public Task Create(CloudEvent cloudEvent)
         {
             return Task.FromResult(cloudEvent);
         }

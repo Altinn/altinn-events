@@ -35,7 +35,7 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEvent> Create(CloudEvent cloudEvent)
+        public async Task Create(CloudEvent cloudEvent)
         {
             await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
@@ -46,13 +46,9 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("subject", cloudEvent.Subject);
             pgcom.Parameters.AddWithValue("type", cloudEvent.Type);
             pgcom.Parameters.AddWithValue("time", cloudEvent.Time.Value.ToUniversalTime());
-            pgcom.Parameters.Add(new NpgsqlParameter("cloudevent", cloudEvent.Serialize()) { Direction = System.Data.ParameterDirection.InputOutput });
+            pgcom.Parameters.Add(new NpgsqlParameter("cloudevent", cloudEvent.Serialize()) { Direction = System.Data.ParameterDirection.Input });
 
             await pgcom.ExecuteNonQueryAsync();
-            string output = (string)pgcom.Parameters[5].Value;
-            cloudEvent = DeserializeAndConvertTime(output);
-
-            return cloudEvent;
         }
 
         /// <inheritdoc/>

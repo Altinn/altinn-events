@@ -52,7 +52,7 @@ namespace Altinn.Platform.Events.Services
         {
             try
             {
-                cloudEvent = await _repository.Create(cloudEvent);
+                await _repository.Create(cloudEvent);
             }
             catch (Exception ex)
             {
