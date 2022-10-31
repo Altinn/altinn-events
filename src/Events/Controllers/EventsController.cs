@@ -72,7 +72,7 @@ namespace Altinn.Platform.Events.Controllers
 
         private static bool AuthorizeEvent(CloudEvent cloudEvent)
         {
-            // Further authorization to be implemented in Altinn/altinn-events#183
+            // Further authorization to be implemented in Altinn/altinn-events#183            
             return true;
         }
     }

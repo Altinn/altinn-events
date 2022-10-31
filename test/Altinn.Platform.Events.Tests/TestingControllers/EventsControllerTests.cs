@@ -65,7 +65,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Source = new Uri("urn:isbn:1234567890"),
                     SpecVersion = "1.0"
                 };
-
             }
 
             [Fact]
@@ -183,7 +182,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
-                    IdentityModelEventSource.ShowPII = true; 
+                    IdentityModelEventSource.ShowPII = true;
 
                     builder.ConfigureTestServices(services =>
                     {
