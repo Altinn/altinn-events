@@ -18,13 +18,6 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <param name="cloudEvent">The cloudEvent to be saved</param>
         /// <returns>Id for the created document</returns>
         Task<string> Save(CloudEvent cloudEvent);
-        
-        /// <summary>
-        /// Starts the process of registering an event 
-        /// </summary>
-        /// <param name="couldEvent">The cloud events to be registered</param>
-        /// <returns></returns>
-        Task<string> RegisterEvent(CloudEvent couldEvent);
 
         /// <summary>
         /// Assign Id and Time values and post cloud event to registration queue.

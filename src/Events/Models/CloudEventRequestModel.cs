@@ -76,8 +76,11 @@ namespace Altinn.Platform.Events.Models
         /// <returns>A boolean indicating whether all required fields have a value</returns>
         public bool ValidateRequiredProperties()
         {
-            if (string.IsNullOrEmpty(Source.OriginalString) || string.IsNullOrEmpty(SpecVersion) ||
-       string.IsNullOrEmpty(Type) || string.IsNullOrEmpty(Subject))
+            if (Source == null ||
+               string.IsNullOrEmpty(Source.OriginalString) ||
+               string.IsNullOrEmpty(SpecVersion) ||
+               string.IsNullOrEmpty(Type) ||
+               string.IsNullOrEmpty(Subject))
             {
                 return false;
             }

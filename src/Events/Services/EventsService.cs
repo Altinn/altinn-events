@@ -116,12 +116,5 @@ namespace Altinn.Platform.Events.Services
 
             return await _authorizationService.AuthorizeEvents(_claimsPrincipalProvider.GetUser(), events);
         }
-
-        /// <inheritdoc/>
-        public Task<string> RegisterEvent(CloudEvent couldEvent)
-        {
-            // waiting for Benjamins implementation
-            throw new NotImplementedException();
-        }
     }
 }

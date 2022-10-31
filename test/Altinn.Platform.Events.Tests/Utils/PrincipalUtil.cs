@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.Tests.Utils
         public static readonly string AltinnCoreClaimTypesOrg = "urn:altinn:org";
         public static readonly string AltinnCoreClaimTypesOrgNumber = "urn:altinn:orgNumber";
 
-        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber)
+        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string scope = null)
         {
             string issuer = "www.altinn.no";
 
@@ -22,6 +22,11 @@ namespace Altinn.Platform.Events.Tests.Utils
             if (!string.IsNullOrEmpty(org))
             {
                 claims.Add(new Claim(AltinnCoreClaimTypesOrg, org, ClaimValueTypes.String, issuer));
+            }
+
+            if (scope != null)
+            {
+                claims.Add(new Claim("urn:altinn:scope", scope, ClaimValueTypes.String, "maskinporten"));
             }
 
             claims.Add(new Claim(AltinnCoreClaimTypesOrgNumber, orgNumber.ToString(), ClaimValueTypes.Integer32, issuer));
@@ -34,7 +39,7 @@ namespace Altinn.Platform.Events.Tests.Utils
             return new ClaimsPrincipal(identity);
         }
 
-        public static ClaimsPrincipal GetClaimsPrincipal(int userId, int authenticationLevel)
+        public static ClaimsPrincipal GetClaimsPrincipal(int userId, int authenticationLevel, string scope = null)
         {
             string issuer = "www.altinn.no";
 
@@ -45,42 +50,29 @@ namespace Altinn.Platform.Events.Tests.Utils
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticationLevel, authenticationLevel.ToString(), ClaimValueTypes.Integer32, issuer));
 
+            if (scope != null)
+            {
+                claims.Add(new Claim("urn:altinn:scope", scope, ClaimValueTypes.String, "maskinporten"));
+            }
+
             ClaimsIdentity identity = new ClaimsIdentity("mock");
             identity.AddClaims(claims);
 
             return new ClaimsPrincipal(identity);
         }
 
-        public static ClaimsPrincipal GetClaimsPrincipal(string scope)
+        public static string GetOrgToken(string org, string orgNumber = "991825827", string scope = null)
         {
-            List<Claim> claims = new List<Claim>();
-            claims.Add(new Claim("urn:altinn:scope", scope, ClaimValueTypes.String, "maskinporten"));
-
-            ClaimsIdentity identity = new ClaimsIdentity("mock-org");
-            identity.AddClaims(claims);
-
-            return new ClaimsPrincipal(identity);
-        }
-
-        public static string GetOrgToken(string org, string orgNumber = "991825827")
-        {
-            ClaimsPrincipal principal = GetClaimsPrincipal(org, orgNumber);
+            ClaimsPrincipal principal = GetClaimsPrincipal(org, orgNumber, scope);
 
             string token = JwtTokenMock.GenerateToken(principal, new TimeSpan(1, 1, 1));
 
             return token;
         }
 
-        public static string GetTokenWithScope(string scope)
+        public static string GetToken(int userId, int authenticationLevel = 2, string scope = null)
         {
-            var principal = GetClaimsPrincipal(scope);
-            string token = JwtTokenMock.GenerateToken(principal, new TimeSpan(1, 1, 1));
-            return token;
-        }
-
-        public static string GetToken(int userId, int authenticationLevel = 2)
-        {
-            ClaimsPrincipal principal = GetClaimsPrincipal(userId, authenticationLevel);
+            ClaimsPrincipal principal = GetClaimsPrincipal(userId, authenticationLevel, scope);
 
             string token = JwtTokenMock.GenerateToken(principal, new TimeSpan(0, 1, 5));
 

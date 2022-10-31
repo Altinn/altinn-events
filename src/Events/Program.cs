@@ -230,7 +230,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddAuthorization(options =>
     {
         options.AddPolicy("PlatformAccess", policy => policy.Requirements.Add(new AccessTokenRequirement()));
-        options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events:publish")));
+        options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events:publish")));      
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
@@ -242,6 +242,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
+    services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
 
     services.AddTransient<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();

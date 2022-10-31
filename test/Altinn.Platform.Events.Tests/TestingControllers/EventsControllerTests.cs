@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -9,6 +10,7 @@ using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Controllers;
+using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
@@ -21,6 +23,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+
+using Moq;
 
 using Xunit;
 
@@ -36,6 +40,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             private const string BasePath = "/events/api/v1";
 
             private readonly WebApplicationFactory<EventsController> _factory;
+            private readonly CloudEventRequestModel _invalidEvent;
+            private readonly CloudEventRequestModel _validEvent;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="AppControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
@@ -44,6 +50,21 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public EventsControllerTests(WebApplicationFactory<EventsController> factory)
             {
                 _factory = factory;
+                _invalidEvent = new CloudEventRequestModel()
+                {
+                    Type = "system.event.occurred",
+                    Subject = "/person/16069412345",
+                    Source = new Uri("urn:isbn:1234567890")
+                };
+
+                _validEvent = new CloudEventRequestModel()
+                {
+                    Type = "system.event.occurred",
+                    Subject = "/person/16069412345",
+                    Source = new Uri("urn:isbn:1234567890"),
+                    SpecVersion = "1.0"
+                };
+
             }
 
             [Fact]
@@ -63,21 +84,87 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
-            public async Task Post_ValidScopee_EventIsRegistered()
+            public async Task Post_ValidTokenInvalidScope_ForbiddenResponse()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events";
 
-                // TODO: add service mock
                 HttpClient client = GetTestClient(null);
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
                     Content = new StringContent(string.Empty, Encoding.UTF8, "application/json")
                 };
 
-                // TODO: PEP not executed.. must figure out why
-                // client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetTokenWithScope("altinn:events:publish"));
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:invalid"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Post_ExternalEventsDisabled_NotFoundResponse()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+
+                HttpClient client = GetTestClient(null);
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(string.Empty, Encoding.UTF8, "application/json")
+                };
+
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:publish"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Post_EventMissingParameters_BadRequstResponse()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(_invalidEvent), Encoding.UTF8, "application/json")
+                };
+
+                HttpClient client = GetTestClient(null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:publish"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Contains("Missing parameter values: source, subject and type cannot be null", responseMessage);
+            }
+
+            [Fact]
+            public async Task Post_AuthorizedRequest_EventIsRegistered()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+
+                Mock<IEventsService> eventMock = new();
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                          .ReturnsAsync(Guid.NewGuid().ToString());
+
+                HttpClient client = GetTestClient(eventMock.Object, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:publish"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(_validEvent), Encoding.UTF8, "application/json")
+                };
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -100,10 +187,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                         services.AddSingleton(eventsService);
                         services.Configure<GeneralSettings>(opts => opts.EnableExternalEvents = enableExternalEvents);
 
-                        // Set up mock authentication so that not well known endpoint is used
+                        /*// Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                         services.AddSingleton<ISigningKeysResolver, SigningKeyResolverMock>();
-                        services.AddSingleton<IPDP, PepWithPDPAuthorizationMockSI>();
+                        services.AddSingleton<IPDP, PepWithPDPAuthorizationMockSI>();*/
                     });
                 }).CreateClient();
 

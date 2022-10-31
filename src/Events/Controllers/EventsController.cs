@@ -38,7 +38,7 @@ namespace Altinn.Platform.Events.Controllers
         /// Endpoint for posting a new cloud event
         /// </summary>
         /// <param name="cloudEventRequest">The incoming cloud event</param>
-        /// <returns></returns>
+        /// <returns>The cloud event subject and id</returns>
         [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH)]
         public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEventRequest)
         {
@@ -53,17 +53,21 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             CloudEvent cloudEvent = _mapper.Map<CloudEvent>(cloudEventRequest);
-            cloudEvent.Id = Guid.NewGuid().ToString();
-            cloudEvent.Time = DateTime.UtcNow;
 
             if (!AuthorizeEvent(cloudEvent))
             {
                 return Forbid();
             }
 
-            string id = await _events.RegisterEvent(cloudEvent);
-
-            return id;
+            try
+            {
+                var id = await _events.RegisterNew(cloudEvent);
+                return Created(cloudEvent.Subject, id);
+            }
+            catch
+            {
+                return StatusCode(500, $"Unable to register cloud event.");
+            }
         }
 
         private bool AuthorizeEvent(CloudEvent cloudEvent)
