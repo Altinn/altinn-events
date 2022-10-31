@@ -90,5 +90,25 @@ namespace Altinn.Platform.Events.Models
         {
             return JsonSerializer.Deserialize<CloudEvent>(jsonString, new JsonSerializerOptions { });
         }
+
+        /// <summary>
+        /// Validated required properties Id, Time, Source, SpecVersion, Type and Subject
+        /// </summary>
+        /// <returns>A boolean indicating whether all required fields have a value</returns>
+        public bool ValidateRequiredProperties()
+        {
+            if (string.IsNullOrEmpty(Id) ||
+                Time == null ||
+                Source == null ||
+                string.IsNullOrEmpty(Source.OriginalString) ||
+                string.IsNullOrEmpty(SpecVersion) ||
+                string.IsNullOrEmpty(Type) ||
+                string.IsNullOrEmpty(Subject))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

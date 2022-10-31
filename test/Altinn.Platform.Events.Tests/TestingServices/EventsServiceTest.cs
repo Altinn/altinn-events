@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -29,6 +31,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly Mock<IAuthorization> _authorizationMock;
         private readonly Mock<IClaimsPrincipalProvider> _claimsPrincipalProviderMock;
         private readonly Mock<ILogger<IEventsService>> _loggerMock;
+        private readonly JsonSerializerOptions _serializerOptions;
 
         public EventsServiceTest()
         {
@@ -38,6 +41,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _authorizationMock = new();
             _claimsPrincipalProviderMock = new();
             _loggerMock = new();
+            _serializerOptions = new()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
         }
 
         /// <summary>
@@ -91,13 +98,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   The response is a non-empty string.
         /// </summary>
         [Fact]
-        public async Task RegisterNewEvent_CheckIdCreatedByService_IdReturned()
+        public async Task RegisterNew_CheckIdCreatedByService_IdReturned()
         {
             // Arrange
             EventsService eventsService = GetEventsService();
 
-            CloudEvent item = GetCloudEvent();
-            item.Id = null;
+            CloudEvent item = GetCloudEventForRegistration();
 
             // Act
             string actual = await eventsService.RegisterNew(item);
@@ -115,11 +121,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///  Error is logged.
         /// </summary>
         [Fact]
-        public async Task RegisterNewEvent_PushEventFails_ErrorIsLogged()
+        public async Task RegisterNew_PushEventFails_ErrorIsLogged()
         {
             // Arrange
             Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
+            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>()))
+                     .ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
             EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
@@ -128,7 +135,45 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEvent()));
 
             // Assert
-            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            logger.Verify(
+                x => x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.IsAny<It.IsAnyType>(),
+                    It.IsAny<Exception>(),
+                    (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   An event without id and time is provided to the service for registraton
+        /// Expected result:
+        /// Id and time are added before the event is pushed to the registration queue
+        /// Success criteria:
+        /// A valid cloud event is pushed to the queue.
+        /// </summary>
+        [Fact]
+        public async Task RegisterNew_IdAndTimeSetForEvent_PushedToQueue()
+        {
+            // Arrange
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock.Setup(q => q.EnqueueRegistration(
+                It.Is<string>(serializedEvent => JsonSerializer.Deserialize<CloudEvent>(serializedEvent, _serializerOptions).ValidateRequiredProperties())))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            queueMock.Setup(q => q.EnqueueRegistration(
+               It.Is<string>(serializedEvent => !JsonSerializer.Deserialize<CloudEvent>(serializedEvent, _serializerOptions).ValidateRequiredProperties())))
+               .ThrowsAsync(new Exception("Invalid cloud event attempted posted to registration queue"));
+
+            EventsService eventsService = GetEventsService(queueMock: queueMock.Object);
+            CloudEvent item = GetCloudEventForRegistration();
+
+            // Act
+            await eventsService.RegisterNew(item);
+
+            // Assert
+            queueMock.VerifyAll();
         }
 
         /// <summary>
@@ -343,6 +388,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorizationMock.Object,
                 _claimsPrincipalProviderMock.Object,
                 loggerMock.Object);
+        }
+
+        private static CloudEvent GetCloudEventForRegistration()
+        {
+            return new CloudEvent()
+            {
+                SpecVersion = "1.0",
+                Type = "instance.created",
+                Source = new Uri("http://www.brreg.no/brg/something/232243423"),
+                Subject = "/party/456456",
+                Data = "something/extra",
+            };
         }
 
         private static CloudEvent GetCloudEvent()
