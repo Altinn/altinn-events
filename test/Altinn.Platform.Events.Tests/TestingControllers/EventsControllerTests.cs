@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Logging;
 
 using Moq;
 
@@ -182,15 +183,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
+                    IdentityModelEventSource.ShowPII = true;
+
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(eventsService);
                         services.Configure<GeneralSettings>(opts => opts.EnableExternalEvents = enableExternalEvents);
-
-                        /*// Set up mock authentication so that not well known endpoint is used
-                        services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                        services.AddSingleton<ISigningKeysResolver, SigningKeyResolverMock>();
-                        services.AddSingleton<IPDP, PepWithPDPAuthorizationMockSI>();*/
                     });
                 }).CreateClient();
 
