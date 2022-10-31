@@ -62,6 +62,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             }
 
+            [Fact]
             public async Task Post_ValidScopee_EventIsRegistered()
             {
                 // Arrange
@@ -75,7 +76,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // TODO: PEP not executed.. must figure out why
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetTokenWithScope("altinn:events:publish"));
+                // client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetTokenWithScope("altinn:events:publish"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
