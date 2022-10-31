@@ -70,7 +70,7 @@ namespace Altinn.Platform.Events.Controllers
         {
             if (!cloudEvent.ValidateRequiredProperties())
             {
-                return Problem("Missing parameter values: source, subject and type cannot be null", null, 400);
+                return Problem("Missing parameter values: source, subject, type, id or time cannot be null", null, 400);
             }
 
             var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];
@@ -82,13 +82,13 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.SaveAndPostInbound(_mapper.Map<CloudEvent>(cloudEvent));
+                string cloudEventId = await _eventsService.RegisterNew(_mapper.Map<CloudEvent>(cloudEvent));
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Unable to save cloud event to storage.");
-                return StatusCode(500, $"Unable to save cloud event to storage.");
+                _logger.LogError(e, "Unable to register cloud event in queue.");
+                return StatusCode(500, $"Unable to register cloud event in queue.");
             }
         }
 

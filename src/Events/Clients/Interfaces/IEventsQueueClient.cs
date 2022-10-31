@@ -9,6 +9,13 @@ namespace Altinn.Platform.Events.Clients.Interfaces
     public interface IEventsQueueClient
     {
         /// <summary>
+        /// Enqueues the provided content to the registration queue
+        /// </summary>
+        /// <param name="content">The content to push to the queue in string format</param>
+        /// <returns>Returns a queue receipt</returns>
+        public Task<QueuePostReceipt> EnqueueRegistration(string content);
+
+        /// <summary>
         /// Enqueues the provided content to the inbound queue
         /// </summary>
         /// <param name="content">The content to push to the queue in string format</param>
