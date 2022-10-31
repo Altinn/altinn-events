@@ -116,7 +116,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Content = new StringContent(string.Empty, Encoding.UTF8, "application/json")
                 };
 
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:publish"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -137,7 +137,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 HttpClient client = GetTestClient(null, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:publish"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -159,7 +159,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                           .ReturnsAsync(Guid.NewGuid().ToString());
 
                 HttpClient client = GetTestClient(eventMock.Object, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:publish"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
