@@ -170,10 +170,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             CloudEvent item = GetCloudEventForRegistration();
 
             // Act
-            await eventsService.RegisterNew(item);
+            var id = await eventsService.RegisterNew(item);
 
-            // Assert
-            queueMock.VerifyAll();
+            // Arrange
+            Assert.False(string.IsNullOrEmpty(id));
         }
 
         /// <summary>
