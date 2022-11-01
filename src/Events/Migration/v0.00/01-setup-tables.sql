@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS events.events_app
     "time" timestamptz  NOT NULL,
     type character varying COLLATE pg_catalog."default" NOT NULL,
     cloudevent text COLLATE pg_catalog."default" NOT NULL,
-    CONSTRAINT events_pkey PRIMARY KEY (sequenceno)
+    CONSTRAINT events_app_pkey PRIMARY KEY (sequenceno)
 )
 
 TABLESPACE pg_default;
