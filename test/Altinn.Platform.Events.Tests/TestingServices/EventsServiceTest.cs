@@ -31,7 +31,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly Mock<IAuthorization> _authorizationMock;
         private readonly Mock<IClaimsPrincipalProvider> _claimsPrincipalProviderMock;
         private readonly Mock<ILogger<IEventsService>> _loggerMock;
-        private readonly JsonSerializerOptions _serializerOptions;
 
         public EventsServiceTest()
         {
@@ -41,10 +40,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _authorizationMock = new();
             _claimsPrincipalProviderMock = new();
             _loggerMock = new();
-            _serializerOptions = new()
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
         }
 
         /// <summary>
@@ -159,11 +154,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             Mock<IEventsQueueClient> queueMock = new();
             queueMock.Setup(q => q.EnqueueRegistration(
-                It.Is<string>(serializedEvent => JsonSerializer.Deserialize<CloudEvent>(serializedEvent, _serializerOptions).ValidateRequiredProperties())))
+                It.Is<string>(serializedEvent => JsonSerializer.Deserialize<CloudEvent>(serializedEvent, new JsonSerializerOptions()).ValidateRequiredProperties())))
                 .ReturnsAsync(new QueuePostReceipt { Success = true });
 
             queueMock.Setup(q => q.EnqueueRegistration(
-               It.Is<string>(serializedEvent => !JsonSerializer.Deserialize<CloudEvent>(serializedEvent, _serializerOptions).ValidateRequiredProperties())))
+               It.Is<string>(serializedEvent => !JsonSerializer.Deserialize<CloudEvent>(serializedEvent, new JsonSerializerOptions()).ValidateRequiredProperties())))
                .ThrowsAsync(new Exception("Invalid cloud event attempted posted to registration queue"));
 
             EventsService eventsService = GetEventsService(queueMock: queueMock.Object);
