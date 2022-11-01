@@ -13,12 +13,12 @@ BEGIN
 return query 
 	Select events.events_app.cloudevent
 	from events.events_app
-	WHERE (_subject = '' OR events.subject = _subject)	
-	AND (_from IS NULL OR events.time >= _from)
-	AND (_to IS NULL OR events.time <= _to)
-	AND (_type IS NULL OR events.type ILIKE ANY(_type) )
-	AND (_source IS NULL OR events.source ILIKE ANY(_source))
-	AND (_after = '' OR events.sequenceno >(
+	WHERE (_subject = '' OR events_app.subject = _subject)	
+	AND (_from IS NULL OR events_app.time >= _from)
+	AND (_to IS NULL OR events_app.time <= _to)
+	AND (_type IS NULL OR events_app.type ILIKE ANY(_type) )
+	AND (_source IS NULL OR events_app.source ILIKE ANY(_source))
+	AND (_after = '' OR events_app.sequenceno >(
 		SELECT 
 			case count(*)
 			when 0
