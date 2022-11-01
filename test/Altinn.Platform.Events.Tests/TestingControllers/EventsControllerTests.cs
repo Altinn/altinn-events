@@ -45,7 +45,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             private readonly CloudEventRequestModel _validEvent;
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="AppControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
+            /// Initializes a new instance of the <see cref="EventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsControllerTests}"/>.
             /// </summary>
             /// <param name="factory">The <see cref="WebApplicationFactory{TEventsController}"/> to use when setting up the test server.</param>
             public EventsControllerTests(WebApplicationFactory<EventsController> factory)
