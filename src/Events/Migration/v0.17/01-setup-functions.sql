@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS events.insertevent(character varying, character varying, character varying, character varying, timestamptz, text);
+DROP FUNCTION IF EXISTS events.insertappevent(character varying, character varying, character varying, character varying, timestamptz, text);
 
-CREATE OR REPLACE PROCEDURE events.insertevent(
+CREATE OR REPLACE PROCEDURE events.insertappevent(
 	id character varying,
 	source character varying,
 	subject character varying,
@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE events.insertevent(
 AS $BODY$
 
   BEGIN
-	INSERT INTO events.events(id, source, subject, type, "time", cloudevent)
+	INSERT INTO events.events_app(id, source, subject, type, "time", cloudevent)
 	  VALUES ($1, $2, $3, $4, $5, $6);
   END;
 

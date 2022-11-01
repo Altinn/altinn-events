@@ -3,9 +3,9 @@
 CREATE SCHEMA IF NOT EXISTS events
 AUTHORIZATION platform_events_admin;
 
--- Table: events.events
+-- Table: events.events_app
 
-CREATE TABLE IF NOT EXISTS events.events
+CREATE TABLE IF NOT EXISTS events.events_app
 (
     sequenceno BIGSERIAL,
     id character varying COLLATE pg_catalog."default" NOT NULL,
@@ -36,7 +36,7 @@ BEGIN
   currentTime := NOW();
   currentTimeString :=  to_char(currentTime, 'YYYY-MM-DD"T"HH24:MI:SS.USOF');
 
-INSERT INTO events.events(id, source, subject, type, "time", cloudevent)
+INSERT INTO events.events_app(id, source, subject, type, "time", cloudevent)
 	VALUES ($1, $2, $3, $4, currentTime,  substring($5 from 1 for length($5) -1)  || ',"time": "' || currentTimeString || '"}');
 	
 END;

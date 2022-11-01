@@ -1,1 +1,1 @@
-CREATE INDEX IF NOT EXISTS idx_events_id ON events.events USING btree (id ASC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_events_id ON events.events_app USING btree (id ASC NULLS LAST);
