@@ -20,8 +20,8 @@ namespace Altinn.Platform.Events.Repository
     [ExcludeFromCodeCoverage]
     public class CloudEventRepository : ICloudEventRepository
     {
-        private readonly string insertEventSql = "call events.insertevent(@id, @source, @subject, @type, @time, @cloudevent)";
-        private readonly string getEventSql = "select events.get(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
+        private readonly string insertAppEventSql = "call events.insertappevent(@id, @source, @subject, @type, @time, @cloudevent)";
+        private readonly string getAppEventSql = "select events.getappevent(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
         private readonly string _connectionString;
 
         /// <summary>
@@ -35,12 +35,12 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task Create(CloudEvent cloudEvent)
+        public async Task CreateAppEvent(CloudEvent cloudEvent)
         {
             await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(insertEventSql, conn);
+            await using NpgsqlCommand pgcom = new NpgsqlCommand(insertAppEventSql, conn);
             pgcom.Parameters.AddWithValue("id", cloudEvent.Id);
             pgcom.Parameters.AddWithValue("source", cloudEvent.Source.OriginalString);
             pgcom.Parameters.AddWithValue("subject", cloudEvent.Subject);
@@ -52,14 +52,14 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> Get(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
+        public async Task<List<CloudEvent>> GetAppEvent(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
         {
             List<CloudEvent> searchResult = new List<CloudEvent>();
 
             await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(getEventSql, conn);
+            await using NpgsqlCommand pgcom = new NpgsqlCommand(getAppEventSql, conn);
             pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject);
             pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
             pgcom.Parameters.AddWithValue("_from", NpgsqlDbType.TimestampTz, from ?? (object)DBNull.Value);
