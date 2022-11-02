@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Repository
     public class CloudEventRepository : ICloudEventRepository
     {
         private readonly string insertAppEventSql = "call events.insertappevent(@id, @source, @subject, @type, @time, @cloudevent)";
-        private readonly string getAppEventSql = "select events.getappevent(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
+        private readonly string getAppEventsSql = "select events.getappevents(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
         private readonly string _connectionString;
 
         /// <summary>
@@ -59,13 +59,13 @@ namespace Altinn.Platform.Events.Repository
             await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(getAppEventSql, conn);
+            await using NpgsqlCommand pgcom = new NpgsqlCommand(getAppEventsSql, conn);
             pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject);
             pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
             pgcom.Parameters.AddWithValue("_from", NpgsqlDbType.TimestampTz, from ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_to", NpgsqlDbType.TimestampTz, to ?? (object)DBNull.Value);
-            pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
