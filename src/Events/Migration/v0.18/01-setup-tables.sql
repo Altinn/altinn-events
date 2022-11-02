@@ -4,12 +4,13 @@
 ALTER TABLE events.events_app
 RENAME CONSTRAINT events_pkey TO events_app_pkey;
 
-ALTER  FUNCTION events.insertevent(
-	id character varying,
-	source character varying,
-	subject character varying,
-	type character varying,
-	INOUT cloudevent text)
+ALTER PROCEDURE events.insertevent(
+	IN id character varying,
+	IN source character varying,
+	IN subject character varying,
+	IN type character varying,
+	IN "time" timestamp with time zone,
+	IN cloudevent text)
 RENAME TO insertappevent;
 
 ALTER FUNCTION events.get(
