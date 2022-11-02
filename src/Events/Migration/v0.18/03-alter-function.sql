@@ -48,4 +48,4 @@ ALTER FUNCTION events.get(
 	_type text[],
 	_source text[],
 	_size integer)
-RENAME TO getappevent;
+RENAME TO getappevents;
