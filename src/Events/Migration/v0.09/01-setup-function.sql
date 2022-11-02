@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION events.insertappevent(
+CREATE OR REPLACE FUNCTION events.insertevent(
 	id character varying,
 	source character varying,
 	subject character varying,
@@ -18,7 +18,7 @@ AS $BODY$
 
   finalCloudEvent:= substring($5 from 1 for length($5) -1)  || ',"time": "' || currentTimeString || '"}';
 
-  INSERT INTO events.events_app(id, source, subject, type, "time", cloudevent)
+  INSERT INTO events.events(id, source, subject, type, "time", cloudevent)
 	  VALUES ($1, $2, $3, $4, currentTime,  finalCloudEvent);
 
   SELECT finalCloudEvent

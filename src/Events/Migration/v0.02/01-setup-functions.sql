@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION events.getappevent(
+CREATE OR REPLACE FUNCTION events.get(
 	_subject character varying,
 	_after character varying,
 	_from timestamp with time zone,
@@ -11,8 +11,8 @@ CREATE OR REPLACE FUNCTION events.getappevent(
 AS $BODY$
 BEGIN
 return query 
-	SELECT events.events_app.cloudevent
-	FROM events.events_app
+	SELECT events.events.cloudevent
+	FROM events.events
 	WHERE (_subject = '' OR events.subject = _subject)	
 	AND (_from IS NULL OR events.time >= _from)
 	AND (_to IS NULL OR events.time <= _to)
@@ -25,10 +25,10 @@ return query
 				then 0
 			else 
 				(SELECT sequenceno
-				FROM events.events_app
+				FROM events.events
 				WHERE id = _after) 
 			end 
-		FROM events.events_app
+		FROM events.events
 		WHERE id = _after))
   ORDER BY events.sequenceno;
 END;
