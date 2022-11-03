@@ -10,6 +10,8 @@ using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
+using Altinn.Platform.Events.Clients;
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Filters;
 using Altinn.Platform.Events.Health;
@@ -232,13 +234,15 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddHttpClient<IRegisterService, RegisterService>();
     services.AddHttpClient<IProfile, ProfileService>();
     services.AddSingleton<IEventsService, EventsService>();
+    services.AddSingleton<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
-    services.AddSingleton<IQueueService, QueueService>();
+    services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
-    services.AddTransient<IAuthorization, AuthorizationService>();
 
+    services.AddTransient<IAuthorization, AuthorizationService>();
+    services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
     if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
     {
         services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });

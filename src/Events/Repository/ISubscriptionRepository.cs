@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -10,6 +11,13 @@ namespace Altinn.Platform.Events.Repository
     /// </summary>
     public interface ISubscriptionRepository
     {
+        /// <summary>
+        /// Attempt to find existing subscriptions with properties matching the given subscription.
+        /// </summary>
+        /// <param name="eventsSubscription">The subscription to be used as base in the search.</param>
+        /// <param name="ct">A token to cancel the asynchronous operation if needed.</param>
+        Task<Subscription> FindSubscription(Subscription eventsSubscription, CancellationToken ct);
+
         /// <summary>
         /// Creates an subscription in repository
         /// </summary>
@@ -31,9 +39,9 @@ namespace Altinn.Platform.Events.Repository
         Task SetValidSubscription(int id);
 
         /// <summary>
-        /// Gets subscriptions by source excluding orgs
+        /// Gets subscriptions by source, subject and type of a cloud event
         /// </summary>
-        Task<List<Subscription>> GetSubscriptionsExcludeOrg(string source, string subject, string type);
+        Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct);
 
         /// <summary>
         /// Gets subscriptions for a given consumer

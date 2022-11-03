@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -16,6 +17,14 @@ namespace Altinn.Platform.Events.Tests.Mocks
     /// </summary>
     public class SubscriptionRepositoryMock : ISubscriptionRepository
     {
+        /// <summary>
+        /// Returns null regardless of input.
+        /// </summary>
+        public Task<Subscription> FindSubscription(Subscription eventsSubscription, CancellationToken ct)
+        {
+            return Task.FromResult((Subscription)null);
+        }
+
         public Task<Subscription> CreateSubscription(Subscription eventsSubscription)
         {
             Random rnd = new Random();
@@ -58,7 +67,12 @@ namespace Altinn.Platform.Events.Tests.Mocks
             }
         }
 
-        public Task<List<Subscription>> GetSubscriptionsExcludeOrg(string source, string subject, string type)
+        public Task SetValidSubscription(int id)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct)
         {
             string subscriptionsPath = Path.Combine(GetSubscriptionPath(), "1.json");
             List<Subscription> subscriptions = null;
@@ -73,15 +87,9 @@ namespace Altinn.Platform.Events.Tests.Mocks
             }
 
             return Task.FromResult(subscriptions.Where(s =>
-                                !s.Consumer.StartsWith("/org/") &&
-                                s.SourceFilter.Equals(source) &&
+                                source.StartsWith(s.SourceFilter.ToString()) &&
                                 subject.Equals(subject) &&
                                 (string.IsNullOrEmpty(s.TypeFilter) || type.Equals(s.TypeFilter))).ToList());
-        }
-
-        public Task SetValidSubscription(int id)
-        {
-            return Task.CompletedTask;
         }
 
         private static string GetSubscriptionPath()

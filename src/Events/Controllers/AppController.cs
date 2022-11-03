@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -29,33 +29,27 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Authorize]
     [Route("events/api/v1/app")]
-    public class EventsController : ControllerBase
+    public class AppController : ControllerBase
     {
         private readonly IEventsService _eventsService;
-        private readonly IRegisterService _registerService;
-        private readonly IAuthorization _authorizationService;
-        private readonly ILogger _logger;
-        private readonly string _eventsBaseUri;
-        private readonly AccessTokenSettings _accessTokenSettings;
         private readonly IMapper _mapper;
+        private readonly ILogger _logger;
+        private readonly AccessTokenSettings _accessTokenSettings;
+        private readonly string _eventsBaseUri;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventsController"/> class
+        /// Initializes a new instance of the <see cref="AppController"/> class
         /// </summary>
-        public EventsController(
+        public AppController(
             IEventsService eventsService,
-            IRegisterService registerService,
-            IAuthorization authorizationService,
             IOptions<GeneralSettings> settings,
-            ILogger<EventsController> logger,
+            ILogger<AppController> logger,
             IOptions<AccessTokenSettings> accessTokenSettings,
             IMapper mapper)
         {
-            _registerService = registerService;
             _logger = logger;
             _eventsService = eventsService;
             _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
-            _authorizationService = authorizationService;
             _accessTokenSettings = accessTokenSettings.Value;
             _mapper = mapper;
         }
@@ -63,7 +57,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Inserts a new event.
         /// </summary>
-        /// <returns>The application metadata object.</returns>
+        /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
         [Consumes("application/json")]
@@ -74,8 +68,10 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
         {
-            if (string.IsNullOrEmpty(cloudEvent.Source.OriginalString) || string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
-            string.IsNullOrEmpty(cloudEvent.Type) || string.IsNullOrEmpty(cloudEvent.Subject))
+            if (string.IsNullOrEmpty(cloudEvent.Source?.OriginalString) ||
+                string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
+                string.IsNullOrEmpty(cloudEvent.Type) || 
+                string.IsNullOrEmpty(cloudEvent.Subject))
             {
                 return Problem("Missing parameter values: source, subject, type, id or time cannot be null", null, 400);
             }
@@ -89,14 +85,13 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                string cloudEventId = await _eventsService.StoreCloudEvent(_mapper.Map<CloudEvent>(cloudEvent));
-                _logger.LogInformation("Cloud Event successfully stored with id: {cloudEventId}", cloudEventId);
+                string cloudEventId = await _eventsService.RegisterNew(_mapper.Map<CloudEvent>(cloudEvent));
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Unable to store cloud event in database.");
-                return StatusCode(500, $"Unable to store cloud event in database. {e}");
+                _logger.LogError(e, "Unable to register cloud event in queue.");
+                return StatusCode(500, $"Unable to register cloud event in queue.");
             }
         }
 
@@ -108,7 +103,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter even that should be included</param>
         /// <param name="from" example="2022-02-14 07:22:19Z">The lower limit for when the cloud event was created in UTC</param>
         /// <param name="to" example="2022-06-16 13:37:00Z">The upper limit for when the cloud event was created in UTC</param>
-        /// <param name="party" example="50002108">The party id representing the subjects</param>        
+        /// <param name="party" example="50002108">The party id representing the subjects</param>
         /// <param name="unit" example="989271156">The organisation number representing the subject</param>
         /// <param name="person" example="01014922047">The person number representing the subject</param>
         /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
@@ -136,35 +131,30 @@ namespace Altinn.Platform.Events.Controllers
         {
             if (string.IsNullOrEmpty(HttpContext.User.GetOrg()))
             {
-                // Only orgs can do a search based on. Alternative can be a service owner read in scope. Need to be added later
+                // Only orgs can do a search based on a specific app. Alternative can be a service owner read in scope. Need to be added later
                 return StatusCode(401, "Only orgs can call this api");
             }
 
-            if (string.IsNullOrEmpty(after) && from == null)
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size);
+
+            if (!isValid)
             {
-                return Problem("From or after must be defined.", null, 400);
+                return Problem(errorMessage, null, 400);
             }
 
-            if (size < 1)
+            var source = new List<string> { $"%{org}/{app}%" };
+
+            try
             {
-                return Problem("Size must be a number larger that 0.", null, 400);
+                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
+                SetNextLink(events);
+
+                return events;
             }
-
-            List<string> source = new List<string> { $"%{org}/{app}%" };
-
-            if ((!string.IsNullOrEmpty(person) || !string.IsNullOrEmpty(unit)) && party <= 0)
+            catch (PlatformHttpException e)
             {
-                try
-                {
-                    party = await _registerService.PartyLookup(unit, person);
-                }
-                catch (PlatformHttpException e)
-                {
-                    return HandlePlatformHttpException(e);
-                }
+                return HandlePlatformHttpException(e);
             }
-
-            return await RetrieveAndAuthorizeEvents(after, from, to, party, source, type, size);
         }
 
         /// <summary>
@@ -173,11 +163,12 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter event that should be included</param>
         /// <param name="from" example="2022-02-14 07:22:19Z">The lower limit for when the cloud event was created in UTC</param>
         /// <param name="to" example="2022-06-16 13:37:00Z">The upper limit for when the cloud event was created in UTC</param>
-        /// <param name="party" example="50002108">The party id representing the subjects</param>        
+        /// <param name="party" example="50002108">The party id representing the subjects</param>
         /// <param name="unit" example="989271156">The organisation number representing the subject</param>
         /// <param name="person" example="01014922047">The person number representing the subject</param>
         /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
-        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;]">A list of the sources to include</param>
+        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;, &quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-%/&quot;]">
+        /// A list of the sources to include</param>
         /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
         /// A list of the event types to include</param>
         /// <param name="size">The maximum number of events to include in the response</param>
@@ -198,14 +189,11 @@ namespace Altinn.Platform.Events.Controllers
             [FromQuery] List<string> type,
             [FromQuery] int size = 50)
         {
-            if (string.IsNullOrEmpty(after) && from == null)
-            {
-                return Problem("From or after must be defined.", null, 400);
-            }
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size);
 
-            if (size < 1)
+            if (!isValid)
             {
-                return Problem("Size must be a number larger that 0.", null, 400);
+                return Problem(errorMessage, null, 400);
             }
 
             if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
@@ -213,45 +201,53 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem("Subject must be specified using either query params party or unit or header value person.", null, 400);
             }
 
-            if (party <= 0)
+            try
             {
-                try
-                {
-                    party = await _registerService.PartyLookup(unit, person);
-                }
-                catch (PlatformHttpException e)
-                {
-                    return HandlePlatformHttpException(e);
-                }
+                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
+                SetNextLink(events);
+                return events;
             }
-
-            return await RetrieveAndAuthorizeEvents(after, from, to, party, source, type, size);
+            catch (PlatformHttpException e)
+            {
+                return HandlePlatformHttpException(e);
+            }
         }
 
-        private async Task<ActionResult<List<CloudEvent>>> RetrieveAndAuthorizeEvents(
-            string after,
-            DateTime? from,
-            DateTime? to,
-            int party,
-            List<string> source,
-            List<string> type,
-            int size)
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, DateTime? from, DateTime? to, int size)
         {
-            List<CloudEvent> events = await _eventsService.Get(after, from, to, party, source, type, size);
-
-            if (events.Count > 0)
+            if (string.IsNullOrEmpty(after) && from == null)
             {
-                events = await _authorizationService.AuthorizeEvents(HttpContext.User, events);
+                return (false, "The 'From' or 'After' parameter must be defined.");
             }
 
+            if (from != null && from.Value.Kind == DateTimeKind.Unspecified)
+            {
+                return (false, "The 'From' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+            }
+
+            if (to != null && to.Value.Kind == DateTimeKind.Unspecified)
+            {
+                return (false, "The 'To' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
+            }
+
+            if (size < 1)
+            {
+                return (false, "The 'Size' parameter must be a number larger that 0.");
+            }
+
+            return (true, null);
+        }
+
+        private void SetNextLink(List<CloudEvent> events)
+        {
             if (events.Count > 0)
             {
-                List<KeyValuePair<string, string>> queryCollection = Request.Query
+                List<KeyValuePair<string, string>> queryCollection = HttpContext.Request.Query
                     .SelectMany(q => q.Value, (col, value) => new KeyValuePair<string, string>(col.Key, value))
                     .Where(q => q.Key != "after")
                     .ToList();
 
-                StringBuilder nextUriBuilder = new StringBuilder($"{_eventsBaseUri}{Request.Path}?after={events.Last().Id}");
+                StringBuilder nextUriBuilder = new StringBuilder($"{_eventsBaseUri}{HttpContext.Request.Path}?after={events.Last().Id}");
 
                 foreach (KeyValuePair<string, string> queryParam in queryCollection)
                 {
@@ -260,8 +256,6 @@ namespace Altinn.Platform.Events.Controllers
 
                 Response.Headers.Add("next", nextUriBuilder.ToString());
             }
-
-            return events;
         }
 
         private ActionResult HandlePlatformHttpException(PlatformHttpException e)
@@ -272,8 +266,8 @@ namespace Altinn.Platform.Events.Controllers
             }
             else
             {
-                _logger.LogError(e, "// EventsController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
-                return StatusCode(500, e);
+                _logger.LogError(e, "// AppController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
+                return Problem(e.Message, statusCode: 500);
             }
         }
     }

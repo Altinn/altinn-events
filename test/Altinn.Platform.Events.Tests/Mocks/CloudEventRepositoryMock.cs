@@ -25,15 +25,13 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEvent> Create(CloudEvent cloudEvent)
+        public Task CreateAppEvent(CloudEvent cloudEvent)
         {
-            cloudEvent.Time = DateTime.UtcNow; // check the format here! goal 2021-02-12 09:35:20.050893+01
-
             return Task.FromResult(cloudEvent);
         }
 
         /// <inheritdoc/>
-        public Task<List<CloudEvent>> Get(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
+        public Task<List<CloudEvent>> GetAppEvent(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
         {
             string eventsPath = Path.Combine(GetEventsPath(), $@"{_eventsCollection}.json");
 

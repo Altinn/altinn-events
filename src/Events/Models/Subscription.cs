@@ -55,6 +55,11 @@ namespace Altinn.Platform.Events.Models
         public DateTime Created { get; set; }
 
         /// <summary>
+        /// Indicate whether the subscription has been validated to be ok. 
+        /// </summary>
+        public bool Validated { get; set; }
+
+        /// <summary>
         /// Serializes the subscriont to a JSON string.
         /// </summary>
         /// <returns>Serialized cloud event</returns>
