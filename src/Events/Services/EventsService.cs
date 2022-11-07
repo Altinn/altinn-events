@@ -66,9 +66,6 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> RegisterNew(CloudEvent cloudEvent)
         {
-            cloudEvent.Id = Guid.NewGuid().ToString();
-            cloudEvent.Time ??= DateTime.UtcNow;
-
             QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(JsonSerializer.Serialize(cloudEvent));
 
             if (!receipt.Success)

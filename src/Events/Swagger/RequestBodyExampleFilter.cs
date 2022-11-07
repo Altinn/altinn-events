@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Swagger
         {
             switch (context.BodyParameterDescription.Type.Name)
             {
-                case nameof(CloudEventRequestModel):
+                case nameof(AppCloudEventRequestModel):
                     CreateCloudEventRequestModelExamples(requestBody);
                     return;
                 case nameof(SubscriptionRequestModel):

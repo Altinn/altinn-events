@@ -12,7 +12,7 @@ namespace Altinn.Platform.Events.Mappers
         /// </summary>
         public CloudEventMapper()
         {
-            CreateMap<CloudEventRequestModel, CloudEvent>();
+            CreateMap<AppCloudEventRequestModel, CloudEvent>();
         }
     }
 }

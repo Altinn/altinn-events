@@ -63,7 +63,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/push";
                 string responseId = Guid.NewGuid().ToString();
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
                 service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>()));
@@ -97,7 +97,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/push";
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
                 service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(service.Object);
@@ -188,9 +188,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 return client;
             }
 
-            private static CloudEventRequestModel GetCloudEventRequest()
+            private static AppCloudEventRequestModel GetCloudEventRequest()
             {
-                CloudEventRequestModel cloudEvent = new CloudEventRequestModel
+                AppCloudEventRequestModel cloudEvent = new AppCloudEventRequestModel
                 {
                     SpecVersion = "1.0",
                     Type = "instance.created",

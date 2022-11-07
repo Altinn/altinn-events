@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (!cloudEventRequest.ValidateRequiredProperties())
             {
-                return Problem("Missing parameter values: source, subject and type cannot be null", null, 400);
+                return Problem("Missing parameter values: source, subject, type and specVersion cannot be null", null, 400);
             }
 
             CloudEvent cloudEvent = _mapper.Map<CloudEvent>(cloudEventRequest);
