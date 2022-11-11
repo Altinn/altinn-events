@@ -58,7 +58,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService();
 
             // Act
-            string actual = await eventsService.PostInbound(GetCloudEvent());
+            string actual = await eventsService.PostInbound(GetCloudEventFromApp());
 
             // Assert
             Assert.NotEmpty(actual);
@@ -79,7 +79,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService();
 
             // Act
-            string actual = await eventsService.Save(GetCloudEvent());
+            string actual = await eventsService.Save(GetCloudEventFromApp());
 
             // Assert
             Assert.NotEmpty(actual);
@@ -99,7 +99,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             EventsService eventsService = GetEventsService();
 
-            CloudEvent item = GetCloudEvent();
+            CloudEvent item = GetCloudEventFromApp();
             item.Id = null;
 
             // Act
@@ -128,7 +128,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act
-            await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEvent()));
+            await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEventFromApp()));
 
             // Assert
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
@@ -153,7 +153,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => eventsService.PostInbound(GetCloudEvent()));
+            await Assert.ThrowsAsync<Exception>(() => eventsService.PostInbound(GetCloudEventFromApp()));
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
@@ -177,7 +177,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEvent()));
+            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEventFromApp()));
 
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
@@ -324,10 +324,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IAuthorization> authorizationMock = null,
             Mock<ILogger<IEventsService>> loggerMock = null)
         {
-            repositoryMock = repositoryMock ?? _repositoryMock;
-            registerMock = registerMock ?? _registerMock;
-            queueMock = queueMock ?? _queueMock;
-            loggerMock = loggerMock ?? _loggerMock;
+            repositoryMock ??= _repositoryMock;
+            registerMock ??= _registerMock;
+            queueMock ??= _queueMock;
+            loggerMock ??= _loggerMock;
 
             // default mocked authorization logic. All elements are returned
             if (authorizationMock == null)
@@ -355,14 +355,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 loggerMock.Object);
         }
 
-        private static CloudEvent GetCloudEvent()
+        private static CloudEvent GetCloudEventFromApp()
         {
             CloudEvent cloudEvent = new()
             {
                 Id = Guid.NewGuid().ToString(),
                 SpecVersion = "1.0",
                 Type = "instance.created",
-                Source = new Uri("http://www.brreg.no/brg/something/232243423"),
+                Source = new Uri("https://brg.apps.altinn.no/brg/something/232243423"),
                 Time = DateTime.Now,
                 Subject = "/party/456456",
                 Data = "something/extra",
