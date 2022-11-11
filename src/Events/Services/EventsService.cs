@@ -58,13 +58,17 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> Save(CloudEvent cloudEvent)
         {
+            var serializedEvent = JsonSerializer.Serialize(cloudEvent);
+
             try
             {
-                await _repository.CreateEvent(JsonSerializer.Serialize(cloudEvent));
-
                 if (IsAppEvent(cloudEvent))
                 {
-                    await _repository.CreateAppEvent(cloudEvent);
+                    await _repository.CreateAppEvent(cloudEvent, serializedEvent);
+                }
+                else
+                {
+                    await _repository.CreateEvent(serializedEvent);
                 }
             }
             catch (Exception ex)

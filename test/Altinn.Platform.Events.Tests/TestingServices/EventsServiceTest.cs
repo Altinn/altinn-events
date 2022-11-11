@@ -277,15 +277,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Expected result:
         ///   Returns the id of the newly created document.
         /// Success criteria:
-        ///   The repository is called twice, once to create an app cloud event and once to create a cloud event.
+        ///   The repository method for creating an app event is called.
         /// </summary>
         [Fact]
-        public async Task Save_CloudEventFromAltinnApp_RepositoryCalledTwice()
+        public async Task Save_CloudEventFromAltinnApp_CreateAppEventMethodCalled()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
-            repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>()));
-            repositoryMock.Setup(r => r.CreateAppEvent(It.IsAny<CloudEvent>()));
+            repositoryMock.Setup(r => r.CreateAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()));
 
             EventsService eventsService = GetEventsService(repositoryMock.Object);
 
@@ -294,7 +293,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.NotEmpty(actual);
-            repositoryMock.VerifyAll();
+            repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Never);
+            repositoryMock.Verify(r => r.CreateAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Once);
         }
 
         /// <summary>
@@ -306,7 +306,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   The repository is called one to create a cloud event in the repository.
         /// </summary>
         [Fact]
-        public async Task Save_CloudEventFromExternalSource_RepositoryCalledOnce()
+        public async Task Save_CloudEventFromExternalSource_CreateEventMethodCalled()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -320,7 +320,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             Assert.NotEmpty(actual);
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
-            repositoryMock.Verify(r => r.CreateAppEvent(It.IsAny<CloudEvent>()), Times.Never);
+            repositoryMock.Verify(r => r.CreateAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Never);
         }
 
         /// <summary>
@@ -336,7 +336,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
-            repoMock.Setup(q => q.CreateAppEvent(It.IsAny<CloudEvent>()))
+            repoMock.Setup(q => q.CreateAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
                 .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
 
             Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
@@ -368,7 +368,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEventFromApp()));
+            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEvent()));
 
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }

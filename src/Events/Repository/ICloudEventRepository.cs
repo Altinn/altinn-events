@@ -14,8 +14,9 @@ namespace Altinn.Platform.Events.Repository
         /// <summary>
         /// Creates an app cloud event in repository
         /// </summary>
-        /// <param name="cloudEvent">the cloud event object</param>
-        Task CreateAppEvent(CloudEvent cloudEvent);
+        /// <param name="cloudEvent">The cloud event object</param>
+        /// <param name="serializedCloudEvent">The json serialized cloud event</param>
+        Task CreateAppEvent(CloudEvent cloudEvent, string serializedCloudEvent);
 
         /// <summary>
         /// Creates a cloud event in the repository.
