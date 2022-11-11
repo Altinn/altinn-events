@@ -189,7 +189,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
 
     services.AddSingleton(config);
-    services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
+    services.Configure<PostgreSqlSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<Altinn.Platform.Events.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));

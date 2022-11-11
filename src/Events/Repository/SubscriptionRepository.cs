@@ -35,7 +35,7 @@ namespace Altinn.Platform.Events.Repository
         /// Initializes a new instance of the <see cref="SubscriptionRepository"/> class with a 
         /// PostgreSQL connection string.
         /// </summary>
-        public SubscriptionRepository(IOptions<PostgreSQLSettings> postgresSettings)
+        public SubscriptionRepository(IOptions<PostgreSqlSettings> postgresSettings)
         {
             connectionString =
                 string.Format(postgresSettings.Value.ConnectionString, postgresSettings.Value.EventsDbPwd);
