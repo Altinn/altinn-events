@@ -66,27 +66,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Store a CloudEvent in postgres DB.
-        /// Expected result:
-        ///   Returns the id of the newly created document.
-        /// Success criteria:
-        ///   The response is a non-empty string.
-        /// </summary>
-        [Fact]
-        public async Task SaveNewEvent_EventSuccessfullyStored_IdReturned()
-        {
-            // Arrange
-            EventsService eventsService = GetEventsService();
-
-            // Act
-            string actual = await eventsService.Save(GetCloudEventFromApp());
-
-            // Assert
-            Assert.NotEmpty(actual);
-        }
-
-        /// <summary>
-        /// Scenario:
         ///   Store a cloud event in postgres DB when id is null.
         /// Expected result:
         ///   Returns the id of the newly created document.
@@ -154,31 +133,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => eventsService.PostInbound(GetCloudEventFromApp()));
-            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Scenario:
-        ///   Save cloud event to db fails.
-        /// Expected result:
-        ///   Error returned to caller.
-        /// Success criteria:
-        ///   Error is logged.
-        /// </summary>
-        [Fact]
-        public async Task SaveNewEvent_SaveToDatabaseFails_ErrorIsLogged()
-        {
-            // Arrange
-            Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
-            repoMock.Setup(q => q.CreateAppEvent(It.IsAny<CloudEvent>()))
-                .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
-
-            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
-            EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEventFromApp()));
-
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
@@ -317,6 +271,108 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             registerMock.Verify(r => r.PartyLookup(It.Is<string>(s => string.IsNullOrEmpty(s)), It.Is<string>(s => string.IsNullOrEmpty(s))), Times.Never);
         }
 
+        /// <summary>
+        /// Scenario:
+        ///   Save a CloudEvent from an Altinn App in postgres DB.
+        /// Expected result:
+        ///   Returns the id of the newly created document.
+        /// Success criteria:
+        ///   The repository is called twice, once to create an app cloud event and once to create a cloud event.
+        /// </summary>
+        [Fact]
+        public async Task Save_CloudEventFromAltinnApp_RepositoryCalledTwice()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repositoryMock = new();
+            repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>()));
+            repositoryMock.Setup(r => r.CreateAppEvent(It.IsAny<CloudEvent>()));
+
+            EventsService eventsService = GetEventsService(repositoryMock.Object);
+
+            // Act
+            string actual = await eventsService.Save(GetCloudEventFromApp());
+
+            // Assert
+            Assert.NotEmpty(actual);
+            repositoryMock.VerifyAll();
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Save a CloudEvent from an external source
+        /// Expected result:
+        ///   Returns the id of the newly created document.
+        /// Success criteria:
+        ///   The repository is called one to create a cloud event in the repository.
+        /// </summary>
+        [Fact]
+        public async Task Save_CloudEventFromExternalSource_RepositoryCalledOnce()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repositoryMock = new();
+            repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>()));
+
+            EventsService eventsService = GetEventsService(repositoryMock.Object);
+
+            // Act
+            string actual = await eventsService.Save(GetCloudEvent());
+
+            // Assert
+            Assert.NotEmpty(actual);
+            repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
+            repositoryMock.Verify(r => r.CreateAppEvent(It.IsAny<CloudEvent>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Save cloud event from app to db fails when storing to events_app table.
+        /// Expected result:
+        ///   Error returned to caller.
+        /// Success criteria:
+        ///   Error is logged.
+        /// </summary>
+        [Fact]
+        public async Task Save_CreateAppEventThrowsException_ErrorIsLogged()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
+            repoMock.Setup(q => q.CreateAppEvent(It.IsAny<CloudEvent>()))
+                .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
+
+            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEventFromApp()));
+
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Save cloud event from app to db fails when storing to events table.
+        /// Expected result:
+        ///   Error returned to caller.
+        /// Success criteria:
+        ///   Error is logged.
+        /// </summary>
+        [Fact]
+        public async Task Save_CreateEventThrowsException_ErrorIsLogged()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
+            repoMock.Setup(q => q.CreateEvent(It.IsAny<string>()))
+                .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
+
+            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEventFromApp()));
+
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
         private EventsService GetEventsService(
             ICloudEventRepository repositoryMock = null,
             IEventsQueueClient queueMock = null,
@@ -366,6 +422,21 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Time = DateTime.Now,
                 Subject = "/party/456456",
                 Data = "something/extra",
+            };
+
+            return cloudEvent;
+        }
+
+        private static CloudEvent GetCloudEvent()
+        {
+            CloudEvent cloudEvent = new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SpecVersion = "1.0",
+                Type = "dom.avsagt",
+                Source = new Uri("http://elsa.domstol.no/1425/sgrgeg35"),
+                Time = DateTime.Now,
+                Subject = "/person/16069412345"
             };
 
             return cloudEvent;
