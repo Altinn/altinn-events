@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -11,6 +13,7 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using Moq;
 
@@ -336,12 +339,19 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorizationMock = _authorizationMock;
             }
 
+            IOptions<PlatformSettings> settingsIOption = Options.Create(
+                new PlatformSettings()
+                {
+                    AppsDomain = "apps.altinn.no"
+                });
+
             return new EventsService(
                 repositoryMock,
                 queueMock,
                 registerMock.Object,
                 authorizationMock.Object,
                 _claimsPrincipalProviderMock.Object,
+                settingsIOption,
                 loggerMock.Object);
         }
 
