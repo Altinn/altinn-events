@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Repository
     public class CloudEventRepository : ICloudEventRepository
     {
         private readonly string insertAppEventSql = "call events.insertappevent(@id, @source, @subject, @type, @time, @cloudevent)";
-        private readonly string insertEventSql = "insert into events.events(cloudevent) VALUES ('{0}');";
+        private readonly string insertEventSql = "insert into events.events(cloudevent) VALUES ($1);";
         private readonly string getAppEventsSql = "select events.getappevents(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
         private readonly string _connectionString;
 
@@ -52,7 +52,14 @@ namespace Altinn.Platform.Events.Repository
 
             await pgcom.ExecuteNonQueryAsync();
 
-            await using NpgsqlCommand pgcom2 = new NpgsqlCommand(string.Format(insertEventSql, serializedCloudEvent), conn);
+            await using NpgsqlCommand pgcom2 = new NpgsqlCommand(insertEventSql, conn)
+            {
+                Parameters =
+                {
+                    new() { Value = serializedCloudEvent, NpgsqlDbType = NpgsqlDbType.Jsonb }
+                }
+            };
+
             await pgcom2.ExecuteNonQueryAsync();
 
             await transaction.CommitAsync();
@@ -63,8 +70,13 @@ namespace Altinn.Platform.Events.Repository
         {
             await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(string.Format(insertEventSql, cloudEvent), conn);
-
+            await using NpgsqlCommand pgcom = new NpgsqlCommand(insertEventSql, conn)
+            {
+                Parameters =
+                {
+                    new() { Value = cloudEvent, NpgsqlDbType = NpgsqlDbType.Jsonb }
+                }
+            };
             await pgcom.ExecuteNonQueryAsync();
         }
 
