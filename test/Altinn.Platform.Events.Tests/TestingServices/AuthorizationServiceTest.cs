@@ -6,6 +6,8 @@ using Altinn.Platform.Events.Services;
 
 using Altinn.Platform.Events.UnitTest.Mocks;
 
+using CloudNative.CloudEvents;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -24,7 +26,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
             AuthorizationService authzHelper = new AuthorizationService(pdp);
 
-            CloudEventOld cloudEvent = new CloudEventOld()
+            CloudEvent cloudEvent = new CloudEvent()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"
@@ -46,7 +48,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
             AuthorizationService authzHelper = new AuthorizationService(pdp);
 
-            CloudEventOld cloudEvent = new CloudEventOld()
+            CloudEvent cloudEvent = new CloudEvent()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"
@@ -68,7 +70,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
             AuthorizationService authzHelper = new AuthorizationService(pdp);
 
-            CloudEventOld cloudEvent = new CloudEventOld()
+            CloudEvent cloudEvent = new CloudEvent()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"

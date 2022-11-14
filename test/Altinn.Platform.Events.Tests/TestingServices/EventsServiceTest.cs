@@ -199,7 +199,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             int partyId = 50;
             var repositoryMock = new Mock<ICloudEventRepository>();
-            repositoryMock.Setup(r => r.GetAppEvent(
+            repositoryMock.Setup(r => r.GetAppEvents(
                 It.IsAny<string>(), // afer
                 It.IsAny<DateTime?>(), // from
                 It.IsAny<DateTime?>(), // to
@@ -231,7 +231,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             var repositoryMock = new Mock<ICloudEventRepository>();
-            repositoryMock.Setup(r => r.GetAppEvent(
+            repositoryMock.Setup(r => r.GetAppEvents(
                 It.IsAny<string>(), // afer
                 It.IsAny<DateTime?>(), // from
                 It.IsAny<DateTime?>(), // to
@@ -415,10 +415,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static CloudEvent GetCloudEventFromApp()
         {
-            CloudEvent cloudEvent = new()
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
                 Id = Guid.NewGuid().ToString(),
-                SpecVersion = "1.0",
                 Type = "instance.created",
                 Source = new Uri("https://brg.apps.altinn.no/brg/something/232243423"),
                 Time = DateTime.Now,
@@ -431,10 +430,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static CloudEvent GetCloudEvent()
         {
-            CloudEvent cloudEvent = new()
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
                 Id = Guid.NewGuid().ToString(),
-                SpecVersion = "1.0",
                 Type = "dom.avsagt",
                 Source = new Uri("urn:isbn:00939963"),
                 Time = DateTime.Now,

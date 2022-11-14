@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.Json.Serialization;
 
-using Altinn.Platform.Events.Models;
+using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Tests.Models
 {
@@ -28,6 +26,6 @@ namespace Altinn.Platform.Events.Tests.Models
         public int SequenceNo { get; set; }
 
         [JsonPropertyName("cloudEvent")]
-        public CloudEventOld CloudEvent { get; set; }
+        public CloudEvent CloudEvent { get; set; }
     }
 }

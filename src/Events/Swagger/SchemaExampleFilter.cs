@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 
 using Altinn.Platform.Events.Models;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 
@@ -26,7 +28,7 @@ namespace Altinn.Platform.Events.Swagger
         {
             switch (type.Name)
             {
-                case nameof(CloudEventOld):
+                case nameof(CloudEvent):
                     return new OpenApiObject
                     {
                         ["id"] = new OpenApiString(Guid.NewGuid().ToString()),

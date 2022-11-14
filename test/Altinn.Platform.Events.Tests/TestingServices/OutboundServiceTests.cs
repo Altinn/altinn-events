@@ -11,6 +11,8 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -38,7 +40,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             string expectedSimplified = "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2";
 
-            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
@@ -65,7 +67,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             string expectedSimplified = "urn:testing-events:test-source";
 
-            CloudEventOld cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), "/party/1337/", "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), "/party/1337/", "app.instance.process.completed");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
@@ -90,7 +92,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
         {
             // Arrange
-            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
@@ -123,7 +125,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void Push_TwoMatchingAndValidSubscriptions_AddedToQueue()
         {
             // Arrange
-            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
             EventsQueueClientMock queueClientMock = new();
             var service = GetOutboundService(queueClientMock);
@@ -148,7 +150,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void Push_OneMatchingAndValidSubscriptions_AddedToQueue()
         {
             // Arrange
-            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
             EventsQueueClientMock queueClientMock = new();
             var service = GetOutboundService(queueClientMock);
@@ -173,7 +175,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void Push_QueueReportsFailure_ErrorIsLogged()
         {
             // Arrange
-            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
             var queueMock = new Mock<IEventsQueueClient>();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
@@ -236,12 +238,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             return service;
         }
 
-        private static CloudEventOld GetCloudEvent(Uri source, string subject, string type)
+        private static CloudEvent GetCloudEvent(Uri source, string subject, string type)
         {
-            CloudEventOld cloudEvent = new()
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
                 Id = Guid.NewGuid().ToString(),
-                SpecVersion = "1.0",
                 Type = type,
                 Source = source,
                 Time = DateTime.Now,

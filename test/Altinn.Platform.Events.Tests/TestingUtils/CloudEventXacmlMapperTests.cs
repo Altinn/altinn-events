@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text;
+
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Platform.Events.Authorization;
-using Altinn.Platform.Events.Models;
 using AltinnCore.Authentication.Constants;
+
+using CloudNative.CloudEvents;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingUtils
@@ -24,8 +26,8 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             // Arrange
             ClaimsPrincipal principal = GetPrincipal(1, 1);
 
-            List<CloudEventOld> cloudEvents = new List<CloudEventOld>();
-            CloudEventOld cloudEvent = new CloudEventOld()
+            List<CloudEvent> cloudEvents = new List<CloudEvent>();
+            CloudEvent cloudEvent = new CloudEvent()
             {
                 Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1234324"
@@ -49,7 +51,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         [Fact]
         public void CreateSingleEventRequestForConsumer()
         {
-            CloudEventOld cloudEvent = new CloudEventOld()
+            CloudEvent cloudEvent = new CloudEvent()
             {
                 Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1234324"

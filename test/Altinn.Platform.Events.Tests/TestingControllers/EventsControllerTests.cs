@@ -43,8 +43,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             private const string BasePath = "/events/api/v1";
 
             private readonly WebApplicationFactory<EventsController> _factory;
-            private readonly CloudEventRequestModel _invalidEvent;
-            private readonly CloudEventRequestModel _validEvent;
+            private readonly AppCloudEventRequestModel _invalidEvent;
+            private readonly AppCloudEventRequestModel _validEvent;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="EventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsControllerTests}"/>.
@@ -53,14 +53,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public EventsControllerTests(WebApplicationFactory<EventsController> factory)
             {
                 _factory = factory;
-                _invalidEvent = new CloudEventRequestModel()
+                _invalidEvent = new AppCloudEventRequestModel()
                 {
                     Type = "system.event.occurred",
                     Subject = "/person/16069412345",
                     Source = new Uri("urn:isbn:1234567890")
                 };
 
-                _validEvent = new CloudEventRequestModel()
+                _validEvent = new AppCloudEventRequestModel()
                 {
                     Type = "system.event.occurred",
                     Subject = "/person/16069412345",

@@ -4,13 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Tests.Models;
 
 using CloudNative.CloudEvents;
-
-using Newtonsoft.Json;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
@@ -33,14 +30,14 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<List<CloudEvent>> GetAppEvent(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
+        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
         {
             string eventsPath = Path.Combine(GetEventsPath(), $@"{_eventsCollection}.json");
 
             if (File.Exists(eventsPath))
             {
                 string content = File.ReadAllText(eventsPath);
-                List<EventsTableEntry> tableEntries = JsonConvert.DeserializeObject<List<EventsTableEntry>>(content);
+                List<EventsTableEntry> tableEntries = System.Text.Json.JsonSerializer.Deserialize<List<EventsTableEntry>>(content);
 
                 // logic for filtering on source and type not implemented.
                 IEnumerable<EventsTableEntry> filter = tableEntries;
@@ -93,6 +90,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(EventsServiceMock).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "events");
+        }
+
+        public Task CreateEvent(string cloudEvent)
+        {
+            throw new NotImplementedException();
         }
     }
 }

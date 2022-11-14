@@ -15,6 +15,9 @@ using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
 using AltinnCore.Authentication.JwtCookie;
+
+using CloudNative.CloudEvents;
+
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,7 +69,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
-                service.Setup(s => s.PostOutbound(It.IsAny<CloudEventOld>()));
+                service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>()));
 
                 HttpClient client = GetTestClient(service.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -99,7 +102,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/push";
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
-                service.Setup(er => er.PostOutbound(It.IsAny<CloudEventOld>())).Throws(new Exception());
+                service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(service.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
