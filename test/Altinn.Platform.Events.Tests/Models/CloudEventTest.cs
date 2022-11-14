@@ -17,7 +17,7 @@ namespace Altinn.Platform.Events.Tests.Models
         [InlineData("{\"id\":\"689880e2-bb76-4dae-8500-de17bcd4b180\",\"source\":\"urn:source:objectid\",\"specversion\":\"1.0\",\"type\":\"app.instance.process.completed\",\"subject\":\"/person/16069412345\",\"time\": \"2022-05-12T00:02:11.260215+00\"}")]
         public void ValidateRequiredProperties_ValidEvents_ReturnsTrue(string serializedEvent)
         {
-            CloudEvent cloudEvent = JsonSerializer.Deserialize<CloudEvent>(serializedEvent);
+            CloudEventOld cloudEvent = JsonSerializer.Deserialize<CloudEventOld>(serializedEvent);
             Assert.True(cloudEvent.ValidateRequiredProperties());
         }
 
@@ -31,7 +31,7 @@ namespace Altinn.Platform.Events.Tests.Models
         [InlineData("{\"source\":\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50002108/545111e6-4e2d-4366-a372-ad4cc9ce6450\",\"specversion\":\"1.0\",\"type\":\"app.instance.created\",\"subject\":\"/party/50002108\"}")]
         public void ValidateRequiredProperties_InvalidEvents_ReturnsFalse(string serializedEvent)
         {
-            CloudEvent cloudEvent = JsonSerializer.Deserialize<CloudEvent>(serializedEvent);
+            CloudEventOld cloudEvent = JsonSerializer.Deserialize<CloudEventOld>(serializedEvent);
             Assert.False(cloudEvent.ValidateRequiredProperties());
         }
     }

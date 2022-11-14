@@ -66,7 +66,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
-                service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>()));
+                service.Setup(s => s.PostOutbound(It.IsAny<CloudEventOld>()));
 
                 HttpClient client = GetTestClient(service.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -99,7 +99,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/outbound";
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
-                service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
+                service.Setup(er => er.PostOutbound(It.IsAny<CloudEventOld>())).Throws(new Exception());
                 HttpClient client = GetTestClient(service.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));

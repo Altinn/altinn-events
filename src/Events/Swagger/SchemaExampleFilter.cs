@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Swagger
         {
             switch (type.Name)
             {
-                case nameof(CloudEvent):
+                case nameof(CloudEventOld):
                     return new OpenApiObject
                     {
                         ["id"] = new OpenApiString(Guid.NewGuid().ToString()),

@@ -19,6 +19,8 @@ using Altinn.Platform.Events.UnitTest.Mocks;
 
 using AltinnCore.Authentication.JwtCookie;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -425,7 +427,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                List<CloudEventOld> actual = JsonSerializer.Deserialize<List<CloudEventOld>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -457,7 +459,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                List<CloudEventOld> actual = JsonSerializer.Deserialize<List<CloudEventOld>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -691,7 +693,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                List<CloudEventOld> actual = JsonSerializer.Deserialize<List<CloudEventOld>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -726,7 +728,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                List<CloudEventOld> actual = JsonSerializer.Deserialize<List<CloudEventOld>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -759,7 +761,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                List<CloudEventOld> actual = JsonSerializer.Deserialize<List<CloudEventOld>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -792,7 +794,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                List<CloudEventOld> actual = JsonSerializer.Deserialize<List<CloudEventOld>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -848,7 +850,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                List<CloudEventOld> actual = JsonSerializer.Deserialize<List<CloudEventOld>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);

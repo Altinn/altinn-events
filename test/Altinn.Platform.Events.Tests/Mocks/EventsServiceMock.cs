@@ -9,6 +9,8 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Models;
 
+using CloudNative.CloudEvents;
+
 using Newtonsoft.Json;
 
 namespace Altinn.Platform.Events.Tests.Mocks
@@ -33,7 +35,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             };
         }
 
-        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, string unit, string person, int size)
+        public Task<List<CloudEventOld>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, string unit, string person, int size)
         {
             if (partyId <= 0)
             {
@@ -79,7 +81,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     filter = filter.Where(te => Regex.IsMatch(te.Source.ToString(), pattern));
                 }
 
-                List<CloudEvent> result = filter.Select(t => t.CloudEvent)
+                List<CloudEventOld> result = filter.Select(t => t.CloudEvent)
                     .Take(size)
                     .ToList();
 
@@ -90,7 +92,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
-        public Task<string> Save(CloudEvent cloudEvent)
+        public Task<string> Save(CloudEventOld cloudEvent)
         {
             throw new NotImplementedException();
         }
@@ -105,7 +107,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             throw new NotImplementedException();
         }
         
-        public Task<string> SaveAndPostInbound(CloudEvent cloudEvent)
+        public Task<string> SaveAndPostInbound(CloudEventOld cloudEvent)
         {
             throw new NotImplementedException();
         }
@@ -121,7 +123,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "events");
         }
 
-        public Task<string> RegisterEvent(CloudEvent couldEvent)
+        public Task<string> RegisterEvent(CloudEventOld couldEvent)
         {
             // waiting for Benjamins implementatio
             throw new NotImplementedException();

@@ -19,6 +19,8 @@ using Altinn.Platform.Events.UnitTest.Mocks;
 
 using AltinnCore.Authentication.JwtCookie;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;

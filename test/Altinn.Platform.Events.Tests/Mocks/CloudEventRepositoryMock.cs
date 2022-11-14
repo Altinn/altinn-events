@@ -8,6 +8,8 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Tests.Models;
 
+using CloudNative.CloudEvents;
+
 using Newtonsoft.Json;
 
 namespace Altinn.Platform.Events.Tests.Mocks
@@ -25,7 +27,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task CreateAppEvent(CloudEvent cloudEvent)
+        public Task CreateAppEvent(CloudEvent cloudEvent, string serializedCloudEvent)
         {
             return Task.FromResult(cloudEvent);
         }

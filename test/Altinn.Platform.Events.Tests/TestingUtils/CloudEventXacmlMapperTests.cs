@@ -24,8 +24,8 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             // Arrange
             ClaimsPrincipal principal = GetPrincipal(1, 1);
 
-            List<CloudEvent> cloudEvents = new List<CloudEvent>();
-            CloudEvent cloudEvent = new CloudEvent()
+            List<CloudEventOld> cloudEvents = new List<CloudEventOld>();
+            CloudEventOld cloudEvent = new CloudEventOld()
             {
                 Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1234324"
@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         [Fact]
         public void CreateSingleEventRequestForConsumer()
         {
-            CloudEvent cloudEvent = new CloudEvent()
+            CloudEventOld cloudEvent = new CloudEventOld()
             {
                 Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1234324"

@@ -28,6 +28,6 @@ namespace Altinn.Platform.Events.Tests.Models
         public int SequenceNo { get; set; }
 
         [JsonPropertyName("cloudEvent")]
-        public CloudEvent CloudEvent { get; set; }
+        public CloudEventOld CloudEvent { get; set; }
     }
 }

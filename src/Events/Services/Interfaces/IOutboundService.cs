@@ -2,6 +2,8 @@
 
 using Altinn.Platform.Events.Models;
 
+using CloudNative.CloudEvents;
+
 namespace Altinn.Platform.Events.Services.Interfaces
 {
     /// <summary>

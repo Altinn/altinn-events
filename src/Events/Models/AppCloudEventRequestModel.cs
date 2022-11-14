@@ -10,5 +10,10 @@ namespace Altinn.Platform.Events.Models
     /// </summary>
     public class AppCloudEventRequestModel : CloudEventRequestModelBase
     {
+        /// <summary>
+        /// Gets or sets the alternative subject of the event.
+        /// </summary>
+        [JsonPropertyName("alternativesubject")]
+        public string AlternativeSubject { get; set; }
     }
 }

@@ -2,10 +2,9 @@
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
-using AutoMapper;
+using CloudNative.CloudEvents;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,41 +17,46 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Authorize]
     [Route("events/api/v1/events")]
+    [ApiController]
     public class EventsController : ControllerBase
     {
         private readonly IEventsService _events;
-        private readonly IMapper _mapper;
         private readonly GeneralSettings _settings;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsController"/> class.
         /// </summary>
-        public EventsController(IEventsService events, IMapper mapper, IOptions<GeneralSettings> settings)
+        public EventsController(IEventsService events, IOptions<GeneralSettings> settings)
         {
             _events = events;
-            _mapper = mapper;
             _settings = settings.Value;
         }
 
         /// <summary>
         /// Endpoint for posting a new cloud event
         /// </summary>
-        /// <param name="cloudEventRequest">The incoming cloud event</param>
+        /// <param name="cloudEvent">The incoming cloud event</param>
         /// <returns>The cloud event subject and id</returns>
         [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH)]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEventRequest)
+        [HttpPost]
+        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
             if (!_settings.EnableExternalEvents)
             {
                 return NotFound();
             }
 
-            if (!cloudEventRequest.ValidateRequiredProperties())
+            cloudEvent.Id ??= Guid.NewGuid().ToString();
+
+            if (cloudEvent.Time == DateTimeOffset.MinValue)
+            {
+                cloudEvent.Time = DateTimeOffset.UtcNow;
+            }
+
+            if (!cloudEvent.IsValid)
             {
                 return Problem("Missing parameter values: source, subject, type and specVersion cannot be null", null, 400);
             }
-
-            CloudEvent cloudEvent = _mapper.Map<CloudEvent>(cloudEventRequest);
 
             if (!AuthorizeEvent(cloudEvent))
             {

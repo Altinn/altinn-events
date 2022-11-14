@@ -38,7 +38,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             string expectedSimplified = "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2";
 
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
@@ -65,7 +65,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             string expectedSimplified = "urn:testing-events:test-source";
 
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), "/party/1337/", "app.instance.process.completed");
+            CloudEventOld cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), "/party/1337/", "app.instance.process.completed");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
@@ -90,7 +90,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
@@ -123,7 +123,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void Push_TwoMatchingAndValidSubscriptions_AddedToQueue()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
             EventsQueueClientMock queueClientMock = new();
             var service = GetOutboundService(queueClientMock);
@@ -148,7 +148,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void Push_OneMatchingAndValidSubscriptions_AddedToQueue()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
+            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
             EventsQueueClientMock queueClientMock = new();
             var service = GetOutboundService(queueClientMock);
@@ -173,7 +173,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void Push_QueueReportsFailure_ErrorIsLogged()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
+            CloudEventOld cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
             var queueMock = new Mock<IEventsQueueClient>();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
@@ -236,9 +236,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             return service;
         }
 
-        private static CloudEvent GetCloudEvent(Uri source, string subject, string type)
+        private static CloudEventOld GetCloudEvent(Uri source, string subject, string type)
         {
-            CloudEvent cloudEvent = new()
+            CloudEventOld cloudEvent = new()
             {
                 Id = Guid.NewGuid().ToString(),
                 SpecVersion = "1.0",

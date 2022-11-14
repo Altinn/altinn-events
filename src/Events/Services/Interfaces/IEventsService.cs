@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Models;
+using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services.Interfaces
 {
@@ -20,14 +20,8 @@ namespace Altinn.Platform.Events.Services.Interfaces
         Task<string> Save(CloudEvent cloudEvent);
 
         /// <summary>
-        /// Assign Id and Time values and post cloud event to registration queue.
+        /// Post cloud event to registration queue.
         /// </summary>
-        /// <remarks>
-        /// "time" is an optional Cloud Event property, according to the official spec.
-        /// From the spec docs:
-        ///   https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#notational-conventions
-        ///   As an Intermediary, we SHOULD forward OPTIONAL attributes
-        /// </remarks>
         /// <param name="cloudEvent">The cloudEvent to be queued</param>
         /// <returns>Id for the queued event</returns>
         Task<string> RegisterNew(CloudEvent cloudEvent);

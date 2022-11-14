@@ -8,7 +8,7 @@ namespace Altinn.Platform.Events.Models
     /// <summary>
     /// Represents a cloud event. Based on CloudEvent: https://github.com/cloudevents/spec/blob/v1.0/spec.md.
     /// </summary>
-    public class CloudEvent
+    public class CloudEventOld
     {
         /// <summary>
         /// Gets or sets the id of the event.
@@ -86,9 +86,9 @@ namespace Altinn.Platform.Events.Models
         /// Deserializes the cloud event to a JSON string.
         /// </summary>
         /// <returns>Cloud event</returns>
-        public static CloudEvent Deserialize(string jsonString)
+        public static CloudEventOld Deserialize(string jsonString)
         {
-            return JsonSerializer.Deserialize<CloudEvent>(jsonString, new JsonSerializerOptions { });
+            return JsonSerializer.Deserialize<CloudEventOld>(jsonString, new JsonSerializerOptions { });
         }
 
         /// <summary>

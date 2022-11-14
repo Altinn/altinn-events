@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Models;
+using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Repository
 {
@@ -12,10 +12,17 @@ namespace Altinn.Platform.Events.Repository
     public interface ICloudEventRepository
     {
         /// <summary>
-        /// Creates an cloud event in repository
+        /// Creates an app cloud event in repository
         /// </summary>
-        /// <param name="cloudEvent">the cloud event object</param>
-        Task CreateAppEvent(CloudEvent cloudEvent);
+        /// <param name="cloudEvent">The cloud event object</param>
+        /// <param name="serializedCloudEvent">The json serialized cloud event</param>
+        Task CreateAppEvent(CloudEvent cloudEvent, string serializedCloudEvent);
+
+        /// <summary>
+        /// Creates a cloud event in the repository.
+        /// </summary>
+        /// <param name="cloudEvent">The json serialized cloud event</param>
+        Task CreateEvent(string cloudEvent);
 
         /// <summary>
         /// Calls a function to retrieve app cloud events based on query params

@@ -2,17 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using Moq;
 
@@ -57,28 +60,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService();
 
             // Act
-            string actual = await eventsService.PostInbound(GetCloudEvent());
-
-            // Assert
-            Assert.NotEmpty(actual);
-        }
-
-        /// <summary>
-        /// Scenario:
-        ///   Store a CloudEvent in postgres DB.
-        /// Expected result:
-        ///   Returns the id of the newly created document.
-        /// Success criteria:
-        ///   The response is a non-empty string.
-        /// </summary>
-        [Fact]
-        public async Task SaveNewEvent_EventSuccessfullyStored_IdReturned()
-        {
-            // Arrange
-            EventsService eventsService = GetEventsService();
-
-            // Act
-            string actual = await eventsService.Save(GetCloudEvent());
+            string actual = await eventsService.PostInbound(GetCloudEventFromApp());
 
             // Assert
             Assert.NotEmpty(actual);
@@ -93,12 +75,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   The response is a non-empty string.
         /// </summary>
         [Fact]
-        public async Task RegisterNew_CheckIdCreatedByService_IdReturned()
+        public async Task RegisterNewEvent_CheckIdCreatedByService_IdReturned()
         {
             // Arrange
             EventsService eventsService = GetEventsService();
 
-            CloudEvent item = GetCloudEventForRegistration();
+            CloudEvent item = GetCloudEventFromApp();
+            item.Id = null;
 
             // Act
             string actual = await eventsService.RegisterNew(item);
@@ -116,59 +99,20 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///  Error is logged.
         /// </summary>
         [Fact]
-        public async Task RegisterNew_PushEventFails_ErrorIsLogged()
+        public async Task RegisterNewEvent_PushEventFails_ErrorIsLogged()
         {
             // Arrange
             Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>()))
-                     .ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
+            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
             Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
             EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act
-            await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEvent()));
+            await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEventFromApp()));
 
             // Assert
-            logger.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
-                Times.Once);
-        }
-
-        /// <summary>
-        /// Scenario:
-        ///   An event without id and time is provided to the service for registraton
-        /// Expected result:
-        /// Id and time are added before the event is pushed to the registration queue
-        /// Success criteria:
-        /// A valid cloud event is pushed to the queue.
-        /// </summary>
-        [Fact]
-        public async Task RegisterNew_IdAndTimeSetForEvent_PushedToQueue()
-        {
-            // Arrange
-            Mock<IEventsQueueClient> queueMock = new();
-            queueMock.Setup(q => q.EnqueueRegistration(
-                It.Is<string>(serializedEvent => JsonSerializer.Deserialize<CloudEvent>(serializedEvent, new JsonSerializerOptions()).ValidateRequiredProperties())))
-                .ReturnsAsync(new QueuePostReceipt { Success = true });
-
-            queueMock.Setup(q => q.EnqueueRegistration(
-               It.Is<string>(serializedEvent => !JsonSerializer.Deserialize<CloudEvent>(serializedEvent, new JsonSerializerOptions()).ValidateRequiredProperties())))
-               .ThrowsAsync(new Exception("Invalid cloud event attempted posted to registration queue"));
-
-            EventsService eventsService = GetEventsService(queueMock: queueMock.Object);
-            CloudEvent item = GetCloudEventForRegistration();
-
-            // Act
-            var id = await eventsService.RegisterNew(item);
-
-            // Arrange
-            Assert.False(string.IsNullOrEmpty(id));
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
         /// <summary>
@@ -190,32 +134,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => eventsService.PostInbound(GetCloudEvent()));
-            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Scenario:
-        ///   Save cloud event to db fails.
-        /// Expected result:
-        ///   Error returned to caller.
-        /// Success criteria:
-        ///   Error is logged.
-        /// </summary>
-        [Fact]
-        public async Task SaveNewEvent_SaveToDatabaseFails_ErrorIsLogged()
-        {
-            // Arrange
-            Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
-            repoMock.Setup(q => q.CreateAppEvent(It.IsAny<CloudEvent>()))
-                .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
-
-            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
-            EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEvent()));
-
+            await Assert.ThrowsAsync<Exception>(() => eventsService.PostInbound(GetCloudEventFromApp()));
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
@@ -354,6 +273,108 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             registerMock.Verify(r => r.PartyLookup(It.Is<string>(s => string.IsNullOrEmpty(s)), It.Is<string>(s => string.IsNullOrEmpty(s))), Times.Never);
         }
 
+        /// <summary>
+        /// Scenario:
+        ///   Save a CloudEvent from an Altinn App in postgres DB.
+        /// Expected result:
+        ///   Returns the id of the newly created document.
+        /// Success criteria:
+        ///   The repository method for creating an app event is called.
+        /// </summary>
+        [Fact]
+        public async Task Save_CloudEventFromAltinnApp_CreateAppEventMethodCalled()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repositoryMock = new();
+            repositoryMock.Setup(r => r.CreateAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()));
+
+            EventsService eventsService = GetEventsService(repositoryMock.Object);
+
+            // Act
+            string actual = await eventsService.Save(GetCloudEventFromApp());
+
+            // Assert
+            Assert.NotEmpty(actual);
+            repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Never);
+            repositoryMock.Verify(r => r.CreateAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Save a CloudEvent from an external source
+        /// Expected result:
+        ///   Returns the id of the newly created document.
+        /// Success criteria:
+        ///   The repository is called one to create a cloud event in the repository.
+        /// </summary>
+        [Fact]
+        public async Task Save_CloudEventFromExternalSource_CreateEventMethodCalled()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repositoryMock = new();
+            repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>()));
+
+            EventsService eventsService = GetEventsService(repositoryMock.Object);
+
+            // Act
+            string actual = await eventsService.Save(GetCloudEvent());
+
+            // Assert
+            Assert.NotEmpty(actual);
+            repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
+            repositoryMock.Verify(r => r.CreateAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Save cloud event from app to db fails when storing to events_app table.
+        /// Expected result:
+        ///   Error returned to caller.
+        /// Success criteria:
+        ///   Error is logged.
+        /// </summary>
+        [Fact]
+        public async Task Save_CreateAppEventThrowsException_ErrorIsLogged()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
+            repoMock.Setup(q => q.CreateAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
+
+            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEventFromApp()));
+
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Save cloud event from app to db fails when storing to events table.
+        /// Expected result:
+        ///   Error returned to caller.
+        /// Success criteria:
+        ///   Error is logged.
+        /// </summary>
+        [Fact]
+        public async Task Save_CreateEventThrowsException_ErrorIsLogged()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
+            repoMock.Setup(q => q.CreateEvent(It.IsAny<string>()))
+                .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
+
+            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEvent()));
+
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
         private EventsService GetEventsService(
             ICloudEventRepository repositoryMock = null,
             IEventsQueueClient queueMock = null,
@@ -361,10 +382,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IAuthorization> authorizationMock = null,
             Mock<ILogger<IEventsService>> loggerMock = null)
         {
-            repositoryMock = repositoryMock ?? _repositoryMock;
-            registerMock = registerMock ?? _registerMock;
-            queueMock = queueMock ?? _queueMock;
-            loggerMock = loggerMock ?? _loggerMock;
+            repositoryMock ??= _repositoryMock;
+            registerMock ??= _registerMock;
+            queueMock ??= _queueMock;
+            loggerMock ??= _loggerMock;
 
             // default mocked authorization logic. All elements are returned
             if (authorizationMock == null)
@@ -376,25 +397,36 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorizationMock = _authorizationMock;
             }
 
+            IOptions<PlatformSettings> settingsIOption = Options.Create(
+                new PlatformSettings()
+                {
+                    AppsDomain = "apps.altinn.no"
+                });
+
             return new EventsService(
                 repositoryMock,
                 queueMock,
                 registerMock.Object,
                 authorizationMock.Object,
                 _claimsPrincipalProviderMock.Object,
+                settingsIOption,
                 loggerMock.Object);
         }
 
-        private static CloudEvent GetCloudEventForRegistration()
+        private static CloudEvent GetCloudEventFromApp()
         {
-            return new CloudEvent()
+            CloudEvent cloudEvent = new()
             {
+                Id = Guid.NewGuid().ToString(),
                 SpecVersion = "1.0",
                 Type = "instance.created",
-                Source = new Uri("http://www.brreg.no/brg/something/232243423"),
+                Source = new Uri("https://brg.apps.altinn.no/brg/something/232243423"),
+                Time = DateTime.Now,
                 Subject = "/party/456456",
                 Data = "something/extra",
             };
+
+            return cloudEvent;
         }
 
         private static CloudEvent GetCloudEvent()
@@ -403,11 +435,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             {
                 Id = Guid.NewGuid().ToString(),
                 SpecVersion = "1.0",
-                Type = "instance.created",
-                Source = new Uri("http://www.brreg.no/brg/something/232243423"),
+                Type = "dom.avsagt",
+                Source = new Uri("urn:isbn:00939963"),
                 Time = DateTime.Now,
-                Subject = "/party/456456",
-                Data = "something/extra",
+                Subject = "/person/16069412345"
             };
 
             return cloudEvent;

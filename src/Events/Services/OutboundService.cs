@@ -10,6 +10,8 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
