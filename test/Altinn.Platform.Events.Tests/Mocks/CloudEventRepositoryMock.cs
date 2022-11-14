@@ -25,13 +25,13 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task Create(CloudEvent cloudEvent)
+        public Task CreateAppEvent(CloudEvent cloudEvent)
         {
             return Task.FromResult(cloudEvent);
         }
 
         /// <inheritdoc/>
-        public Task<List<CloudEvent>> Get(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
+        public Task<List<CloudEvent>> GetAppEvent(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
         {
             string eventsPath = Path.Combine(GetEventsPath(), $@"{_eventsCollection}.json");
 

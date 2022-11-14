@@ -207,7 +207,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             Mock<ICloudEventRepository> repoMock = new Mock<ICloudEventRepository>();
-            repoMock.Setup(q => q.Create(It.IsAny<CloudEvent>()))
+            repoMock.Setup(q => q.CreateAppEvent(It.IsAny<CloudEvent>()))
                 .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
 
             Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
@@ -280,7 +280,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             int partyId = 50;
             var repositoryMock = new Mock<ICloudEventRepository>();
-            repositoryMock.Setup(r => r.Get(
+            repositoryMock.Setup(r => r.GetAppEvent(
                 It.IsAny<string>(), // afer
                 It.IsAny<DateTime?>(), // from
                 It.IsAny<DateTime?>(), // to
@@ -312,7 +312,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             var repositoryMock = new Mock<ICloudEventRepository>();
-            repositoryMock.Setup(r => r.Get(
+            repositoryMock.Setup(r => r.GetAppEvent(
                 It.IsAny<string>(), // afer
                 It.IsAny<DateTime?>(), // from
                 It.IsAny<DateTime?>(), // to

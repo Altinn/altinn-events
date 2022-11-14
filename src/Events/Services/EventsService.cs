@@ -52,7 +52,7 @@ namespace Altinn.Platform.Events.Services
         {
             try
             {
-                await _repository.Create(cloudEvent);
+                await _repository.CreateAppEvent(cloudEvent);
             }
             catch (Exception ex)
             {
@@ -104,7 +104,7 @@ namespace Altinn.Platform.Events.Services
             type = type.Count > 0 ? type : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.Get(after, from, to, subject, source, type, size);
+            List<CloudEvent> events = await _repository.GetAppEvent(after, from, to, subject, source, type, size);
 
             if (events.Count == 0)
             {
