@@ -97,10 +97,5 @@ namespace Altinn.Platform.Events.Tests.Mocks
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(EventsServiceMock).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "events");
         }
-
-        public Task CreateEvent(string cloudEvent)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

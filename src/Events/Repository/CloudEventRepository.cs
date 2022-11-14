@@ -81,33 +81,6 @@ namespace Altinn.Platform.Events.Repository
                 }
             };
             await pgcom.ExecuteNonQueryAsync();
-
-            await using NpgsqlCommand pgcom2 = new NpgsqlCommand(insertEventSql, conn)
-            {
-                Parameters =
-                {
-                    new() { Value = serializedCloudEvent, NpgsqlDbType = NpgsqlDbType.Jsonb }
-                }
-            };
-
-            await pgcom2.ExecuteNonQueryAsync();
-
-            await transaction.CommitAsync();
-        }
-
-        /// <inheritdoc/>
-        public async Task CreateEvent(string cloudEvent)
-        {
-            await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(insertEventSql, conn)
-            {
-                Parameters =
-                {
-                    new() { Value = cloudEvent, NpgsqlDbType = NpgsqlDbType.Jsonb }
-                }
-            };
-            await pgcom.ExecuteNonQueryAsync();
         }
 
         /// <inheritdoc/>
