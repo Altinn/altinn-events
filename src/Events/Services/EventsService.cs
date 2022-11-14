@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -26,6 +29,9 @@ namespace Altinn.Platform.Events.Services
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
+
+        private readonly PlatformSettings _settings;
+
         private readonly ILogger<IEventsService> _logger;
 
         /// <summary>
@@ -37,6 +43,7 @@ namespace Altinn.Platform.Events.Services
             IRegisterService registerService,
             IAuthorization authorizationService,
             IClaimsPrincipalProvider claimsPrincipalProvider,
+            IOptions<PlatformSettings> settings,
             ILogger<IEventsService> logger)
         {
             _repository = repository;
@@ -44,15 +51,25 @@ namespace Altinn.Platform.Events.Services
             _registerService = registerService;
             _authorizationService = authorizationService;
             _claimsPrincipalProvider = claimsPrincipalProvider;
+            _settings = settings.Value;
             _logger = logger;
         }
 
         /// <inheritdoc/>
         public async Task<string> Save(CloudEvent cloudEvent)
         {
+            var serializedEvent = JsonSerializer.Serialize(cloudEvent);
+
             try
             {
-                await _repository.CreateAppEvent(cloudEvent);
+                if (IsAppEvent(cloudEvent))
+                {
+                    await _repository.CreateAppEvent(cloudEvent, serializedEvent);
+                }
+                else
+                {
+                    await _repository.CreateEvent(serializedEvent);
+                }
             }
             catch (Exception ex)
             {
@@ -115,6 +132,11 @@ namespace Altinn.Platform.Events.Services
             }
 
             return await _authorizationService.AuthorizeEvents(_claimsPrincipalProvider.GetUser(), events);
+        }
+
+        private bool IsAppEvent(CloudEvent cloudEvent)
+        {
+            return !string.IsNullOrEmpty(cloudEvent.Source.Host) && cloudEvent.Source.Host.EndsWith(_settings.AppsDomain);
         }
     }
 }
