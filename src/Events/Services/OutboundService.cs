@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
+using CloudNative.CloudEvents.SystemTextJson;
 
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -96,7 +98,15 @@ namespace Altinn.Platform.Events.Services
 
         private async Task PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
         {
-            QueuePostReceipt receipt = await _queueClient.EnqueueOutbound(JsonSerializer.Serialize(cloudEventEnvelope));
+            var formatter = new JsonEventFormatter();
+            var bytes = formatter.EncodeStructuredModeMessage(cloudEventEnvelope.CloudEvent, out _);
+            var serializedEvent =  Encoding.UTF8.GetString(bytes.Span);
+
+            cloudEventEnvelope.CloudEvent = null;
+            var serializedEnvelope = JsonSerializer.Serialize(cloudEventEnvelope);
+
+            // TODO: figure out how to serialize / deserialize the cloudEnvelope. Currently breaking all test
+            QueuePostReceipt receipt = await _queueClient.EnqueueOutbound(serializedEnvelope);
             string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
             int subscriptionId = cloudEventEnvelope.SubscriptionId;
 

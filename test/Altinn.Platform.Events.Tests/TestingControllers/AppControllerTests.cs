@@ -75,7 +75,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue ))).ReturnsAsync((CloudEvent c) => c.Id);
+                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue))).ReturnsAsync((CloudEvent c) => c.Id);
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)

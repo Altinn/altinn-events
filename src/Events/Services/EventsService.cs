@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -58,7 +59,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> Save(CloudEvent cloudEvent)
         {
-            var serializedEvent = SerializeCloudEvent(cloudEvent);
+            var serializedEvent = cloudEvent.SerializeCloudEvent();
 
             try
             {
@@ -83,7 +84,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> RegisterNew(CloudEvent cloudEvent)
         {
-            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(SerializeCloudEvent(cloudEvent));
+            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(cloudEvent.SerializeCloudEvent());
 
             if (!receipt.Success)
             {
@@ -97,7 +98,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> PostInbound(CloudEvent cloudEvent)
         {
-            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(SerializeCloudEvent(cloudEvent));
+            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(cloudEvent.SerializeCloudEvent());
 
             if (!receipt.Success)
             {
@@ -134,14 +135,6 @@ namespace Altinn.Platform.Events.Services
         private bool IsAppEvent(CloudEvent cloudEvent)
         {
             return !string.IsNullOrEmpty(cloudEvent.Source.Host) && cloudEvent.Source.Host.EndsWith(_settings.AppsDomain);
-        }
-
-        private static string SerializeCloudEvent(CloudEvent cloudEvent)
-        {
-            var formatter = new CloudNative.CloudEvents.SystemTextJson.JsonEventFormatter();
-            var bytes = formatter.EncodeStructuredModeMessage(cloudEvent, out _);
-            string serializedEvent = Encoding.UTF8.GetString(bytes.Span);
-            return serializedEvent;
-        }
+        }    
     }
 }
