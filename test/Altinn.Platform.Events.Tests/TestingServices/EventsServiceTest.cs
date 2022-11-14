@@ -434,7 +434,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Id = Guid.NewGuid().ToString(),
                 SpecVersion = "1.0",
                 Type = "dom.avsagt",
-                Source = new Uri("http://elsa.domstol.no/1425/sgrgeg35"),
+                Source = new Uri("urn:isbn:00939963"),
                 Time = DateTime.Now,
                 Subject = "/person/16069412345"
             };
