@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -122,7 +121,7 @@ namespace Altinn.Platform.Events.Services
             type = type.Count > 0 ? type : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.GetAppEvent(after, from, to, subject, source, type, size);
+            List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subject, source, type, size);
 
             if (events.Count == 0)
             {

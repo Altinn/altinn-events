@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Models;
 
 using CloudNative.CloudEvents;
 
@@ -83,7 +84,7 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetAppEvent(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
+        public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
         {
             List<CloudEvent> searchResult = new List<CloudEvent>();
 
@@ -113,8 +114,9 @@ namespace Altinn.Platform.Events.Repository
 
         private static CloudEvent DeserializeAndConvertTime(string eventString)
         {
-            // TODO: fix this
-            CloudEvent cloudEvent = CloudEvent.Deserialize(eventString);
+            var formatter = new CloudNative.CloudEvents.SystemTextJson.JsonEventFormatter();
+            CloudEvent cloudEvent = formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(eventString)), null, null);
+
             cloudEvent.Time = cloudEvent.Time.Value.ToUniversalTime();
 
             return cloudEvent;
