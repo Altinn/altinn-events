@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -17,6 +18,7 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Authorize]
     [Route("events/api/v1/storage/events")]
+    [ApiController]
     public class StorageController : ControllerBase
     {
         private readonly IEventsService _eventsService;

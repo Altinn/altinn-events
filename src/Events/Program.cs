@@ -28,6 +28,9 @@ using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
+using CloudNative.CloudEvents.AspNetCoreSample;
+using CloudNative.CloudEvents.SystemTextJson;
+
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -180,10 +183,16 @@ void ConfigureLogging(ILoggingBuilder logging)
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     services.AddAutoMapper(typeof(Program));
-    services.AddControllers().AddJsonOptions(options =>
+
+    services.AddControllers(opts =>
     {
-        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        opts.InputFormatters.Insert(0, new CloudEventJsonInputFormatter(new JsonEventFormatter()));
+        opts.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+    })
+     .AddJsonOptions(options =>
+    {
+        // options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        // options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
     services.AddMemoryCache();
@@ -230,7 +239,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddAuthorization(options =>
     {
         options.AddPolicy("PlatformAccess", policy => policy.Requirements.Add(new AccessTokenRequirement()));
-        options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.publish")));      
+        options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.publish")));
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
