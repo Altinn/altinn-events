@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using Azure.Core;
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.AspNetCore;
 using CloudNative.CloudEvents.Core;
@@ -25,9 +26,8 @@ namespace Altinn.Platform.Events.Formatters
         /// Constructs a new instance that uses the given formatter for deserialization.
         /// </summary>
         public CloudEventJsonInputFormatter(CloudEventFormatter formatter)
-        {
+        {            
             _formatter = Validation.CheckNotNull(formatter, nameof(formatter));
-            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/json"));
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/cloudevents+json"));
 
             SupportedEncodings.Add(Encoding.UTF8);
