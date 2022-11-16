@@ -184,16 +184,16 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     services.AddAutoMapper(typeof(Program));
 
-    services.AddControllers(opts =>
+    services.AddControllers(opts => 
     {
         opts.InputFormatters.Insert(0, new CloudEventJsonInputFormatter(new JsonEventFormatter()));
         opts.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
     })
-     .AddJsonOptions(options =>
-    {
-        // options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-        // options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-    });
+    .AddJsonOptions(options =>
+   {
+       options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+       options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+   });
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
