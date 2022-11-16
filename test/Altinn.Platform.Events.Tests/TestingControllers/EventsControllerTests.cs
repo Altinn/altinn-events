@@ -94,7 +94,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(null);
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(string.Empty, Encoding.UTF8, "application/json")
+                    Content = new StringContent(string.Empty, Encoding.UTF8, "application/cloudevents+json")
                 };
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:invalid"));
@@ -115,7 +115,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(null);
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(string.Empty, Encoding.UTF8, "application/json")
+                    Content = new StringContent(string.Empty, Encoding.UTF8, "application/cloudevents+json")
                 };
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
@@ -128,14 +128,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
-            public async Task Post_EventMissingParameters_BadRequstResponse()
+            public async Task Post_EventMissingParameters_BadRequestResponse()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events";
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(JsonSerializer.Serialize(_invalidEvent), Encoding.UTF8, "application/json")
+                    Content = new StringContent(JsonSerializer.Serialize(_invalidEvent), Encoding.UTF8, "application/cloudevents+json")
                 };
 
                 HttpClient client = GetTestClient(null, true);
@@ -148,6 +148,27 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
                 Assert.Contains("Missing parameter values: source, subject and type cannot be null", responseMessage);
+            }
+
+            [Fact]
+            public async Task Post_IncorrectContentType_UnsupportedMediaType()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+
+                HttpClient client = GetTestClient(null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(_validEvent), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
             }
 
             [Fact]
@@ -165,7 +186,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(JsonSerializer.Serialize(_validEvent), Encoding.UTF8, "application/json")
+                    Content = new StringContent(JsonSerializer.Serialize(_validEvent), Encoding.UTF8, "application/cloudevents+json")
                 };
 
                 // Act

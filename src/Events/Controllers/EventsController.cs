@@ -38,6 +38,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="cloudEvent">The incoming cloud event</param>
         /// <returns>The cloud event subject and id</returns>
         [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH)]
+        [Consumes("application/cloudevents+json")]
         [HttpPost]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
@@ -47,11 +48,6 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             cloudEvent.Id ??= Guid.NewGuid().ToString();
-
-            if (cloudEvent.Time == DateTimeOffset.MinValue)
-            {
-                cloudEvent.Time = DateTimeOffset.UtcNow;
-            }
 
             if (!cloudEvent.IsValid)
             {
