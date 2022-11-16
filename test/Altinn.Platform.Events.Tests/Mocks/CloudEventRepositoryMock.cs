@@ -43,6 +43,8 @@ namespace Altinn.Platform.Events.Tests.Mocks
             if (File.Exists(eventsPath))
             {
                 string content = File.ReadAllText(eventsPath);
+
+                // TODO: fix deserialization to work with SDK
                 List<EventsTableEntry> tableEntries = System.Text.Json.JsonSerializer.Deserialize<List<EventsTableEntry>>(content);
 
                 // logic for filtering on source and type not implemented.
@@ -85,7 +87,6 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     .Take(size)
                     .ToList();
 
-                result.ForEach(ce => ce.Time = ce.Time.Value.ToUniversalTime());
                 return Task.FromResult(result);
             }
 

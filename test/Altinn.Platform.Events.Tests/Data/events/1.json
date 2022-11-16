@@ -4,7 +4,7 @@
     "id": "e31dbb11-2208-4dda-a549-92a0db8c7708",
     "source": "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd",
     "subject": "/party/1337",
-    "time": "2020-10-13 11:50:29.463221+00",
+    "time": "2020-10-13T11:50:29Z",
     "type": "instance.deleted",
     "cloudEvent": {
       "id": "e31dbb11-2208-4dda-a549-92a0db8c7708",
@@ -13,7 +13,7 @@
       "type": "instance.deleted",
       "subject": "/party/1337",
       "alternativesubject": "/person/01038712345",
-      "time": "2020-10-13T11:50:29.463221+00"
+      "time": "2020-10-13T11:50:29Z"
     }
   },
   {
@@ -21,7 +21,7 @@
     "id": "e31dbb11-2208-4dda-a549-92a0db8c8808",
     "source": "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd",
     "subject": "/party/1337",
-    "time": "2020-10-13 12:50:29.463221+02",
+    "time": "2020-10-13T11:50:29Z",
     "type": "instance.restored",
     "cloudEvent": {
       "id": "e31dbb11-2208-4dda-a549-92a0db8c8808",
@@ -30,7 +30,7 @@
       "type": "instance.deleted",
       "subject": "/party/1337",
       "alternativesubject": "/person/01038712345",
-      "time": "2020-10-13T12:50:29.463221+00"
+      "time": "2020-10-13T12:50:29Z"
     }
   }
 

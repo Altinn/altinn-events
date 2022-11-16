@@ -10,13 +10,13 @@ namespace Altinn.Platform.Events.Tests.Mocks
     {
         public EventsQueueClientMock()
         {
-            OutboundQueue = new Dictionary<string, List<CloudEventEnvelope>>();
+            OutboundQueue = new Dictionary<int, List<CloudEventEnvelope>>();
         }
 
         /// <summary>
         /// Queue mock for unit test
         /// </summary>
-        public Dictionary<string, List<CloudEventEnvelope>> OutboundQueue { get; set; }
+        public Dictionary<int, List<CloudEventEnvelope>> OutboundQueue { get; set; }
 
         public Task<QueuePostReceipt> EnqueueRegistration(string content)
         {
@@ -32,12 +32,13 @@ namespace Altinn.Platform.Events.Tests.Mocks
         {
             CloudEventEnvelope cloudEventEnvelope = JsonSerializer.Deserialize<CloudEventEnvelope>(content);
 
-            if (!OutboundQueue.ContainsKey(cloudEventEnvelope.CloudEvent.Id))
+            var hash = cloudEventEnvelope.CloudEvent.GetHashCode();
+            if (!OutboundQueue.ContainsKey(hash))
             {
-                OutboundQueue.Add(cloudEventEnvelope.CloudEvent.Id, new List<CloudEventEnvelope>());
+                OutboundQueue.Add(hash, new List<CloudEventEnvelope>());
             }
 
-            OutboundQueue[cloudEventEnvelope.CloudEvent.Id].Add(cloudEventEnvelope);
+            OutboundQueue[hash].Add(cloudEventEnvelope);
 
             return Task.FromResult(new QueuePostReceipt { Success = true });
         }

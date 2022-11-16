@@ -92,28 +92,21 @@ namespace Altinn.Platform.Events.Services
             if (await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer))
             {
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
-                await PushToOutboundQueue(cloudEventEnvelope);
+
+                var receipt = await PushToOutboundQueue(cloudEventEnvelope);
+
+                if (!receipt.Success)
+                {
+                    _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEvent.Id, subscription.Id);
+                }
             }
         }
 
-        private async Task PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
+        private async Task<QueuePostReceipt> PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
         {
-            var formatter = new JsonEventFormatter();
-            var bytes = formatter.EncodeStructuredModeMessage(cloudEventEnvelope.CloudEvent, out _);
-            var serializedEvent =  Encoding.UTF8.GetString(bytes.Span);
-
-            cloudEventEnvelope.CloudEvent = null;
             var serializedEnvelope = JsonSerializer.Serialize(cloudEventEnvelope);
 
-            // TODO: figure out how to serialize / deserialize the cloudEnvelope. Currently breaking all test
-            QueuePostReceipt receipt = await _queueClient.EnqueueOutbound(serializedEnvelope);
-            string cloudEventId = cloudEventEnvelope.CloudEvent.Id;
-            int subscriptionId = cloudEventEnvelope.SubscriptionId;
-
-            if (!receipt.Success)
-            {
-                _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEventId, subscriptionId);
-            }
+            return await _queueClient.EnqueueOutbound(serializedEnvelope);            
         }
 
         private async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
@@ -159,12 +152,16 @@ namespace Altinn.Platform.Events.Services
         {
             CloudEventEnvelope cloudEventEnvelope = new CloudEventEnvelope()
             {
-                CloudEvent = cloudEvent,
                 Consumer = subscription.Consumer,
                 Pushed = DateTime.Now,
                 SubscriptionId = subscription.Id,
                 Endpoint = subscription.EndPoint
             };
+
+            var formatter = new JsonEventFormatter();
+            var bytes = formatter.EncodeStructuredModeMessage(cloudEvent, out _);
+            var serializedEvent = Encoding.UTF8.GetString(bytes.Span);
+            cloudEventEnvelope.CloudEvent = serializedEvent;
 
             return cloudEventEnvelope;
         }
