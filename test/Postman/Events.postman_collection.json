@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "d23d809f-f8bd-4264-ba25-40b4a351840e",
+		"_postman_id": "c34260c2-ea6d-4625-a456-7ec662d75e4a",
 		"name": "Events",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "20656512"
+		"_exporter_id": "10288676"
 	},
 	"item": [
 		{
@@ -38,13 +38,9 @@
 					}
 				},
 				"url": {
-					"raw": "https://platform.at22.altinn.cloud/events/api/v1/subscriptions/",
-					"protocol": "https",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/subscriptions/",
 					"host": [
-						"platform",
-						"at22",
-						"altinn",
-						"cloud"
+						"{{PlatformHostUrl}}"
 					],
 					"path": [
 						"events",
@@ -89,13 +85,9 @@
 					}
 				},
 				"url": {
-					"raw": "https://platform.at22.altinn.cloud/events/api/v1/subscriptions/",
-					"protocol": "https",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/subscriptions/",
 					"host": [
-						"platform",
-						"at22",
-						"altinn",
-						"cloud"
+						"{{PlatformHostUrl}}"
 					],
 					"path": [
 						"events",
@@ -124,13 +116,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "https://platform.at22.altinn.cloud/events/api/v1/subscriptions/",
-					"protocol": "https",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/subscriptions/",
 					"host": [
-						"platform",
-						"at22",
-						"altinn",
-						"cloud"
+						"{{PlatformHostUrl}}"
 					],
 					"path": [
 						"events",
@@ -159,13 +147,9 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "https://platform.at22.altinn.cloud/events/api/v1/subscriptions/272",
-					"protocol": "https",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/subscriptions/272",
 					"host": [
-						"platform",
-						"at22",
-						"altinn",
-						"cloud"
+						"{{PlatformHostUrl}}"
 					],
 					"path": [
 						"events",
@@ -194,13 +178,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "https://platform.at22.altinn.cloud/events/api/v1/app/party?from=2021-10-29 07:22:19Z&party=50002108",
-					"protocol": "https",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/app/party?from=2021-10-29 07:22:19Z&party=50002108",
 					"host": [
-						"platform",
-						"at22",
-						"altinn",
-						"cloud"
+						"{{PlatformHostUrl}}"
 					],
 					"path": [
 						"events",
@@ -239,13 +219,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "https://platform.at22.altinn.cloud/events/api/v1/app/ttd/apps-test?after=bla",
-					"protocol": "https",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/app/ttd/apps-test?after=bla",
 					"host": [
-						"platform",
-						"at22",
-						"altinn",
-						"cloud"
+						"{{PlatformHostUrl}}"
 					],
 					"path": [
 						"events",
@@ -280,12 +256,10 @@
 					}
 				},
 				"url": {
-					"raw": "https://localhost:5080/events/api/v1/push ",
-					"protocol": "https",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/push ",
 					"host": [
-						"localhost"
+						"{{PlatformHostUrl}}"
 					],
-					"port": "5080",
 					"path": [
 						"events",
 						"api",
@@ -295,6 +269,42 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "POST event",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/cloudevents+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"id\": \"9611d8c2-b1b2-4491-9133-b21680a7cbc4\",\r\n\t\"time\": \"2022-11-15T10:46:53.5339928Z\",\r\n\t\"type\": \"app.instance.created\",\r\n\t\"source\": \"https://ttd.apps.at21.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\",\r\n\t\"subject\": \"/party/50019855\",\r\n\t\"specversion\": \"1.0\",\r\n\t\"alternativesubject\": \"/person/stephanie\"\r\n}"
+				},
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/events",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"events"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "PlatformHostUrl",
+			"value": "http://localhost:5080"
 		}
 	]
 }
