@@ -21,20 +21,17 @@ namespace Altinn.Platform.Events.Formatters
     public class CloudEventJsonInputFormatter : TextInputFormatter
     {
         private readonly CloudEventFormatter _formatter;
-        private readonly ILogger _logger;
 
         /// <summary>
         /// Constructs a new instance that uses the given formatter for deserialization.
         /// </summary>
-        public CloudEventJsonInputFormatter(CloudEventFormatter formatter, ILogger logger)
+        public CloudEventJsonInputFormatter(CloudEventFormatter formatter)
         {            
             _formatter = Validation.CheckNotNull(formatter, nameof(formatter));
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/cloudevents+json"));
 
             SupportedEncodings.Add(Encoding.UTF8);
             SupportedEncodings.Add(Encoding.Unicode);
-
-            _logger = logger;
         }
 
         /// <inheritdoc />
