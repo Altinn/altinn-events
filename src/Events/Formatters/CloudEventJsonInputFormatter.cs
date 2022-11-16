@@ -1,21 +1,18 @@
-﻿// Copyright (c) Cloud Native Foundation.
-// Licensed under the Apache 2.0 license.
-// See LICENSE file in the project root for full license information.
-using System;
+﻿using System;
 using System.Text;
 using System.Threading.Tasks;
-
+using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.AspNetCore;
 using CloudNative.CloudEvents.Core;
 
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
 
-namespace CloudNative.CloudEvents.AspNetCoreSample
+namespace Altinn.Platform.Events.Formatters
 {
+    // Inspired by: https://github.com/cloudevents/sdk-csharp/blob/main/samples/CloudNative.CloudEvents.AspNetCoreSample/CloudEventJsonInputFormatter.cs
     // FIXME: This doesn't get called for binary CloudEvents without content, or with a different data content type.
     // FIXME: This shouldn't really be tied to JSON. We need to work out how we actually want this to be used.
-    // See 
 
     /// <summary>
     /// A <see cref="TextInputFormatter"/> that parses HTTP requests into CloudEvents.
@@ -52,7 +49,7 @@ namespace CloudNative.CloudEvents.AspNetCoreSample
             }
             catch (Exception ex)
             {
-                return await InputFormatterResult.FailureAsync();
+                throw;
             }
         }
 

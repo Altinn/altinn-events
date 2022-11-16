@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken;
@@ -15,6 +14,7 @@ using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Filters;
+using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -28,7 +28,6 @@ using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-using CloudNative.CloudEvents.AspNetCoreSample;
 using CloudNative.CloudEvents.SystemTextJson;
 
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
@@ -39,9 +38,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.KeyVault.Models;
-using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
