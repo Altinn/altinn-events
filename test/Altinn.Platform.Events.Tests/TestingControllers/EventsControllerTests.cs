@@ -10,7 +10,7 @@ using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Controllers;
-using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
@@ -43,8 +43,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             private const string BasePath = "/events/api/v1";
 
             private readonly WebApplicationFactory<EventsController> _factory;
-            private readonly AppCloudEventRequestModel _invalidEvent;
-            private readonly AppCloudEventRequestModel _validEvent;
+            private readonly string _invalidEvent;
+            private readonly CloudEvent _validEvent;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="EventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsControllerTests}"/>.
@@ -53,20 +53,15 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public EventsControllerTests(WebApplicationFactory<EventsController> factory)
             {
                 _factory = factory;
-                _invalidEvent = new AppCloudEventRequestModel()
-                {
-                    Type = "system.event.occurred",
-                    Subject = "/person/16069412345",
-                    Source = new Uri("urn:isbn:1234567890")
-                };
 
-                _validEvent = new AppCloudEventRequestModel()
+                _validEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
                 {
+                    Id = Guid.NewGuid().ToString(),
                     Type = "system.event.occurred",
                     Subject = "/person/16069412345",
                     Source = new Uri("urn:isbn:1234567890"),
-                    SpecVersion = "1.0"
                 };
+
             }
 
             [Fact]
@@ -76,8 +71,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 HttpClient client = GetTestClient(null);
-                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri) { Content = null };
-
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(_validEvent.SerializeCloudEvent(), Encoding.UTF8, "application/cloudevents+json")
+                };
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
@@ -94,7 +91,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(null);
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(string.Empty, Encoding.UTF8, "application/cloudevents+json")
+                    Content = new StringContent(_validEvent.SerializeCloudEvent(), Encoding.UTF8, "application/cloudevents+json")
                 };
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:invalid"));
@@ -113,11 +110,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 HttpClient client = GetTestClient(null);
+
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(string.Empty, Encoding.UTF8, "application/cloudevents+json")
+                    Content = new StringContent(_validEvent.SerializeCloudEvent(), Encoding.UTF8, "application/cloudevents+json")
                 };
-
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 // Act
@@ -131,11 +128,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async Task Post_EventMissingParameters_BadRequestResponse()
             {
                 // Arrange
+                string invalidEvent = "{ \"time\": \"2022-11-15T10:46:53.5339928Z\", \"type\": \"app.instance.created\", \"source\": \"https://ttd.apps.at21.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\", \"subject\": \"/party/50019855\", \"specversion\": \"1.0\", \"alternativesubject\": \"/person/stephanie\" }";
                 string requestUri = $"{BasePath}/events";
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(JsonSerializer.Serialize(_invalidEvent), Encoding.UTF8, "application/cloudevents+json")
+                    Content = new StringContent(invalidEvent, Encoding.UTF8, "application/cloudevents+json")
                 };
 
                 HttpClient client = GetTestClient(null, true);
@@ -147,7 +145,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Contains("Missing parameter values: source, subject and type cannot be null", responseMessage);
+                Assert.Contains("CloudEvent is missing required attributes", responseMessage);
             }
 
             [Fact]
@@ -161,7 +159,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(JsonSerializer.Serialize(_validEvent), Encoding.UTF8, "application/json")
+                    Content = new StringContent(_validEvent.SerializeCloudEvent(), Encoding.UTF8, "application/json")
                 };
 
                 // Act
@@ -186,7 +184,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(JsonSerializer.Serialize(_validEvent), Encoding.UTF8, "application/cloudevents+json")
+                    Content = new StringContent(_validEvent.SerializeCloudEvent(), Encoding.UTF8, "application/cloudevents+json")
                 };
 
                 // Act

@@ -6,6 +6,7 @@ using CloudNative.CloudEvents.AspNetCore;
 using CloudNative.CloudEvents.Core;
 
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
 namespace Altinn.Platform.Events.Formatters
@@ -20,17 +21,20 @@ namespace Altinn.Platform.Events.Formatters
     public class CloudEventJsonInputFormatter : TextInputFormatter
     {
         private readonly CloudEventFormatter _formatter;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// Constructs a new instance that uses the given formatter for deserialization.
         /// </summary>
-        public CloudEventJsonInputFormatter(CloudEventFormatter formatter)
+        public CloudEventJsonInputFormatter(CloudEventFormatter formatter, ILogger logger)
         {            
             _formatter = Validation.CheckNotNull(formatter, nameof(formatter));
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/cloudevents+json"));
 
             SupportedEncodings.Add(Encoding.UTF8);
             SupportedEncodings.Add(Encoding.Unicode);
+
+            _logger = logger;
         }
 
         /// <inheritdoc />
@@ -48,7 +52,8 @@ namespace Altinn.Platform.Events.Formatters
             }
             catch (Exception ex)
             {
-                throw;
+                context.ModelState.TryAddModelError("RequestBody", ex.Message);
+                return InputFormatterResult.Failure();
             }
         }
 
