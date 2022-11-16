@@ -1,0 +1,1 @@
+## Collection of all postman related collections and tests
