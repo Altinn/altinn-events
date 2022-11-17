@@ -47,13 +47,6 @@ namespace Altinn.Platform.Events.Controllers
                 return NotFound();
             }
 
-            cloudEvent.Id ??= Guid.NewGuid().ToString();
-
-            if (!cloudEvent.IsValid)
-            {
-                return Problem("Missing parameter values: source, subject, type and specVersion cannot be null", null, 400);
-            }
-
             if (!AuthorizeEvent(cloudEvent))
             {
                 return Forbid();
