@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Extensions;
-using Altinn.Platform.Register.Models;
 using CloudNative.CloudEvents;
-using CloudNative.CloudEvents.AspNetCore;
 using CloudNative.CloudEvents.Core;
-using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
@@ -53,7 +49,7 @@ namespace Altinn.Platform.Events.Formatters
                 var cloudEvents = new List<CloudEvent>(context.Object as IEnumerable<CloudEvent>);
 
                 await response.WriteAsync("[");
-                for (int i = 0; i<cloudEvents.Count; i++)
+                for (int i = 0; i < cloudEvents.Count; i++)
                 {
                     await response.WriteAsync(cloudEvents[i].SerializeCloudEvent(_formatter));
                     if (i != cloudEvents.Count - 1)
