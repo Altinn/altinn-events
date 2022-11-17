@@ -28,7 +28,7 @@ namespace Altinn.Platform.Events.Repository
         /// <summary>
         /// Initializes a new instance of the <see cref="CloudEventRepository"/> class.
         /// </summary>
-        public CloudEventRepository(IOptions<PostgreSQLSettings> postgresSettings)
+        public CloudEventRepository(IOptions<PostgreSqlSettings> postgresSettings)
         {
             _connectionString = string.Format(
                 postgresSettings.Value.ConnectionString,
