@@ -456,7 +456,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                var actual = JsonSerializer.Deserialize<List<object>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);

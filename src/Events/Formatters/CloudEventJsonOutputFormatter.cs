@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Register.Models;
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.AspNetCore;
@@ -40,30 +42,30 @@ namespace Altinn.Platform.Events.Formatters
         public override async Task WriteResponseBodyAsync(OutputFormatterWriteContext context, Encoding selectedEncoding)
         {
             var response = context.HttpContext.Response;
+            if (context.Object is CloudEvent)
+            {
+                await response.WriteAsync((context.Object as CloudEvent).SerializeCloudEvent(_formatter));
+                return;
+            }
 
-            //_formatter.EncodeStructuredModeMessage(context.Object)
+            if (context.Object is IEnumerable<CloudEvent>)
+            {
+                var cloudEvents = new List<CloudEvent>(context.Object as IEnumerable<CloudEvent>);
 
-            await response.WriteAsJsonAsync(selectedEncoding);
+                await response.WriteAsync("[");
+                for (int i = 0; i<cloudEvents.Count; i++)
+                {
+                    await response.WriteAsync(cloudEvents[i].SerializeCloudEvent(_formatter));
+                    if (i != cloudEvents.Count - 1)
+                    {
+                        await response.WriteAsync(", ");
+                    }
+                }
+
+                await response.WriteAsync("]");
+                return;
+            }
         }
-
-        /// <inheritdoc />
-        //public override async Task<Output> ReadRequestBodyAsync( context, Encoding encoding)
-        //{
-        //    Validation.CheckNotNull(context, nameof(context));
-        //    Validation.CheckNotNull(encoding, nameof(encoding));
-
-        //    var request = context.HttpContext.Request;
-
-        //    try
-        //    {
-        //        var cloudEvent = await request.ToCloudEventAsync(_formatter);
-        //        return await OutputFormatterResult.SuccessAsync(cloudEvent);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw;
-        //    }
-        //}
 
         /// <inheritdoc />
         protected override bool CanWriteType(Type type)

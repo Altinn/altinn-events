@@ -13,9 +13,9 @@ namespace Altinn.Platform.Events.Extensions
         ///  Serializes the cloud event using a JsonEventFormatter
         /// </summary>
         /// <returns>The json serialized cloud event</returns>
-        public static string SerializeCloudEvent(this CloudEvent cloudEvent)
+        public static string SerializeCloudEvent(this CloudEvent cloudEvent, CloudEventFormatter formatter = null)
         {
-            var formatter = new JsonEventFormatter();
+            formatter ??= new JsonEventFormatter();
             var bytes = formatter.EncodeStructuredModeMessage(cloudEvent, out _);
             return Encoding.UTF8.GetString(bytes.Span);
         }
