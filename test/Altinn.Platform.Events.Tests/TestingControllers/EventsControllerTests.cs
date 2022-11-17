@@ -65,7 +65,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
-            public async Task Post_MissingBearerToken_UnauhtorizedResponse()
+            public async Task Post_MissingBearerToken_UnauthorizedResponse()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events";
@@ -75,6 +75,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 {
                     Content = new StringContent(_validEvent.SerializeCloudEvent(), Encoding.UTF8, "application/cloudevents+json")
                 };
+                
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 

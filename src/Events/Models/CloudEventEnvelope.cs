@@ -12,7 +12,7 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// The Event to push
         /// </summary>
-        public CloudEvent CloudEvent { get; set; }
+        public string CloudEvent { get; set; }
 
         /// <summary>
         /// The time the event was pushed to queue

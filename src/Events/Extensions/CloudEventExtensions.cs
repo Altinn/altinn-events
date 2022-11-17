@@ -1,5 +1,4 @@
 ﻿using System.Text;
-
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
 
