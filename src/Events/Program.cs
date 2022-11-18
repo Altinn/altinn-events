@@ -179,19 +179,7 @@ void ConfigureLogging(ILoggingBuilder logging)
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
-    services.AddAutoMapper(typeof(Program));
-
-    services.AddControllers(opts =>
-    {
-        opts.InputFormatters.Insert(0, new CloudEventJsonInputFormatter(new JsonEventFormatter()));
-        opts.OutputFormatters.Insert(0, new CloudEventJsonOutputFormatter(new JsonEventFormatter()));
-        opts.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
-    })
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-    });
+    services.AddAutoMapper(typeof(Program));    
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
@@ -238,6 +226,18 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         options.AddPolicy("PlatformAccess", policy => policy.Requirements.Add(new AccessTokenRequirement()));
         options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.publish")));
+    });
+
+    services.AddControllers(opts =>
+    {
+        opts.InputFormatters.Insert(0, new CloudEventJsonInputFormatter(new JsonEventFormatter()));
+        opts.OutputFormatters.Insert(0, new CloudEventJsonOutputFormatter(new JsonEventFormatter()));
+        opts.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();

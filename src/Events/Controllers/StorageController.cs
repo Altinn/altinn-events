@@ -15,8 +15,7 @@ namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
     /// Provides operations for saving and retrieving cloud events from persistent storage.
-    /// </summary>
-    [Authorize]
+    /// </summary>    
     [Route("events/api/v1/storage/events")]
     [ApiController]
     public class StorageController : ControllerBase
@@ -42,7 +41,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
-        [Consumes("application/json")]
+        [Consumes("application/cloudevents+json")]
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
