@@ -110,7 +110,7 @@ namespace Altinn.Platform.Events.Functions.Clients
         {
             StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
 
-            string endpointUrl = "push";
+            string endpointUrl = "outbound";
 
             var accessToken = await GenerateAccessToken();
 
