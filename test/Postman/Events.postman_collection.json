@@ -1,24 +1,91 @@
 {
 	"info": {
-		"_postman_id": "c34260c2-ea6d-4625-a456-7ec662d75e4a",
+		"_postman_id": "981547f7-4a19-454b-82e1-d8eb0369e319",
 		"name": "Events",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "10288676"
+		"_exporter_id": "20656512"
 	},
 	"item": [
 		{
-			"name": "POST subscription",
+			"name": "GET Platform Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const rtext = pm.response.text();\r",
+							"\r",
+							"//console.log(rtext);\r",
+							"\r",
+							"pm.environment.set(\"PlatformToken\", rtext);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
-					"type": "bearer",
-					"bearer": [
+					"type": "basic",
+					"basic": [
 						{
-							"key": "token",
-							"value": "",
+							"key": "username",
+							"value": "autotest",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "altinn8900bnn",
 							"type": "string"
 						}
 					]
 				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "subjectFilter",
+						"value": "/party/1337",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://altinn-testtools-token-generator.azurewebsites.net/api/GetEnterpriseToken?env=at22&scopes=altinn:serviceowner/instances.read&org=ttd&orgNo=991825827",
+					"protocol": "https",
+					"host": [
+						"altinn-testtools-token-generator",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"api",
+						"GetEnterpriseToken"
+					],
+					"query": [
+						{
+							"key": "env",
+							"value": "at22"
+						},
+						{
+							"key": "scopes",
+							"value": "altinn:serviceowner/instances.read"
+						},
+						{
+							"key": "org",
+							"value": "ttd"
+						},
+						{
+							"key": "orgNo",
+							"value": "991825827"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST subscription",
+			"request": {
 				"method": "POST",
 				"header": [
 					{
@@ -54,65 +121,8 @@
 			"response": []
 		},
 		{
-			"name": "POST events/storage",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjI3MzI2OTYxMDIzQjJGREY3OTFENUVEQTJDRTJCQzk3REU0NDcyMUEiLCJ0eXAiOiJKV1QiLCJ4NWMiOiIyNzMyNjk2MTAyM0IyRkRGNzkxRDVFREEyQ0UyQkM5N0RFNDQ3MjFBIn0.eyJzY29wZSI6ImFsdGlubjpzZXJ2aWNlb3duZXIvaW5zdGFuY2VzLnJlYWQiLCJ0b2tlbl90eXBlIjoiQmVhcmVyIiwiZXhwIjoxNjY3NTY3OTY2LCJpYXQiOjE2Njc1NjYxNjYsImNsaWVudF9pZCI6ImMyNzM2NGM1LWMyNzAtNDdhNi05YzcwLTZlNTQ0MjBhZTdhOSIsImp0aSI6IjN3WDY3QkViRncyMEpKM1E5eGdKQkpxdkpmcVMwS1lWU1ZiYmhhbkdmUWUiLCJjb25zdW1lciI6eyJhdXRob3JpdHkiOiJpc282NTIzLWFjdG9yaWQtdXBpcyIsIklEIjoiMDE5Mjo5OTE4MjU4MjcifSwidXJuOmFsdGlubjpvcmciOiJ0dGQiLCJ1cm46YWx0aW5uOm9yZ051bWJlciI6Ijk5MTgyNTgyNyIsInVybjphbHRpbm46YXV0aGVudGljYXRlbWV0aG9kIjoibWFza2lucG9ydGVuIiwidXJuOmFsdGlubjphdXRobGV2ZWwiOjMsImlzcyI6Imh0dHBzOi8vcGxhdGZvcm0uYXQyMi5hbHRpbm4uY2xvdWQvYXV0aGVudGljYXRpb24vYXBpL3YxL29wZW5pZC8iLCJhY3R1YWxfaXNzIjoiYWx0aW5uLXRlc3QtdG9vbHMiLCJuYmYiOjE2Njc1NjYxNjZ9.ahmSqYd2Akl7OtNhWTTHBpCeTklJwun9OY2eZF8k3M7w0t-JuXDCsv36BYTbIYyx79cg_dqxQ38PnO9dGAEyK5xkEJwgyOnWythcmq6H49hhqHab8O-EfC3eEycCDGrCbWj9JqGVZl7rgyAg9DYHCJ26jYY4q1eQBOb1IMIs0BT-oJy8Q-R0iVxH5rmXKsu99xBI5wbaksLxhT91ct-d_Bendl5pwrGrGBupEKMCRClZmIl_rOE_4udigNImpMEBbxBUCAYrQaePhXdPSj2wmz0TF92lYq7vEs8nrdHlu9u9i2RKB3_W_wayQRSUPYI8NwvlJRl9RjweUf26guiESw",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [
-					{
-						"key": "subjectFilter",
-						"value": "/party/1337",
-						"type": "text",
-						"disabled": true
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"sourceFilter\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\",\r\n    \"endpoint\": \"https://hooks.slack.com/services/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\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{PlatformHostUrl}}/events/api/v1/subscriptions/",
-					"host": [
-						"{{PlatformHostUrl}}"
-					],
-					"path": [
-						"events",
-						"api",
-						"v1",
-						"subscriptions",
-						""
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "GET list subscription",
 			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjI3MzI2OTYxMDIzQjJGREY3OTFENUVEQTJDRTJCQzk3REU0NDcyMUEiLCJ0eXAiOiJKV1QiLCJ4NWMiOiIyNzMyNjk2MTAyM0IyRkRGNzkxRDVFREEyQ0UyQkM5N0RFNDQ3MjFBIn0.eyJzY29wZSI6ImFsdGlubjpzZXJ2aWNlb3duZXIvaW5zdGFuY2VzLnJlYWQiLCJ0b2tlbl90eXBlIjoiQmVhcmVyIiwiZXhwIjoxNjY3NTcwMTE4LCJpYXQiOjE2Njc1NjgzMTgsImNsaWVudF9pZCI6IjIwMTc3OWExLTg3YzgtNDY4Yi1iOWM3LTU1MzNhNjc1YjYzNyIsImp0aSI6IkJFSkRBTnhwRTlLRW9nM25WT0lpNU1PWjNLY0Z2OUZXNGdIT084UW96VW0iLCJjb25zdW1lciI6eyJhdXRob3JpdHkiOiJpc282NTIzLWFjdG9yaWQtdXBpcyIsIklEIjoiMDE5Mjo5OTE4MjU4MjcifSwidXJuOmFsdGlubjpvcmciOiJ0dGQiLCJ1cm46YWx0aW5uOm9yZ051bWJlciI6Ijk5MTgyNTgyNyIsInVybjphbHRpbm46YXV0aGVudGljYXRlbWV0aG9kIjoibWFza2lucG9ydGVuIiwidXJuOmFsdGlubjphdXRobGV2ZWwiOjMsImlzcyI6Imh0dHBzOi8vcGxhdGZvcm0uYXQyMi5hbHRpbm4uY2xvdWQvYXV0aGVudGljYXRpb24vYXBpL3YxL29wZW5pZC8iLCJhY3R1YWxfaXNzIjoiYWx0aW5uLXRlc3QtdG9vbHMiLCJuYmYiOjE2Njc1NjgzMTh9.lC0qE_hJAp0BcEbkWevCFoRdAu9CZOMKZrd0e2dtnhSUbE3lRj9shQkZX2OPZ44meTU8DlAMM2-HNJXr-8yhRpD4ubGxYfAnOOpYKPjlDLDXOxAvaaZGn8b4INUa5EleOSKQUqi_Dsxng_dJGFQrYzfXGoE_DO2XrMcgU8eLJoXnym-4x8QbwGVjcOSi39suovTBnmri6MSgyWXIumDolgu3xeM-s2nY_xW0MGrcxHz8cfgk7z06tJw3isB_G9gDdSvjy97QslvFv0pkboTtLrOw4RsRvGW1xnp1BV2oAob1X6KU9jPp4C7vUxdLU5vfnqLohG_Uz0p15EG4LW_7Ug",
-							"type": "string"
-						}
-					]
-				},
 				"method": "GET",
 				"header": [],
 				"url": {
@@ -134,16 +144,6 @@
 		{
 			"name": "DELETE subscription",
 			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjI3MzI2OTYxMDIzQjJGREY3OTFENUVEQTJDRTJCQzk3REU0NDcyMUEiLCJ0eXAiOiJKV1QiLCJ4NWMiOiIyNzMyNjk2MTAyM0IyRkRGNzkxRDVFREEyQ0UyQkM5N0RFNDQ3MjFBIn0.eyJzY29wZSI6ImFsdGlubjpzZXJ2aWNlb3duZXIvaW5zdGFuY2VzLnJlYWQiLCJ0b2tlbl90eXBlIjoiQmVhcmVyIiwiZXhwIjoxNjY3NTY3OTY2LCJpYXQiOjE2Njc1NjYxNjYsImNsaWVudF9pZCI6ImMyNzM2NGM1LWMyNzAtNDdhNi05YzcwLTZlNTQ0MjBhZTdhOSIsImp0aSI6IjN3WDY3QkViRncyMEpKM1E5eGdKQkpxdkpmcVMwS1lWU1ZiYmhhbkdmUWUiLCJjb25zdW1lciI6eyJhdXRob3JpdHkiOiJpc282NTIzLWFjdG9yaWQtdXBpcyIsIklEIjoiMDE5Mjo5OTE4MjU4MjcifSwidXJuOmFsdGlubjpvcmciOiJ0dGQiLCJ1cm46YWx0aW5uOm9yZ051bWJlciI6Ijk5MTgyNTgyNyIsInVybjphbHRpbm46YXV0aGVudGljYXRlbWV0aG9kIjoibWFza2lucG9ydGVuIiwidXJuOmFsdGlubjphdXRobGV2ZWwiOjMsImlzcyI6Imh0dHBzOi8vcGxhdGZvcm0uYXQyMi5hbHRpbm4uY2xvdWQvYXV0aGVudGljYXRpb24vYXBpL3YxL29wZW5pZC8iLCJhY3R1YWxfaXNzIjoiYWx0aW5uLXRlc3QtdG9vbHMiLCJuYmYiOjE2Njc1NjYxNjZ9.ahmSqYd2Akl7OtNhWTTHBpCeTklJwun9OY2eZF8k3M7w0t-JuXDCsv36BYTbIYyx79cg_dqxQ38PnO9dGAEyK5xkEJwgyOnWythcmq6H49hhqHab8O-EfC3eEycCDGrCbWj9JqGVZl7rgyAg9DYHCJ26jYY4q1eQBOb1IMIs0BT-oJy8Q-R0iVxH5rmXKsu99xBI5wbaksLxhT91ct-d_Bendl5pwrGrGBupEKMCRClZmIl_rOE_4udigNImpMEBbxBUCAYrQaePhXdPSj2wmz0TF92lYq7vEs8nrdHlu9u9i2RKB3_W_wayQRSUPYI8NwvlJRl9RjweUf26guiESw",
-							"type": "string"
-						}
-					]
-				},
 				"method": "DELETE",
 				"header": [],
 				"url": {
@@ -165,20 +165,10 @@
 		{
 			"name": "GET events",
 			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNGQTg4MEMyQjg3QUEwMTk2QTgyRTg2M0Y3RTQzN0Q0NzU4NUI3RDgiLCJ0eXAiOiJKV1QiLCJ4NWMiOiIzRkE4ODBDMkI4N0FBMDE5NkE4MkU4NjNGN0U0MzdENDc1ODVCN0Q4In0.eyJzY29wZSI6ImFsdGlubjpzZXJ2aWNlb3duZXIvaW5zdGFuY2VzLnJlYWQiLCJ0b2tlbl90eXBlIjoiQmVhcmVyIiwiZXhwIjoxNjY3NDY4NTUyLCJpYXQiOjE2Njc0NjY3NTIsImNsaWVudF9pZCI6ImJmZmNiYjg3LTU5NDgtNGJjYS04YTgyLWE4YjNhMWRhMzAwYyIsImp0aSI6InZXS2dZNEw4UUdRcU9uSkM4UlR4eVhLMEJzQVA4QkV3Z0FrWHloOTVkV00iLCJjb25zdW1lciI6eyJhdXRob3JpdHkiOiJpc282NTIzLWFjdG9yaWQtdXBpcyIsIklEIjoiMDE5Mjo5OTE4MjU4MjcifSwidXJuOmFsdGlubjpvcmciOiJ0dGQiLCJ1cm46YWx0aW5uOm9yZ051bWJlciI6Ijk5MTgyNTgyNyIsInVybjphbHRpbm46YXV0aGVudGljYXRlbWV0aG9kIjoibWFza2lucG9ydGVuIiwidXJuOmFsdGlubjphdXRobGV2ZWwiOjMsImlzcyI6Imh0dHBzOi8vcGxhdGZvcm0udHQwMi5hbHRpbm4ubm8vYXV0aGVudGljYXRpb24vYXBpL3YxL29wZW5pZC8iLCJhY3R1YWxfaXNzIjoiYWx0aW5uLXRlc3QtdG9vbHMiLCJuYmYiOjE2Njc0NjY3NTJ9.VKOv5rhiT0s-SJfkgmAT4tSkIxB5rQgIcP_E4uuCU4JlMtzAvuPzXid2Gzqmm5uiMab9IW2CAgCUvnvmVzoUlQ6sZh39WSoUnZpJEsLIO4uimELptOCuv8rN_edzJvtAvzmyh5PcFU3li6R5Bz6XCfXhvXmliyWRYp5tuAua23lojT5PSy580Nsa0MlXdKKOQkBVZUhhwhQmyPP9gd9q9cWY0z7AiRAJJvofUqZDe0pDHN5BH5FxXw6FaV9A9YyafpZeWN1487kZ9X7ywM1meIoa_KCPNWICT5WdDc8lrN4UkSu2C15OLxA-6KsEanVGxIU4ul9Fu75uCajWA3s-BQ",
-							"type": "string"
-						}
-					]
-				},
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{PlatformHostUrl}}/events/api/v1/app/party?from=2021-10-29 07:22:19Z&party=50002108",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/app/party?from=2022-11-17T11:00:53.3917Z&party=50002108",
 					"host": [
 						"{{PlatformHostUrl}}"
 					],
@@ -192,7 +182,7 @@
 					"query": [
 						{
 							"key": "from",
-							"value": "2021-10-29 07:22:19Z"
+							"value": "2022-11-17T11:00:53.3917Z"
 						},
 						{
 							"key": "party",
@@ -204,22 +194,42 @@
 			"response": []
 		},
 		{
+			"name": "POST app event",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"time\": \"2022-11-18T12:00:000Z\",\r\n\t\"type\": \"app.instance.created\",\r\n\t\"source\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\",\r\n\t\"subject\": \"/party/50019855\",\r\n\t\"specversion\": \"1.0\",\r\n\t\"alternativesubject\": \"/person/123456\"\r\n}"
+				},
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/app",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"app"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "GET events - app-test",
 			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjNGQTg4MEMyQjg3QUEwMTk2QTgyRTg2M0Y3RTQzN0Q0NzU4NUI3RDgiLCJ0eXAiOiJKV1QiLCJ4NWMiOiIzRkE4ODBDMkI4N0FBMDE5NkE4MkU4NjNGN0U0MzdENDc1ODVCN0Q4In0.eyJzY29wZSI6ImFsdGlubjpzZXJ2aWNlb3duZXIvaW5zdGFuY2VzLnJlYWQiLCJ0b2tlbl90eXBlIjoiQmVhcmVyIiwiZXhwIjoxNjY3NDY4NTUyLCJpYXQiOjE2Njc0NjY3NTIsImNsaWVudF9pZCI6ImJmZmNiYjg3LTU5NDgtNGJjYS04YTgyLWE4YjNhMWRhMzAwYyIsImp0aSI6InZXS2dZNEw4UUdRcU9uSkM4UlR4eVhLMEJzQVA4QkV3Z0FrWHloOTVkV00iLCJjb25zdW1lciI6eyJhdXRob3JpdHkiOiJpc282NTIzLWFjdG9yaWQtdXBpcyIsIklEIjoiMDE5Mjo5OTE4MjU4MjcifSwidXJuOmFsdGlubjpvcmciOiJ0dGQiLCJ1cm46YWx0aW5uOm9yZ051bWJlciI6Ijk5MTgyNTgyNyIsInVybjphbHRpbm46YXV0aGVudGljYXRlbWV0aG9kIjoibWFza2lucG9ydGVuIiwidXJuOmFsdGlubjphdXRobGV2ZWwiOjMsImlzcyI6Imh0dHBzOi8vcGxhdGZvcm0udHQwMi5hbHRpbm4ubm8vYXV0aGVudGljYXRpb24vYXBpL3YxL29wZW5pZC8iLCJhY3R1YWxfaXNzIjoiYWx0aW5uLXRlc3QtdG9vbHMiLCJuYmYiOjE2Njc0NjY3NTJ9.VKOv5rhiT0s-SJfkgmAT4tSkIxB5rQgIcP_E4uuCU4JlMtzAvuPzXid2Gzqmm5uiMab9IW2CAgCUvnvmVzoUlQ6sZh39WSoUnZpJEsLIO4uimELptOCuv8rN_edzJvtAvzmyh5PcFU3li6R5Bz6XCfXhvXmliyWRYp5tuAua23lojT5PSy580Nsa0MlXdKKOQkBVZUhhwhQmyPP9gd9q9cWY0z7AiRAJJvofUqZDe0pDHN5BH5FxXw6FaV9A9YyafpZeWN1487kZ9X7ywM1meIoa_KCPNWICT5WdDc8lrN4UkSu2C15OLxA-6KsEanVGxIU4ul9Fu75uCajWA3s-BQ",
-							"type": "string"
-						}
-					]
-				},
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{PlatformHostUrl}}/events/api/v1/app/ttd/apps-test?after=bla",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/app/ttd/apps-test?after=5b9a8887-0023-4f07-8791-d98e15a3542b",
 					"host": [
 						"{{PlatformHostUrl}}"
 					],
@@ -234,7 +244,7 @@
 					"query": [
 						{
 							"key": "after",
-							"value": "bla"
+							"value": "5b9a8887-0023-4f07-8791-d98e15a3542b"
 						}
 					]
 				}
@@ -256,7 +266,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{PlatformHostUrl}}/events/api/v1/push ",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/outbound",
 					"host": [
 						"{{PlatformHostUrl}}"
 					],
@@ -264,7 +274,7 @@
 						"events",
 						"api",
 						"v1",
-						"push "
+						"outbound"
 					]
 				}
 			},
@@ -301,22 +311,28 @@
 			"response": []
 		},
 		{
-			"name": "POST app event",
+			"name": "POST events/storage",
 			"request": {
 				"method": "POST",
 				"header": [
 					{
-						"key": "Content-Type",
-						"value": "application/cloudevents+json",
-						"type": "text"
+						"key": "subjectFilter",
+						"value": "/party/1337",
+						"type": "text",
+						"disabled": true
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n\t\"id\": \"9611d8c2-b1b2-4491-9133-b21680a7cbc4\",\r\n\t\"time\": \"2022-11-15T10:46:53.5339928Z\",\r\n\t\"type\": \"app.instance.created\",\r\n\t\"source\": \"https://ttd.apps.at21.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\",\r\n\t\"subject\": \"/party/50019855\",\r\n\t\"specversion\": \"1.0\",\r\n\t\"alternativesubject\": \"/person/stephanie\"\r\n}"
+					"raw": "{\r\n  \"sourceFilter\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\",\r\n    \"endpoint\": \"https://hooks.slack.com/services/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\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "{{PlatformHostUrl}}/events/api/v1/app",
+					"raw": "{{PlatformHostUrl}}/events/api/v1/",
 					"host": [
 						"{{PlatformHostUrl}}"
 					],
@@ -324,11 +340,41 @@
 						"events",
 						"api",
 						"v1",
-						"app"
+						""
 					]
 				}
 			},
 			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{PlatformToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	],
 	"variable": [
