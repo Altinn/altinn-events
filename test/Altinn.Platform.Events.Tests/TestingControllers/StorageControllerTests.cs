@@ -76,7 +76,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(eventsService.Object);
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEvent.SerializeCloudEvent(), Encoding.UTF8, "application/cloudevents+json")
+                    Content = new StringContent(cloudEvent.SerializeCloudEvent(), Encoding.UTF8, "application/json")
                 };
 
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
@@ -111,7 +111,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEvent.SerializeCloudEvent(), Encoding.UTF8, "application/cloudevents+json")
+                    Content = new StringContent(cloudEvent.SerializeCloudEvent(), Encoding.UTF8, "application/json")
                 };
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
@@ -137,9 +137,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/storage/events";
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
 
-                StringContent content = new StringContent(string.Empty);
+                StringContent content = new(string.Empty);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri) { Content = content };
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -165,9 +165,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
 
-                StringContent content = new StringContent(string.Empty);
+                StringContent content = new(string.Empty);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri) { Content = content };
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);

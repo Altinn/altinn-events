@@ -3,8 +3,6 @@
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 
-using CloudNative.CloudEvents;
-
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingExtensions
