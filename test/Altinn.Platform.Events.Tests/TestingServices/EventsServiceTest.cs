@@ -68,30 +68,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Store a cloud event in postgres DB when id is null.
-        /// Expected result:
-        ///   Returns the id of the newly created document.
-        /// Success criteria:
-        ///   The response is a non-empty string.
-        /// </summary>
-        [Fact]
-        public async Task RegisterNewEvent_CheckIdCreatedByService_IdReturned()
-        {
-            // Arrange
-            EventsService eventsService = GetEventsService();
-
-            CloudEvent item = GetCloudEventFromApp();
-            item.Id = null;
-
-            // Act
-            string actual = await eventsService.RegisterNew(item);
-
-            // Assert
-            Assert.NotEmpty(actual);
-        }
-
-        /// <summary>
-        /// Scenario:
         ///   Store an event, but push to queue fails.
         /// Expected result:
         /// Event is stored and eventId returned.

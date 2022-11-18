@@ -1,7 +1,5 @@
 using System;
 
-using CloudNative.CloudEvents;
-
 namespace Altinn.Platform.Events.Models
 {
     /// <summary>
@@ -12,7 +10,7 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// The Event to push
         /// </summary>
-        public string CloudEvent { get; set; }
+        public object CloudEvent { get; set; }
 
         /// <summary>
         /// The time the event was pushed to queue

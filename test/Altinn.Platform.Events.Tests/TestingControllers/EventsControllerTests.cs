@@ -43,7 +43,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             private const string BasePath = "/events/api/v1";
 
             private readonly WebApplicationFactory<EventsController> _factory;
-            private readonly string _invalidEvent;
             private readonly CloudEvent _validEvent;
 
             /// <summary>
@@ -61,7 +60,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Subject = "/person/16069412345",
                     Source = new Uri("urn:isbn:1234567890"),
                 };
-
             }
 
             [Fact]

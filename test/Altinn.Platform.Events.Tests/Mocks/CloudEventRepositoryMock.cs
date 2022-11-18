@@ -84,7 +84,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 events.Add(NewTestEvent(
                     2,
                     "e31dbb11-2208-4dda-a549-92a0db8c7708",
-                     new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+                    new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                     "instance.deleted",
                     "/party/1337",
                     "/person/01038712345",
