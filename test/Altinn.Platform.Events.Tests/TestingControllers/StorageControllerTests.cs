@@ -8,6 +8,7 @@ using System.Text.Json;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
@@ -67,7 +68,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
                 string responseId = Guid.NewGuid().ToString();
-                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                var cloudEvent = GetCloudEventRequest();                
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(s => s.Save(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
@@ -75,7 +76,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(eventsService.Object);
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                    Content = new StringContent(cloudEvent.SerializeCloudEvent(), Encoding.UTF8, "application/json")
                 };
 
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
@@ -103,14 +104,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
-                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                var cloudEvent = GetCloudEventRequest();
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(er => er.Save(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                    Content = new StringContent(cloudEvent.SerializeCloudEvent(), Encoding.UTF8, "application/json")
                 };
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
@@ -136,9 +137,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/storage/events";
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
 
-                StringContent content = new StringContent(string.Empty);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+                StringContent content = new(string.Empty);
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri) { Content = content };
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -164,9 +165,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
 
-                StringContent content = new StringContent(string.Empty);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+                StringContent content = new(string.Empty);
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri) { Content = content };
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -193,18 +194,15 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 return client;
             }
 
-            private static AppCloudEventRequestModel GetCloudEventRequest()
+            private static CloudEvent GetCloudEventRequest()
             {
-                AppCloudEventRequestModel cloudEvent = new AppCloudEventRequestModel
+                return new CloudEvent(CloudEventsSpecVersion.V1_0)
                 {
-                    SpecVersion = "1.0",
-                    Type = "instance.created",
-                    Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/232243423"),
-                    Subject = "/party/456456",
-                    Data = "something/extra",
+                    Id = Guid.NewGuid().ToString(),
+                    Type = "system.event.occurred",
+                    Subject = "/person/16069412345",
+                    Source = new Uri("urn:isbn:1234567890"),
                 };
-
-                return cloudEvent;
             }
         }
     }

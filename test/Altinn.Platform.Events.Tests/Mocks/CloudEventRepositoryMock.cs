@@ -35,7 +35,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.CompletedTask;
         }
 
-        private EventsTableEntry NewTestEvent(
+        private static EventsTableEntry NewTestEvent(
             int sequenceno,
             string id, 
             Uri source, 

@@ -1,10 +1,12 @@
 using System;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
-
+using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,12 +17,13 @@ namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
     /// Provides operations for saving and retrieving cloud events from persistent storage.
-    /// </summary>
-    [Authorize]
+    /// </summary>    
     [Route("events/api/v1/storage/events")]
     [ApiController]
     public class StorageController : ControllerBase
     {
+        private static readonly CloudEventFormatter _formatter = new JsonEventFormatter();
+
         private readonly IEventsService _eventsService;
         private readonly ILogger _logger;
 
@@ -38,7 +41,6 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Saves a cloud event to persistent storage.
         /// </summary>
-        /// <param name="cloudEvent">The cloudEvent to be saved</param>
         /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
@@ -48,17 +50,22 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
+        public async Task<ActionResult<string>> Post()
         {
+            var rawBody = await Request.GetRawBodyAsync(Encoding.UTF8);
+            CloudEvent cloudEvent = null;
+
             try
             {
+                cloudEvent = _formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(rawBody)), null, null);
+
                 string cloudEventId = await _eventsService.Save(cloudEvent);
                 return Created(cloudEvent.Subject, cloudEventId);
             }
             catch (Exception e)
             {
-                var msg = $"Temporarily unable to save cloudEventId {cloudEvent?.Id} to storage, please try again.";
-                _logger.LogError(e, msg);
+                var msg = "Temporarily unable to save cloudEventId {cloudEventId} to storage, please try again.";
+                _logger.LogError(e, msg, cloudEvent?.Id);
                 return StatusCode(503, msg);
             }
         }

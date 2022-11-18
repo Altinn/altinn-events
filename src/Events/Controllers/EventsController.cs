@@ -14,7 +14,8 @@ namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
     /// Controller for all events related operations
-    /// </summary>
+    /// </summary>66
+    /// 
     [Authorize]
     [Route("events/api/v1/events")]
     [ApiController]

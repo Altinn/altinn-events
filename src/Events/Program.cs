@@ -17,6 +17,7 @@ using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Filters;
 using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
+using Altinn.Platform.Events.Middleware;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -179,25 +180,13 @@ void ConfigureLogging(ILoggingBuilder logging)
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
-    services.AddAutoMapper(typeof(Program));
-
-    services.AddControllers(opts =>
-    {
-        opts.InputFormatters.Insert(0, new CloudEventJsonInputFormatter(new JsonEventFormatter()));
-        opts.OutputFormatters.Insert(0, new CloudEventJsonOutputFormatter(new JsonEventFormatter()));
-        opts.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
-    })
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-    });
+    services.AddAutoMapper(typeof(Program));    
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
 
     services.AddSingleton(config);
-    services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
+    services.Configure<PostgreSqlSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<Altinn.Platform.Events.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
@@ -238,6 +227,18 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         options.AddPolicy("PlatformAccess", policy => policy.Requirements.Add(new AccessTokenRequirement()));
         options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.publish")));
+    });    
+
+    services.AddControllers(opts =>
+    {
+        opts.InputFormatters.Insert(0, new CloudEventJsonInputFormatter(new JsonEventFormatter()));
+        opts.OutputFormatters.Insert(0, new CloudEventJsonOutputFormatter(new JsonEventFormatter()));
+        opts.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
@@ -364,6 +365,9 @@ void Configure(IConfiguration config)
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseMiddleware<EnableRequestBodyBufferingMiddleware>();
+
     app.UseEndpoints(endpoints =>
     {
         endpoints.MapControllers();

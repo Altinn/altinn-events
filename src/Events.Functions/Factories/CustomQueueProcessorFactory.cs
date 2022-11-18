@@ -25,7 +25,7 @@ namespace Altinn.Platform.Events.Functions.Factories
             return new QueueProcessor(context);
         }
 
-        private class CustomQueueProcessor : QueueProcessor
+        private sealed class CustomQueueProcessor : QueueProcessor
         {
             public CustomQueueProcessor(QueueProcessorFactoryContext context)
                 : base(context)
