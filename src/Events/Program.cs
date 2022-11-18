@@ -17,6 +17,7 @@ using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Filters;
 using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
+using Altinn.Platform.Events.Middleware;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -226,7 +227,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         options.AddPolicy("PlatformAccess", policy => policy.Requirements.Add(new AccessTokenRequirement()));
         options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.publish")));
-    });
+    });    
 
     services.AddControllers(opts =>
     {
@@ -364,6 +365,9 @@ void Configure(IConfiguration config)
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseMiddleware<EnableRequestBodyBufferingMiddleware>();
+
     app.UseEndpoints(endpoints =>
     {
         endpoints.MapControllers();
