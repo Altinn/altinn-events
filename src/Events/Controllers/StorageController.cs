@@ -44,7 +44,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
-        [Consumes("application/cloudevents+json")]
+        [Consumes("application/json")]
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
