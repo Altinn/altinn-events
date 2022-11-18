@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "981547f7-4a19-454b-82e1-d8eb0369e319",
+		"_postman_id": "bef5c6ee-1545-4c53-bd0a-119e146f95a3",
 		"name": "Events",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "20656512"
+		"_exporter_id": "10288676"
 	},
 	"item": [
 		{
@@ -29,13 +29,13 @@
 					"type": "basic",
 					"basic": [
 						{
-							"key": "username",
-							"value": "autotest",
+							"key": "password",
+							"value": "{{TestToolsUserPassword}}",
 							"type": "string"
 						},
 						{
-							"key": "password",
-							"value": "altinn8900bnn",
+							"key": "username",
+							"value": "autotest",
 							"type": "string"
 						}
 					]
