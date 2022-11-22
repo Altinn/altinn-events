@@ -68,7 +68,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task PostOutbound(CloudEvent cloudEvent)
         {
-            var eventSource = cloudEvent.Source.ToString();
+            string eventSource = cloudEvent.Source.ToString();
 
             if (IsAppEvent(cloudEvent))
             {
@@ -152,16 +152,13 @@ namespace Altinn.Platform.Events.Services
         {
             CloudEventEnvelope cloudEventEnvelope = new CloudEventEnvelope()
             {
+                CloudEvent = cloudEvent,
                 Consumer = subscription.Consumer,
                 Pushed = DateTime.Now,
                 SubscriptionId = subscription.Id,
+
                 Endpoint = subscription.EndPoint
             };
-
-            var formatter = new JsonEventFormatter();
-            var bytes = formatter.EncodeStructuredModeMessage(cloudEvent, out _);
-            var serializedEvent = Encoding.UTF8.GetString(bytes.Span);
-            cloudEventEnvelope.CloudEvent = serializedEvent;
 
             return cloudEventEnvelope;
         }
