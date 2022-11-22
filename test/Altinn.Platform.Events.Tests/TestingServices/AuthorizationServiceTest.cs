@@ -6,6 +6,8 @@ using Altinn.Platform.Events.Services;
 
 using Altinn.Platform.Events.UnitTest.Mocks;
 
+using CloudNative.CloudEvents;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices

@@ -47,7 +47,7 @@ namespace Tests.TestingServices
 
             Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
             claimsPrincipalProviderMock.Setup(
-                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765", "serviceowner"));
+                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
 
             _repositoryMock.Setup(
                 s => s.FindSubscription(
@@ -77,7 +77,7 @@ namespace Tests.TestingServices
 
             Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
             claimsPrincipalProviderMock.Setup(
-                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765", "serviceowner"));
+                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
 
             _repositoryMock.Setup(
                 s => s.FindSubscription(

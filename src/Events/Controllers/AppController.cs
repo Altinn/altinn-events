@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 using Altinn.Common.AccessToken.Configuration;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Exceptions;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platorm.Events.Extensions;
 
-using AutoMapper;
+using CloudNative.CloudEvents;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -32,7 +33,6 @@ namespace Altinn.Platform.Events.Controllers
     public class AppController : ControllerBase
     {
         private readonly IEventsService _eventsService;
-        private readonly IMapper _mapper;
         private readonly ILogger _logger;
         private readonly AccessTokenSettings _accessTokenSettings;
         private readonly string _eventsBaseUri;
@@ -44,14 +44,12 @@ namespace Altinn.Platform.Events.Controllers
             IEventsService eventsService,
             IOptions<GeneralSettings> settings,
             ILogger<AppController> logger,
-            IOptions<AccessTokenSettings> accessTokenSettings,
-            IMapper mapper)
+            IOptions<AccessTokenSettings> accessTokenSettings)
         {
             _logger = logger;
             _eventsService = eventsService;
             _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
             _accessTokenSettings = accessTokenSettings.Value;
-            _mapper = mapper;
         }
 
         /// <summary>
@@ -66,32 +64,31 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEventRequestModel cloudEvent)
+        public async Task<ActionResult<string>> Post([FromBody] AppCloudEventRequestModel cloudEventRequest)
         {
-            if (string.IsNullOrEmpty(cloudEvent.Source?.OriginalString) ||
-                string.IsNullOrEmpty(cloudEvent.SpecVersion) ||
-                string.IsNullOrEmpty(cloudEvent.Type) || 
-                string.IsNullOrEmpty(cloudEvent.Subject))
+            if (!cloudEventRequest.ValidateRequiredProperties())
             {
-                return Problem("Missing parameter values: source, subject, type, id or time cannot be null", null, 400);
+                return Problem("Missing parameter values: source, subject and type cannot be null", null, 400);
             }
 
             var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];
 
-            if (!cloudEvent.Source.AbsolutePath.StartsWith("/" + item))
+            if (!cloudEventRequest.Source.AbsolutePath.StartsWith("/" + item))
             {
-                return StatusCode(401, item + " is not authorized to create events for " + cloudEvent.Source);
+                return StatusCode(401, item + " is not authorized to create events for " + cloudEventRequest.Source);
             }
 
             try
             {
-                string cloudEventId = await _eventsService.RegisterNew(_mapper.Map<CloudEvent>(cloudEvent));
-                return Created(cloudEvent.Subject, cloudEventId);
+                var cloudEvent = AppCloudEventExtensions.CreateEvent(cloudEventRequest);
+
+                await _eventsService.RegisterNew(cloudEvent);
+                return Created(cloudEvent.Subject, cloudEvent.Id);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Unable to register cloud event in queue.");
-                return StatusCode(500, $"Unable to register cloud event in queue.");
+                return StatusCode(500, $"Unable to register cloud event.");
             }
         }
 

@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 
 using Altinn.Platform.Events.Models;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 

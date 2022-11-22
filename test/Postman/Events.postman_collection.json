@@ -1,0 +1,386 @@
+{
+	"info": {
+		"_postman_id": "bef5c6ee-1545-4c53-bd0a-119e146f95a3",
+		"name": "Events",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10288676"
+	},
+	"item": [
+		{
+			"name": "GET Platform Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const rtext = pm.response.text();\r",
+							"\r",
+							"//console.log(rtext);\r",
+							"\r",
+							"pm.environment.set(\"PlatformToken\", rtext);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{TestToolsUserPassword}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "subjectFilter",
+						"value": "/party/1337",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://altinn-testtools-token-generator.azurewebsites.net/api/GetEnterpriseToken?env=at22&scopes=altinn:serviceowner/instances.read&org=ttd&orgNo=991825827",
+					"protocol": "https",
+					"host": [
+						"altinn-testtools-token-generator",
+						"azurewebsites",
+						"net"
+					],
+					"path": [
+						"api",
+						"GetEnterpriseToken"
+					],
+					"query": [
+						{
+							"key": "env",
+							"value": "at22"
+						},
+						{
+							"key": "scopes",
+							"value": "altinn:serviceowner/instances.read"
+						},
+						{
+							"key": "org",
+							"value": "ttd"
+						},
+						{
+							"key": "orgNo",
+							"value": "991825827"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST subscription",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "subjectFilter",
+						"value": "/party/1337",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"sourceFilter\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\",\r\n    \"endpoint\": \"{{AltinnSlackWebHook}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/subscriptions/",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"subscriptions",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET list subscription",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/subscriptions/",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"subscriptions",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE subscription",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/subscriptions/272",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"subscriptions",
+						"272"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET events",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/app/party?from=2022-11-17T11:00:53.3917Z&party=50002108",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"app",
+						"party"
+					],
+					"query": [
+						{
+							"key": "from",
+							"value": "2022-11-17T11:00:53.3917Z"
+						},
+						{
+							"key": "party",
+							"value": "50002108"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST app event",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"time\": \"2022-11-18T12:00:000Z\",\r\n\t\"type\": \"app.instance.created\",\r\n\t\"source\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\",\r\n\t\"subject\": \"/party/50019855\",\r\n\t\"specversion\": \"1.0\",\r\n\t\"alternativesubject\": \"/person/123456\"\r\n}"
+				},
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/app",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"app"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET events - app-test",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/app/ttd/apps-test?after=5b9a8887-0023-4f07-8791-d98e15a3542b",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"app",
+						"ttd",
+						"apps-test"
+					],
+					"query": [
+						{
+							"key": "after",
+							"value": "5b9a8887-0023-4f07-8791-d98e15a3542b"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Push Event",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"id\":\"eae8d8a7-4659-43c0-83cd-42f673eff8cf\",\r\n\"source\":\"https://ttd.apps.at21.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\",\r\n\"specversion\":\"1.0\",\r\n\"type\":\"app.instance.created\",\r\n\"subject\":\"/party/50019855\",\r\n\"alternativesubject\":\"/person/16035001577\",\r\n\"time\": \"2022-05-12T00:02:07.541482+00\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/outbound",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"outbound"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST event",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/cloudevents+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"id\": \"9611d8c2-b1b2-4491-9133-b21680a7cbc4\",\r\n\t\"time\": \"2022-11-15T10:46:53.5339928Z\",\r\n\t\"type\": \"app.instance.created\",\r\n\t\"source\": \"https://ttd.apps.at21.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\",\r\n\t\"subject\": \"/party/50019855\",\r\n\t\"specversion\": \"1.0\",\r\n\t\"alternativesubject\": \"/person/stephanie\"\r\n}"
+				},
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/events",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						"events"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST events/storage",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "subjectFilter",
+						"value": "/party/1337",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"sourceFilter\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\",\r\n    \"endpoint\": \"https://hooks.slack.com/services/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\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{PlatformHostUrl}}/events/api/v1/",
+					"host": [
+						"{{PlatformHostUrl}}"
+					],
+					"path": [
+						"events",
+						"api",
+						"v1",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{PlatformToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "PlatformHostUrl",
+			"value": "http://localhost:5080"
+		}
+	]
+}

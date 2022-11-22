@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+
+using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,9 +32,7 @@ namespace Altinn.Platform.Events.Services
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
-
         private readonly PlatformSettings _settings;
-
         private readonly ILogger<IEventsService> _logger;
 
         /// <summary>
@@ -58,7 +59,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> Save(CloudEvent cloudEvent)
         {
-            var serializedEvent = JsonSerializer.Serialize(cloudEvent);
+            var serializedEvent = cloudEvent.Serialize();
 
             try
             {
@@ -83,10 +84,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> RegisterNew(CloudEvent cloudEvent)
         {
-            cloudEvent.Id = Guid.NewGuid().ToString();
-            cloudEvent.Time ??= DateTime.UtcNow;
-
-            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(JsonSerializer.Serialize(cloudEvent));
+            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(cloudEvent.Serialize());
 
             if (!receipt.Success)
             {
@@ -100,7 +98,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> PostInbound(CloudEvent cloudEvent)
         {
-            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(JsonSerializer.Serialize(cloudEvent));
+            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(cloudEvent.Serialize());
 
             if (!receipt.Success)
             {
@@ -124,7 +122,7 @@ namespace Altinn.Platform.Events.Services
             type = type.Count > 0 ? type : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.GetAppEvent(after, from, to, subject, source, type, size);
+            List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subject, source, type, size);
 
             if (events.Count == 0)
             {
@@ -137,6 +135,6 @@ namespace Altinn.Platform.Events.Services
         private bool IsAppEvent(CloudEvent cloudEvent)
         {
             return !string.IsNullOrEmpty(cloudEvent.Source.Host) && cloudEvent.Source.Host.EndsWith(_settings.AppsDomain);
-        }
+        }    
     }
 }

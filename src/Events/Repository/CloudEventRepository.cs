@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Models;
+
+using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Options;
 
@@ -48,7 +51,7 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("subject", cloudEvent.Subject);
             pgcom.Parameters.AddWithValue("type", cloudEvent.Type);
             pgcom.Parameters.AddWithValue("time", cloudEvent.Time.Value.ToUniversalTime());
-            pgcom.Parameters.Add(new NpgsqlParameter("cloudevent", cloudEvent.Serialize()) { Direction = System.Data.ParameterDirection.Input });
+            pgcom.Parameters.Add(new NpgsqlParameter("cloudevent", serializedCloudEvent) { Direction = System.Data.ParameterDirection.Input });
 
             await pgcom.ExecuteNonQueryAsync();
 
@@ -81,7 +84,7 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetAppEvent(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
+        public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
         {
             List<CloudEvent> searchResult = new List<CloudEvent>();
 
@@ -111,7 +114,9 @@ namespace Altinn.Platform.Events.Repository
 
         private static CloudEvent DeserializeAndConvertTime(string eventString)
         {
-            CloudEvent cloudEvent = CloudEvent.Deserialize(eventString);
+            var formatter = new CloudNative.CloudEvents.SystemTextJson.JsonEventFormatter();
+            CloudEvent cloudEvent = formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(eventString)), null, null);
+
             cloudEvent.Time = cloudEvent.Time.Value.ToUniversalTime();
 
             return cloudEvent;

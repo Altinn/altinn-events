@@ -11,6 +11,8 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -125,15 +127,17 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
-            EventsQueueClientMock queueClientMock = new();
-            var service = GetOutboundService(queueClientMock);
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var service = GetOutboundService(queueMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            Assert.True(queueClientMock.OutboundQueue.ContainsKey(cloudEvent.Id));
-            Assert.Equal(3, queueClientMock.OutboundQueue[cloudEvent.Id].Count);
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(3));
         }
 
         /// <summary>
@@ -150,15 +154,17 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
-            EventsQueueClientMock queueClientMock = new();
-            var service = GetOutboundService(queueClientMock);
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var service = GetOutboundService(queueMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            Assert.True(queueClientMock.OutboundQueue.ContainsKey(cloudEvent.Id));
-            Assert.Single(queueClientMock.OutboundQueue[cloudEvent.Id]);
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(1));
         }
 
         /// <summary>
@@ -175,9 +181,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
 
-            var queueMock = new Mock<IEventsQueueClient>();
+            Mock<IEventsQueueClient> queueMock = new();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
-                    .ReturnsAsync(new QueuePostReceipt { Success = false });
+                .ReturnsAsync(new QueuePostReceipt { Success = false });
 
             var loggerMock = new Mock<ILogger<IOutboundService>>();
 
@@ -238,10 +244,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static CloudEvent GetCloudEvent(Uri source, string subject, string type)
         {
-            CloudEvent cloudEvent = new()
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
                 Id = Guid.NewGuid().ToString(),
-                SpecVersion = "1.0",
                 Type = type,
                 Source = source,
                 Time = DateTime.Now,

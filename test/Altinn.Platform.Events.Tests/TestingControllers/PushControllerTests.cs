@@ -7,6 +7,7 @@ using System.Text;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
@@ -15,6 +16,9 @@ using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
 using AltinnCore.Authentication.JwtCookie;
+
+using CloudNative.CloudEvents;
+
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,7 +67,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/push";
                 string responseId = Guid.NewGuid().ToString();
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                var cloudEvent = GetCloudEventRequest();
 
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
                 service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>()));
@@ -97,7 +101,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/push";
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                var cloudEvent = GetCloudEventRequest();
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
                 service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(service.Object);
@@ -188,18 +192,16 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 return client;
             }
 
-            private static CloudEventRequestModel GetCloudEventRequest()
+            private static CloudEvent GetCloudEventRequest()
             {
-                CloudEventRequestModel cloudEvent = new CloudEventRequestModel
+                return new CloudEvent(CloudEventsSpecVersion.V1_0)
                 {
-                    SpecVersion = "1.0",
+                    Id = "7df35cf2-a43b-48b7-b158-dcdf480cc785",
                     Type = "instance.created",
                     Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/232243423"),
                     Subject = "/party/456456",
                     Data = "something/extra",
                 };
-
-                return cloudEvent;
             }
         }
     }

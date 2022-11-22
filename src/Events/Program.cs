@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Altinn.Common.AccessToken;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.AccessTokenClient.Services;
+using Altinn.Common.PEP.Authorization;
 using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
@@ -14,7 +15,9 @@ using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Filters;
+using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
+using Altinn.Platform.Events.Middleware;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -27,6 +30,8 @@ using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
+using CloudNative.CloudEvents.SystemTextJson;
+
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -35,9 +40,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.KeyVault.Models;
-using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -178,12 +180,7 @@ void ConfigureLogging(ILoggingBuilder logging)
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
-    services.AddAutoMapper(typeof(Program));
-    services.AddControllers().AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-    });
+    services.AddAutoMapper(typeof(Program));    
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
@@ -229,6 +226,19 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddAuthorization(options =>
     {
         options.AddPolicy("PlatformAccess", policy => policy.Requirements.Add(new AccessTokenRequirement()));
+        options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.publish")));
+    });    
+
+    services.AddControllers(opts =>
+    {
+        opts.InputFormatters.Insert(0, new CloudEventJsonInputFormatter(new JsonEventFormatter()));
+        opts.OutputFormatters.Insert(0, new CloudEventJsonOutputFormatter(new JsonEventFormatter()));
+        opts.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
@@ -240,6 +250,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
+    services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
 
     services.AddTransient<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
@@ -354,6 +365,9 @@ void Configure(IConfiguration config)
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseMiddleware<EnableRequestBodyBufferingMiddleware>();
+
     app.UseEndpoints(endpoints =>
     {
         endpoints.MapControllers();

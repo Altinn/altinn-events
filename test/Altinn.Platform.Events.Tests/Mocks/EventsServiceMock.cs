@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
-using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Models;
+
+using CloudNative.CloudEvents;
 
 using Newtonsoft.Json;
 
@@ -90,11 +90,6 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
-        public Task<string> Save(CloudEvent cloudEvent)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<string> RegisterNew(CloudEvent cloudEvent)
         {
             throw new NotImplementedException();
@@ -104,8 +99,8 @@ namespace Altinn.Platform.Events.Tests.Mocks
         {
             throw new NotImplementedException();
         }
-        
-        public Task<string> SaveAndPostInbound(CloudEvent cloudEvent)
+
+        public Task<string> Save(CloudEvent cloudEvent)
         {
             throw new NotImplementedException();
         }

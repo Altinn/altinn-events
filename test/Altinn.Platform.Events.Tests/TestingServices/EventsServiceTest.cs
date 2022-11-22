@@ -12,6 +12,8 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -59,30 +61,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Act
             string actual = await eventsService.PostInbound(GetCloudEventFromApp());
-
-            // Assert
-            Assert.NotEmpty(actual);
-        }
-
-        /// <summary>
-        /// Scenario:
-        ///   Store a cloud event in postgres DB when id is null.
-        /// Expected result:
-        ///   Returns the id of the newly created document.
-        /// Success criteria:
-        ///   The response is a non-empty string.
-        /// </summary>
-        [Fact]
-        public async Task RegisterNewEvent_CheckIdCreatedByService_IdReturned()
-        {
-            // Arrange
-            EventsService eventsService = GetEventsService();
-
-            CloudEvent item = GetCloudEventFromApp();
-            item.Id = null;
-
-            // Act
-            string actual = await eventsService.RegisterNew(item);
 
             // Assert
             Assert.NotEmpty(actual);
@@ -197,7 +175,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             int partyId = 50;
             var repositoryMock = new Mock<ICloudEventRepository>();
-            repositoryMock.Setup(r => r.GetAppEvent(
+            repositoryMock.Setup(r => r.GetAppEvents(
                 It.IsAny<string>(), // afer
                 It.IsAny<DateTime?>(), // from
                 It.IsAny<DateTime?>(), // to
@@ -229,7 +207,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             var repositoryMock = new Mock<ICloudEventRepository>();
-            repositoryMock.Setup(r => r.GetAppEvent(
+            repositoryMock.Setup(r => r.GetAppEvents(
                 It.IsAny<string>(), // afer
                 It.IsAny<DateTime?>(), // from
                 It.IsAny<DateTime?>(), // to
@@ -413,10 +391,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static CloudEvent GetCloudEventFromApp()
         {
-            CloudEvent cloudEvent = new()
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
                 Id = Guid.NewGuid().ToString(),
-                SpecVersion = "1.0",
                 Type = "instance.created",
                 Source = new Uri("https://brg.apps.altinn.no/brg/something/232243423"),
                 Time = DateTime.Now,
@@ -429,10 +406,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static CloudEvent GetCloudEvent()
         {
-            CloudEvent cloudEvent = new()
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
                 Id = Guid.NewGuid().ToString(),
-                SpecVersion = "1.0",
                 Type = "dom.avsagt",
                 Source = new Uri("urn:isbn:00939963"),
                 Time = DateTime.Now,

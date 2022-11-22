@@ -1,0 +1,1 @@
+## Folder for collecting all k6 tests related to events

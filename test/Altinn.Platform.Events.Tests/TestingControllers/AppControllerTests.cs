@@ -19,6 +19,8 @@ using Altinn.Platform.Events.UnitTest.Mocks;
 
 using AltinnCore.Authentication.JwtCookie;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -70,15 +72,13 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
-                string responseId = Guid.NewGuid().ToString();
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(s => s.RegisterNew(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
-
+                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue))).ReturnsAsync((CloudEvent c) => c.Id);
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
                     Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
                 };
@@ -92,7 +92,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
                 string content = response.Content.ReadAsStringAsync().Result;
-                Assert.Contains(responseId, content);
             }
 
             /// <summary>
@@ -109,7 +108,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/app";
                 string responseId = Guid.NewGuid().ToString();
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(s => s.RegisterNew(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
@@ -143,7 +142,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 cloudEvent.Subject = null;
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
@@ -177,7 +176,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 cloudEvent.Source = null;
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
@@ -211,7 +210,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest("skd");
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest("skd");
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
 
@@ -244,7 +243,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
-                CloudEventRequestModel cloudEvent = GetCloudEventRequest();
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(er => er.RegisterNew(It.IsAny<CloudEvent>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
@@ -457,7 +456,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                var actual = JsonSerializer.Deserialize<List<object>>(responseString);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -932,9 +931,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 return client;
             }
 
-            private static CloudEventRequestModel GetCloudEventRequest(string org = "ttd")
+            private static AppCloudEventRequestModel GetCloudEventRequest(string org = "ttd")
             {
-                CloudEventRequestModel cloudEvent = new CloudEventRequestModel
+                AppCloudEventRequestModel cloudEvent = new AppCloudEventRequestModel
                 {
                     SpecVersion = "1.0",
                     Type = "instance.created",
