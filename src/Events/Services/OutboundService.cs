@@ -106,7 +106,7 @@ namespace Altinn.Platform.Events.Services
 
         private async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
         {
-           string cacheKey = GetAltinnAppAuthorizationCacheKey(GetSourceFilter(cloudEvent.Source), consumer);
+            string cacheKey = GetAltinnAppAuthorizationCacheKey(GetSourceFilter(cloudEvent.Source), consumer);
 
             bool isAuthorized;
 
@@ -115,7 +115,7 @@ namespace Altinn.Platform.Events.Services
                 isAuthorized = await _authorizationService.AuthorizeConsumerForAltinnAppEvent(cloudEvent, consumer);
                 _memoryCache.Set(cacheKey, isAuthorized, _orgAuthorizationEntryOptions);
             }
-           
+
             return isAuthorized;
         }
 
