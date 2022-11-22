@@ -59,7 +59,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> Save(CloudEvent cloudEvent)
         {
-            var serializedEvent = cloudEvent.SerializeCloudEvent();
+            var serializedEvent = cloudEvent.Serialize();
 
             try
             {
@@ -84,7 +84,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> RegisterNew(CloudEvent cloudEvent)
         {
-            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(cloudEvent.SerializeCloudEvent());
+            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(cloudEvent.Serialize());
 
             if (!receipt.Success)
             {
@@ -98,7 +98,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> PostInbound(CloudEvent cloudEvent)
         {
-            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(cloudEvent.SerializeCloudEvent());
+            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(cloudEvent.Serialize());
 
             if (!receipt.Success)
             {

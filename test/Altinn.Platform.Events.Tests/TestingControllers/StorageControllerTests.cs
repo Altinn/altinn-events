@@ -76,7 +76,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(eventsService.Object);
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEvent.SerializeCloudEvent(), Encoding.UTF8, "application/json")
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
                 };
 
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
@@ -111,7 +111,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEvent.SerializeCloudEvent(), Encoding.UTF8, "application/json")
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
                 };
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 

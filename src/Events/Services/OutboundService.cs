@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,7 +10,6 @@ using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
-using CloudNative.CloudEvents.SystemTextJson;
 
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -104,14 +101,12 @@ namespace Altinn.Platform.Events.Services
 
         private async Task<QueuePostReceipt> PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
         {
-            var serializedEnvelope = JsonSerializer.Serialize(cloudEventEnvelope);
-
-            return await _queueClient.EnqueueOutbound(serializedEnvelope);
+            return await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
         }
 
         private async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
         {
-            string cacheKey = GetAltinnAppAuthorizationCacheKey(GetSourceFilter(cloudEvent.Source), consumer);
+           string cacheKey = GetAltinnAppAuthorizationCacheKey(GetSourceFilter(cloudEvent.Source), consumer);
 
             bool isAuthorized;
 
@@ -120,7 +115,7 @@ namespace Altinn.Platform.Events.Services
                 isAuthorized = await _authorizationService.AuthorizeConsumerForAltinnAppEvent(cloudEvent, consumer);
                 _memoryCache.Set(cacheKey, isAuthorized, _orgAuthorizationEntryOptions);
             }
-
+           
             return isAuthorized;
         }
 
@@ -150,13 +145,12 @@ namespace Altinn.Platform.Events.Services
 
         private static CloudEventEnvelope MapToEnvelope(CloudEvent cloudEvent, Subscription subscription)
         {
-            CloudEventEnvelope cloudEventEnvelope = new CloudEventEnvelope()
+            CloudEventEnvelope cloudEventEnvelope = new()
             {
                 CloudEvent = cloudEvent,
                 Consumer = subscription.Consumer,
                 Pushed = DateTime.Now,
                 SubscriptionId = subscription.Id,
-
                 Endpoint = subscription.EndPoint
             };
 

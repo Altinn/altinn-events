@@ -37,7 +37,7 @@ namespace Altinn.Platform.Events.Formatters
             var response = context.HttpContext.Response;
             if (context.Object is CloudEvent)
             {
-                await response.WriteAsync((context.Object as CloudEvent).SerializeCloudEvent(_formatter));
+                await response.WriteAsync((context.Object as CloudEvent).Serialize(_formatter));
                 return;
             }
 
@@ -48,7 +48,7 @@ namespace Altinn.Platform.Events.Formatters
                 await response.WriteAsync("[");
                 for (int i = 0; i < cloudEvents.Count; i++)
                 {
-                    await response.WriteAsync(cloudEvents[i].SerializeCloudEvent(_formatter));
+                    await response.WriteAsync(cloudEvents[i].Serialize(_formatter));
                     if (i != cloudEvents.Count - 1)
                     {
                         await response.WriteAsync(", ");
