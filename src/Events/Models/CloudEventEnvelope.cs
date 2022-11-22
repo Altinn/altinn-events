@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Altinn.Platform.Events.Models
 {
@@ -10,7 +13,7 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// The Event to push
         /// </summary>
-        public object CloudEvent { get; set; }
+        public CloudEvent CloudEvent { get; set; }
 
         /// <summary>
         /// The time the event was pushed to queue
