@@ -1,7 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
+using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Models
 {
