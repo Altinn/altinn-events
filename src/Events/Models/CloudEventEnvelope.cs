@@ -45,13 +45,15 @@ namespace Altinn.Platform.Events.Models
         /// <returns>A json serialized cloud envelope</returns>
         public string Serialize()
         {
+            var cloudEvent = CloudEvent;
             string serializedCloudEvent = CloudEvent.Serialize();
             CloudEvent = null;
 
             var partalSerializedEnvelope = JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
-
             var index = partalSerializedEnvelope.LastIndexOf('}');
             string serializedEnvelope = partalSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
+
+            CloudEvent = cloudEvent;
             return serializedEnvelope;
         }
     }
