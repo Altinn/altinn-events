@@ -190,7 +190,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
 
             private HttpClient GetTestClient(IEventsService eventsService = null, bool enableExternalEvents = false)

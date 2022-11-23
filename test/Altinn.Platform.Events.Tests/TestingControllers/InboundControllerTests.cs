@@ -56,9 +56,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Scenario:
             ///   Post a valid CloudEventRequest instance.
             /// Expected result:
-            ///   Returns HttpStatus Created and the Id for the instance.
+            ///   Returns HttpStatus Ok.
             /// Success criteria:
-            ///   The response has correct status and correct responseId.
+            ///   The response has correct status code.
             /// </summary>
             [Fact]
             public async void Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
