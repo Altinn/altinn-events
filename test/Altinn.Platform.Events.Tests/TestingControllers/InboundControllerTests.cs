@@ -84,10 +84,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-
-                string content = response.Content.ReadAsStringAsync().Result;
-                Assert.Contains(responseId, content);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
 
             /// <summary>
