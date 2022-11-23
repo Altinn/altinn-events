@@ -7,6 +7,7 @@ import * as setupToken from "../setup.js";
 import * as eventsApi from "../api/events.js";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 const eventJson = JSON.parse(open("../data/event.json"));
+import { generateJUnitXML, reportPath } from "../report.js";
 
 const scopes = "altinn:events.publish";
 
@@ -33,3 +34,12 @@ export default function (data) {
     "POST valid cloud event status is 200": (r) => r === 200,
   });
 }
+
+/*
+export function handleSummary(data) {
+  let result = {};
+  result[reportPath("events.xml")] = generateJUnitXML(data, "platform-events");
+
+  return result;
+}
+*/

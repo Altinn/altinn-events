@@ -16,7 +16,7 @@ export function postCloudEvent(serializedCloudEvent, token) {
   var response = http.post(endpoint, serializedCloudEvent, params);
 
   if (response.status != 200) {
-    stopIterationOnFail("Posting cloudEvent failed", false, response);
+    stopIterationOnFail("POST to events/api/v1/events failed", false, response);
   }
 
   return response.status;
