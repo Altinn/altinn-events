@@ -27,9 +27,6 @@ export function generateEnterpriseToken(queryParams) {
   };
 
   var response = http.get(endpoint, params);
-  success = check(response, {
-    "Enterprise token generation was successful": (r) => r.status === 200,
-  });
 
   if (response.status != 200) {
     stopIterationOnFail("Enterprise token generation failed", false, response);
