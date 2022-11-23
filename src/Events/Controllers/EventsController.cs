@@ -54,7 +54,7 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                var id = await _events.RegisterNew(cloudEvent);
+                await _events.RegisterNew(cloudEvent);
                 return Ok();
             }
             catch

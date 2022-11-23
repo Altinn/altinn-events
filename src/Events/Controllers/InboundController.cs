@@ -2,14 +2,17 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
@@ -52,9 +55,9 @@ namespace Altinn.Platform.Events.Controllers
             {
                 cloudEvent = _formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(rawBody)), null, null);
 
-                string cloudEventId = await _eventsService.PostInbound(cloudEvent);
+                await _eventsService.PostInbound(cloudEvent);
 
-                 return Ok();
+                return Ok();
             }
             catch (Exception e)
             {
