@@ -54,7 +54,7 @@ namespace Altinn.Platform.Events.Controllers
 
                 string cloudEventId = await _eventsService.PostInbound(cloudEvent);
 
-                return Created(cloudEvent.Subject, cloudEventId);
+                 return Ok();
             }
             catch (Exception e)
             {

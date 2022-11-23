@@ -17,7 +17,7 @@ namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
     /// Provides operations for saving and retrieving cloud events from persistent storage.
-    /// </summary>    
+    /// </summary>
     [Route("events/api/v1/storage/events")]
     [ApiController]
     public class StorageController : ControllerBase
@@ -60,7 +60,7 @@ namespace Altinn.Platform.Events.Controllers
                 cloudEvent = _formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(rawBody)), null, null);
 
                 string cloudEventId = await _eventsService.Save(cloudEvent);
-                return Created(cloudEvent.Subject, cloudEventId);
+                return Ok();
             }
             catch (Exception e)
             {

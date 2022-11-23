@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
     /// Controller for all events related operations
-    /// </summary>    
+    /// </summary>
     [Authorize]
     [Route("events/api/v1/events")]
     [ApiController]
@@ -55,7 +55,7 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 var id = await _events.RegisterNew(cloudEvent);
-                return Created(cloudEvent.Subject, id);
+                return Ok();
             }
             catch
             {
@@ -65,7 +65,7 @@ namespace Altinn.Platform.Events.Controllers
 
         private static bool AuthorizeEvent(CloudEvent cloudEvent)
         {
-            // Further authorization to be implemented in Altinn/altinn-events#183            
+            // Further authorization to be implemented in Altinn/altinn-events#183
             return true;
         }
     }
