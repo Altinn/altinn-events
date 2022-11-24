@@ -10,6 +10,7 @@ using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -22,13 +23,15 @@ namespace Altinn.Platform.Events.Controllers
     {
         private static readonly CloudEventFormatter _formatter = new JsonEventFormatter();
         private readonly IOutboundService _outboundService;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OutboundController"/> class.
         /// </summary>
-        public OutboundController(IOutboundService outboundService)
+        public OutboundController(IOutboundService outboundService, ILogger<OutboundController> logger)
         {
             _outboundService = outboundService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -61,7 +64,8 @@ namespace Altinn.Platform.Events.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(503, $"Temporarily unable to send cloudEventId ${cloudEvent?.Id} to events-outbound queue. Error: {e.Message}");
+                _logger.LogError(e, "// OutboundController.Post failed for {cloudEventId}.", cloudEvent?.Id);
+                return StatusCode(503, e.Message);
             }
         }
     }

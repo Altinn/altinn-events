@@ -72,6 +72,12 @@ namespace Altinn.Platform.Events.Services
                 eventSource = GetSourceFilter(cloudEvent.Source);
             }
 
+            // subject is optional for cloud events. Returning without retrieveing subjections for now.
+            if (cloudEvent.Subject == null)
+            {
+                return;
+            }
+
             List<Subscription> subscriptions = await GetSubscriptions(eventSource, cloudEvent.Subject, cloudEvent.Type);
             await AuthorizeAndPush(cloudEvent, subscriptions);
         }
