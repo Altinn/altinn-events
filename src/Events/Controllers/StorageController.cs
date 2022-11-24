@@ -67,9 +67,9 @@ namespace Altinn.Platform.Events.Controllers
             }
             catch (Exception e)
             {
-                var msg = $"Temporarily unable to save cloudEventId {cloudEvent?.Id} to storage, please try again. Message: {e.Message}";
-                _logger.LogError(e, msg);
-                return StatusCode(503, msg);
+                var msg = "Temporarily unable to save cloudEventId {cloudEventId} to storage, please try again. Message: {message}";
+                _logger.LogError(e, msg, cloudEvent?.Id, e.Message);
+                return StatusCode(503, e.Message);
             }
         }
     }
