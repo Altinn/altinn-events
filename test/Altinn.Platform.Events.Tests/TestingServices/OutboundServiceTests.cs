@@ -84,6 +84,28 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         /// <summary>
+        /// Scenario: Event without subject is to be pushed
+        /// Expected result: Method returns successfully
+        /// Success criteria: Subscription repository is not called to retrieve subscriptions
+        /// </summary>
+        [Fact]
+        public async void PostOutbound_NoSubject_UseEventSourceAsRepositoryInput()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed");
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+
+            var service = GetOutboundService(repositoryMock: repositoryMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent);
+
+            // Assert
+            repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        /// <summary>
         /// Scenario: Subscription Repository finds a single match for an outbound event
         /// Expected result: Consumer is not authorized against the event source 
         /// Success criteria: QueueClient is never called to send the outbound event
