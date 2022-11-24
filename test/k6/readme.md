@@ -16,7 +16,7 @@ The comand consists of three sections
 
 `docker-compose run` to run the test in a docker container
 
-`k6 run {path to test file}` pointing to the test file you want to run e.g. `src/test/events.json`
+`k6 run {path to test file}` pointing to the test file you want to run e.g. `src/test/events.js`
 
 
 `-e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***` all environment variables that should be included in the request.
