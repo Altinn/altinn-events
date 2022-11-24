@@ -25,16 +25,53 @@ export function setup() {
 
 export default function (data) {
   var resStatusCode, success;
+
+  // Valid cloud event with all parameters, optional and additional
   resStatusCode = eventsApi.postCloudEvent(
     JSON.stringify(data.cloudEvent),
     data.token
   );
 
   success = check(resStatusCode, {
-    "POST valid cloud event status is 200": (r) => r === 200,
+    "POST valid cloud event with all parameters status is 200": (r) =>
+      r === 200,
+  });
+
+  // Valid cloud event without subject
+  var cloudEventWithoutSubject = removePropFromCloudEvent(
+    data.cloudEvent,
+    "subject"
+  );
+
+  resStatusCode = eventsApi.postCloudEvent(
+    JSON.stringify(cloudEventWithoutSubject),
+    data.token
+  );
+
+  success = check(resStatusCode, {
+    "POST valid cloud event without subject status is 200": (r) => r === 200,
+  });
+
+  // Valid cloud event without time
+  var cloudEventWithoutTime = removePropFromCloudEvent(data.cloudEvent, "time");
+
+  resStatusCode = eventsApi.postCloudEvent(
+    JSON.stringify(cloudEventWithoutTime),
+    data.token
+  );
+
+  success = check(resStatusCode, {
+    "POST valid cloud event without time status is 200": (r) => r === 200,
   });
 }
 
+function removePropFromCloudEvent(cloudEvent, propertyname) {
+  // parse and stringify to ensure a copy of the object by value not ref
+  var modifiedEvent = JSON.parse(JSON.stringify(cloudEvent));
+  delete modifiedEvent[propertyname];
+
+  return modifiedEvent;
+}
 /*
 export function handleSummary(data) {
   let result = {};
