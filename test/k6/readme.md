@@ -10,7 +10,7 @@ You will need to install k6 this can be run directly on your machine or in a doc
 
 All tests are defined in `src/tests` and in the top of each test file an example of the cmd to run the test is available.
 
-The command should be run from root e.g. the k6 folder.
+The command should be run from the root of the k6 folder.
 
 The comand consists of three sections
 
