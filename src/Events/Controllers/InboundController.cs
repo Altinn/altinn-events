@@ -63,8 +63,7 @@ namespace Altinn.Platform.Events.Controllers
             }
             catch (Exception e)
             {
-                var msg = "// InboundController.Post failed for {cloudEventId}. Message: {message}";
-                _logger.LogError(e, msg, cloudEvent?.Id, e.Message);
+                _logger.LogError(e, "// InboundController.Post failed for {cloudEventId}.", cloudEvent?.Id);
                 return StatusCode(503, e.Message);
             }
         }
