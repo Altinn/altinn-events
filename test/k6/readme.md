@@ -1,4 +1,4 @@
-## Folder for collecting all k6 tests related to events
+## k6 test project for automated tests
 
 ### Prerequisites
 
