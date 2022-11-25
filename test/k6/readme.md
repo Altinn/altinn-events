@@ -2,9 +2,12 @@
 
 ### Prerequisites
 
-You will need to install k6 this can be run directly on your machine or in a docker container.
-[Instructions on installing k6 is available here.](https://k6.io/docs/get-started/installation/)
+We reccomend running the tests through a docker container. 
+[Instructions on installing k6 for running in docker is available here.](https://k6.io/docs/get-started/installation/#docker)
 
+
+It is possible to run the tests directly on your machine as well. 
+[General installation instructions are available here.](https://k6.io/docs/get-started/installation/)
 
 ### Running tests
 
