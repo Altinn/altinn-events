@@ -23,6 +23,7 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Route("events/api/v1/storage/events")]
     [ApiController]
+    [SwaggerTag("Private API")]
     public class StorageController : ControllerBase
     {
         private static readonly CloudEventFormatter _formatter = new JsonEventFormatter();

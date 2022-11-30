@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -8,6 +7,7 @@ using CloudNative.CloudEvents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -16,6 +16,7 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Route("events/api/v1/push")]
     [ApiController]
+    [SwaggerTag("Private API")]
     public class PushController : ControllerBase
     {
         private readonly IOutboundService _outboundService;

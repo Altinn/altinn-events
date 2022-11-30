@@ -2,15 +2,18 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -19,6 +22,7 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Route("events/api/v1/outbound")]
     [ApiController]
+    [SwaggerTag("Private API")]
     public class OutboundController : ControllerBase
     {
         private static readonly CloudEventFormatter _formatter = new JsonEventFormatter();
