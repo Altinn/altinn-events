@@ -22,6 +22,7 @@ namespace Altinn.Platform.Events.Controllers
     /// </summary>
     [Route("events/api/v1/inbound")]
     [ApiController]
+    [SwaggerTag("Private API")]
     public class InboundController : ControllerBase
     {
         private static readonly CloudEventFormatter _formatter = new JsonEventFormatter();
