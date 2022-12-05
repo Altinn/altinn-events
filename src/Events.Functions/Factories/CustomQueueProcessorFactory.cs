@@ -8,15 +8,15 @@ namespace Altinn.Platform.Events.Functions.Factories
     public class CustomQueueProcessorFactory : IQueueProcessorFactory
     {
         /// <inheritdoc/>
-        public QueueProcessor Create(QueueProcessorOptions options)
+        public QueueProcessor Create(QueueProcessorOptions queueProcessorOptions)
         {
-            if (options.Queue.Name == "events-outbound" ||
-                options.Queue.Name == "subscription-validation")
+            if (queueProcessorOptions.Queue.Name == "events-outbound" ||
+                queueProcessorOptions.Queue.Name == "subscription-validation")
             {
-                options.Options.MaxDequeueCount = 12;
+                queueProcessorOptions.Options.MaxDequeueCount = 12;
             }
 
-            return new QueueProcessorWrapper(options);
+            return new QueueProcessorWrapper(queueProcessorOptions);
         }
     }
 }
