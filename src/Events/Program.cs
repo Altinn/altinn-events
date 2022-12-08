@@ -47,8 +47,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
-using Npgsql.Logging;
-
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 using Yuniql.AspNetCore;
@@ -333,8 +331,6 @@ void Configure(IConfiguration config)
 
     if (config.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
     {
-        NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Trace, true, true);
-
         ConsoleTraceService traceService = new ConsoleTraceService { IsDebugEnabled = true };
 
         string connectionString = string.Format(
