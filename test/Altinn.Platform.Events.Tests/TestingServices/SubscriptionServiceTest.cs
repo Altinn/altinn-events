@@ -8,6 +8,7 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
+
 using Moq;
 
 using Xunit;
@@ -19,7 +20,7 @@ namespace Tests.TestingServices
     /// </summary>
     public class SubscriptionServiceTest
     {
-        private readonly Mock<ISubscriptionRepository> _repositoryMock = new();    
+        private readonly Mock<ISubscriptionRepository> _repositoryMock = new();
 
         [Fact]
         public async Task GetAllSubscriptions_SendsIncludeInvalidTrueToRepository()
@@ -54,7 +55,7 @@ namespace Tests.TestingServices
                     It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
                 .ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService = 
+            SubscriptionService subscriptionService =
                 GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
 
             // Act
@@ -86,7 +87,8 @@ namespace Tests.TestingServices
 
             _repositoryMock.Setup(
                 s => s.CreateSubscription(
-                    It.Is<Subscription>(p => p.Id == subscriptionId)))
+                    It.Is<Subscription>(p => p.Id == subscriptionId),
+                    It.IsAny<string>()))
                 .ReturnsAsync(subscription);
 
             SubscriptionService subscriptionService =
@@ -100,7 +102,7 @@ namespace Tests.TestingServices
         }
 
         private static SubscriptionService GetSubscriptionService(
-            ISubscriptionRepository repository = null, 
+            ISubscriptionRepository repository = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null)
         {
             return new SubscriptionService(

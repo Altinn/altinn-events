@@ -25,7 +25,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.FromResult((Subscription)null);
         }
 
-        public Task<Subscription> CreateSubscription(Subscription eventsSubscription)
+        public Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash)
         {
             Random rnd = new Random();
             eventsSubscription.Id = rnd.Next(1, int.MaxValue);
