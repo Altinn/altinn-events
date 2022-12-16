@@ -88,7 +88,7 @@ namespace Tests.TestingServices
             _repositoryMock.Setup(
                 s => s.CreateSubscription(
                     It.Is<Subscription>(p => p.Id == subscriptionId),
-                    It.IsAny<string>()))
+                    It.Is<string>(s => s.Equals("03E4D9CA0902493533E9C62AB437EF50"))))
                 .ReturnsAsync(subscription);
 
             SubscriptionService subscriptionService =
