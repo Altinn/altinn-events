@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -65,7 +66,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task PostOutbound(CloudEvent cloudEvent)
         {
-            string eventSource = cloudEvent.Source.ToString();
+            Uri eventSource = cloudEvent.Source;
 
             if (IsAppEvent(cloudEvent))
             {
@@ -112,7 +113,7 @@ namespace Altinn.Platform.Events.Services
 
         private async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
         {
-            string cacheKey = GetAltinnAppAuthorizationCacheKey(GetSourceFilter(cloudEvent.Source), consumer);
+            string cacheKey = GetAltinnAppAuthorizationCacheKey(GetSourceFilter(cloudEvent.Source).ToString(), consumer);
 
             bool isAuthorized;
 
@@ -125,20 +126,19 @@ namespace Altinn.Platform.Events.Services
             return isAuthorized;
         }
 
-        private async Task<List<Subscription>> GetSubscriptions(string sourceFilter, string subject, string type)
+        private async Task<List<Subscription>> GetSubscriptions(Uri source, string subject, string type)
         {
-            sourceFilter = sourceFilter.ToLower();
             subject = subject.ToLower();
             type = type.ToLower();
 
-            string cacheKey = GetSubscriptionCacheKey(sourceFilter, subject, type);
+            string cacheKey = GetSubscriptionCacheKey(source.ToString(), subject, type);
 
             List<Subscription> subscriptions;
 
             if (!_memoryCache.TryGetValue(cacheKey, out subscriptions))
             {
                 subscriptions = await _subscriptionRepository.GetSubscriptions(
-                      sourceFilter,
+                      source.GetMD5HashSets(),
                       subject,
                       type,
                       CancellationToken.None);
@@ -183,15 +183,16 @@ namespace Altinn.Platform.Events.Services
             return "authorizationdecision:so:" + sourceFilter + "co:" + consumer;
         }
 
-        private string GetSourceFilter(Uri source)
+        private Uri GetSourceFilter(Uri source)
         {
             if (source.DnsSafeHost.Contains(_platformSettings.AppsDomain))
             {
-                return source.OriginalString.Substring(0, source.OriginalString.IndexOf(source.Segments[3]) - 1);
+                // including schema in uri
+                return new Uri(source.AbsoluteUri.Substring(0, source.AbsoluteUri.IndexOf(source.Segments[3]) - 1));
             }
             else
             {
-                return string.Empty;
+                return null;
             }
         }
 

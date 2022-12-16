@@ -15,7 +15,7 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
 
         public void MD5HashUri(string uri, string expected)
         {
-            var actual = UriExtensions.MD5HashUri(new Uri(uri));
+            var actual = UriExtensions.GetMD5Hash(new Uri(uri));
 
             Assert.Equal(expected, actual);
         }

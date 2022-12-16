@@ -44,7 +44,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
-                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Subscription>());
 
             var service = GetOutboundService(repositoryMock: repositoryMock.Object);
@@ -53,7 +53,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            repositoryMock.Verify(r => r.GetSubscriptions(It.Is<string>(s => s.Equals(expectedSimplified)), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()));
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
-                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Subscription>());
 
             var service = GetOutboundService(repositoryMock: repositoryMock.Object);
@@ -80,7 +80,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            repositoryMock.Verify(r => r.GetSubscriptions(It.Is<string>(s => s.Equals(expectedSimplified)), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()));
+            repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()));
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
-                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Subscription>() { new Subscription { Consumer = "/org/nav" } });
             Mock<IEventsQueueClient> queueMock = new();
             queueMock
@@ -137,7 +137,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Push an event. Three subscriptions are matching and is authorized
+        ///   Push an event. Two subscriptions are matching and is authorized
         /// Expected result:
         ///   The event are pushed to three different subscribers
         /// Success criteria:
@@ -159,7 +159,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(3));
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(2));
         }
 
         /// <summary>

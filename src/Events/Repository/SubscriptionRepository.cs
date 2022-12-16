@@ -92,7 +92,7 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct)
+        public async Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string subject, string type, CancellationToken ct)
         {
             List<Subscription> searchResult = new List<Subscription>();
 
@@ -102,7 +102,7 @@ namespace Altinn.Platform.Events.Repository
             {
                 Parameters =
                 {
-                    new() { Value = source },
+                    new() { Value = sourceFilterHashes },
                     new() { Value = subject },
                     new() { Value = type }
                 }
