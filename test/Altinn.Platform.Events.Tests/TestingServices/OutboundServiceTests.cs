@@ -38,8 +38,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async void PostOutbound_AppSource_CorrectlyModifiedForRepositoryInput()
         {
             // Arrange
-            string expectedSimplified = "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2";
-
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
             Mock<ISubscriptionRepository> repositoryMock = new();

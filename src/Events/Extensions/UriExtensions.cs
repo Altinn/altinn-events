@@ -26,10 +26,11 @@ namespace Altinn.Platform.Events.Extensions
         /// URNs are spli based on ':' for each part in the name specific string. </remarks>
         public static List<string> GetMD5HashSets(this Uri uri)
         {
+            List<string> segmentHashes = new List<string>();
+
             if (uri.Scheme == "https")
             {
                 int numSegments = uri.Segments.Length;
-                List<string> segmentHashes = new List<string>();
 
                 for (int i = 0; i < numSegments; i++)
                 {
@@ -38,15 +39,11 @@ namespace Altinn.Platform.Events.Extensions
 
                     segmentHashes.Add(hash);
                 }
-
-                return segmentHashes;
             }
             else if (uri.Scheme == "urn")
             {
                 string urn = uri.ToString();
                 int numSegments = urn.Count(ch => ch == ':');
-
-                List<string> segmentHashes = new List<string>();
 
                 var indexOfDelimiter = urn.IndexOf(':');
 
@@ -60,23 +57,21 @@ namespace Altinn.Platform.Events.Extensions
 
                     indexOfDelimiter = nextDelimiter;
                 }
-
-                return segmentHashes;
             }
 
-            return null;
+            return segmentHashes;
         }
 
         private static string GetUrlUptoNthSegment(Uri uri, int n)
         {
-            string partUri = uri.Scheme + Uri.SchemeDelimiter + uri.DnsSafeHost;
+            StringBuilder partUri = new(uri.Scheme + Uri.SchemeDelimiter + uri.DnsSafeHost);
 
             for (int i = 0; i < n; i++)
             {
-                partUri += uri.Segments[i];
+               partUri.Append(uri.Segments[i]);
             }
 
-            return partUri.TrimEnd('/');
+            return partUri.ToString().TrimEnd('/');
         }
 
         private static string GetMD5Hash(string input)

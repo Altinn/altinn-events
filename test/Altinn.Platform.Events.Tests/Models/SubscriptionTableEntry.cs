@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Altinn.Platform.Events.Tests.Models
 {
     /// <summary>
-    /// Class that describes an events subscription
+    /// Class that describes an events subscription table entry for unit tests
     /// </summary>
     public class SubscriptionTableEntry
     {
@@ -63,6 +63,5 @@ namespace Altinn.Platform.Events.Tests.Models
         /// MD5 hashed source filter
         /// </summary>
         public string SourceFilterHash { get; set; }
-
     }
 }
