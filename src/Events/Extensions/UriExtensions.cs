@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -21,20 +22,43 @@ namespace Altinn.Platform.Events.Extensions
         /// <summary>
         /// Hashes the provided uri using MD5 algorithm and returns a set
         /// </summary>
+        /// <remarks>URLs are split based on '/' for each path segment.
+        /// URNs are spli based on ':' for each part in the name specific string. </remarks>
         public static List<string> GetMD5HashSets(this Uri uri)
         {
-            if (uri.Scheme == "https" || uri.Scheme == "urn")
+            if (uri.Scheme == "https")
             {
                 int numSegments = uri.Segments.Length;
                 List<string> segmentHashes = new List<string>();
 
                 for (int i = 0; i < numSegments; i++)
                 {
-                    string part = GetUriUptoNthSegment(uri, i + 1);
+                    string part = GetUrlUptoNthSegment(uri, i + 1);
                     string hash = GetMD5Hash(part);
 
-                    Console.WriteLine("[" + i + "]: " + hash + " - " + part);
                     segmentHashes.Add(hash);
+                }
+
+                return segmentHashes;
+            }
+            else if (uri.Scheme == "urn")
+            {
+                string urn = uri.ToString();
+                int numSegments = urn.Count(ch => ch == ':');
+
+                List<string> segmentHashes = new List<string>();
+
+                var indexOfDelimiter = urn.IndexOf(':');
+
+                for (int i = 0; i < numSegments; i++)
+                {
+                    var nextDelimiter = urn.IndexOf(':', indexOfDelimiter + 1);
+                    var part = nextDelimiter > 0 ? urn.Substring(0, nextDelimiter) : urn;
+                    string hash = GetMD5Hash(part);
+
+                    segmentHashes.Add(hash);
+
+                    indexOfDelimiter = nextDelimiter;
                 }
 
                 return segmentHashes;
@@ -43,7 +67,7 @@ namespace Altinn.Platform.Events.Extensions
             return null;
         }
 
-        private static string GetUriUptoNthSegment(Uri uri, int n)
+        private static string GetUrlUptoNthSegment(Uri uri, int n)
         {
             string partUri = uri.Scheme + Uri.SchemeDelimiter + uri.DnsSafeHost;
 
@@ -63,7 +87,6 @@ namespace Altinn.Platform.Events.Extensions
             byte[] hashBytes = md5.ComputeHash(inputBytes);
 
             var hash = Convert.ToHexString(hashBytes);
-            Console.WriteLine($"Hash {input} \t as \t {hash}");
             return hash;
         }
     }
