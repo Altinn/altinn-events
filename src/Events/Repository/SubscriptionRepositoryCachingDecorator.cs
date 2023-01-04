@@ -75,7 +75,6 @@ namespace Altinn.Platform.Events.Repository
         {
             return await _decoratedService.GetSubscription(id);
         }
-
       
         /// <inheritdoc/>
         public async Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer, bool includeInvalid)
