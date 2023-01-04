@@ -30,7 +30,6 @@ namespace Altinn.Platform.Events.Services
         private readonly PlatformSettings _platformSettings;
 
         private readonly IMemoryCache _memoryCache;
-        private readonly MemoryCacheEntryOptions _subscriptionCacheEntryOptions;
         private readonly MemoryCacheEntryOptions _orgAuthorizationEntryOptions;
 
         private readonly ILogger<IOutboundService> _logger;
@@ -53,10 +52,6 @@ namespace Altinn.Platform.Events.Services
             _memoryCache = memoryCache;
             _logger = logger;
 
-            _subscriptionCacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetPriority(CacheItemPriority.High)
-                .SetAbsoluteExpiration(
-                    new TimeSpan(0, 0, _platformSettings.SubscriptionCachingLifetimeInSeconds));
             _orgAuthorizationEntryOptions = new MemoryCacheEntryOptions()
               .SetPriority(CacheItemPriority.High)
               .SetAbsoluteExpiration(
@@ -128,16 +123,6 @@ namespace Altinn.Platform.Events.Services
             }
 
             return isAuthorized;
-        }
-
-        private async Task<List<Subscription>> GetSubscriptions(Uri source, string subject, string type)
-        {
-            return await _subscriptionRepository.GetSubscriptions(
-                  source.GetMD5HashSets(),
-                  source.ToString(),
-                  subject,
-                  type,
-                  CancellationToken.None);
         }
 
         private static CloudEventEnvelope MapToEnvelope(CloudEvent cloudEvent, Subscription subscription)
