@@ -13,7 +13,7 @@ using Moq;
 
 using Xunit;
 
-namespace Tests.TestingServices
+namespace Altinn.Platform.Events.Tests.TestingServices
 {
     /// <summary>
     /// A collection of tests related to <see cref="SubscriptionService"/>.

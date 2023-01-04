@@ -74,7 +74,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.CompletedTask;
         }
 
-        public Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string subject, string type, CancellationToken ct)
+        public Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct)
         {
             string subscriptionsPath = Path.Combine(GetSubscriptionPath(), "1.json");
             List<SubscriptionTableEntry> subscriptionEntries = null;

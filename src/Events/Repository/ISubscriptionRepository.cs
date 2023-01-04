@@ -43,7 +43,7 @@ namespace Altinn.Platform.Events.Repository
         /// <summary>
         /// Gets subscriptions by source, subject and type of a cloud event
         /// </summary>
-        Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string subject, string type, CancellationToken ct);
+        Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct);
 
         /// <summary>
         /// Gets subscriptions for a given consumer

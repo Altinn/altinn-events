@@ -92,13 +92,13 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string subject, string type, CancellationToken ct)
+        public async Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct)
         {
-            List<Subscription> searchResult = new List<Subscription>();
+            List<Subscription> searchResult = new();
 
-            await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
+            await using NpgsqlConnection conn = new(connectionString);
             await conn.OpenAsync(ct);
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(getSubscriptionsSql, conn)            
+            await using NpgsqlCommand pgcom = new(getSubscriptionsSql, conn)
             {
                 Parameters =
                 {
@@ -123,10 +123,10 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task DeleteSubscription(int id)
         {
-            await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
+            await using NpgsqlConnection conn = new(connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(deleteSubscription, conn);
+            await using NpgsqlCommand pgcom = new(deleteSubscription, conn);
             pgcom.Parameters.AddWithValue("_id", id);
 
             await pgcom.ExecuteNonQueryAsync();
@@ -135,7 +135,7 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task SetValidSubscription(int id)
         {
-            await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
+            await using NpgsqlConnection conn = new(connectionString);
             await conn.OpenAsync();
 
             await using NpgsqlCommand pgcom = new NpgsqlCommand(setValidSubscription, conn);
