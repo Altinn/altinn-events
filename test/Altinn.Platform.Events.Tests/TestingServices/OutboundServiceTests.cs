@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,18 +30,34 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     public class OutboundServiceTests
     {
         [Fact]
-        public void PostOutbound_AppEvent()
+        public async Task PostOutbound_AppEvent_SourceFilterIsSimplified()
         {
-        }
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
 
-        [Fact]
-        public void PostOutbound_ExternalEvent()
-        {
-        }
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(
+                    It.IsAny<List<string>>(),
+                    It.Is<string>(s => s.Equals("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2")),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Subscription>() { GetSubscription() });
 
-        [Fact]
-        public void PostOutbound_ExternalEvent_NoSubject()
-        {
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent);
+
+            // Assert
+            repositoryMock.VerifyAll();
+
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Once);
         }
 
         /// <summary>
@@ -253,7 +267,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             return new Subscription()
             {
-                Consumer = "/org/ttd"
+                Id = 16,
+                SourceFilter = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2"),
+                Consumer = "/org/ttd",
+                CreatedBy = "/org/ttd",
+                TypeFilter = "app.instance.process.completed"
             };
         }
 
