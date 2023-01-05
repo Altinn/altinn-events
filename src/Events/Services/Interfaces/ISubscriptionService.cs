@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Models;
 
 namespace Altinn.Platform.Events.Services.Interfaces
@@ -9,20 +10,6 @@ namespace Altinn.Platform.Events.Services.Interfaces
     /// </summary>
     public interface ISubscriptionService
     {
-        /// <summary>
-        /// Operation to create a subscription for an Altinn App event source
-        /// </summary>
-        /// <param name="eventsSubscription">The event subscription</param>
-        /// <returns>A subscription if creation was successful or an errorr object</returns>
-        public Task<(Subscription Subscription, ServiceError Error)> CreateAppSubscription(Subscription eventsSubscription);
-
-        /// <summary>
-        /// Operation to create a subscription for a generic event source
-        /// </summary>
-        /// <param name="eventsSubscription">The event subscription</param>
-        /// <returns>A subscription if creation was successful or an errorr object</returns>
-        public Task<(Subscription Subscription, ServiceError Error)> CreateGenericSubscription(Subscription eventsSubscription);
-
         /// <summary>
         /// Operation to delete a given subscriptions
         /// </summary>

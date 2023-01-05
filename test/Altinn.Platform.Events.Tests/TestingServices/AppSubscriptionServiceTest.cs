@@ -18,7 +18,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     /// <summary>
     /// A collection of tests related to <see cref="SubscriptionService"/>.
     /// </summary>
-    public class SubscriptionServiceTest
+    public class AppSubscriptionServiceTest
     {
         private readonly Mock<ISubscriptionRepository> _repositoryMock = new();
 
@@ -28,7 +28,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _repositoryMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true))
                 .ReturnsAsync(new List<Subscription>());
 
-            SubscriptionService subscriptionService = GetSubscriptionService(repository: _repositoryMock.Object);
+            SubscriptionService subscriptionService = GetAppSubscriptionService(repository: _repositoryMock.Object);
 
             await subscriptionService.GetAllSubscriptions("/org/ttd");
 
@@ -36,7 +36,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_SubscriptionAlreadyExists_ReturnExisting()
+        public async Task CreateAppSubscription_SubscriptionAlreadyExists_ReturnExisting()
         {
             // Arrange
             int subscriptionId = 645187;
@@ -55,18 +55,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
                 .ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService =
-                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
+            AppSubscriptionService subscriptionService =
+                GetAppSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
 
             // Act
-            var result = await subscriptionService.CreateAppSubscription(subscription);
+            var result = await subscriptionService.CreateSubscription(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
         }
 
         [Fact]
-        public async Task CreateSubscription_SubscriptionNotFound_ReturnNew()
+        public async Task CreateAppSubscription_SubscriptionNotFound_ReturnNew()
         {
             // Arrange
             int subscriptionId = 645187;
@@ -91,21 +91,21 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     It.Is<string>(s => s.Equals("03E4D9CA0902493533E9C62AB437EF50"))))
                 .ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService =
-                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
+            AppSubscriptionService subscriptionService =
+                GetAppSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
 
             // Act
-            var result = await subscriptionService.CreateAppSubscription(subscription);
+            var result = await subscriptionService.CreateSubscription(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
         }
 
-        private static SubscriptionService GetSubscriptionService(
+        private static AppSubscriptionService GetAppSubscriptionService(
             ISubscriptionRepository repository = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null)
         {
-            return new SubscriptionService(
+            return new AppSubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
                 new EventsQueueClientMock(),
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,

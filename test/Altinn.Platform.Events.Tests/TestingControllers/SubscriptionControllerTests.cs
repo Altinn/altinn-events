@@ -467,11 +467,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/subscriptions";
                 SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
 
-                Mock<ISubscriptionService> serivceMock = new();
-                serivceMock.Setup(s => s.CreateGenericSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 1 }, null));
-                serivceMock.Setup(s => s.CreateAppSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 2 }, null));
+                Mock<IGenericSubscriptionService> serivceMock = new();
+                serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 1 }, null));
 
-                HttpClient client = GetTestClient(serivceMock.Object);
+                HttpClient client = GetTestClient(genericSubscriptionServiceMock: serivceMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084", "altinn:events.subscribe"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
@@ -482,8 +481,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                serivceMock.Verify(s => s.CreateGenericSubscription(It.IsAny<Subscription>()), Times.Once);
-                serivceMock.Verify(s => s.CreateAppSubscription(It.IsAny<Subscription>()), Times.Never);
+                serivceMock.Verify(s => s.CreateSubscription(It.IsAny<Subscription>()), Times.Once);
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             }
 
@@ -501,11 +499,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/subscriptions";
                 SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
 
-                Mock<ISubscriptionService> serivceMock = new();
-                serivceMock.Setup(s => s.CreateGenericSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 1 }, null));
-                serivceMock.Setup(s => s.CreateAppSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 2 }, null));
+                Mock<IAppSubscriptionService> serivceMock = new();
+                serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 2 }, null));
 
-                HttpClient client = GetTestClient(serivceMock.Object);
+                HttpClient client = GetTestClient(appSubscriptionServiceMock: serivceMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084", "altinn:events.subscribe"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
@@ -516,8 +513,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                serivceMock.Verify(s => s.CreateAppSubscription(It.IsAny<Subscription>()), Times.Once);
-                serivceMock.Verify(s => s.CreateGenericSubscription(It.IsAny<Subscription>()), Times.Never);
+                serivceMock.Verify(s => s.CreateSubscription(It.IsAny<Subscription>()), Times.Once);
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             }
 
@@ -716,15 +712,20 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(0, actual.Count);
             }
 
-            private HttpClient GetTestClient(ISubscriptionService subscriptionServiceMock = null)
+            private HttpClient GetTestClient(IAppSubscriptionService appSubscriptionServiceMock = null, IGenericSubscriptionService genericSubscriptionServiceMock = null)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
                     builder.ConfigureTestServices(services =>
                     {
-                        if (subscriptionServiceMock != null)
+                        if (appSubscriptionServiceMock != null)
                         {
-                            services.AddSingleton(subscriptionServiceMock);
+                            services.AddSingleton(appSubscriptionServiceMock);
+                        }
+
+                        if (genericSubscriptionServiceMock != null)
+                        {
+                            services.AddSingleton(genericSubscriptionServiceMock);
                         }
 
                         services.AddSingleton<IRegisterService, RegisterServiceMock>();

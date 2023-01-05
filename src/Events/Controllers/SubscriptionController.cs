@@ -23,7 +23,9 @@ namespace Altinn.Platform.Events.Controllers
     [ApiController]
     public class SubscriptionController : ControllerBase
     {
-        private readonly ISubscriptionService _eventsSubscriptionService;
+        private readonly ISubscriptionService _subscriptionService;
+        private readonly IAppSubscriptionService _appSubscriptionService;
+        private readonly IGenericSubscriptionService _genericSubscriptionService;
         private readonly IMapper _mapper;
         private readonly PlatformSettings _settings;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
@@ -36,11 +38,15 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         public SubscriptionController(
             ISubscriptionService eventsSubscriptionService,
+            IAppSubscriptionService appSubscriptionService,
+            IGenericSubscriptionService genericSubscriptionService,
             IMapper mapper,
             IClaimsPrincipalProvider claimsPrincipalProvider,
             IOptions<PlatformSettings> settings)
         {
-            _eventsSubscriptionService = eventsSubscriptionService;
+            _subscriptionService = eventsSubscriptionService;
+            _appSubscriptionService = appSubscriptionService;
+            _genericSubscriptionService = genericSubscriptionService;
             _mapper = mapper;
             _claimsPrincipalProvider = claimsPrincipalProvider;
             _settings = settings.Value;
@@ -83,8 +89,8 @@ namespace Altinn.Platform.Events.Controllers
             Subscription eventsSubscription = _mapper.Map<Subscription>(eventsSubscriptionRequest);
 
             (Subscription createdSubscription, ServiceError error) = isAppSubscription ?
-                await _eventsSubscriptionService.CreateAppSubscription(eventsSubscription) :
-                await _eventsSubscriptionService.CreateGenericSubscription(eventsSubscription);
+                await _appSubscriptionService.CreateSubscription(eventsSubscription) :
+                await _genericSubscriptionService.CreateSubscription(eventsSubscription);
 
             if (error != null)
             {
@@ -105,7 +111,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Get(int id)
         {
-            (Subscription subscription, ServiceError error) = await _eventsSubscriptionService.GetSubscription(id);
+            (Subscription subscription, ServiceError error) = await _subscriptionService.GetSubscription(id);
 
             if (error != null)
             {
@@ -126,7 +132,7 @@ namespace Altinn.Platform.Events.Controllers
         public async Task<ActionResult<SubscriptionList>> Get()
         {
             string consumer = GetConsumer();
-            (List<Subscription> subscriptions, ServiceError error) = await _eventsSubscriptionService.GetAllSubscriptions(consumer);
+            (List<Subscription> subscriptions, ServiceError error) = await _subscriptionService.GetAllSubscriptions(consumer);
 
             if (error != null)
             {
@@ -152,7 +158,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Validate(int id)
         {
-            (Subscription subscription, ServiceError error) = await _eventsSubscriptionService.SetValidSubscription(id);
+            (Subscription subscription, ServiceError error) = await _subscriptionService.SetValidSubscription(id);
 
             if (error != null)
             {
@@ -173,7 +179,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult> Delete(int id)
         {
-            var error = await _eventsSubscriptionService.DeleteSubscription(id);
+            var error = await _subscriptionService.DeleteSubscription(id);
 
             if (error != null)
             {
