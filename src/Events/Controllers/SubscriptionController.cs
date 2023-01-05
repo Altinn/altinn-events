@@ -53,8 +53,8 @@ namespace Altinn.Platform.Events.Controllers
         /// Requires information about endpoint to post events for subscribers.
         /// </remarks>
         /// <param name="eventsSubscriptionRequest">The subscription details</param>
-        [Authorize]
         [HttpPost]
+        [Authorize]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
