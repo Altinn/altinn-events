@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platorm.Events.Extensions;
@@ -10,6 +12,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -22,6 +25,8 @@ namespace Altinn.Platform.Events.Controllers
     {
         private readonly ISubscriptionService _eventsSubscriptionService;
         private readonly IMapper _mapper;
+        private readonly PlatformSettings _settings;
+        private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
 
         private const string UserPrefix = "/user/";
         private const string OrgPrefix = "/org/";
@@ -31,10 +36,14 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         public SubscriptionController(
             ISubscriptionService eventsSubscriptionService,
-            IMapper mapper)
+            IMapper mapper,
+            IClaimsPrincipalProvider claimsPrincipalProvider,
+            IOptions<PlatformSettings> settings)
         {
             _eventsSubscriptionService = eventsSubscriptionService;
             _mapper = mapper;
+            _claimsPrincipalProvider = claimsPrincipalProvider;
+            _settings = settings.Value;
         }
 
         /// <summary>
@@ -44,8 +53,8 @@ namespace Altinn.Platform.Events.Controllers
         /// Requires information about endpoint to post events for subscribers.
         /// </remarks>
         /// <param name="eventsSubscriptionRequest">The subscription details</param>
-        [HttpPost]
         [Authorize]
+        [HttpPost]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -53,9 +62,29 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel eventsSubscriptionRequest)
         {
+            bool isAppSubscription = true;
+
+            if (!Uri.IsWellFormedUriString(eventsSubscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
+            {
+                return StatusCode(400, "SourceFilter must be an absolute URI");
+            }
+
+            if (!eventsSubscriptionRequest.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
+            {
+                // Only non Altinn App subscriptions require the additional scope
+                if (!_claimsPrincipalProvider.GetUser().HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
+                {
+                    return Forbid();
+                }
+
+                isAppSubscription = false;
+            }
+
             Subscription eventsSubscription = _mapper.Map<Subscription>(eventsSubscriptionRequest);
 
-            (Subscription createdSubscription, ServiceError error) = await _eventsSubscriptionService.CreateSubscription(eventsSubscription);
+            (Subscription createdSubscription, ServiceError error) = isAppSubscription ?
+                await _eventsSubscriptionService.CreateAppSubscription(eventsSubscription) :
+                await _eventsSubscriptionService.CreateGenericSubscription(eventsSubscription);
 
             if (error != null)
             {

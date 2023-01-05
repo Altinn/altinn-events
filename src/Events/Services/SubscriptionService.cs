@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
@@ -44,7 +45,23 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<(Subscription Subscription, ServiceError Error)> CreateSubscription(Subscription eventsSubscription)
+        public async Task<(Subscription Subscription, ServiceError Error)> CreateGenericSubscription(Subscription eventsSubscription)
+        {
+            await SetCreatedBy(eventsSubscription);
+            await EnrichConsumer(eventsSubscription); // enrich if not previously set based on claims
+
+            // what requirements do we have for a subscribtion to be valid? 
+
+            Subscription subscription = await _repository.FindSubscription(eventsSubscription, CancellationToken.None);
+
+            subscription ??= await _repository.CreateSubscription(eventsSubscription, eventsSubscription.SourceFilter.GetMD5Hash());
+
+            await _queue.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
+            return (subscription, null);
+        }
+
+        /// <inheritdoc/>
+        public async Task<(Subscription Subscription, ServiceError Error)> CreateAppSubscription(Subscription eventsSubscription)
         {
             await EnrichSubject(eventsSubscription);
 

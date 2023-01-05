@@ -59,7 +59,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
 
             // Act
-            var result = await subscriptionService.CreateSubscription(subscription);
+            var result = await subscriptionService.CreateAppSubscription(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
@@ -95,7 +95,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
 
             // Act
-            var result = await subscriptionService.CreateSubscription(subscription);
+            var result = await subscriptionService.CreateAppSubscription(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
