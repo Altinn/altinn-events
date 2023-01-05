@@ -37,7 +37,7 @@ BEGIN
 return query 
 	SELECT s.id, s.sourcefilter, s.subjectfilter, s.typefilter, s.consumer, s.endpointurl, s.createdby, s.validated, s."time"
 	FROM events.subscription s
-  WHERE  s.sourcefilter = ANY(sourcehashset)
+  WHERE  s.sourcefilterhash = ANY(sourcehashset)
   AND (s.subjectfilter is NULL OR s.subjectfilter = subject)
   AND (s.typefilter is NULL OR s.typefilter = type)
   AND s.validated;
