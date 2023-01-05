@@ -21,7 +21,9 @@ namespace Altinn.Platform.Events.Repository
         /// <summary>
         /// Creates an subscription in repository
         /// </summary>
-        Task<Subscription> CreateSubscription(Subscription eventsSubscription);
+        /// <param name="eventsSubscription">The subscription to persist in repository</param>
+        /// <param name="sourceFilterHash">The hashed subscription source filter to persist in repository</param>
+        Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash);
 
         /// <summary>
         /// Gets a specific subscription
@@ -41,7 +43,7 @@ namespace Altinn.Platform.Events.Repository
         /// <summary>
         /// Gets subscriptions by source, subject and type of a cloud event
         /// </summary>
-        Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct);
+        Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct);
 
         /// <summary>
         /// Gets subscriptions for a given consumer

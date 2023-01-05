@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -69,7 +70,7 @@ namespace Altinn.Platform.Events.Services
 
             Subscription subscription = await _repository.FindSubscription(eventsSubscription, CancellationToken.None);
 
-            subscription ??= await _repository.CreateSubscription(eventsSubscription);
+            subscription ??= await _repository.CreateSubscription(eventsSubscription, eventsSubscription.SourceFilter.GetMD5Hash());
 
             await _queue.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
             return (subscription, null);

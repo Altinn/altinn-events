@@ -23,7 +23,7 @@ namespace Altinn.Platform.Events.Repository
     public class SubscriptionRepository : ISubscriptionRepository
     {
         private readonly string findSubscriptionSql = "select * from events.find_subscription(@sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl)";
-        private readonly string insertSubscriptionSql = "select * from events.insert_subscription(@sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated)";
+        private readonly string insertSubscriptionSql = "select * from events.insert_subscription(@sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated, @sourcefilterhash)";
         private readonly string getSubscriptionSql = "select * from events.getsubscription(@_id)";
         private readonly string deleteSubscription = "call events.deletesubscription(@_id)";
         private readonly string setValidSubscription = "call events.setvalidsubscription(@_id)";
@@ -42,7 +42,7 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<Subscription> CreateSubscription(Subscription eventsSubscription)
+        public async Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash)
         {
             await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
             await conn.OpenAsync();
@@ -57,6 +57,7 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
             pgcom.Parameters.AddWithValue("createdby", eventsSubscription.CreatedBy);
             pgcom.Parameters.AddWithValue("validated", false);
+            pgcom.Parameters.AddWithValue("sourcefilterhash", sourceFilterHash);
 
             await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();
             await reader.ReadAsync();
@@ -91,17 +92,17 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct)
+        public async Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct)
         {
-            List<Subscription> searchResult = new List<Subscription>();
+            List<Subscription> searchResult = new();
 
-            await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
+            await using NpgsqlConnection conn = new(connectionString);
             await conn.OpenAsync(ct);
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(getSubscriptionsSql, conn)            
+            await using NpgsqlCommand pgcom = new(getSubscriptionsSql, conn)
             {
                 Parameters =
                 {
-                    new() { Value = source },
+                    new() { Value = sourceFilterHashes },
                     new() { Value = subject },
                     new() { Value = type }
                 }
@@ -122,10 +123,10 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task DeleteSubscription(int id)
         {
-            await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
+            await using NpgsqlConnection conn = new(connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(deleteSubscription, conn);
+            await using NpgsqlCommand pgcom = new(deleteSubscription, conn);
             pgcom.Parameters.AddWithValue("_id", id);
 
             await pgcom.ExecuteNonQueryAsync();
@@ -134,7 +135,7 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task SetValidSubscription(int id)
         {
-            await using NpgsqlConnection conn = new NpgsqlConnection(connectionString);
+            await using NpgsqlConnection conn = new(connectionString);
             await conn.OpenAsync();
 
             await using NpgsqlCommand pgcom = new NpgsqlCommand(setValidSubscription, conn);

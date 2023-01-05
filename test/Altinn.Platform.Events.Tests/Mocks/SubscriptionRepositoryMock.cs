@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
+using Altinn.Platform.Events.Tests.Models;
 
 using Newtonsoft.Json;
 
@@ -25,7 +27,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.FromResult((Subscription)null);
         }
 
-        public Task<Subscription> CreateSubscription(Subscription eventsSubscription)
+        public Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash)
         {
             Random rnd = new Random();
             eventsSubscription.Id = rnd.Next(1, int.MaxValue);
@@ -72,24 +74,34 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.CompletedTask;
         }
 
-        public Task<List<Subscription>> GetSubscriptions(string source, string subject, string type, CancellationToken ct)
+        public Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct)
         {
             string subscriptionsPath = Path.Combine(GetSubscriptionPath(), "1.json");
-            List<Subscription> subscriptions = null;
+            List<SubscriptionTableEntry> subscriptionEntries = null;
             if (File.Exists(subscriptionsPath))
             {
                 string content = File.ReadAllText(subscriptionsPath);
-                subscriptions = JsonConvert.DeserializeObject<List<Subscription>>(content);
+                subscriptionEntries = JsonConvert.DeserializeObject<List<SubscriptionTableEntry>>(content);
             }
             else
             {
-                subscriptions = new List<Subscription>();
+                subscriptionEntries = new List<SubscriptionTableEntry>();
             }
 
-            return Task.FromResult(subscriptions.Where(s =>
-                                source.StartsWith(s.SourceFilter.ToString()) &&
-                                subject.Equals(subject) &&
-                                (string.IsNullOrEmpty(s.TypeFilter) || type.Equals(s.TypeFilter))).ToList());
+            List<Subscription> subscriptions = subscriptionEntries
+                .Where(s => sourceFilterHashes.Contains(s.SourceFilterHash) && subject.Equals(subject) && (string.IsNullOrEmpty(s.TypeFilter) || type.Equals(s.TypeFilter)))
+                .Select(s =>
+                    new Subscription 
+                    {
+                        Id = s.Id,
+                        SourceFilter = s.SourceFilter,
+                        AlternativeSubjectFilter = s.AlternativeSubjectFilter,
+                        Consumer = s.Consumer,
+                        EndPoint = s.EndPoint                        
+                    })
+                .ToList();
+
+            return Task.FromResult(subscriptions);
         }
 
         private static string GetSubscriptionPath()
