@@ -7,8 +7,9 @@ CREATE OR REPLACE FUNCTION events.insert_subscription(
     createdby character varying,
     validated boolean,
     sourcefilterhash character varying)
-  RETURNS SETOF events.subscription AS
-$BODY$
+  RETURNS SETOF events.subscription 
+LANGUAGE 'plpgsql'
+AS $BODY$
 
 DECLARE currentTime timestamptz; 
 
@@ -31,6 +32,7 @@ CREATE OR REPLACE FUNCTION events.getsubscriptions(
 	subject character varying,
 	type character varying)
     RETURNS TABLE(id bigint, sourcefilter character varying, subjectfilter character varying, typefilter character varying, consumer character varying, endpointurl character varying, createdby character varying, validated boolean, "time" timestamp with time zone) 
+LANGUAGE 'plpgsql'
 AS $BODY$
 
 BEGIN
