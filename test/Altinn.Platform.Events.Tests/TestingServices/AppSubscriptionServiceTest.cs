@@ -128,15 +128,15 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_NonMatchingConsumerProvided_ReturnsError()
         {
             // Arrange
-            string expectedErrorMessage = "A valid subject to the authenticated identity is required";
-            int expectedErrorCode = 400;
+            string expectedErrorMessage = "Not authorized to create a subscription on behalf of";
+            int expectedErrorCode = 401;
             int subscriptionId = 1337;
 
             var subs = new Subscription
             {
                 Id = subscriptionId,
                 SourceFilter = new System.Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
-                AlternativeSubjectFilter = "/person/14029112345",
+                SubjectFilter = "/party/1337",
                 Consumer = "/party/2016"
             };
 
