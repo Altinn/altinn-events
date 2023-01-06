@@ -38,8 +38,6 @@ namespace Altinn.Platform.Events.Services
                   repository,
                   queue,
                   claimsPrincipalProvider,
-                  profile,
-                  authorization,
                   register)
         {
             _profile = profile;
@@ -120,12 +118,6 @@ namespace Altinn.Platform.Events.Services
             if (eventsSubscription.SourceFilter == null)
             {
                 message = "Source is required";
-                return false;
-            }
-
-            if (!Uri.IsWellFormedUriString(eventsSubscription.SourceFilter.ToString(), UriKind.Absolute))
-            {
-                message = "SourceFilter must be an absolute URI";
                 return false;
             }
 

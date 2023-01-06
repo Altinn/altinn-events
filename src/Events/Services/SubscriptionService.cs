@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,13 +28,11 @@ namespace Altinn.Platform.Events.Services
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
-        public SubscriptionService(ISubscriptionRepository repository, IEventsQueueClient queue, IClaimsPrincipalProvider claimsPrincipalProvider, IProfile profile, IAuthorization authorization, IRegisterService register)
+        public SubscriptionService(ISubscriptionRepository repository, IEventsQueueClient queue, IClaimsPrincipalProvider claimsPrincipalProvider, IRegisterService register)
         {
             _repository = repository;
             _queue = queue;
             _claimsPrincipalProvider = claimsPrincipalProvider;
-            _profile = profile;
-            _authorization = authorization;
             _register = register;
         }
 

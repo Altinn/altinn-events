@@ -17,15 +17,11 @@ namespace Altinn.Platform.Events.Services
             ISubscriptionRepository repository,
             IEventsQueueClient queue,
             IClaimsPrincipalProvider claimsPrincipalProvider,
-            IProfile profile,
-            IAuthorization authorization,
             IRegisterService register)
             : base(
                   repository,
                   queue,
                   claimsPrincipalProvider,
-                  profile,
-                  authorization,
                   register)
         {
         }
@@ -34,11 +30,6 @@ namespace Altinn.Platform.Events.Services
         public async Task<(Subscription Subscription, ServiceError Error)> CreateSubscription(Subscription eventsSubscription)
         {
             await SetCreatedBy(eventsSubscription);
-
-            if (string.IsNullOrEmpty(eventsSubscription.Consumer))
-            {
-                await EnrichConsumer(eventsSubscription);
-            }
 
             if (!ValidateSubscription(eventsSubscription, out string message))
             {
@@ -56,6 +47,12 @@ namespace Altinn.Platform.Events.Services
 
         private static bool ValidateSubscription(Subscription eventsSubscription, out string message)
         {
+            if (string.IsNullOrEmpty(eventsSubscription.Consumer))
+            {
+                message = "Consumer is required";
+                return false;
+            }
+
             // what requirements do we have for a subscription to be valid? 
             // do we allow alternative subject for generic event subscriptions?
             message = null;
