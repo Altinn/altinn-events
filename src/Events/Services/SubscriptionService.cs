@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +8,6 @@ using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platform.Profile.Models;
 using Altinn.Platorm.Events.Extensions;
 
 namespace Altinn.Platform.Events.Services
@@ -21,11 +18,8 @@ namespace Altinn.Platform.Events.Services
         private readonly ISubscriptionRepository _repository;
         private readonly IEventsQueueClient _queue;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
-        private readonly IProfile _profile;
         private readonly IRegisterService _register;
-        private readonly IAuthorization _authorization;
 
-        private const string PersonPrefix = "/person/";
         private const string UserPrefix = "/user/";
         private const string OrgPrefix = "/org/";
         private const string PartyPrefix = "/party/";

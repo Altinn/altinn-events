@@ -54,7 +54,7 @@ namespace Altinn.Platform.Events.Services
             return await CompleteSubscriptionCreation(eventsSubscription);
         }
 
-        private bool ValidateSubscription(Subscription eventsSubscription, out string message)
+        private static bool ValidateSubscription(Subscription eventsSubscription, out string message)
         {
             // what requirements do we have for a subscription to be valid? 
             // do we allow alternative subject for generic event subscriptions?
