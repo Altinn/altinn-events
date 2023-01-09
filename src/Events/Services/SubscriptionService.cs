@@ -28,12 +28,16 @@ namespace Altinn.Platform.Events.Services
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
-        public SubscriptionService(ISubscriptionRepository repository, IEventsQueueClient queue, IClaimsPrincipalProvider claimsPrincipalProvider, IRegisterService register)
+        public SubscriptionService(
+            ISubscriptionRepository repository,
+            IRegisterService register,
+            IEventsQueueClient queue,
+            IClaimsPrincipalProvider claimsPrincipalProvider)
         {
             _repository = repository;
+            _register = register;
             _queue = queue;
             _claimsPrincipalProvider = claimsPrincipalProvider;
-            _register = register;
         }
 
         /// <summary>

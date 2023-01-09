@@ -18,7 +18,7 @@ using Xunit;
 namespace Altinn.Platform.Events.Tests.TestingServices
 {
     /// <summary>
-    /// A collection of tests related to <see cref="SubscriptionService"/>.
+    /// A collection of tests related to <see cref="AppSubscriptionService"/>.
     /// </summary>
     public class AppSubscriptionServiceTest
     {
@@ -184,11 +184,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             return new AppSubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
-                new EventsQueueClientMock(),
-                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
                 profile,
                 authorization,
-                register);
+                register,
+                new EventsQueueClientMock(),
+                claimsPrincipalProvider);
         }
     }
 }

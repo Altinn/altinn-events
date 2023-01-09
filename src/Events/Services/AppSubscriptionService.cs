@@ -29,21 +29,21 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         public AppSubscriptionService(
             ISubscriptionRepository repository,
-            IEventsQueueClient queue,
-            IClaimsPrincipalProvider claimsPrincipalProvider,
             IProfile profile,
             IAuthorization authorization,
-            IRegisterService register)
+            IRegisterService register,
+            IEventsQueueClient queue,
+            IClaimsPrincipalProvider claimsPrincipalProvider)
             : base(
                   repository,
+                  register,
                   queue,
-                  claimsPrincipalProvider,
-                  register)
+                  claimsPrincipalProvider)
         {
             _profile = profile;
-            _claimsPrincipalProvider = claimsPrincipalProvider;
-            _register = register;
             _authorization = authorization;
+            _register = register;
+            _claimsPrincipalProvider = claimsPrincipalProvider;
         }
 
         /// <inheritdoc/>
@@ -125,12 +125,6 @@ namespace Altinn.Platform.Events.Services
             if (string.IsNullOrEmpty(absolutePath) || absolutePath.Split("/").Length != 3)
             {
                 message = "A valid app id is required in Source filter {environment}/{org}/{app}";
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(eventsSubscription.CreatedBy))
-            {
-                message = "Invalid creator";
                 return false;
             }
 

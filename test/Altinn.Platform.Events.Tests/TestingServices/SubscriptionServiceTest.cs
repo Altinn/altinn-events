@@ -107,9 +107,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
+                new Mock<IRegisterService>().Object,
                 new EventsQueueClientMock(),
-                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
-                new Mock<IRegisterService>().Object);
+                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
         }
     }
 }

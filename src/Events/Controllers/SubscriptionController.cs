@@ -58,7 +58,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <remarks>
         /// Requires information about endpoint to post events for subscribers.
         /// </remarks>
-        /// <param name="eventsSubscriptionRequest">The subscription details</param>
+        /// <param name="subscriptionRequest">The subscription details</param>
         [HttpPost]
         [Authorize]
         [Consumes("application/json")]
@@ -66,16 +66,16 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Produces("application/json")]
-        public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel eventsSubscriptionRequest)
+        public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
             bool isAppSubscription = true;
 
-            if (!Uri.IsWellFormedUriString(eventsSubscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
+            if (subscriptionRequest.SourceFilter == null || !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
             {
                 return StatusCode(400, "SourceFilter must be an absolute URI");
             }
 
-            if (!eventsSubscriptionRequest.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
+            if (!subscriptionRequest.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
             {
                 // Only non Altinn App subscriptions require the additional scope
                 if (!_claimsPrincipalProvider.GetUser().HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
@@ -86,7 +86,7 @@ namespace Altinn.Platform.Events.Controllers
                 isAppSubscription = false;
             }
 
-            Subscription eventsSubscription = _mapper.Map<Subscription>(eventsSubscriptionRequest);
+            Subscription eventsSubscription = _mapper.Map<Subscription>(subscriptionRequest);
 
             (Subscription createdSubscription, ServiceError error) = isAppSubscription ?
                 await _appSubscriptionService.CreateSubscription(eventsSubscription) :

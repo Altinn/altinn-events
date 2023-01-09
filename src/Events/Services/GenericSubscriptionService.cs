@@ -15,14 +15,15 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         public GenericSubscriptionService(
             ISubscriptionRepository repository,
+            IRegisterService register,
             IEventsQueueClient queue,
-            IClaimsPrincipalProvider claimsPrincipalProvider,
-            IRegisterService register)
+            IClaimsPrincipalProvider claimsPrincipalProvider)
+
             : base(
                   repository,
+                  register,
                   queue,
-                  claimsPrincipalProvider,
-                  register)
+                  claimsPrincipalProvider)
         {
         }
 
@@ -49,12 +50,16 @@ namespace Altinn.Platform.Events.Services
         {
             if (string.IsNullOrEmpty(eventsSubscription.Consumer))
             {
-                message = "Consumer is required";
+                message = "Consumer is required.";
                 return false;
             }
 
-            // what requirements do we have for a subscription to be valid? 
-            // do we allow alternative subject for generic event subscriptions?
+            if (!string.IsNullOrEmpty(eventsSubscription.AlternativeSubjectFilter))
+            {
+                message = "AlternativeSubject is not supported for subscriptions on generic event sources.";
+                return false;
+            }
+
             message = null;
             return true;
         }
