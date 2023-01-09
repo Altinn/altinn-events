@@ -115,12 +115,6 @@ namespace Altinn.Platform.Events.Services
                 return false;
             }
 
-            if (eventsSubscription.SourceFilter == null)
-            {
-                message = "Source is required";
-                return false;
-            }
-
             string absolutePath = eventsSubscription.SourceFilter.AbsolutePath;
             if (string.IsNullOrEmpty(absolutePath) || absolutePath.Split("/").Length != 3)
             {
