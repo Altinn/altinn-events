@@ -399,6 +399,34 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
+            /// Post invalid subscription for org with missing sourceFilter
+            /// Expected result:
+            /// Returns HttpStatus badrequest
+            /// Success criteria:
+            /// The response has correct status and correct responseId.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionWithoutSourceFilter_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest(string.Empty, "https://www.app-event.no/hook", subjectFilter: "/party/133");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            }
+
+            /// <summary>
             /// Post missing bearer token
             /// Expected result:
             /// Returns HttpStatus Unauthorized
