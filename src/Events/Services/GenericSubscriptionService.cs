@@ -37,7 +37,7 @@ namespace Altinn.Platform.Events.Services
                 return (null, new ServiceError(400, message));
             }
 
-            if (!AuthorizeSubscription(eventsSubscription))
+            if (!AuthorizeSubscription())
             {
                 var errorMessage = $"Not authorized to create a subscription with source {eventsSubscription.SourceFilter} and/ subject filter: {eventsSubscription.SubjectFilter}.";
                 return (null, new ServiceError(401, errorMessage));
@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Services
             return true;
         }
 
-        private static bool AuthorizeSubscription(Subscription eventsSubscription)
+        private static bool AuthorizeSubscription()
         {
             // if consumer can be set at random, should and can we control who creates a subscription with a given consumer? consumer: "The queen", createdBy: /org/ttd or /user/123
 
