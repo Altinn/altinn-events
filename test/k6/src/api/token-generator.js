@@ -4,6 +4,7 @@ import encoding from "k6/encoding";
 
 import * as config from "../config.js";
 import { stopIterationOnFail } from "../errorhandler.js";
+import * as apiHelpers from "../apiHelpers.js";
 
 const tokenGeneratorUserName = __ENV.tokenGeneratorUserName;
 const tokenGeneratorUserPwd = __ENV.tokenGeneratorUserPwd;
@@ -12,45 +13,58 @@ const tokenGeneratorUserPwd = __ENV.tokenGeneratorUserPwd;
 Generate enterprise token for test environment
 */
 export function generateEnterpriseToken(queryParams) {
-  var success;
+  var endpoint =
+    config.tokenGenerator.getEnterpriseToken +
+    apiHelpers.buildQueryParametersForEndpoint(queryParams);
+
+  return generateToken(endpoint);
+}
+
+export function generatePersonalToken(queryParams) {
+  var endpoint =
+    config.tokenGenerator.getPersonalToken +
+    apiHelpers.buildQueryParametersForEndpoint(queryParams);
+
+  return generateToken(endpoint);
+}
+
+function generateToken(endpoint) {
   const credentials = `${tokenGeneratorUserName}:${tokenGeneratorUserPwd}`;
   const encodedCredentials = encoding.b64encode(credentials);
 
-  var endpoint =
-    config.tokenGenerator.getEnterpriseToken +
-    buildQueryParametersForEndpoint(queryParams);
-
-  var params = {
-    headers: {
-      Authorization: `Basic ${encodedCredentials}`,
-    },
-  };
+  var params = apiHelpers.buildHeaderWithBasic(encodedCredentials);
 
   var response = http.get(endpoint, params);
 
   if (response.status != 200) {
-    stopIterationOnFail("Enterprise token generation failed", false, response);
+    console.log(response.body)
+    stopIterationOnFail("Token generation failed", false, response);
   }
 
   var token = response.body;
   return token;
 }
 
-/*
-Build query parameters
-*/
-function buildQueryParametersForEndpoint(filterParameters) {
-  var query = "?";
-  Object.keys(filterParameters).forEach(function (key) {
-    if (Array.isArray(filterParameters[key])) {
-      filterParameters[key].forEach((value) => {
-        query += key + "=" + value + "&";
-      });
-    } else {
-      query += key + "=" + filterParameters[key] + "&";
-    }
-  });
-  query = query.slice(0, -1);
 
-  return query;
+
+export function getTokenForWebhookSite(){
+  var params = {
+    headers: {
+      Accept : "application/json",
+      'Content-Type': "application/json"
+    }
+  };
+
+  var endpoint = 'https://webhook.site/token';
+  var res = http.post(endpoint, params);
+if(res.status != 201 ){
+  console.log(JSON.stringify(res))
+
+  stopIterationOnFail("", false, res);
+
+}
+  var token = JSON.parse(res.body)['uuid'];
+
+  return token;
+
 }

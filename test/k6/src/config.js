@@ -14,10 +14,18 @@ export let baseUrl = baseUrls[environment];
 export var tokenGenerator = {
   getEnterpriseToken:
     "https://altinn-testtools-token-generator.azurewebsites.net/api/GetEnterpriseToken",
+    getPersonalToken:
+    "https://altinn-testtools-token-generator.azurewebsites.net/api/GetPersonalToken"
 };
 
 // Platform Events
 export var platformEvents = {
   events: "https://platform." + baseUrl + "/events/api/v1/events/",
   app: "https://platform." + baseUrl + "/events/api/v1/app/",
+  subscriptions: "https://platform." + baseUrl + "/events/api/v1/subscriptions/"
 };
+
+export var platformAuthentication = {
+
+}
+
