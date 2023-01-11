@@ -37,34 +37,9 @@ function generateToken(endpoint) {
   var response = http.get(endpoint, params);
 
   if (response.status != 200) {
-    console.log(response.body)
     stopIterationOnFail("Token generation failed", false, response);
   }
 
   var token = response.body;
   return token;
-}
-
-
-
-export function getTokenForWebhookSite(){
-  var params = {
-    headers: {
-      Accept : "application/json",
-      'Content-Type': "application/json"
-    }
-  };
-
-  var endpoint = 'https://webhook.site/token';
-  var res = http.post(endpoint, params);
-if(res.status != 201 ){
-  console.log(JSON.stringify(res))
-
-  stopIterationOnFail("", false, res);
-
-}
-  var token = JSON.parse(res.body)['uuid'];
-
-  return token;
-
 }

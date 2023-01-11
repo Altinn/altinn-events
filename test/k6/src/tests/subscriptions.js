@@ -8,14 +8,19 @@ import * as subscriptionsApi from "../api/subscriptions.js";
 import { generateJUnitXML, reportPath } from "../report.js";
 import { addErrorCount } from "../errorhandler.js";
 import * as config from "../config.js";
-const appSubscription = JSON.parse(open("../data/subscriptions/01-app-subscription.json"));
-const genericSubscription = JSON.parse(open("../data/subscriptions/02-generic-subscription.json"));
+const appSubscription = JSON.parse(
+  open("../data/subscriptions/01-app-subscription.json")
+);
+const genericSubscription = JSON.parse(
+  open("../data/subscriptions/02-generic-subscription.json")
+);
 
 const scopes = "altinn:events.publish,altinn:events.subscribe";
 const subsetScopes = "altinn:serviceowner/instances.read";
 const app = __ENV.app.toLowerCase();
 const org = "ttd";
-let webhookEndpoint= __ENV.webhookEndpoint.toLowerCase();
+
+let webhookEndpoint = __ENV.webhookEndpoint;
 
 appSubscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${app}`;
 appSubscription.endPoint = webhookEndpoint;
@@ -32,7 +37,7 @@ export function setup() {
     app: app,
     appSubscription: JSON.stringify(appSubscription),
     genericSubscription: JSON.stringify(genericSubscription),
-    webhookEndpoint: webhookEndpoint
+    webhookEndpoint: webhookEndpoint,
   };
 
   return data;
@@ -143,7 +148,7 @@ export default function (data) {
 
   //  07 - POST new subscription for external event source
   response = subscriptionsApi.postSubscription(
-   data.genericSubscription,
+    data.genericSubscription,
     data.orgToken
   );
 

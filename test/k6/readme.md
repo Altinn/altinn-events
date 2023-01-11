@@ -43,3 +43,26 @@ The comand consists of three sections
 
 
 `-e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***` all environment variables that should be included in the request.
+
+
+### Webhook for subscriptions
+
+When testing the subscriptions a webook must be provided.
+You are free to provide whichever endpoint, but make sure it ends with `/`.
+
+We would suggest to use webhook.site.
+The following PowerShell script will generate a dedicated webhook to provide as the environment variable `webhookEndpoint`
+
+
+```ps
+$params = @{
+ Uri = "https://webhook.site/token"
+ Method = "Post"
+}
+
+$webhookToken =((Invoke-Webrequest @params).Content  | ConvertFrom-Json).uuid
+
+$webhookEndpoint= "https://webhook.site/" + $webhookToken + "/"
+```
+
+
