@@ -1,0 +1,5 @@
+{
+    "endPoint": "webhookEndpoint",
+    "sourceFilter": "https://vg.no/",
+    "consumer": "norsknettavisleser"
+}

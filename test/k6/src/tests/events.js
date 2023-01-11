@@ -9,7 +9,6 @@ import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 const eventJson = JSON.parse(open("../data/events/01-event.json"));
 import { generateJUnitXML, reportPath } from "../report.js";
 import { addErrorCount } from "../errorhandler.js";
-
 const scopes = "altinn:events.publish";
 
 export function setup() {
