@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platorm.Events.Extensions;
@@ -10,6 +12,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -20,8 +23,12 @@ namespace Altinn.Platform.Events.Controllers
     [ApiController]
     public class SubscriptionController : ControllerBase
     {
-        private readonly ISubscriptionService _eventsSubscriptionService;
+        private readonly ISubscriptionService _subscriptionService;
+        private readonly IAppSubscriptionService _appSubscriptionService;
+        private readonly IGenericSubscriptionService _genericSubscriptionService;
         private readonly IMapper _mapper;
+        private readonly PlatformSettings _settings;
+        private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
 
         private const string UserPrefix = "/user/";
         private const string OrgPrefix = "/org/";
@@ -31,10 +38,18 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         public SubscriptionController(
             ISubscriptionService eventsSubscriptionService,
-            IMapper mapper)
+            IAppSubscriptionService appSubscriptionService,
+            IGenericSubscriptionService genericSubscriptionService,
+            IMapper mapper,
+            IClaimsPrincipalProvider claimsPrincipalProvider,
+            IOptions<PlatformSettings> settings)
         {
-            _eventsSubscriptionService = eventsSubscriptionService;
+            _subscriptionService = eventsSubscriptionService;
+            _appSubscriptionService = appSubscriptionService;
+            _genericSubscriptionService = genericSubscriptionService;
             _mapper = mapper;
+            _claimsPrincipalProvider = claimsPrincipalProvider;
+            _settings = settings.Value;
         }
 
         /// <summary>
@@ -43,7 +58,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <remarks>
         /// Requires information about endpoint to post events for subscribers.
         /// </remarks>
-        /// <param name="eventsSubscriptionRequest">The subscription details</param>
+        /// <param name="subscriptionRequest">The subscription details</param>
         [HttpPost]
         [Authorize]
         [Consumes("application/json")]
@@ -51,11 +66,31 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Produces("application/json")]
-        public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel eventsSubscriptionRequest)
+        public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
-            Subscription eventsSubscription = _mapper.Map<Subscription>(eventsSubscriptionRequest);
+            bool isAppSubscription = true;
 
-            (Subscription createdSubscription, ServiceError error) = await _eventsSubscriptionService.CreateSubscription(eventsSubscription);
+            if (subscriptionRequest.SourceFilter == null || !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
+            {
+                return StatusCode(400, "SourceFilter must be an absolute URI");
+            }
+
+            if (!subscriptionRequest.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
+            {
+                // Only non Altinn App subscriptions require the additional scope
+                if (!_claimsPrincipalProvider.GetUser().HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
+                {
+                    return Forbid();
+                }
+
+                isAppSubscription = false;
+            }
+
+            Subscription eventsSubscription = _mapper.Map<Subscription>(subscriptionRequest);
+
+            (Subscription createdSubscription, ServiceError error) = isAppSubscription ?
+                await _appSubscriptionService.CreateSubscription(eventsSubscription) :
+                await _genericSubscriptionService.CreateSubscription(eventsSubscription);
 
             if (error != null)
             {
@@ -76,7 +111,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Get(int id)
         {
-            (Subscription subscription, ServiceError error) = await _eventsSubscriptionService.GetSubscription(id);
+            (Subscription subscription, ServiceError error) = await _subscriptionService.GetSubscription(id);
 
             if (error != null)
             {
@@ -97,7 +132,7 @@ namespace Altinn.Platform.Events.Controllers
         public async Task<ActionResult<SubscriptionList>> Get()
         {
             string consumer = GetConsumer();
-            (List<Subscription> subscriptions, ServiceError error) = await _eventsSubscriptionService.GetAllSubscriptions(consumer);
+            (List<Subscription> subscriptions, ServiceError error) = await _subscriptionService.GetAllSubscriptions(consumer);
 
             if (error != null)
             {
@@ -123,7 +158,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Validate(int id)
         {
-            (Subscription subscription, ServiceError error) = await _eventsSubscriptionService.SetValidSubscription(id);
+            (Subscription subscription, ServiceError error) = await _subscriptionService.SetValidSubscription(id);
 
             if (error != null)
             {
@@ -144,7 +179,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult> Delete(int id)
         {
-            var error = await _eventsSubscriptionService.DeleteSubscription(id);
+            var error = await _subscriptionService.DeleteSubscription(id);
 
             if (error != null)
             {

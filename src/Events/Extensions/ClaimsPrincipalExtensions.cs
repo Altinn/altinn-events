@@ -1,4 +1,7 @@
+using System;
+using System.Linq;
 using System.Security.Claims;
+
 using AltinnCore.Authentication.Constants;
 
 namespace Altinn.Platorm.Events.Extensions
@@ -40,6 +43,26 @@ namespace Altinn.Platorm.Events.Extensions
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Returns a boolean indicating if the provided required scope is present in the scope claim.
+        /// </summary>
+        public static bool HasRequiredScope(this ClaimsPrincipal user, string requiredScope)
+        {
+            string contextScope = user.Identities
+              ?.FirstOrDefault(i => i.AuthenticationType != null && i.AuthenticationType.Equals("AuthenticationTypes.Federation"))?.Claims
+              .Where(c => c.Type.Equals("urn:altinn:scope"))?
+              .Select(c => c.Value).FirstOrDefault();
+
+            contextScope ??= user.Claims.Where(c => c.Type.Equals("scope")).Select(c => c.Value).FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(contextScope) && contextScope.Contains(requiredScope, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>

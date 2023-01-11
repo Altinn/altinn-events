@@ -36,7 +36,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_SubscriptionAlreadyExists_ReturnExisting()
+        public async Task CompleteSubscriptionCreation_SubscriptionAlreadyExists_ReturnExisting()
         {
             // Arrange
             int subscriptionId = 645187;
@@ -59,14 +59,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
 
             // Act
-            var result = await subscriptionService.CreateSubscription(subscription);
+            var result = await subscriptionService.CompleteSubscriptionCreation(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
         }
 
         [Fact]
-        public async Task CreateSubscription_SubscriptionNotFound_ReturnNew()
+        public async Task CompleteSubscriptionCreation_SubscriptionNotFound_ReturnNew()
         {
             // Arrange
             int subscriptionId = 645187;
@@ -91,11 +91,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     It.Is<string>(s => s.Equals("03E4D9CA0902493533E9C62AB437EF50"))))
                 .ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService =
-                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
-
             // Act
-            var result = await subscriptionService.CreateSubscription(subscription);
+            SubscriptionService subscriptionService =
+                  GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
+
+            var result = await subscriptionService.CompleteSubscriptionCreation(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
@@ -107,11 +107,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
+                new Mock<IRegisterService>().Object,
                 new EventsQueueClientMock(),
-                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
-                new Mock<IProfile>().Object,
-                new Mock<IAuthorization>().Object,
-                new Mock<IRegisterService>().Object);
+                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
         }
     }
 }
