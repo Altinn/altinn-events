@@ -146,13 +146,7 @@ namespace Altinn.Platform.Events.Services
         private async Task<bool> AuthorizeAccessToSubscription(Subscription eventsSubscription)
         {
             string currentIdenity = await GetEntityFromPrincipal();
-
-            if (eventsSubscription.CreatedBy.Equals(currentIdenity))
-            {
-                return true;
-            }
-
-            return false;
+            return eventsSubscription.CreatedBy.Equals(currentIdenity);
         }
     }
 }
