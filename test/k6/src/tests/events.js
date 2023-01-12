@@ -1,6 +1,11 @@
 /*
     Test script to platform events api with user token
-    Command: docker-compose run k6 run /src/tests/events.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e env=***
+    Command:
+    docker-compose run k6 run /src/tests/events.js `
+    -e tokenGeneratorUserName=autotest `
+    -e tokenGeneratorUserPwd=*** `
+    -e env=*** `
+    -e runFullTestSet=true
 */
 import { check } from "k6";
 import * as setupToken from "../setup.js";
@@ -17,23 +22,23 @@ export function setup() {
   var cloudEvent = eventJson;
   cloudEvent.id = uuidv4();
 
-  var data = {};
-  data.token = token;
-  data.cloudEvent = cloudEvent;
+  const runFullTestSet = __ENV.runFullTestSet
+    ? __ENV.runFullTestSet.toLowerCase().includes("true")
+    : false;
+
+  var data = {
+    runFullTestSet: runFullTestSet,
+    token: token,
+    cloudEvent: cloudEvent,
+  };
+
   return data;
 }
 
-/*
- * 01 - POST valid cloud event with all parameters
- * 02 - POST valid cloud event without subject
- * 03 - POST valid cloud event without time
- * 04 - POST cloud event without bearer token
- * 05 - POST cloud event without required scope
- */
-export default function (data) {
+// 01 - POST valid cloud event with all parameters
+function TC01_POstValidCloudEventWithAllParameters(data) {
   var response, success;
 
-  // 01 - POST valid cloud event with all parameters
   response = eventsApi.postCloudEvent(
     JSON.stringify(data.cloudEvent),
     data.token
@@ -45,8 +50,11 @@ export default function (data) {
   });
 
   addErrorCount(success);
+}
 
-  // 02 - POST valid cloud event without subject
+// 02 - POST valid cloud event without subject
+function TC02_PostValidCloudEventWithoutSubject(data) {
+  var response, success;
   var cloudEventWithoutSubject = removePropFromCloudEvent(
     data.cloudEvent,
     "subject"
@@ -63,8 +71,12 @@ export default function (data) {
   });
 
   addErrorCount(success);
+}
 
-  // 03 - POST valid cloud event without time
+// 03 - POST valid cloud event without time
+function TC03_PostValidCloudEventWithoutTIme(data) {
+  var response, success;
+
   var cloudEventWithoutTime = removePropFromCloudEvent(data.cloudEvent, "time");
 
   response = eventsApi.postCloudEvent(
@@ -78,17 +90,26 @@ export default function (data) {
   });
 
   addErrorCount(success);
+}
 
-  // 04 - POST cloud event without bearer token
+// 04 - POST cloud event without bearer token
+function TC04_PostCloudEventWithoutBearerToken(data) {
+  var response, success;
+
   response = eventsApi.postCloudEvent(JSON.stringify(data.cloudEvent), "");
 
   success = check(response, {
-    "POST cloud event without bearer token. Status is 401": (r) => r.status === 401,
+    "POST cloud event without bearer token. Status is 401": (r) =>
+      r.status === 401,
   });
 
   addErrorCount(success);
+}
 
-  // 05 - POST cloud event without required scope
+// 05 - POST cloud event without required scope
+function TC05_PostCloudEventWithoutRequiredScopes(data) {
+  var response, success;
+
   var scopeLessToken = setupToken.getAltinnTokenForOrg();
 
   response = eventsApi.postCloudEvent(
@@ -97,10 +118,36 @@ export default function (data) {
   );
 
   success = check(response, {
-    "POST cloud event without required scope. Status is 403": (r) => r.status === 403,
+    "POST cloud event without required scope. Status is 403": (r) =>
+      r.status === 403,
   });
 
   addErrorCount(success);
+}
+
+/*
+ * 01 - POST valid cloud event with all parameters
+ * 02 - POST valid cloud event without subject
+ * 03 - POST valid cloud event without time
+ * 04 - POST cloud event without bearer token
+ * 05 - POST cloud event without required scope
+ */
+export default function (data) {
+  if (data.runFullTestSet) {
+    TC01_POstValidCloudEventWithAllParameters(data);
+
+    TC02_PostValidCloudEventWithoutSubject(data);
+
+    TC03_PostValidCloudEventWithoutTIme(data);
+
+    TC04_PostCloudEventWithoutBearerToken(data);
+
+    TC05_PostCloudEventWithoutRequiredScopes(data);
+  } else {
+    // Limited test set for use case tests
+
+    TC01_POstValidCloudEventWithAllParameters(data);
+  }
 }
 
 function removePropFromCloudEvent(cloudEvent, propertyname) {

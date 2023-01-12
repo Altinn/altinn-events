@@ -24,8 +24,6 @@ function getAppEvents(endpoint, queryParams, token) {
     ? apiHelper.buildQueryParametersForEndpoint(queryParams)
     : "";
 
-    console.log(endpoint);
-
   var params = apiHelper.buildHeaderWithBearer(token);
 
   var response = http.get(endpoint, params);

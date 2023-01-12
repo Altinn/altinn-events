@@ -1,6 +1,15 @@
 /*
     Test script to platform events api with user token
-    Command: docker-compose run k6 run /src/tests/app-events.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e env=*** -e app=apps-test -e userId=20000000 -e partyId=01014922047 -e pid=01014922047
+    Command:
+    docker-compose run k6 run /src/tests/app-events.js `
+    -e tokenGeneratorUserName=autotest `
+    -e tokenGeneratorUserPwd=*** `
+    -e env=*** `
+    -e app=apps-test `
+    -e userId=20000000 `
+    -e partyId=50002108 `
+    -e pid=01014922047 `
+    -e runFullTestSet=true
 */
 import { check } from "k6";
 import * as setupToken from "../setup.js";
@@ -14,14 +23,20 @@ export function setup() {
   const org = "ttd";
   const partyId = __ENV.partyId;
 
+  const runFullTestSet = __ENV.runFullTestSet
+    ? __ENV.runFullTestSet.toLowerCase().includes("true")
+    : false;
+
   var userToken = setupToken.getAltinnTokenForUser(
     __ENV.userId,
     partyId,
     __ENV.pid
   );
+
   var orgToken = setupToken.getAltinnTokenForOrg(scopes, org);
 
   var data = {
+    runFullTestSet: runFullTestSet,
     userToken: userToken,
     userPartyId: partyId,
     orgToken: orgToken,
@@ -32,16 +47,10 @@ export function setup() {
   return data;
 }
 
-/*
- * 01 - GET app events for org. Query parameter 'after'
- * 02 - GET app  events for org based on 'next' url
- * 03 -  GET app events for party. Query parameters: partyId, after
- * 04 - GET app events for party based on 'next'
- */
-export default function (data) {
+// 01 - GET events for org. Query parameter 'after'
+function TC01_GetAppEventsForOrg(data) {
   var response, success;
 
-  // 01 - GET events for org. Query parameter 'after'
   response = appEventsApi.getEventsForOrg(
     data.org,
     data.app,
@@ -52,27 +61,36 @@ export default function (data) {
   var nextUrl = response.headers["Next"];
 
   success = check(response, {
-    "01 - GET app events for org. Query parameter 'after'. Status is 200": (r) =>
-      r.status === 200,
+    "01 - GET app events for org. Query parameter 'after'. Status is 200": (
+      r
+    ) => r.status === 200,
     "01 - GET app events for org. Query parameter 'after'. List contains minimum one element":
-      (r) => JSON.parse(r.body).length > 1,
-    "01 - GET app events for org. Query parameter 'after'. Continuation token provided":
+      (r) => JSON.parse(r.body).length >= 1,
+    "01 - GET app events for org. Query parameter 'after'. Next url provided":
       nextUrl,
   });
 
   addErrorCount(success);
+  return nextUrl;
+}
 
-  // 02 - GET events for org based on 'next' url
+// 02 - GET events for org from next url
+function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
+  var response, success;
   response = appEventsApi.getEventsFromNextLink(nextUrl, data.orgToken);
 
   success = check(response, {
-    "02 - GET app events for org based on 'next' url. Status is 200": (r) =>
+    "02 - GET app events for org from next url. Status is 200": (r) =>
       r.status === 200,
   });
 
   addErrorCount(success);
+}
 
-  // 03 -  GET app events for party. Query parameters: partyId, after.
+// 03 -  GET app events for party. Query parameters: partyId, after.
+function TC03_GetAppEventsForParty(data) {
+  var response, success;
+
   response = appEventsApi.getEventsForParty(
     { after: 1, party: data.userPartyId },
     data.userToken
@@ -84,20 +102,51 @@ export default function (data) {
     "03 - GET app events for party. Query parameters: partyId, after. Status is 200":
       (r) => r.status === 200,
     "03 - GET app events for party. Query parameters: partyId, after. List contains minimum one element":
-      (r) => JSON.parse(r.body).length > 1,
-    "03 - GET app events for party. Query parameters: partyId, after. Continuation token provided":
+      (r) => JSON.parse(r.body).length >= 1,
+    "03 - GET app events for party. Query parameters: partyId, after. Next url provided":
       nextUrl,
   });
 
   addErrorCount(success);
 
-  // 04 - GET events for party based on 'next' url
+  return nextUrl;
+}
+
+// 04 - GET events for party from 'next' url
+function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
+  var response, success;
+
   response = appEventsApi.getEventsFromNextLink(nextUrl, data.userToken);
 
   success = check(response, {
-    "04 - GET app events for party based on 'next' url. Status is 200": (r) =>
+    "04 - GET app events for party from 'next' url. Status is 200": (r) =>
       r.status === 200,
   });
+
+  addErrorCount(success);
+}
+
+/*
+ * 01 - GET app events for org. Query parameter 'after'
+ * 02 - GET app  events for org from 'next' url
+ * 03 -  GET app events for party. Query parameters: partyId, after
+ * 04 - GET app events for party from 'next'
+ */
+export default function (data) {
+  if (data.runFullTestSet) {
+    let nextUrl = TC01_GetAppEventsForOrg(data);
+
+    TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl);
+
+    nextUrl = TC03_GetAppEventsForParty(data);
+
+    TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
+  } else {
+    // Limited test set for use case tests
+    let nextUrl = TC03_GetAppEventsForParty(data);
+
+    TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
+  }
 }
 
 /*

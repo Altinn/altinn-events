@@ -1,26 +1,41 @@
 /*
     Test script to platform subscriptions api with user token
-    Command: docker-compose run k6 run /src/tests/subscriptions.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e app=apps-test -e webhookEndpoint=*****
-*/
+    Command:
+      docker-compose run k6 run /src/tests/subscriptions.js `
+      -e tokenGeneratorUserName=autotest `
+      -e tokenGeneratorUserPwd=*** `
+      -e app=apps-test `
+      -e webhookEndpoint=***** `
+      -e runFullTestSet=true
+
+    For use case tests ommit environment variable runFullTestSet or set value to false
+    */
+
 import { check } from "k6";
-import * as setupToken from "../setup.js";
 import * as subscriptionsApi from "../api/subscriptions.js";
-import { generateJUnitXML, reportPath } from "../report.js";
-import { addErrorCount } from "../errorhandler.js";
 import * as config from "../config.js";
+import { addErrorCount } from "../errorhandler.js";
+import { generateJUnitXML, reportPath } from "../report.js";
+import * as setupToken from "../setup.js";
+
 const appSubscription = JSON.parse(
   open("../data/subscriptions/01-app-subscription.json")
 );
+
 const genericSubscription = JSON.parse(
   open("../data/subscriptions/02-generic-subscription.json")
 );
 
 const scopes = "altinn:events.publish,altinn:events.subscribe";
 const subsetScopes = "altinn:serviceowner/instances.read";
-const app = __ENV.app.toLowerCase();
-const org = "ttd";
 
-let webhookEndpoint = __ENV.webhookEndpoint;
+const webhookEndpoint = __ENV.webhookEndpoint;
+
+const org = "ttd";
+const app = __ENV.app.toLowerCase();
+const runFullTestSet = __ENV.runFullTestSet
+  ? __ENV.runFullTestSet.toLowerCase().includes("true")
+  : false;
 
 appSubscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${app}`;
 appSubscription.endPoint = webhookEndpoint;
@@ -31,6 +46,7 @@ export function setup() {
   var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
 
   var data = {
+    runFullTestSet: runFullTestSet,
     orgToken: orgToken,
     orgTokenWithoutSubScope: orgTokenWithoutSubScope,
     org: org,
@@ -151,29 +167,10 @@ function TC06_DeleteSubscription(data, subscriptionId) {
   addErrorCount(success);
 }
 
-/*
- * 01 - POST new subscription for app event source
- * 02 - GET existing subscriptions for org
- * 03 - POST existing subscription for app event source
- * 04 - GET existing subscriptions for org. No change expected.
- * 05 - GET subscription by id
- * 06 - DELETE subscription
- * 07 - POST new subscription for external event source
- * 08 - POST new subscription for external event source without required scope
- * 09 - DELETE subscription
- */
-export default function (data) {
+//  07 - POST subscription for external event source
+function TC07_PostSubscriptionExternalEventSource(data) {
   var response, success;
 
-  const subscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
-  const currentSubscriptionCount = TC02_GetExistingSubscriptionsForOrg(data);
-  console.log(currentSubscriptionCount);
-  TC03_PostExistingSubscription(data);
-  TC04_GetExistingSubscriptionsForOrg(data, currentSubscriptionCount);
-  TC05_GetSubscriptionById(data, subscriptionId);
-  TC06_DeleteSubscription(data, subscriptionId);
-
-  //  07 - POST new subscription for external event source
   response = subscriptionsApi.postSubscription(
     data.genericSubscription,
     data.orgToken
@@ -181,39 +178,73 @@ export default function (data) {
 
   var subscription = JSON.parse(response.body);
   success = check(response, {
-    "07 - POST new subscription for external event source. Status is 201": (
-      r
-    ) => r.status === 201,
-    "07 - POST new subscription for external event source. Subscription id is defined":
+    "07 - POST subscription for external event source. Status is 201": (r) =>
+      r.status === 201,
+    "07 - POST subscription for external event source. Subscription id is defined":
       subscription.id != "undefined",
   });
 
   addErrorCount(success);
 
-  // 08 - POST new subscription for external event source without required scope
+  return subscription.id;
+}
+
+// 08 - POST subscription for external event source without required scope
+function TC08_PostSubscriptionForExternalEventSourceWithoutScope(data) {
+  var response, success;
+
   response = subscriptionsApi.postSubscription(
     data.genericSubscription,
     data.orgTokenWithoutSubScope
   );
 
   success = check(response, {
-    "08 - POST new subscription for external event source without required scope. Status is 403":
+    "08 - POST subscription for external event source without required scope. Status is 403":
       (r) => r.status === 403,
   });
 
   addErrorCount(success);
+}
+/*
+ * 01 - POST new subscription for app event source
+ * 02 - GET existing subscriptions for org
+ * 03 - POST existing subscription for app event source
+ * 04 - GET existing subscriptions for org. No change expected.
+ * 05 - GET subscription by id
+ * 06 - DELETE subscription
+ * 07 - POST subscription for external event source
+ * 08 - POST subscription for external event source without required scope
+ */
+export default function (data) {
+  if (data.runFullTestSet) {
+    const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
 
-  // 09 - DELETE subscription
-  response = subscriptionsApi.deleteSubscription(
-    subscription.id,
-    data.orgToken
-  );
+    const currentSubscriptionCount = TC02_GetExistingSubscriptionsForOrg(data);
 
-  success = check(response, {
-    "09 - DELETE subscription. Status is 200.": (r) => r.status === 200,
-  });
+    TC03_PostExistingSubscription(data);
 
-  addErrorCount(success);
+    TC04_GetExistingSubscriptionsForOrg(data, currentSubscriptionCount);
+
+    TC05_GetSubscriptionById(data, appSubscriptionId);
+
+    TC06_DeleteSubscription(data, appSubscriptionId);
+
+    const genericSubscriptionId =
+      TC07_PostSubscriptionExternalEventSource(data);
+
+    TC06_DeleteSubscription(data, genericSubscriptionId);
+
+    TC08_PostSubscriptionForExternalEventSourceWithoutScope(data);
+  } else {
+    // Limited test set for use case tests
+    const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
+
+    TC02_GetExistingSubscriptionsForOrg(data);
+
+    TC05_GetSubscriptionById(data, appSubscriptionId);
+
+    TC06_DeleteSubscription(data, appSubscriptionId);
+  }
 }
 
 /*
