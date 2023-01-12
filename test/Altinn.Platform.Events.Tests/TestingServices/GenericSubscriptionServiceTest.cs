@@ -27,7 +27,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange 
             var input = new Subscription
             {
-                Consumer = "/owner/223596",
                 SubjectFilter = "/dog/bruno",
                 EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
                 SourceFilter = new Uri("https://doggy-daycare.no/booking")
@@ -41,6 +40,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal("/org/ttd", actual.CreatedBy);
+            Assert.Equal("/org/ttd", actual.Consumer);
             repoMock.VerifyAll();
         }
 
@@ -52,7 +52,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var input = new Subscription
             {
-                Consumer = "/owner/223596",
                 SubjectFilter = "/dog/bruno",
                 EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
                 SourceFilter = new Uri("https://doggy-daycare.no/booking"),

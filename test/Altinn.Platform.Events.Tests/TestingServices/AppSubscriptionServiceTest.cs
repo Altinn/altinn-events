@@ -61,6 +61,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal(expectedSubjectFilter, actual.SubjectFilter);
+            Assert.Equal("/user/1337", actual.Consumer);
+            Assert.Equal("/user/1337", actual.CreatedBy);
         }
 
         [Fact]
