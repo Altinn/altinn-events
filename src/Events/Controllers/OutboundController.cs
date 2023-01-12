@@ -18,7 +18,8 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
-    /// Controller responsible for pushing events to internal event queues.
+    /// Controller responsible for multicasting incoming events 
+    /// to all authorized subscribers.
     /// </summary>
     [Route("events/api/v1/outbound")]
     [ApiController]
@@ -39,14 +40,13 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Alert push controller about a new event.
+        /// Submit event for Outbound processing
         /// </summary>
         /// <remarks>
-        /// This method will then identify any matching subscriptions
-        /// and verify whether the consumer is authorized to receive each event.
-        /// If authorized, the event will be added to the outbound queue.
+        /// Identifies matching subscriptions based on subscription filter hash.
+        /// Runs authorization check before adding event to the outbound queue.
         /// </remarks>
-        /// <returns>Returns the result of the request in the form og a HTTP status code.</returns>
+        /// <returns>Returns HTTP 503 Service Unavailable if unable to post to outbound queue.</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
         [Consumes("application/json")]

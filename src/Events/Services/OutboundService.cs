@@ -88,28 +88,23 @@ namespace Altinn.Platform.Events.Services
         {
             foreach (Subscription subscription in subscriptions)
             {
-                await AuthorizeAndPush(cloudEvent, subscription);
+                await AuthorizeAndEnqueueOutbound(cloudEvent, subscription);
             }
         }
 
-        private async Task AuthorizeAndPush(CloudEvent cloudEvent, Subscription subscription)
+        private async Task AuthorizeAndEnqueueOutbound(CloudEvent cloudEvent, Subscription subscription)
         {
             if (await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer))
             {
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
 
-                var receipt = await PushToOutboundQueue(cloudEventEnvelope);
+                var receipt = await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
 
                 if (!receipt.Success)
                 {
                     _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEvent.Id, subscription.Id);
                 }
             }
-        }
-
-        private async Task<QueuePostReceipt> PushToOutboundQueue(CloudEventEnvelope cloudEventEnvelope)
-        {
-            return await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
         }
 
         private async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
