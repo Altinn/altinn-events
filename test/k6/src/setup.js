@@ -8,6 +8,7 @@ const environment = __ENV.env.toLowerCase();
  * @returns altinn token with the provided scopes for an org
  */
 export function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "991825827") {
+  //TODO: Handle login for prod
   var queryParams = {
     env: environment,
     scopes: scopes,
@@ -19,6 +20,7 @@ export function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "991825827") {
 }
 
 export function getAltinnTokenForUser(userId, partyId, pid) {
+  //TODO: Handle login for prod
   var queryParams = {
     env: environment,
     userId: userId,
@@ -27,8 +29,4 @@ export function getAltinnTokenForUser(userId, partyId, pid) {
   };
 
   return tokenGenerator.generatePersonalToken(queryParams);
-}
-
-export function getTokenForWebhookSite(){
- return tokenGenerator.getTokenForWebhookSite();
 }
