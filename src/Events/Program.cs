@@ -244,6 +244,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsService, EventsService>();
     services.AddSingleton<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
+    services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
+    services.AddSingleton<IGenericSubscriptionService, GenericSubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.Decorate<ISubscriptionRepository, SubscriptionRepositoryCachingDecorator>();

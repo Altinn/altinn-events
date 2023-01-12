@@ -8,7 +8,7 @@ using CloudNative.CloudEvents;
 namespace Altinn.Platform.Events.Models
 {
     /// <summary>
-    /// Cloud event envelope to push
+    /// Outbound processing state object
     /// </summary>
     public class CloudEventEnvelope
     {
@@ -18,7 +18,7 @@ namespace Altinn.Platform.Events.Models
         public CloudEvent CloudEvent { get; set; }
 
         /// <summary>
-        /// The time the event was pushed to queue
+        /// The time the event was posted to the outbound queue
         /// </summary>
         public DateTime Pushed { get; set; }
 
@@ -38,9 +38,8 @@ namespace Altinn.Platform.Events.Models
         public int SubscriptionId { get; set; }
 
         /// <summary>
-        /// Serializes the cloud envelope by serializing the cloud event seperate 
-        /// from the remaning properties and then using string 
-        /// manipulation to insert the serialized cloud event.
+        /// CloudEvent property requires specialized serialization handling.
+        /// Uses string manipulation to insert the serialized cloud event.
         /// </summary>
         /// <returns>A json serialized cloud envelope</returns>
         public string Serialize()

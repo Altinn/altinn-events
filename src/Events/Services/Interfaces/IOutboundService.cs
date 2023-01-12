@@ -7,7 +7,7 @@ using CloudNative.CloudEvents;
 namespace Altinn.Platform.Events.Services.Interfaces
 {
     /// <summary>
-    /// Defines the methods required for an implementation of the push service.
+    /// Defines the methods required for an implementation of the Outbound service.
     /// </summary>
     public interface IOutboundService
     {
