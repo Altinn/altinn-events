@@ -43,22 +43,9 @@ export function setup() {
   return data;
 }
 
-/*
- * 01 - POST new subscription for app event source
- * 02 - GET existing subscriptions for org
- * 03 - POST existing subscription for app event source
- * 04 - GET existing subscriptions for org. No change expected.
- * 05 - GET subscription by id
- * 06 - DELETE subscription
- * 07 - POST new subscription for external event source
- * 08 - POST new subscription for external event source without required scope
- * 09 - DELETE subscription
- */
-export default function (data) {
+// 01 - POST new subscription for app event source
+function TC01_PostNewSubscriptionForAppEventSource(data) {
   var response, success;
-
-  // 01 - POST new subscription for app event source
-  //    - use public webhook testing api for subscription verification
 
   response = subscriptionsApi.postSubscription(
     data.appSubscription,
@@ -74,27 +61,36 @@ export default function (data) {
   });
 
   addErrorCount(success);
+  return subscription.id;
+}
 
-  // 02 - GET existing subscriptions for org
+// 02 - GET existing subscriptions for org
+function TC02_GetExistingSubscriptionsForOrg(data) {
+  var response, success;
+
   response = subscriptionsApi.getAllSubscriptions(data.orgToken);
 
-  var responseObject = JSON.parse(response.body);
-  var subscriptionList = responseObject.subscriptions;
+  var subscriptionList = JSON.parse(response.body);
+  var subscriptions = subscriptionList.subscriptions;
 
   success = check(response, {
     "02 - GET existing subscriptions for org. Status is 200.": (r) =>
       r.status === 200,
     "02 - GET existing subscriptions for org. Count is at least 1":
-      responseObject.count >= 1,
+      subscriptionList.count >= 1,
     "02 - GET existing subscriptions for org. Auto test subscription in list":
-      subscriptionList.some((s) => s.endPoint === data.webhookEndpoint),
+      subscriptions.some((s) => s.endPoint === data.webhookEndpoint),
   });
 
   addErrorCount(success);
 
-  let expectedSubscriptionCount = responseObject.count;
+  return subscriptionList.count;
+}
 
-  // 03 - POST existing subscription
+// 03 - POST existing subscription
+function TC03_PostExistingSubscription(data) {
+  var response, success;
+
   response = subscriptionsApi.postSubscription(
     data.appSubscription,
     data.orgToken
@@ -108,23 +104,30 @@ export default function (data) {
   });
 
   addErrorCount(success);
+}
 
-  // 04 - GET existing subscriptions for org. Known count.
+// 04 - GET existing subscriptions for org. Known count.
+
+function TC04_GetExistingSubscriptionsForOrg(data, expectedSubscriptionCount) {
+  var response, success;
+
   response = subscriptionsApi.getAllSubscriptions(data.orgToken);
 
   var responseObject = JSON.parse(response.body);
-  var subscriptionList = responseObject.subscriptions;
-
   success = check(response, {
     "04 - GET existing subscriptions for org again. Count matches expected subscription count":
       responseObject.count === expectedSubscriptionCount,
   });
 
   addErrorCount(success);
+}
 
-  // 05 - GET subscriptions by id
+// 05 - GET subscriptions by id
+function TC05_GetSubscriptionById(data, subscriptionId) {
+  var response, success;
+
   response = subscriptionsApi.getSubscriptionById(
-    subscription.id,
+    subscriptionId,
     data.orgToken
   );
 
@@ -133,18 +136,42 @@ export default function (data) {
   });
 
   addErrorCount(success);
+}
 
-  // 06 - DELETE subscription
-  response = subscriptionsApi.deleteSubscription(
-    subscription.id,
-    data.orgToken
-  );
+// 06 - DELETE subscription
+function TC06_DeleteSubscription(data, subscriptionId) {
+  var response, success;
+
+  response = subscriptionsApi.deleteSubscription(subscriptionId, data.orgToken);
 
   success = check(response, {
     "06 - DELETE subscription. Status is 200.": (r) => r.status === 200,
   });
 
   addErrorCount(success);
+}
+
+/*
+ * 01 - POST new subscription for app event source
+ * 02 - GET existing subscriptions for org
+ * 03 - POST existing subscription for app event source
+ * 04 - GET existing subscriptions for org. No change expected.
+ * 05 - GET subscription by id
+ * 06 - DELETE subscription
+ * 07 - POST new subscription for external event source
+ * 08 - POST new subscription for external event source without required scope
+ * 09 - DELETE subscription
+ */
+export default function (data) {
+  var response, success;
+
+  const subscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
+  const currentSubscriptionCount = TC02_GetExistingSubscriptionsForOrg(data);
+  console.log(currentSubscriptionCount);
+  TC03_PostExistingSubscription(data);
+  TC04_GetExistingSubscriptionsForOrg(data, currentSubscriptionCount);
+  TC05_GetSubscriptionById(data, subscriptionId);
+  TC06_DeleteSubscription(data, subscriptionId);
 
   //  07 - POST new subscription for external event source
   response = subscriptionsApi.postSubscription(
