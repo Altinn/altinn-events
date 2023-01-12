@@ -45,29 +45,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_ConsumerNotProvided_ReturnsError()
-        {
-            // Arrange 
-            string expectedErrorMessage = "Consumer is required.";
-
-            var input = new Subscription
-            {
-                SubjectFilter = "/dog/bruno",
-                EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
-                SourceFilter = new Uri("https://doggy-daycare.no/booking")
-            };
-
-            var sut = GetGenericSubscriptionService();
-
-            // Act
-            (var _, ServiceError actual) = await sut.CreateSubscription(input);
-
-            // Assert
-            Assert.Equal(400, actual.ErrorCode);
-            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
-        }
-
-        [Fact]
         public async Task CreateSubscription_AlternaticSubjectFilterProvided_ReturnsError()
         {
             // Arrange 

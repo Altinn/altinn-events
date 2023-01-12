@@ -39,6 +39,22 @@ namespace Altinn.Platform.Events.Tests.Utils
             return new ClaimsPrincipal(identity);
         }
 
+        public static ClaimsPrincipal GetClaimsPrincipal(string orgNumber)
+        {
+            string issuer = "www.altinn.no";
+
+            List<Claim> claims = new List<Claim>();
+
+            claims.Add(new Claim(AltinnCoreClaimTypesOrgNumber, orgNumber.ToString(), ClaimValueTypes.Integer32, issuer));
+            claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer));
+            claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticationLevel, "3", ClaimValueTypes.Integer32, issuer));
+
+            ClaimsIdentity identity = new ClaimsIdentity("mock-org");
+            identity.AddClaims(claims);
+
+            return new ClaimsPrincipal(identity);
+        }
+
         public static ClaimsPrincipal GetClaimsPrincipal(int userId, int authenticationLevel, string scope = null)
         {
             string issuer = "www.altinn.no";

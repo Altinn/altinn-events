@@ -51,8 +51,9 @@ namespace Altinn.Platform.Events.Services
         {
             await EnrichSubject(eventsSubscription);
 
-            await SetCreatedBy(eventsSubscription);
-            await EnrichConsumer(eventsSubscription);
+            var currentEntity = await GetEntityFromPrincipal();
+            eventsSubscription.CreatedBy = currentEntity;
+            eventsSubscription.Consumer = currentEntity;
 
             if (!ValidateSubscription(eventsSubscription, out string message))
             {

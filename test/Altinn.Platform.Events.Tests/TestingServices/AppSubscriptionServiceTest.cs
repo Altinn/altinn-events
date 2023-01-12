@@ -124,33 +124,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorCode, actual.ErrorCode);
         }
 
-        [Fact]
-        public async Task CreateSubscription_NonMatchingConsumerProvided_ReturnsError()
-        {
-            // Arrange
-            string expectedErrorMessage = "Not authorized to create a subscription on behalf of";
-            int expectedErrorCode = 401;
-            int subscriptionId = 1337;
-
-            var subs = new Subscription
-            {
-                Id = subscriptionId,
-                SourceFilter = new System.Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
-                SubjectFilter = "/party/1337",
-                Consumer = "/party/2016"
-            };
-
-            var sut = GetAppSubscriptionService();
-
-            // Act
-            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
-
-            // Assert
-            Assert.NotNull(actual);
-            Assert.StartsWith(expectedErrorMessage, actual.ErrorMessage);
-            Assert.Equal(expectedErrorCode, actual.ErrorCode);
-        }
-
         private static AppSubscriptionService GetAppSubscriptionService(
             IRegisterService register = null,
             IProfile profile = null,
