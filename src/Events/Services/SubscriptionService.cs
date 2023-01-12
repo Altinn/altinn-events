@@ -117,7 +117,6 @@ namespace Altinn.Platform.Events.Services
         /// <summary>
         /// Retrieves the current entity based on the claims principal
         /// </summary>
-        /// <returns></returns>
         internal async Task<string> GetEntityFromPrincipal()
         {
             var user = _claimsPrincipalProvider.GetUser();
@@ -146,21 +145,7 @@ namespace Altinn.Platform.Events.Services
 
         private async Task<bool> AuthorizeAccessToSubscription(Subscription eventsSubscription)
         {
-            var user = _claimsPrincipalProvider.GetUser();
-            string currentIdenity = string.Empty;
-
-            if (!string.IsNullOrEmpty(user.GetOrg()))
-            {
-                currentIdenity = OrgPrefix + user.GetOrg();
-            }
-            else if (!string.IsNullOrEmpty(user.GetOrgNumber()))
-            {
-                currentIdenity = PartyPrefix + await _register.PartyLookup(user.GetOrgNumber(), null);
-            }
-            else if (user.GetUserIdAsInt().HasValue)
-            {
-                currentIdenity = UserPrefix + user.GetUserIdAsInt().Value;
-            }
+            string currentIdenity = await GetEntityFromPrincipal();
 
             if (eventsSubscription.CreatedBy.Equals(currentIdenity))
             {
