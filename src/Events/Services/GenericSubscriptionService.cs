@@ -53,7 +53,7 @@ namespace Altinn.Platform.Events.Services
         {
             if (!UriExtensions.IsValidUrlOrUrn(eventsSubscription.SourceFilter))
             {
-                message = "Source filter must be a valid URN or an URL using https scheme.";
+                message = "Source filter must be a valid URN or a URL using https scheme.";
                 return false;
             }
 

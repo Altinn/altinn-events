@@ -72,7 +72,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_InvalidUrnProvidedAsEn_ReturnsError()
         {
             // Arrange 
-            string expectedErrorMessage = "Source filter must be a valid URN or an URL using https scheme.";
+            string expectedErrorMessage = "Source filter must be a valid URN or a URL using https scheme.";
 
             var input = new Subscription
             {
