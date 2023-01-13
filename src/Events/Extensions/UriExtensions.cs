@@ -69,7 +69,7 @@ namespace Altinn.Platform.Events.Extensions
         public static bool IsValidUrlOrUrn(Uri uri)
         {
             string pattern = @"\burn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+";
-            return Regex.IsMatch(uri.ToString(), pattern) || uri.Scheme == "https";
+            return uri.Scheme == "https" || Regex.IsMatch(uri.ToString(), pattern, RegexOptions.None, TimeSpan.FromSeconds(0.5));
         }
 
         private static string GetUrlUptoNthSegment(Uri uri, int n)
