@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Altinn.Platform.Events.Extensions
 {
@@ -62,13 +63,22 @@ namespace Altinn.Platform.Events.Extensions
             return segmentHashes;
         }
 
+        /// <summary>
+        ///  Validates that the provided uri is a urn or an url with the https scheme.
+        /// </summary>
+        public static bool IsValidUrlOrUrn(Uri uri)
+        {
+            string pattern = @"\burn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+";
+            return Regex.IsMatch(uri.ToString(), pattern) || uri.Scheme == "https";
+        }
+
         private static string GetUrlUptoNthSegment(Uri uri, int n)
         {
             StringBuilder partUri = new(uri.Scheme + Uri.SchemeDelimiter + uri.DnsSafeHost);
 
             for (int i = 0; i < n; i++)
             {
-               partUri.Append(uri.Segments[i]);
+                partUri.Append(uri.Segments[i]);
             }
 
             return partUri.ToString().TrimEnd('/');

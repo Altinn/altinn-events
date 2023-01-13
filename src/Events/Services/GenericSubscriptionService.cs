@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -50,6 +51,12 @@ namespace Altinn.Platform.Events.Services
 
         private static bool ValidateSubscription(Subscription eventsSubscription, out string message)
         {
+            if (!UriExtensions.IsValidUrlOrUrn(eventsSubscription.SourceFilter))
+            {
+                message = "Source filter must be a valid URN or an URL using https scheme.";
+                return false;
+            }
+
             if (!string.IsNullOrEmpty(eventsSubscription.AlternativeSubjectFilter))
             {
                 message = "AlternativeSubject is not supported for subscriptions on generic event sources.";

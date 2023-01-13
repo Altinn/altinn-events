@@ -68,6 +68,29 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
+        [Fact]
+        public async Task CreateSubscription_InvalidUrnProvidedAsEn_ReturnsError()
+        {
+            // Arrange 
+            string expectedErrorMessage = "Source filter must be a valid URN or an URL using https scheme.";
+
+            var input = new Subscription
+            {
+                SubjectFilter = "/dog/bruno",
+                EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
+                SourceFilter = new Uri("telnet://ole:qwerty@altinn.no:45432/")
+            };
+
+            var sut = GetGenericSubscriptionService();
+
+            // Act
+            (var _, ServiceError actual) = await sut.CreateSubscription(input);
+
+            // Assert
+            Assert.Equal(400, actual.ErrorCode);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+        }
+
         private static GenericSubscriptionService GetGenericSubscriptionService(
             Mock<ISubscriptionRepository> repoMock = null)
         {
