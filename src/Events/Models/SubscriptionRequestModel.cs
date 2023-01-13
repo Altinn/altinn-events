@@ -35,11 +35,6 @@ namespace Altinn.Platform.Events.Models
         public string TypeFilter { get; set; }
 
         /// <summary>
-        /// The subject intended to receive the events
-        /// </summary>
-        public string Consumer { get; set; }
-
-        /// <summary>
         /// Serializes the subscription request to a JSON string.
         /// </summary>
         /// <returns>Serialized cloud event</returns>

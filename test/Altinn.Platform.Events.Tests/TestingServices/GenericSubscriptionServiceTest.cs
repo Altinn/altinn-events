@@ -27,7 +27,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange 
             var input = new Subscription
             {
-                Consumer = "/owner/223596",
                 SubjectFilter = "/dog/bruno",
                 EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
                 SourceFilter = new Uri("https://doggy-daycare.no/booking")
@@ -41,30 +40,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal("/org/ttd", actual.CreatedBy);
+            Assert.Equal("/org/ttd", actual.Consumer);
             repoMock.VerifyAll();
-        }
-
-        [Fact]
-        public async Task CreateSubscription_ConsumerNotProvided_ReturnsError()
-        {
-            // Arrange 
-            string expectedErrorMessage = "Consumer is required.";
-
-            var input = new Subscription
-            {
-                SubjectFilter = "/dog/bruno",
-                EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
-                SourceFilter = new Uri("https://doggy-daycare.no/booking")
-            };
-
-            var sut = GetGenericSubscriptionService();
-
-            // Act
-            (var _, ServiceError actual) = await sut.CreateSubscription(input);
-
-            // Assert
-            Assert.Equal(400, actual.ErrorCode);
-            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
         [Fact]
@@ -75,7 +52,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var input = new Subscription
             {
-                Consumer = "/owner/223596",
                 SubjectFilter = "/dog/bruno",
                 EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
                 SourceFilter = new Uri("https://doggy-daycare.no/booking"),

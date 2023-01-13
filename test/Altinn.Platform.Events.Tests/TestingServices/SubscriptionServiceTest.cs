@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -101,13 +102,61 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _repositoryMock.VerifyAll();
         }
 
+        [Theory]
+        [InlineData(EntityType.Org, "ttd", "/org/ttd")]
+        [InlineData(EntityType.Organisation, "987654321", "/party/1337")]
+        [InlineData(EntityType.User, "1406840", "/user/1406840")]
+        public async Task GetEntityFromPrincipal(EntityType entityType, string entityKeyValue, string expectedEntity)
+        {
+            // Arrange
+            ClaimsPrincipal principal = null;
+
+            switch (entityType)
+            {
+                case EntityType.User:
+                    principal = PrincipalUtil.GetClaimsPrincipal(int.Parse(entityKeyValue), 2);
+                    break;
+                case EntityType.Org:
+                    principal = PrincipalUtil.GetClaimsPrincipal(entityKeyValue, "87364765");
+                    break;
+                case EntityType.Organisation:
+                    principal = PrincipalUtil.GetClaimsPrincipal(entityKeyValue);
+                    break;
+            }
+
+            Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
+            claimsPrincipalProviderMock.Setup(
+                s => s.GetUser()).Returns(principal);
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock.Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s == null)))
+                .ReturnsAsync(1337);
+
+            SubscriptionService subscriptionService =
+             GetSubscriptionService(null, claimsPrincipalProviderMock.Object, registerMock.Object);
+
+            // Act
+            var actualEntity = await subscriptionService.GetEntityFromPrincipal();
+
+            // Assert
+            Assert.Equal(expectedEntity, actualEntity);
+        }
+
+        public enum EntityType
+        {
+            User,
+            Org,
+            Organisation
+        }
+
         private static SubscriptionService GetSubscriptionService(
             ISubscriptionRepository repository = null,
-            IClaimsPrincipalProvider claimsPrincipalProvider = null)
+            IClaimsPrincipalProvider claimsPrincipalProvider = null,
+            IRegisterService registerMock = null)
         {
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
-                new Mock<IRegisterService>().Object,
+                registerMock ?? new Mock<IRegisterService>().Object,
                 new EventsQueueClientMock(),
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
         }

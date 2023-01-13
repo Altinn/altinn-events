@@ -115,89 +115,38 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <summary>
-        /// Enriches the consumer based on the claims principal
-        /// </summary>        
-        internal async Task EnrichConsumer(Subscription eventsSubscription)
-        {
-            if (string.IsNullOrEmpty(eventsSubscription.Consumer))
-            {
-                var user = _claimsPrincipalProvider.GetUser();
-                string org = user.GetOrg();
-                if (!string.IsNullOrEmpty(org))
-                {
-                    eventsSubscription.Consumer = OrgPrefix + org;
-                    return;
-                }
-
-                int? userId = user.GetUserIdAsInt();
-                if (userId.HasValue)
-                {
-                    eventsSubscription.Consumer = UserPrefix + userId.Value;
-                    return;
-                }
-
-                string organization = user.GetOrgNumber();
-                if (!string.IsNullOrEmpty(organization))
-                {
-                    int partyId = await _register.PartyLookup(organization, null);
-                    eventsSubscription.Consumer = PartyPrefix + partyId;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Sets created by on the subscription based on the claims principal
+        /// Retrieves the current entity based on the claims principal
         /// </summary>
-        internal async Task SetCreatedBy(Subscription eventsSubscription)
+        internal async Task<string> GetEntityFromPrincipal()
         {
             var user = _claimsPrincipalProvider.GetUser();
 
             string org = user.GetOrg();
             if (!string.IsNullOrEmpty(org))
             {
-                eventsSubscription.CreatedBy = OrgPrefix + org;
-                return;
+                return OrgPrefix + org;
             }
 
             int? userId = user.GetUserIdAsInt();
             if (userId.HasValue)
             {
-                eventsSubscription.CreatedBy = UserPrefix + userId.Value;
-                return;
+                return UserPrefix + userId.Value;
             }
 
             string organization = user.GetOrgNumber();
             if (!string.IsNullOrEmpty(organization))
             {
                 int partyId = await _register.PartyLookup(organization, null);
-                eventsSubscription.CreatedBy = PartyPrefix + partyId;
+                return PartyPrefix + partyId;
             }
+
+            return null;
         }
 
         private async Task<bool> AuthorizeAccessToSubscription(Subscription eventsSubscription)
         {
-            var user = _claimsPrincipalProvider.GetUser();
-            string currentIdenity = string.Empty;
-
-            if (!string.IsNullOrEmpty(user.GetOrg()))
-            {
-                currentIdenity = OrgPrefix + user.GetOrg();
-            }
-            else if (!string.IsNullOrEmpty(user.GetOrgNumber()))
-            {
-                currentIdenity = PartyPrefix + await _register.PartyLookup(user.GetOrgNumber(), null);
-            }
-            else if (user.GetUserIdAsInt().HasValue)
-            {
-                currentIdenity = UserPrefix + user.GetUserIdAsInt().Value;
-            }
-
-            if (eventsSubscription.CreatedBy.Equals(currentIdenity))
-            {
-                return true;
-            }
-
-            return false;
+            string currentIdenity = await GetEntityFromPrincipal();
+            return eventsSubscription.CreatedBy.Equals(currentIdenity);
         }
     }
 }

@@ -30,7 +30,9 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<(Subscription Subscription, ServiceError Error)> CreateSubscription(Subscription eventsSubscription)
         {
-            await SetCreatedBy(eventsSubscription);
+            var currentEntity = await GetEntityFromPrincipal();
+            eventsSubscription.CreatedBy = currentEntity;
+            eventsSubscription.Consumer = currentEntity;
 
             if (!ValidateSubscription(eventsSubscription, out string message))
             {
@@ -48,12 +50,6 @@ namespace Altinn.Platform.Events.Services
 
         private static bool ValidateSubscription(Subscription eventsSubscription, out string message)
         {
-            if (string.IsNullOrEmpty(eventsSubscription.Consumer))
-            {
-                message = "Consumer is required.";
-                return false;
-            }
-
             if (!string.IsNullOrEmpty(eventsSubscription.AlternativeSubjectFilter))
             {
                 message = "AlternativeSubject is not supported for subscriptions on generic event sources.";
@@ -66,8 +62,6 @@ namespace Altinn.Platform.Events.Services
 
         private static bool AuthorizeSubscription()
         {
-            // if consumer can be set at random, should and can we control who creates a subscription with a given consumer? consumer: "The queen", createdBy: /org/ttd or /user/123
-
             // Further authorization to be implemented in Altinn/altinn-events#259
             return true;
         }
