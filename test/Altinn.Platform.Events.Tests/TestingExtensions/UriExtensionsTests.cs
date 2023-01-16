@@ -10,7 +10,7 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
 {
     public class UriExtensionsTests
     {
-        [Theory]        
+        [Theory]
         [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test", "E9F8E9ED2A9DABC8123FFCF1B14AE6A8")]
         [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test-v2", "1D53F5D431A0A84FA0DF31AB0E06672C")]
         [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test/-v2", "AF00680EAB3ABA2A595D5C6B308B384C")]
@@ -76,6 +76,20 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
 
             // Assert
             Assert.Empty(actual.Except(expected));
+        }
+
+        [Theory]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test", true)]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test-v2/", true)]
+        [InlineData("urn:namespaceid:ttd:apps:apps-test", true)]
+        [InlineData("urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66", true)]
+        [InlineData("telnet://ole:qwerty@altinn.no:45432/", false)]
+        [InlineData("http://vg.no", false)]
+        public void IsValidUrlOrUrn(string uri, bool expected)
+        {
+            bool actual = UriExtensions.IsValidUrlOrUrn(new Uri(uri));
+
+            Assert.Equal(expected, actual);
         }
     }
 }
