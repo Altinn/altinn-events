@@ -3,9 +3,12 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+
+using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Models.Payloads;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions.Services

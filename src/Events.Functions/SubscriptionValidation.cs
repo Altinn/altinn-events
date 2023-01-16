@@ -7,6 +7,8 @@ using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Altinn.Platform.Events.Models;
 
+using CloudNative.CloudEvents;
+
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -57,12 +59,11 @@ namespace Altinn.Platform.Events.Functions
                 Consumer = subscription.Consumer,
                 Endpoint = subscription.EndPoint,
                 SubscriptionId = subscription.Id,
-                CloudEvent = new()
+                CloudEvent = new(CloudEventsSpecVersion.V1_0)
                 {
                     Id = Guid.NewGuid().ToString(),
                     Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
                     Type = "platform.events.validatesubscription",
-                    SpecVersion = "1.0"
                 }
             };
 
