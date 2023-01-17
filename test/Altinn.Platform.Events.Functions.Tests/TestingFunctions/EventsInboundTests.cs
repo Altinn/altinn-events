@@ -10,32 +10,8 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
 {
     public class EventsInboundTests
     {
-        [Theory]
-        [InlineData("{\"id\":\"f276d3da-9b72-492b-9fee-9cf71e2826a2\",\"source\":\"https://ttd.apps.at23.altinn.cloud/ttd/apps-test/instances/50012356/8f66119a-39eb-49ea-a34e-6b99ec6af319\",\"specversion\":\"1.0\",\"type\":\"app.instance.created\",\"subject\":\"/party/50012356\",\"time\":\"2023-01-13T09:47:41.1680188Z\",\"alternativesubject\":\"/person/16035001577\"}", 1, "alternativesubject", "/person/16035001577")]
-        public async Task PostInbound_ConfirmDeserializationOfEvent(string serializedCloudEvent, int expectedExtensionAttributeCount, string extensionAttributeName, string expectedValue)
-        {
-
-            // Arrange
-            CloudEvent serviceInput = null;
-            Mock<IEventsClient> clientMock = new();
-            clientMock.Setup(c => c.PostOutbound(It.IsAny<CloudEvent>()))
-                .Callback<CloudEvent>(e => serviceInput = e)
-                .Returns(Task.CompletedTask);
-
-            EventsInbound sut = new EventsInbound(clientMock.Object);
-
-            // Act
-            await sut.Run(serializedCloudEvent, null);
-
-            // Assert
-
-            clientMock.VerifyAll();
-            Assert.NotNull(serviceInput);
-            AssertExpectedCloudEvent(serviceInput, expectedExtensionAttributeCount, extensionAttributeName, expectedValue);
-        }
-
         [Fact]
-        public async Task PostInbound_ConfirmDeserializationOfEvent_AlternativeSubject()
+        public async Task Run_ConfirmDeserializationOfEvent_AlternativeSubject()
         {
 
             // Arrange
@@ -64,7 +40,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
         }
 
         [Fact]
-        public async Task PostInbound_ConfirmDeserializationOfEvent_TwoExtensionAttributes()
+        public async Task Run_ConfirmDeserializationOfEvent_TwoExtensionAttributes()
         {
 
             // Arrange
@@ -93,7 +69,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
         }
 
         [Fact]
-        public async Task PostInbound_ConfirmDeserializationOfEvent_DataPropertiesPerserved()
+        public async Task Run_ConfirmDeserializationOfEvent_DataPropertiesPerserved()
         {
 
             // Arrange
