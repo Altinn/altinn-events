@@ -130,7 +130,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             Assert.Equal("text/xml", serviceInput.DataContentType.ToString());
         }
 
-        private bool AssertExpectedCloudEvent(CloudEvent cloudEvent, int expectedExtensionAttributeCount, string extensionAttributeName, string expectedValue)
+        private static bool AssertExpectedCloudEvent(CloudEvent cloudEvent, int expectedExtensionAttributeCount, string extensionAttributeName, string expectedValue)
         {
             string actualExtensionAttribute = cloudEvent
                 .GetPopulatedAttributes()
