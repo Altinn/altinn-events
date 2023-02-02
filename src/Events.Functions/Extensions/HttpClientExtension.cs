@@ -22,8 +22,8 @@ namespace Altinn.Platform.Events.Functions.Extensions
         {
             HttpRequestMessage request = new(HttpMethod.Post, new Uri(requestUri, UriKind.Relative))
             {
-                Content = content;
-            }
+                Content = content
+            };
 
             if (!string.IsNullOrEmpty(platformAccessToken))
             {

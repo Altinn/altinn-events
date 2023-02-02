@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             // Arrange
             string expectedPayload = "";
 
-            CloudEventEnvelope input = new CloudEventEnvelope
+            CloudEventEnvelope input = new()
             {
                 CloudEvent = new(CloudNative.CloudEvents.CloudEventsSpecVersion.V1_0)
                 {
