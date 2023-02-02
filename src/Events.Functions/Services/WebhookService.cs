@@ -40,7 +40,7 @@ namespace Altinn.Platform.Events.Functions.Services
             try
             {
                 HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent);
-                if (response.StatusCode != HttpStatusCode.OK)
+                if (!response.IsSuccessStatusCode)
                 {
                     string reason = await response.Content.ReadAsStringAsync();
                     _logger.LogError($"// WebhookService // Send // Failed to send cloud event id {envelope.CloudEvent.Id}, subscriptionId: {envelope.SubscriptionId}. \nReason: {reason} \nResponse: {response}");
@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Functions.Services
             {
                 SlackEnvelope slackEnvelope = new()
                 {
-                    CloudEvent = envelope.CloudEvent.Serialize()
+                    CloudEvent = envelope.CloudEvent
                 };
                 return slackEnvelope.Serialize();
             }
