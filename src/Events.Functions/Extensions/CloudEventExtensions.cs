@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Functions.Extensions
         ///  Deserializes a json string to a the cloud event using a JsonEventFormatter
         /// </summary>
         /// <returns>The cloud event</returns>
-        public static CloudEvent DeserializeToClodEvent(this string item)
+        public static CloudEvent DeserializeToCloudEvent(this string item)
         {
             var formatter = new JsonEventFormatter();
 

@@ -55,7 +55,10 @@ namespace Altinn.Platform.Events.Functions.Services
             }
         }
 
-        private string GetPayload(CloudEventEnvelope envelope)
+        /// <summary>
+        /// Prepares the provided cloud envelope as serialized payload
+        /// </summary>
+        internal string GetPayload(CloudEventEnvelope envelope)
         {
             if (envelope.Endpoint.OriginalString.Contains(_slackUri))
             {

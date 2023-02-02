@@ -35,11 +35,11 @@ namespace Altinn.Platform.Events.Functions
         public async Task Run([QueueTrigger("events-registration", Connection = "QueueStorage")] string item, ILogger log)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
-            CloudEvent cloudEvent = item.DeserializeToClodEvent();
+            CloudEvent cloudEvent = item.DeserializeToCloudEvent();
 
             /*
-            Attempt to save cloudEvent. 
-            If saving fails, the cloudEvent will automatically be 
+            Attempt to save cloudEvent.
+            If saving fails, the cloudEvent will automatically be
             returned to events-registration queue for retry handling.
             */
 

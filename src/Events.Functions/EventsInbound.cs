@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Functions
         public async Task Run([QueueTrigger("events-inbound", Connection = "QueueStorage")] string item, ILogger log)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
-            CloudEvent cloudEvent = item.DeserializeToClodEvent();
+            CloudEvent cloudEvent = item.DeserializeToCloudEvent();
             await _eventsClient.PostOutbound(cloudEvent);
         }
     }

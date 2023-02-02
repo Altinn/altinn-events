@@ -51,7 +51,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             {
                 await sut.Run(serializedCloudEvent, null);
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
             }
 

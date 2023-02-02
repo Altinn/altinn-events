@@ -44,9 +44,10 @@ namespace Altinn.Platform.Events.Functions.Models
         /// <returns>The cloud event envelope object</returns>
         public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
         {
-            var n = JsonNode.Parse(serializedEnvelope);
+            var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
+
             string serializedCloudEvent = n["cloudEvent"].ToString();
-            var cloudEvent = serializedCloudEvent.DeserializeToClodEvent();
+            var cloudEvent = serializedCloudEvent.DeserializeToCloudEvent();
 
             n["cloudEvent"] = null;
             CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(
