@@ -123,7 +123,7 @@ namespace Altinn.Platform.Events.Functions.Clients
             var accessToken = await GenerateAccessToken();
 
             HttpResponseMessage response = await _client.PostAsync(endpoint, httpContent, accessToken);
-            if (response.StatusCode != HttpStatusCode.OK)
+            if (!response.IsSuccessStatusCode)
             {
                 return (false, response.StatusCode);
             }

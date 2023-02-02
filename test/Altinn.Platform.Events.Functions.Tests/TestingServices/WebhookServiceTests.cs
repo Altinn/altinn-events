@@ -1,12 +1,6 @@
 ﻿using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using Xunit;
 
 namespace Altinn.Platform.Events.Functions.Tests.TestingServices
