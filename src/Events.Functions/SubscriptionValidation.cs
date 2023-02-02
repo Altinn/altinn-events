@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Models;
@@ -28,8 +29,8 @@ namespace Altinn.Platform.Events.Functions
         /// Initializes a new instance of the <see cref="SubscriptionValidation"/> class.
         /// </summary>
         public SubscriptionValidation(
-            IWebhookService webhookService,
             IOptions<PlatformSettings> eventsConfig,
+            IWebhookService webhookService,
             IEventsClient eventsClient)
         {
             _platformSettings = eventsConfig.Value;
@@ -52,7 +53,10 @@ namespace Altinn.Platform.Events.Functions
             await _eventsClient.ValidateSubscription(cloudEventEnvelope.SubscriptionId);
         }
 
-        private CloudEventEnvelope CreateValidateEvent(Subscription subscription)
+        /// <summary>
+        /// Createas a cloud event envelope to wrap the subscription validation event
+        /// </summary>
+        internal CloudEventEnvelope CreateValidateEvent(Subscription subscription)
         {
             CloudEventEnvelope cloudEventEnvelope = new()
             {

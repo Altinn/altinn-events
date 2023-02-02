@@ -9,7 +9,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
 {
     public class WebhookServiceTests
     {
-        public static string cloudEventId = "1337";
+        private const string cloudEventId = "1337";
 
         [Fact]
         public void GetPayload_CloudEventExtentionAttributesPersisted()
