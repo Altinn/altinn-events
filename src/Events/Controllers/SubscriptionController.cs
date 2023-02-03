@@ -86,6 +86,11 @@ namespace Altinn.Platform.Events.Controllers
                 isAppSubscription = false;
             }
 
+            if (subscriptionRequest.EndPoint == null || !Uri.IsWellFormedUriString(subscriptionRequest.EndPoint.ToString(), UriKind.Absolute))
+            {
+                return StatusCode(400, "Missing or invalid endpoint to push events towards");
+            }
+
             Subscription eventsSubscription = _mapper.Map<Subscription>(subscriptionRequest);
 
             (Subscription createdSubscription, ServiceError error) = isAppSubscription ?
