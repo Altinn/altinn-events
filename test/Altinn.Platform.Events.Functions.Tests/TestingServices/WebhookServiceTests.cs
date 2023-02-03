@@ -198,7 +198,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
 
             messageHandlerMock.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Equals(clientEndpoint)), ItExpr.IsAny<CancellationToken>())
-                .Returns(async (HttpRequestMessage request, CancellationToken _) =>
+                .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
                 {
                     return response;
                 })

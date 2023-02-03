@@ -131,7 +131,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 HttpStatusCode.ServiceUnavailable);
 
             var sut = CreateTestInstance(handlerMock.Object);
-    
+
             // Act
 
             await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.PostInbound(_cloudEvent));
@@ -235,13 +235,13 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
-        private Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpStatusCode statusCode)
+        private static Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpStatusCode statusCode)
         {
             var messageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
 
             messageHandlerMock.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Equals(clientEndpoint)), ItExpr.IsAny<CancellationToken>())
-                .Returns(async (HttpRequestMessage request, CancellationToken token) =>
+                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
                 {
                     var response = new HttpResponseMessage(statusCode);
                     return response;

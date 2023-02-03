@@ -147,6 +147,5 @@ namespace Altinn.Platform.Events.Functions.Clients
 
             return (true, response.StatusCode);
         }
-
     }
 }
