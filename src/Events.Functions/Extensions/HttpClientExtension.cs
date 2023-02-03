@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,8 +7,9 @@ using System.Threading.Tasks;
 namespace Altinn.Platform.Events.Functions.Extensions
 {
     /// <summary>
-    /// This extension is created to make it easy to add a bearer token to a HttpRequests. 
+    /// This extension is created to make it easy to add a bearer token to a HttpRequests.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public static class HttpClientExtension
     {
         /// <summary>
@@ -20,10 +22,10 @@ namespace Altinn.Platform.Events.Functions.Extensions
         /// <returns>A HttpResponseMessage</returns>
         public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string requestUri, HttpContent content, string platformAccessToken = null)
         {
-#pragma warning disable IDE0017 // Simplify object initialization
-            HttpRequestMessage request = new(HttpMethod.Post, new Uri(requestUri, UriKind.Relative));
-#pragma warning restore IDE0017 // Simplify object initialization
-            request.Content = content;
+            HttpRequestMessage request = new(HttpMethod.Post, new Uri(requestUri, UriKind.Relative))
+            {
+                Content = content
+            };
 
             if (!string.IsNullOrEmpty(platformAccessToken))
             {

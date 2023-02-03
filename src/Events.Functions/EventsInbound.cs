@@ -1,7 +1,10 @@
-using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
-using Altinn.Platform.Events.Functions.Models;
+using Altinn.Platform.Events.Functions.Extensions;
+
+using CloudNative.CloudEvents;
+
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +33,7 @@ namespace Altinn.Platform.Events.Functions
         public async Task Run([QueueTrigger("events-inbound", Connection = "QueueStorage")] string item, ILogger log)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
-            CloudEvent cloudEvent = JsonSerializer.Deserialize<CloudEvent>(item);
+            CloudEvent cloudEvent = item.DeserializeToCloudEvent();
             await _eventsClient.PostOutbound(cloudEvent);
         }
     }

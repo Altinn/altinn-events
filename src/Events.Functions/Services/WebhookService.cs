@@ -3,9 +3,12 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+
+using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Models.Payloads;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions.Services
@@ -37,7 +40,7 @@ namespace Altinn.Platform.Events.Functions.Services
             try
             {
                 HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent);
-                if (response.StatusCode != HttpStatusCode.OK)
+                if (!response.IsSuccessStatusCode)
                 {
                     string reason = await response.Content.ReadAsStringAsync();
                     _logger.LogError($"// WebhookService // Send // Failed to send cloud event id {envelope.CloudEvent.Id}, subscriptionId: {envelope.SubscriptionId}. \nReason: {reason} \nResponse: {response}");
@@ -52,13 +55,16 @@ namespace Altinn.Platform.Events.Functions.Services
             }
         }
 
-        private string GetPayload(CloudEventEnvelope envelope)
+        /// <summary>
+        /// Prepares the provided cloud envelope as serialized payload
+        /// </summary>
+        internal string GetPayload(CloudEventEnvelope envelope)
         {
             if (envelope.Endpoint.OriginalString.Contains(_slackUri))
             {
                 SlackEnvelope slackEnvelope = new()
                 {
-                    CloudEvent = envelope.CloudEvent.Serialize()
+                    CloudEvent = envelope.CloudEvent
                 };
                 return slackEnvelope.Serialize();
             }

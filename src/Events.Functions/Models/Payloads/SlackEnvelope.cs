@@ -1,5 +1,10 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+using Altinn.Platform.Events.Functions.Extensions;
+
+using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Functions.Models.Payloads
 {
@@ -12,7 +17,7 @@ namespace Altinn.Platform.Events.Functions.Models.Payloads
         /// Gets or sets the cloudevent as string.
         /// </summary>
         [JsonPropertyName("text")]
-        public string CloudEvent { get; set; }
+        public CloudEvent CloudEvent { get; set; }
 
         /// <summary>
         /// Serializes the SlackEnvelope to a JSON string.
@@ -20,7 +25,7 @@ namespace Altinn.Platform.Events.Functions.Models.Payloads
         /// <returns>Serialized slack envelope</returns>
         public string Serialize()
         {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+            return CloudEvent == null ? "{ }" : string.Format("{{\"text\": \"{0}\"}}", CloudEvent.Serialize());
         }
     }
 }

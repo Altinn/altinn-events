@@ -3,14 +3,16 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
+
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
-using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+
+using CloudNative.CloudEvents;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -72,16 +74,12 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// <inheritdoc/>
         public async Task SaveCloudEvent(CloudEvent cloudEvent)
         {
-            StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
-
-            var accessToken = await GenerateAccessToken();
-
             string endpointUrl = "storage/events";
+            var (success, statusCode) = await PostCloudEventToEndpoint(cloudEvent, endpointUrl);
 
-            HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
-            if (!response.IsSuccessStatusCode)
+            if (!success)
             {
-                var msg = $"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {response.StatusCode}";
+                var msg = $"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {statusCode}";
                 _logger.LogError(msg);
                 throw new HttpRequestException(msg);
             }
@@ -90,16 +88,13 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// <inheritdoc/>
         public async Task PostInbound(CloudEvent cloudEvent)
         {
-            StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
-
             string endpointUrl = "inbound";
 
-            var accessToken = await GenerateAccessToken();
+            var (success, statusCode) = await PostCloudEventToEndpoint(cloudEvent, endpointUrl);
 
-            HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
-            if (!response.IsSuccessStatusCode)
+            if (!success)
             {
-                var msg = $"// PostInbound with cloudEvent Id {cloudEvent.Id} failed, status code: {response.StatusCode}";
+                var msg = $"// PostInbound event with id {cloudEvent.Id} failed with status code {statusCode}";
                 _logger.LogError(msg);
                 throw new HttpRequestException(msg);
             }
@@ -108,19 +103,16 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// <inheritdoc/>
         public async Task PostOutbound(CloudEvent cloudEvent)
         {
-            StringContent httpContent = new(JsonSerializer.Serialize(cloudEvent), Encoding.UTF8, "application/json");
-
             string endpointUrl = "outbound";
 
-            var accessToken = await GenerateAccessToken();
+            var (success, statusCode) = await PostCloudEventToEndpoint(cloudEvent, endpointUrl);
 
-            HttpResponseMessage response = await _client.PostAsync(endpointUrl, httpContent, accessToken);
-            if (response.StatusCode != HttpStatusCode.OK)
+            if (!success)
             {
-                _logger.LogError(
-                    $"// Post outbound event with id {cloudEvent.Id} failed with status code {response.StatusCode}");
-                throw new HttpRequestException(
-                    $"// Post outbound event with id {cloudEvent.Id} failed with status code {response.StatusCode}");
+                var msg = $"// PostOutbound event with id {cloudEvent.Id} failed with status code {statusCode}";
+
+                _logger.LogError(msg);
+                throw new HttpRequestException(msg);
             }
         }
 
@@ -132,13 +124,28 @@ namespace Altinn.Platform.Events.Functions.Clients
             string endpointUrl = "subscriptions/validate/" + subscriptionId;
 
             HttpResponseMessage response = await _client.PutAsync(endpointUrl, null, accessToken);
-            if (response.StatusCode != HttpStatusCode.OK)
+            if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError(
-                    $"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
+                    $"// Validate subscription with id {subscriptionId} failed with status code {response.StatusCode}");
                 throw new HttpRequestException(
-                    $"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
+                    $"// Validate subscription with id {subscriptionId} failed with status code {response.StatusCode}");
             }
+        }
+
+        private async Task<(bool Success, HttpStatusCode StatusCode)> PostCloudEventToEndpoint(CloudEvent cloudEvent, string endpoint)
+        {
+            StringContent httpContent = new(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json");
+
+            var accessToken = await GenerateAccessToken();
+
+            HttpResponseMessage response = await _client.PostAsync(endpoint, httpContent, accessToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return (false, response.StatusCode);
+            }
+
+            return (true, response.StatusCode);
         }
     }
 }

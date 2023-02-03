@@ -1,8 +1,9 @@
-using System;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
-using Altinn.Platform.Events.Functions.Models;
+using Altinn.Platform.Events.Functions.Extensions;
+
+using CloudNative.CloudEvents;
+
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 
@@ -34,16 +35,16 @@ namespace Altinn.Platform.Events.Functions
         public async Task Run([QueueTrigger("events-registration", Connection = "QueueStorage")] string item, ILogger log)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
-                CloudEvent cloudEvent = JsonSerializer.Deserialize<CloudEvent>(item);
+            CloudEvent cloudEvent = item.DeserializeToCloudEvent();
 
-                /*
-                Attempt to save cloudEvent. 
-                If saving fails, the cloudEvent will automatically be 
-                returned to events-registration queue for retry handling.
-                */
+            /*
+            Attempt to save cloudEvent.
+            If saving fails, the cloudEvent will automatically be
+            returned to events-registration queue for retry handling.
+            */
 
-                await _eventsClient.SaveCloudEvent(cloudEvent);
-                await _eventsClient.PostInbound(cloudEvent);
-            }
+            await _eventsClient.SaveCloudEvent(cloudEvent);
+            await _eventsClient.PostInbound(cloudEvent);
+        }
     }
 }
