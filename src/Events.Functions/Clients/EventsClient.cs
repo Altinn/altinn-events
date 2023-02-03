@@ -94,7 +94,7 @@ namespace Altinn.Platform.Events.Functions.Clients
 
             if (!success)
             {
-                var msg = $"// PostInbound with cloudEvent Id {cloudEvent.Id} failed, status code: {statusCode}";
+                var msg = $"// PostInbound event with id {cloudEvent.Id} failed with status code {statusCode}";
                 _logger.LogError(msg);
                 throw new HttpRequestException(msg);
             }
@@ -109,10 +109,27 @@ namespace Altinn.Platform.Events.Functions.Clients
 
             if (!success)
             {
+                var msg = $"// PostOutbound event with id {cloudEvent.Id} failed with status code {statusCode}";
+
+                _logger.LogError(msg);
+                throw new HttpRequestException(msg);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task ValidateSubscription(int subscriptionId)
+        {
+            var accessToken = await GenerateAccessToken();
+
+            string endpointUrl = "subscriptions/validate/" + subscriptionId;
+
+            HttpResponseMessage response = await _client.PutAsync(endpointUrl, null, accessToken);
+            if (!response.IsSuccessStatusCode)
+            {
                 _logger.LogError(
-                    $"// Post outbound event with id {cloudEvent.Id} failed with status code {statusCode}");
+                    $"// Validate subscription with id {subscriptionId} failed with status code {response.StatusCode}");
                 throw new HttpRequestException(
-                    $"// Post outbound event with id {cloudEvent.Id} failed with status code {statusCode}");
+                    $"// Validate subscription with id {subscriptionId} failed with status code {response.StatusCode}");
             }
         }
 
@@ -131,21 +148,5 @@ namespace Altinn.Platform.Events.Functions.Clients
             return (true, response.StatusCode);
         }
 
-        /// <inheritdoc/>
-        public async Task ValidateSubscription(int subscriptionId)
-        {
-            var accessToken = await GenerateAccessToken();
-
-            string endpointUrl = "subscriptions/validate/" + subscriptionId;
-
-            HttpResponseMessage response = await _client.PutAsync(endpointUrl, null, accessToken);
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                _logger.LogError(
-                    $"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
-                throw new HttpRequestException(
-                    $"// Validate subscription with id {subscriptionId} failed with statuscode {response.StatusCode}");
-            }
-        }
     }
 }

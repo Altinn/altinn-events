@@ -192,17 +192,14 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             handlerMock.VerifyAll();
         }
 
-        private Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpResponseMessage response)
+        private static Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpResponseMessage response)
         {
             var messageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
 
             messageHandlerMock.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Equals(clientEndpoint)), ItExpr.IsAny<CancellationToken>())
-                .Returns(async (HttpRequestMessage request, CancellationToken token) =>
+                .Returns(async (HttpRequestMessage request, CancellationToken _) =>
                 {
-
-                    string requestMessageContent = await request.Content.ReadAsStringAsync();
-
                     return response;
                 })
                 .Verifiable();
