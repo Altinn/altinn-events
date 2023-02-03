@@ -16,7 +16,7 @@ From the command line:
 Further information on [installing k6 for running in docker is available here.](https://k6.io/docs/get-started/installation/#docker)
 
 
-Alternatively, it is possible to run the tests directly on your machine as well. 
+Alternatively, it is possible to run the tests directly on your machine as well.
 
 [General installation instructions are available here.](https://k6.io/docs/get-started/installation/)
 
@@ -29,17 +29,40 @@ The command should be run from the root of the k6 folder.
 
 >$> cd /altinn-events/test/k6
 
-Run test suite by specifying filename. 
+Run test suite by specifying filename.
 
 For example:
 
->$> docker-compose run k6 run /src/test/events.js -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***
+>$> docker-compose run k6 run /src/tests/events.js -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***
 
 The comand consists of three sections
 
 `docker-compose run` to run the test in a docker container
 
-`k6 run {path to test file}` pointing to the test file you want to run e.g. `/src/test/events.js`
+`k6 run {path to test file}` pointing to the test file you want to run e.g. `/src/tests/events.js`
 
 
 `-e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***` all environment variables that should be included in the request.
+
+
+### Webhook for subscriptions
+
+When testing the subscriptions a webook must be provided.
+You are free to provide whichever endpoint, but make sure it ends with `/`.
+
+We would suggest to use webhook.site.
+The following PowerShell script will generate a dedicated webhook to provide as the environment variable `webhookEndpoint`
+
+
+```ps
+$params = @{
+ Uri = "https://webhook.site/token"
+ Method = "Post"
+}
+
+$webhookToken =((Invoke-Webrequest @params).Content  | ConvertFrom-Json).uuid
+
+$webhookEndpoint= "https://webhook.site/" + $webhookToken + "/"
+```
+
+
