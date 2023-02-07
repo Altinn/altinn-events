@@ -89,7 +89,9 @@ namespace Altinn.Platform.Events.Tests.Mocks
             }
 
             List<Subscription> subscriptions = subscriptionEntries
-                .Where(s => sourceFilterHashes.Contains(s.SourceFilterHash) && subject.Equals(subject) && (string.IsNullOrEmpty(s.TypeFilter) || type.Equals(s.TypeFilter)))
+                .Where(s => sourceFilterHashes.Contains(s.SourceFilterHash) 
+                    && (string.IsNullOrEmpty(s.SubjectFilter) || s.SubjectFilter.Equals(subject))
+                    && (string.IsNullOrEmpty(s.TypeFilter) || type.Equals(s.TypeFilter)))
                 .Select(s =>
                     new Subscription 
                     {

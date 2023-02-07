@@ -98,7 +98,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// <summary>
         /// Scenario: Event without subject is to be pushed
         /// Expected result: Method returns successfully
-        /// Success criteria: Subscription repository is not called to retrieve subscriptions.
+        /// Success criteria: Subscription repository is called to retrieve subscriptions.
         /// </summary>
         /// <remarks>
         /// A workaround for generic events untill full support is in place. 
@@ -106,20 +106,22 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// The test may then be removed.
         /// </remarks>
         [Fact]
-        public async void PostOutbound_NoSubject_ExecutionStops()
+        public async void PostOutboundEventWithoutSubject_TwoMatchingSubscriptions_AddedToQueue()
         {
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed");
 
-            Mock<ISubscriptionRepository> repositoryMock = new();
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
 
-            var service = GetOutboundService(repositoryMock: repositoryMock.Object);
+            var service = GetOutboundService(queueMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(1));
         }
 
         /// <summary>
@@ -269,6 +271,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             {
                 Id = 16,
                 SourceFilter = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2"),
+                Consumer = "/org/ttd",
+                CreatedBy = "/org/ttd",
+                TypeFilter = "app.instance.process.completed"
+            };
+        }
+
+        private static Subscription GetGenericEventsSubscription()
+        {
+            return new Subscription()
+            {
+                Id = 16,
+                SourceFilter = new Uri("urn:testing-events:test-source"),
                 Consumer = "/org/ttd",
                 CreatedBy = "/org/ttd",
                 TypeFilter = "app.instance.process.completed"

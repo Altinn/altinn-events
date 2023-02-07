@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Policy;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -67,13 +68,7 @@ namespace Altinn.Platform.Events.Services
             {
                 eventSource = GetSourceFilter(cloudEvent.Source);
             }
-
-            // subject is optional for cloud events. Returning without retrieveing subjections for now.
-            if (cloudEvent.Subject == null)
-            {
-                return;
-            }
-
+           
             List<Subscription> subscriptions = await _subscriptionRepository.GetSubscriptions(
                  eventSource.GetMD5HashSets(),
                  eventSource.ToString(),
@@ -86,7 +81,7 @@ namespace Altinn.Platform.Events.Services
 
         private async Task AuthorizeAndPush(CloudEvent cloudEvent, List<Subscription> subscriptions)
         {
-            foreach (Subscription subscription in subscriptions)
+            foreach (Subscription subscription in subscriptions ?? new List<Subscription>())
             {
                 await AuthorizeAndEnqueueOutbound(cloudEvent, subscription);
             }
@@ -94,7 +89,21 @@ namespace Altinn.Platform.Events.Services
 
         private async Task AuthorizeAndEnqueueOutbound(CloudEvent cloudEvent, Subscription subscription)
         {
-            if (await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer))
+            if (cloudEvent.Source.Scheme == "urn" &&
+                await AuthorizeConsumerForGenericEvent(cloudEvent, subscription.Consumer))
+            {
+                CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
+
+                var receipt = await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
+
+                if (!receipt.Success)
+                {
+                    _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEvent.Id, subscription.Id);
+                }
+            }
+
+            if (cloudEvent.Source.Scheme == "https" &&
+                await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer))
             {
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
 
@@ -118,6 +127,11 @@ namespace Altinn.Platform.Events.Services
             }
 
             return isAuthorized;
+        }
+
+        private async Task<bool> AuthorizeConsumerForGenericEvent(CloudEvent cloudEvent, string consumer)
+        {
+            return await Task.FromResult(true);
         }
 
         private static CloudEventEnvelope MapToEnvelope(CloudEvent cloudEvent, Subscription subscription)
@@ -156,7 +170,7 @@ namespace Altinn.Platform.Events.Services
             }
             else
             {
-                return null;
+                return source;
             }
         }
 

@@ -88,5 +88,25 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": ""
+  },
+  {
+    "Id": "10",
+    "Sourcefilter": "urn:testing-events:test-source",
+    "Consumer": "/org/ttd",
+    "CreatedBy": "/org/ttd",
+    "Typefilter": "app.instance.process.completed",
+    "EndPoint": "https://www.ttd.no/webhook",
+    "Created": "2020-10-13T11:50:29.463221+00",
+    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8"
+  },
+  {
+    "Id": "11",
+    "Sourcefilter": "urn:testing-events:test-source",
+    "Subjectfilter": "/party/1336",
+    "Consumer": "/org/ttd",
+    "CreatedBy": "/org/ttd",
+    "EndPoint": "https://www.ttd.no/webhook",
+    "Created": "2020-10-13T11:50:29.463221+00",
+    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8"
   }
 ]
