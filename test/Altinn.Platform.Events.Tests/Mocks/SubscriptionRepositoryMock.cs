@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -89,9 +88,9 @@ namespace Altinn.Platform.Events.Tests.Mocks
             }
 
             List<Subscription> subscriptions = subscriptionEntries
-                .Where(s => sourceFilterHashes.Contains(s.SourceFilterHash) 
-                    && (string.IsNullOrEmpty(s.SubjectFilter) || s.SubjectFilter.Equals(subject))
-                    && (string.IsNullOrEmpty(s.TypeFilter) || type.Equals(s.TypeFilter)))
+                .Where(s => sourceFilterHashes.Contains(s.SourceFilterHash)
+                    && (string.IsNullOrEmpty(s.TypeFilter) || s.TypeFilter.Equals(type))
+                    && (string.IsNullOrEmpty(s.SubjectFilter) || s.SubjectFilter.Equals(subject)))
                 .Select(s =>
                     new Subscription 
                     {

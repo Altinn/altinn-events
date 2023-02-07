@@ -89,22 +89,14 @@ namespace Altinn.Platform.Events.Services
 
         private async Task AuthorizeAndEnqueueOutbound(CloudEvent cloudEvent, Subscription subscription)
         {
-            if (cloudEvent.Source.Scheme == "urn" &&
-                await AuthorizeConsumerForGenericEvent(cloudEvent, subscription.Consumer))
-            {
-                CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
+            var authorized = 
+                (cloudEvent.Source.Scheme == "urn" && 
+                    await AuthorizeConsumerForGenericEvent(cloudEvent, subscription.Consumer))
+                || (cloudEvent.Source.Scheme == "https" &&
+                    await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer));
 
-                var receipt = await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
-
-                if (!receipt.Success)
-                {
-                    _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEvent.Id, subscription.Id);
-                }
-            }
-
-            if (cloudEvent.Source.Scheme == "https" &&
-                await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer))
-            {
+            if (authorized) 
+            { 
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
 
                 var receipt = await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
