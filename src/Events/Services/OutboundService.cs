@@ -80,7 +80,7 @@ namespace Altinn.Platform.Events.Services
 
         private async Task AuthorizeAndPush(CloudEvent cloudEvent, List<Subscription> subscriptions)
         {
-            foreach (Subscription subscription in subscriptions ?? new List<Subscription>())
+            foreach (Subscription subscription in subscriptions)
             {
                 await AuthorizeAndEnqueueOutbound(cloudEvent, subscription);
             }
@@ -89,10 +89,9 @@ namespace Altinn.Platform.Events.Services
         private async Task AuthorizeAndEnqueueOutbound(CloudEvent cloudEvent, Subscription subscription)
         {
             var authorized = 
-                (cloudEvent.Source.Scheme == "urn" && 
-                    await AuthorizeConsumerForGenericEvent(cloudEvent, subscription.Consumer))
-                || (cloudEvent.Source.Scheme == "https" &&
-                    await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer));
+                IsAppEvent(cloudEvent)
+                ? await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer)
+                : await AuthorizeConsumerForGenericEvent(cloudEvent, subscription.Consumer);
 
             if (authorized) 
             { 
