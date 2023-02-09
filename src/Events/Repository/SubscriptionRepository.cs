@@ -103,7 +103,7 @@ namespace Altinn.Platform.Events.Repository
                 Parameters =
                 {
                     new() { Value = sourceFilterHashes },
-                    new() { Value = subject },
+                    new() { Value = subject ?? string.Empty, NpgsqlDbType = NpgsqlDbType.Varchar, IsNullable = false },
                     new() { Value = type }
                 }
             };

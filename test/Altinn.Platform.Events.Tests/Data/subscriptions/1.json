@@ -12,7 +12,7 @@
   {
     "Id": "2",
     "Sourcefilter": "https://ttd.apps.altinn.no/ttd/endring-av-navn-v1",
-    "Subjectfilter": "/party/1336",
+    "Subjectfilter": "/party/1336/",
     "Consumer": "/org/ttd",
     "CreatedBy": "/org/ttd",
     "EndPoint": "https://www.ttd.no/webhook",
@@ -22,7 +22,7 @@
   {
     "Id": "3",
     "Sourcefilter": "https://ttd.apps.altinn.no/ttd/test-app",
-    "Subjectfilter": "/party/1337",
+    "Subjectfilter": "/party/1337/",
     "Consumer": "/org/ttd",
     "CreatedBy": "/party/1337",
     "EndPoint": "https://www.ttd.no/webhook",
@@ -32,7 +32,7 @@
   {
     "Id": "4",
     "Sourcefilter": "https://ttd.apps.altinn.no/ttd/new-app",
-    "Subjectfilter": "/party/1337",
+    "Subjectfilter": "/party/1337/",
     "Consumer": "/user/12345678",
     "CreatedBy": "/party/1337",
     "EndPoint": "https://www.ttd.no/webhook",
@@ -42,7 +42,7 @@
   {
     "Id": "5",
     "Sourcefilter": "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2",
-    "Subjectfilter": "/party/1337",
+    "Subjectfilter": "/party/1337/",
     "Consumer": "/user/1337",
     "CreatedBy": "/user/1337",
     "EndPoint": "https://www.ttd.no/webhook",
@@ -88,5 +88,25 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": ""
+  },
+  {
+    "Id": "10",
+    "Sourcefilter": "urn:testing-events:test-source",
+    "Consumer": "/org/ttd",
+    "CreatedBy": "/org/ttd",
+    "Typefilter": "app.instance.process.completed",
+    "EndPoint": "https://www.ttd.no/webhook",
+    "Created": "2020-10-13T11:50:29.463221+00",
+    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8"
+  },
+  {
+    "Id": "11",
+    "Sourcefilter": "urn:testing-events:test-source",
+    "SubjectFilter": "/party/1336",
+    "Consumer": "/org/ttd",
+    "CreatedBy": "/org/ttd",
+    "EndPoint": "https://www.ttd.no/webhook",
+    "Created": "2020-10-13T11:50:29.463221+00",
+    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8"
   }
 ]
