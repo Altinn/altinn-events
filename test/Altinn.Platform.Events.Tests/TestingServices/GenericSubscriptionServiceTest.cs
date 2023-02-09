@@ -21,15 +21,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     /// </summary>
     public class GenericSubscriptionServiceTest
     {
-        [Fact]
-        public async Task CreateSubscription_ValidAndAuthorizedSubscription_ReturnsNewSubscription()
+        [Theory]
+        [InlineData("https://fantastiske-hundepassere.no/events", "https://doggy-daycare.no/booking", "/dog/bruno")]
+        [InlineData("https://fantastiske-hundepassere.no", "https://doggy-daycare.no/booking", "/dog/bruno")]
+        [InlineData("https://fantastiske-hundepassere.no", "https://doggy-daycare.no", "/dog/bruno")]
+        public async Task CreateSubscription_ValidAndAuthorizedSubscription_ReturnsNewSubscription(string endpoint, string sourceFilter, string subjectFilter)
         {
             // Arrange 
             var input = new Subscription
             {
-                SubjectFilter = "/dog/bruno",
-                EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
-                SourceFilter = new Uri("https://doggy-daycare.no/booking")
+                SubjectFilter = subjectFilter,
+                EndPoint = new Uri(endpoint),
+                SourceFilter = new Uri(sourceFilter)
             };
 
             Mock<ISubscriptionRepository> repoMock = new();

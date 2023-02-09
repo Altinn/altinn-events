@@ -11,9 +11,14 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
     public class UriExtensionsTests
     {
         [Theory]
+        [InlineData("https://ttd.apps.altinn.cloud", "D34B794F06E1934F88FBEA351D9B0DF3")]
+        [InlineData("https://ttd.apps.altinn.cloud/", "D34B794F06E1934F88FBEA351D9B0DF3")]
         [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test", "E9F8E9ED2A9DABC8123FFCF1B14AE6A8")]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test/", "E9F8E9ED2A9DABC8123FFCF1B14AE6A8")]
         [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test-v2", "1D53F5D431A0A84FA0DF31AB0E06672C")]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test-v2/", "1D53F5D431A0A84FA0DF31AB0E06672C")]
         [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test/-v2", "AF00680EAB3ABA2A595D5C6B308B384C")]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test/-v2/", "AF00680EAB3ABA2A595D5C6B308B384C")]
         [InlineData("urn:namespaceid:ttd:apps:apps-test", "C3DE88BE83CDA065F60C53867E7320A7")]
         [InlineData("urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66", "BB85C459B7C780AF57BF6417A491F70A")]
         public void MD5HashUri(string uri, string expected)
@@ -24,7 +29,10 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
         }
 
         [Theory]
+        [InlineData("https://ttd.apps.altinn.cloud", 1, "D34B794F06E1934F88FBEA351D9B0DF3")]
+        [InlineData("https://ttd.apps.altinn.cloud/", 1, "D34B794F06E1934F88FBEA351D9B0DF3")]
         [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test/-v2", 4, "E9F8E9ED2A9DABC8123FFCF1B14AE6A8")]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test/-v2/", 4, "E9F8E9ED2A9DABC8123FFCF1B14AE6A8")]
         [InlineData("urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66", 2, "C30C0F37EDD5D9CBF36C03B16D963A32")]
         public void GetMD5HashSet(string uri, int expectedCount, string expectedContainingHash)
         {
@@ -34,8 +42,28 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
             Assert.Contains(expectedContainingHash, actual);
         }
 
+        [Theory]
+        [InlineData("https://ttd.apps.altinn.cloud")]
+        [InlineData("https://ttd.apps.altinn.cloud/")]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test")]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test/")]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test-v2")]
+        [InlineData("https://ttd.apps.altinn.cloud/ttd/apps-test/-v2")]
+        [InlineData("urn:namespaceid:ttd:apps:apps-test")]
+        [InlineData("urn:namespaceid:ttd:apps:apps-test:")]
+        [InlineData("urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66")]
+        public void MD5HashUriMatchedsHashSet(string uri)
+        {
+            var hashSets = UriExtensions.GetMD5HashSets(new Uri(uri));
+            var uriHash = UriExtensions.GetMD5Hash(new Uri(uri));
+
+            var matchFound = hashSets.Contains(uriHash);
+
+            Assert.True(matchFound);
+        }
+
         [Fact]
-        public void GetMD5HashSet_URLProdivided()
+        public void GetMD5HashSet_URLProvided()
         {
             // Arrange
             Uri uri = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50002108/25724855-f16c-4f10-b988-4542929df1aa");
