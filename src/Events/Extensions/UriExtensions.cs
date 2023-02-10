@@ -17,7 +17,7 @@ namespace Altinn.Platform.Events.Extensions
         /// </summary>
         public static string GetMD5Hash(this Uri uri)
         {
-            return GetMD5Hash(uri.ToString());
+            return GetMD5Hash(uri.ToString().TrimEnd('/'));
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace Altinn.Platform.Events.Extensions
                 partUri.Append(uri.Segments[i]);
             }
 
-            return partUri.ToString().TrimEnd('/');
+            return partUri.ToString().TrimEnd('/'); 
         }
 
         private static string GetMD5Hash(string input)
