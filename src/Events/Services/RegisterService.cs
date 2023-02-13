@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
@@ -60,7 +61,8 @@ namespace Altinn.Platform.Events.Services
             HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken);
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                party = await response.Content.ReadAsAsync<Party>();
+                party = await response.Content.ReadFromJsonAsync<Party>();
+
             }
             else
             {
@@ -86,7 +88,7 @@ namespace Altinn.Platform.Events.Services
             HttpResponseMessage response = await _client.PostAsync(bearerToken, endpointUrl, content, accessToken);
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                Party party = await response.Content.ReadAsAsync<Party>();
+                Party party = await response.Content.ReadFromJsonAsync<Party>();
                 return party.PartyId;
             }
             else

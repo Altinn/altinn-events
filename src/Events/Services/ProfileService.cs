@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Configuration;
@@ -57,7 +58,7 @@ namespace Altinn.Platform.Events.Services
             HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
-                userProfile = await response.Content.ReadAsAsync<UserProfile>();
+                userProfile = await response.Content.ReadFromJsonAsync<UserProfile>();
             }
             else
             {
