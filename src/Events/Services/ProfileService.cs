@@ -2,13 +2,18 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
+
 using AltinnCore.Authentication.Utils;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -25,6 +30,7 @@ namespace Altinn.Platform.Events.Services
         private readonly HttpClient _client;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly GeneralSettings _generalSettings;
+        private readonly JsonSerializerOptions _serializerOptions;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProfileService"/> class
@@ -44,6 +50,12 @@ namespace Altinn.Platform.Events.Services
             _client = httpClient;
             _accessTokenGenerator = accessTokenGenerator;
             _generalSettings = generalSettings.Value;
+
+            _serializerOptions = new()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                Converters = { new JsonStringEnumConverter() }
+            };
         }
 
         /// <inheritdoc />
@@ -58,7 +70,7 @@ namespace Altinn.Platform.Events.Services
             HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
-                userProfile = await response.Content.ReadFromJsonAsync<UserProfile>();
+                userProfile = await response.Content.ReadFromJsonAsync<UserProfile>(_serializerOptions);
             }
             else
             {
