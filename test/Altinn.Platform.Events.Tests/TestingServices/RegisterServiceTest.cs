@@ -5,14 +5,18 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Services;
+using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
 using Moq;
 using Moq.Protected;
 
@@ -73,6 +77,49 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal(expected, actual);
+            _handlerMock.VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetParty_SuccessResponse_PartyTypeDeserializedSuccessfully()
+        {
+            // Arrange         
+            PartyType expectedPartyType = PartyType.Organisation;
+
+            string repsonseString = "{\"partyId\": 500000," +
+                "\"partyTypeName\": \"Organisation\"," +
+                "\"orgNumber\": \"897069650\"," +
+                "\"unitType\": \"AS\"," +
+                "\"name\": \"DDG Fitness\"," +
+                "\"isDeleted\": false," +
+                "\"onlyHierarchyElementWithNoAccess\": false," +
+                "\"organization\": {\"orgNumber\": \"897069650\",\"name\": \"DDG Fitness\",\"unitType\": \"AS\",\"telephoneNumber\": \"12345678\",\"mobileNumber\": \"92010000\",\"faxNumber\": \"92110000\",\"eMailAddress\": \"central@ddgfitness.no\",\"internetAddress\": \"http://ddgfitness.no\",\"mailingAddress\": \"Sofies Gate 1\",\"mailingPostalCode\": \"0170\",\"mailingPostalCity\": \"Oslo\",\"businessAddress\": \"Sofies Gate 1\",\"businessPostalCode\": \"0170\",\"businessPostalCity\": \"By\",\"unitStatus\": null},\"childParties\": null\r\n}";
+
+            HttpResponseMessage httpResponseMessage = new()
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(repsonseString, Encoding.UTF8, "application/json")
+            };
+
+            HttpRequestMessage actualRequest = null;
+            void SetRequest(HttpRequestMessage request) => actualRequest = request;
+            InitializeMocks(httpResponseMessage, SetRequest);
+
+            HttpClient httpClient = new HttpClient(_handlerMock.Object);
+
+            RegisterService target = new RegisterService(
+                httpClient,
+                _contextAccessor.Object,
+                _accessTokenGenerator.Object,
+                _generalSettings.Object,
+                _platformSettings.Object,
+                new Mock<ILogger<RegisterService>>().Object);
+
+            // Act
+            Party actual = await target.GetParty(500000);
+
+            // Assert
+            Assert.Equal(expectedPartyType, actual.PartyTypeName);
             _handlerMock.VerifyAll();
         }
 
