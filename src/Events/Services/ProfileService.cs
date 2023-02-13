@@ -53,7 +53,7 @@ namespace Altinn.Platform.Events.Services
 
             _serializerOptions = new()
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true,
                 Converters = { new JsonStringEnumConverter() }
             };
         }
