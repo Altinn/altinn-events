@@ -235,6 +235,30 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
+        [Fact]
+        public async Task ValidateSubscription_NotFoundResponse_ErrorLoggedNoExceptionThrown()
+        {
+            // Arrange
+            var handlerMock = CreateMessageHandlerMock(
+                "https://platform.test.altinn.cloud/events/api/v1/subscriptions/validate/1337",
+                HttpStatusCode.NotFound);
+
+            var sut = CreateTestInstance(handlerMock.Object);
+
+            // Act
+
+            await sut.ValidateSubscription(1337);
+
+            // Assert
+            handlerMock.VerifyAll();
+            _loggerMock.Verify(x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Attempting to validate non existing subscription 1337")),
+                It.IsAny<Exception>(),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
         private static Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpStatusCode statusCode)
         {
             var messageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);

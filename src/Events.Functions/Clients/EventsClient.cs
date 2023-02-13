@@ -124,6 +124,13 @@ namespace Altinn.Platform.Events.Functions.Clients
             string endpointUrl = "subscriptions/validate/" + subscriptionId;
 
             HttpResponseMessage response = await _client.PutAsync(endpointUrl, null, accessToken);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _logger.LogError("Attempting to validate non existing subscription {subscriptionId}", subscriptionId);
+                return;
+            }
+            
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError(
