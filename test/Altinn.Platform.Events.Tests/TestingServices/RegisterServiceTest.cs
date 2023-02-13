@@ -50,12 +50,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             {
                 PartyId = 500000,
                 OrgNumber = "897069650",
+                PartyTypeName = PartyType.Organisation
             };
             int expected = 500000;
             HttpResponseMessage httpResponseMessage = new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(JsonSerializer.Serialize(party), Encoding.UTF8, "application/json")
+                Content = new StringContent(JsonSerializer.Serialize(party, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase}), Encoding.UTF8, "application/json")
             };
 
             HttpRequestMessage actualRequest = null;
