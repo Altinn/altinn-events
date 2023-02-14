@@ -8,7 +8,7 @@
       -e webhookEndpoint=***** `
       -e runFullTestSet=true
 
-    For use case tests ommit environment variable runFullTestSet or set value to false
+    For use case tests omit environment variable runFullTestSet or set value to false
     */
 
 import { check } from "k6";
