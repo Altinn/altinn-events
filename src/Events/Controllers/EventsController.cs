@@ -1,13 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Controllers
@@ -20,16 +27,23 @@ namespace Altinn.Platform.Events.Controllers
     [ApiController]
     public class EventsController : ControllerBase
     {
-        private readonly IEventsService _events;
+        private readonly IEventsService _eventsService;
+        private readonly ILogger _logger;
         private readonly GeneralSettings _settings;
+        private readonly string _eventsBaseUri;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsController"/> class.
         /// </summary>
-        public EventsController(IEventsService events, IOptions<GeneralSettings> settings)
+        public EventsController(
+            IEventsService events,
+            ILogger<EventsController> logger,
+            IOptions<GeneralSettings> settings)
         {
-            _events = events;
+            _eventsService = events;
+            _logger = logger;
             _settings = settings.Value;
+            _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
         }
 
         /// <summary>
@@ -54,12 +68,98 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                await _events.RegisterNew(cloudEvent);
+                await _eventsService.RegisterNew(cloudEvent);
                 return Ok();
             }
             catch
             {
                 return StatusCode(500, $"Unable to register cloud event.");
+            }
+        }
+
+        /// <summary>
+        /// Retrieves a set of events related to a party based on query parameters.
+        /// </summary>
+        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter event that should be included</param>
+        /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
+        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;, &quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-%/&quot;]">
+        /// A list of the sources to include</param>
+        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
+        /// A list of the event types to include</param>
+        /// <param name="subject">Optional filter by subject. Only exact matches will be returned.</param>
+        /// <param name="size">The maximum number of events to include in the response</param>
+        [HttpGet("party")]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
+        [Produces("application/cloudevents+json")]
+        public async Task<ActionResult<List<CloudEvent>>> Get(
+            [FromQuery] string after,
+            [FromQuery] List<string> source,
+            [FromQuery] List<string> type,
+            [FromHeader] string subject,
+            [FromQuery] int size = 50)
+        {
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, size);
+
+            if (!isValid)
+            {
+                return Problem(errorMessage, null, 400);
+            }
+
+            try
+            {
+                List<CloudEvent> events = await _eventsService.GetEvents(after, source, type, subject, size);
+                SetNextLink(events);
+                return events;
+            }
+            catch (PlatformHttpException e)
+            {
+                return HandlePlatformHttpException(e);
+            }
+        }
+
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size)
+        {            
+            if (size < 1)
+            {
+                return (false, "The 'Size' parameter must be a number larger that 0.");
+            }
+
+            return (true, null);
+        }
+
+        private void SetNextLink(List<CloudEvent> events)
+        {
+            if (events.Count > 0)
+            {
+                List<KeyValuePair<string, string>> queryCollection = HttpContext.Request.Query
+                    .SelectMany(q => q.Value, (col, value) => new KeyValuePair<string, string>(col.Key, value))
+                    .Where(q => q.Key != "after")
+                    .ToList();
+
+                StringBuilder nextUriBuilder = new StringBuilder($"{_eventsBaseUri}{HttpContext.Request.Path}?after={events.Last().Id}");
+
+                foreach (KeyValuePair<string, string> queryParam in queryCollection)
+                {
+                    nextUriBuilder.Append($"&{queryParam.Key}={queryParam.Value}");
+                }
+
+                Response.Headers.Add("next", nextUriBuilder.ToString());
+            }
+        }
+
+        private ActionResult HandlePlatformHttpException(PlatformHttpException e)
+        {
+            if (e.Response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return NotFound();
+            }
+            else
+            {
+                _logger.LogError(e, "// AppController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
+                return Problem(e.Message, statusCode: 500);
             }
         }
 

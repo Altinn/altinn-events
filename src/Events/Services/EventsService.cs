@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -123,6 +122,23 @@ namespace Altinn.Platform.Events.Services
             after ??= string.Empty;
 
             List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subject, source, type, size);
+
+            if (events.Count == 0)
+            {
+                return events;
+            }
+
+            return await _authorizationService.AuthorizeEvents(_claimsPrincipalProvider.GetUser(), events);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size = 50)
+        {
+            source = source.Count > 0 ? source : null;
+            type = type.Count > 0 ? type : null;
+            after ??= string.Empty;
+
+            List<CloudEvent> events = await _repository.GetEvents(after, source, type, subject, size);
 
             if (events.Count == 0)
             {

@@ -90,6 +90,47 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
+        public Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size)
+        {
+            string eventsPath = Path.Combine(GetEventsPath(), $@"{_eventsCollection}.json");
+
+            if (File.Exists(eventsPath))
+            {
+                string content = File.ReadAllText(eventsPath);
+                List<EventsTableEntry> tableEntries = JsonConvert.DeserializeObject<List<EventsTableEntry>>(content);
+
+                // logic for filtering on source and type not implemented.
+                // source filtering is only enabled for 1 source list element.
+                IEnumerable<EventsTableEntry> filter = tableEntries;
+
+                if (!string.IsNullOrEmpty(after))
+                {
+                    int sequenceNo = filter.Where(te => te.Id.Equals(after)).Select(te => te.SequenceNo).FirstOrDefault();
+                    filter = filter.Where(te => te.SequenceNo > sequenceNo);
+                }
+
+                if (!string.IsNullOrEmpty(subject))
+                {
+                    filter = filter.Where(te => te.Subject.Equals(subject));
+                }
+
+                if (source.Count == 1)
+                {
+                    string pattern = "^" + Regex.Escape(source[0]).Replace("%", "*").Replace("_", ".");
+                    filter = filter.Where(te => Regex.IsMatch(te.Source.ToString(), pattern));
+                }
+
+                List<CloudEvent> result = filter.Select(t => t.CloudEvent)
+                    .Take(size)
+                    .ToList();
+
+                result.ForEach(ce => ce.Time = ce.Time.Value.ToUniversalTime());
+                return Task.FromResult(result);
+            }
+
+            return null;
+        }
+
         public Task<string> RegisterNew(CloudEvent cloudEvent)
         {
             throw new NotImplementedException();

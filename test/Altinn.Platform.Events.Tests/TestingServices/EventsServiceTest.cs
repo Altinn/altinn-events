@@ -249,6 +249,141 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             registerMock.Verify(r => r.PartyLookup(It.Is<string>(s => string.IsNullOrEmpty(s)), It.Is<string>(s => string.IsNullOrEmpty(s))), Times.Never);
         }
 
+        #region Generic events
+
+        /// <summary>
+        /// Scenario:
+        ///   Get instances based on from and party Id
+        /// Expected result:
+        ///   A single instance is returned.
+        /// Success criteria:
+        ///  PartyId is coverted to correct subject and matched in the repository.
+        /// </summary>
+        [Fact]
+        public async Task GetEvents_QueryIncludesAfterAndSubject_RetrievesCorrectNumberOfEvents()
+        {
+            // Arrange
+            int expectedCount = 1;
+            string expectedSubject = "/party/54321";
+
+            EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
+
+            // Act
+            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c0008", new List<string>() { }, new List<string>() { }, expectedSubject);
+
+            // Assert
+            Assert.Equal(expectedCount, actual.Count);
+            Assert.Equal(expectedSubject, actual.First().Subject);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Get instances based on after.
+        /// Expected result:
+        ///   A single instance is returned.
+        /// Success criteria:
+        ///  Passes on the after parameter to the repository.
+        /// </summary>
+        [Fact]
+        public async Task GetEvents_QueryIncludesAfter_RetrievesCorrectNumberOfEvents()
+        {
+            // Arrange
+            int expectedCount = 3;
+            EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
+
+            // Act
+            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", new List<string>() { }, new List<string>() { }, null);
+
+            // Assert
+            Assert.Equal(expectedCount, actual.Count);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Get instances with various input 
+        /// Expected result:
+        ///   Conditions to evaluate input to repository method are evaluated.
+        /// Success criteria:
+        ///  Conditions are evaluated correctly.
+        /// </summary>
+        [Fact]
+        public async Task GetEvents_AllConditionsHaveValues_ConditionsEvaluatedCorrectly()
+        {
+            // Arrange
+            string expectedSubject = "/party/50";
+            var repositoryMock = new Mock<ICloudEventRepository>();
+            repositoryMock.Setup(r => r.GetEvents(
+                It.IsAny<string>(), // after
+                It.Is<List<string>>(sourceFilter => sourceFilter != null),
+                It.Is<List<string>>(typeFiler => typeFiler != null),
+                It.Is<string>(subject => subject.Equals(subject)),
+                It.IsAny<int>())) // size
+                .ReturnsAsync(new List<CloudEvent>());
+
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
+
+            // Act
+            List<CloudEvent> actual = await eventsService.GetEvents(null, new List<string>() { "https://ttd.apps.tt02.altinn.no/ttd/apps-test/" }, new List<string>() { "instance.completed" }, expectedSubject);
+
+            // Assert
+            repositoryMock.VerifyAll();
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Get instances with various input 
+        /// Expected result:
+        ///   Conditions to evaluate input to repository method are evaluated.
+        /// Success criteria:
+        ///  Conditions are evaluated correctly.
+        /// </summary>
+        [Fact]
+        public async Task GetEvents_AllConditionsAreNull_ConditionsEvaluatedCorrectly()
+        {
+            // Arrange
+            var repositoryMock = new Mock<ICloudEventRepository>();
+            repositoryMock.Setup(r => r.GetEvents(
+                It.IsAny<string>(), // after
+                null, // sourceFilter
+                null, // typeFilter
+                string.Empty, // subject
+                It.IsAny<int>())) // size
+                .ReturnsAsync(new List<CloudEvent>());
+
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
+
+            // Act
+            List<CloudEvent> actual = await eventsService.GetEvents(null, new List<string>(), new List<string>(), string.Empty);
+
+            // Assert
+            repositoryMock.VerifyAll();
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Get instances without specifying source
+        /// Expected result:
+        ///   No events are returned
+        /// Success criteria:
+        ///  Register service is not called to lookup party
+        /// </summary>
+        [Fact]
+        public async Task GetEvents_NoSubjectInfoAvailable_RegisterLookupIsNotCalled()
+        {
+            // Arrange
+            Mock<IRegisterService> registerMock = new();
+
+            EventsService eventsService = GetEventsService(registerMock: registerMock);
+
+            // Act
+            List<CloudEvent> actual = await eventsService.GetEvents("1", new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, new List<string>() { }, null);
+
+            // Assert
+            registerMock.Verify(r => r.PartyLookup(It.Is<string>(s => string.IsNullOrEmpty(s)), It.Is<string>(s => string.IsNullOrEmpty(s))), Times.Never);
+        }
+
+        #endregion
+
         /// <summary>
         /// Scenario:
         ///   Save a CloudEvent from an Altinn App in postgres DB.
