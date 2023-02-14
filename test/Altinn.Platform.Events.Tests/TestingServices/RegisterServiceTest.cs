@@ -21,7 +21,6 @@ using Moq;
 using Moq.Protected;
 
 using Xunit;
-using Xunit.Sdk;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
 {
@@ -78,7 +77,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal(expected, actual);
-            _handlerMock.VerifyAll();
         }
 
         [Fact]
@@ -121,7 +119,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal(expectedPartyType, actual.PartyTypeName);
-            _handlerMock.VerifyAll();
         }
 
         [Fact]

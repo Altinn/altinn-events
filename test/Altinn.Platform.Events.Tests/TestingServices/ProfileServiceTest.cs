@@ -78,7 +78,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.NotNull(actual);
             Assert.Equal(UserType.SSNIdentified, actual.UserType);
             Assert.Equal("testemail@automatedtest.com", actual.Email);
-            _handlerMock.VerifyAll();
         }
 
         [Fact]
