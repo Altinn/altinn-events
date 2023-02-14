@@ -8,7 +8,7 @@
     -e app=apps-test `
     -e userId=20000000 `
     -e partyId=50002108 `
-    -e pid=01014922047 `
+    -e personNumber=01014922047 `
     -e runFullTestSet=true
 */
 import { check } from "k6";
@@ -30,7 +30,7 @@ export function setup() {
   var userToken = setupToken.getAltinnTokenForUser(
     __ENV.userId,
     partyId,
-    __ENV.pid
+    __ENV.personNumber
   );
 
   var orgToken = setupToken.getAltinnTokenForOrg(scopes, org);
