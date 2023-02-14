@@ -2,15 +2,20 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Register.Models;
+
 using AltinnCore.Authentication.Utils;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -27,6 +32,8 @@ namespace Altinn.Platform.Events.Services
         private readonly GeneralSettings _generalSettings;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly ILogger<IRegisterService> _logger;
+
+        private readonly JsonSerializerOptions _serializerOptions;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RegisterService"/> class.
@@ -46,6 +53,12 @@ namespace Altinn.Platform.Events.Services
             _generalSettings = generalSettings.Value;
             _accessTokenGenerator = accessTokenGenerator;
             _logger = logger;
+
+            _serializerOptions = new()
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            };
         }
 
         /// <inheritdoc/>
@@ -60,7 +73,7 @@ namespace Altinn.Platform.Events.Services
             HttpResponseMessage response = await _client.GetAsync(token, endpointUrl, accessToken);
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                party = await response.Content.ReadAsAsync<Party>();
+                party = await response.Content.ReadFromJsonAsync<Party>(_serializerOptions);
             }
             else
             {
@@ -86,7 +99,7 @@ namespace Altinn.Platform.Events.Services
             HttpResponseMessage response = await _client.PostAsync(bearerToken, endpointUrl, content, accessToken);
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                Party party = await response.Content.ReadAsAsync<Party>();
+                Party party = await response.Content.ReadFromJsonAsync<Party>(_serializerOptions);
                 return party.PartyId;
             }
             else
