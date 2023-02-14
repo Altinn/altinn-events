@@ -2,6 +2,7 @@
     Test script to platform subscriptions api with user token
     Command:
       docker-compose run k6 run /src/tests/subscriptions.js `
+      -e env=*** `
       -e tokenGeneratorUserName=autotest `
       -e tokenGeneratorUserPwd=*** `
       -e app=apps-test `
