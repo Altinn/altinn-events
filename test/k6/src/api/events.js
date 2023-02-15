@@ -7,7 +7,7 @@ import * as apiHelpers from "../apiHelpers.js";
 export function postCloudEvent(serializedCloudEvent, token) {
   var endpoint = config.platformEvents.events;
 
-  var params = apiHelpers.buildHeaderWithBearerAndContentType(
+  var params = apiHelpers.buildHeaderWithBearerContentTypeAndQuery(
     token,
     "application/cloudevents+json"
   );
@@ -17,12 +17,19 @@ export function postCloudEvent(serializedCloudEvent, token) {
   return response;
 }
 
-export function getCloudEvents(token) {
+export function getCloudEvents(after, source, type, subject, size, token) {
   var endpoint = config.platformEvents.events;
 
-  var params = apiHelpers.buildHeaderWithBearerAndContentType(
+  var params = apiHelpers.buildHeaderWithBearerContentTypeAndQuery(
     token,
-    "application/cloudevents+json"
+    "application/cloudevents+json",
+    {
+      after,
+      source,
+      type,
+      subject,
+      size
+    }
   );
 
   var response = http.get(endpoint, params);

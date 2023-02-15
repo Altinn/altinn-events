@@ -39,13 +39,14 @@ export function buildHeaderWithBasic(token){
     return params;
 }
 
-export function buildHeaderWithBearerAndContentType(token, conentType) {
+export function buildHeaderWithBearerContentTypeAndQuery(token, conentType, query) {
   var params = {
     headers: {
       Authorization: "Bearer " + token,
       "Content-Type": conentType
-    }
+    },
+    query,
   };
-
+ 
   return params;
 }
