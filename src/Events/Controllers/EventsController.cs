@@ -78,21 +78,22 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Retrieves a set of events related to a party based on query parameters.
+        /// Retrieves a set of events related based on query parameters.
         /// </summary>
-        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter event that should be included</param>
+        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Retrieve events that were registered after this event Id</param>
         /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
         /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;, &quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-%/&quot;]">
         /// A list of the sources to include</param>
         /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
         /// A list of the event types to include</param>
         /// <param name="subject">Optional filter by subject. Only exact matches will be returned.</param>
-        /// <param name="size">The maximum number of events to include in the response</param>
-        [HttpGet("party")]
+        /// <param name="size">The maximum number of events to include in the response.</param>
+        [HttpGet()]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
+
+        // [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
         [Produces("application/cloudevents+json")]
         public async Task<ActionResult<List<CloudEvent>>> Get(
             [FromQuery] string after,
@@ -121,10 +122,15 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size)
-        {            
+        {
+            if (string.IsNullOrEmpty(after))
+            {
+                return (false, "The 'after' parameter must be defined.");
+            }
+
             if (size < 1)
             {
-                return (false, "The 'Size' parameter must be a number larger that 0.");
+                return (false, "The 'size' parameter must be a number larger that 0.");
             }
 
             return (true, null);

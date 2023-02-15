@@ -378,14 +378,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a cloud event, without bearer token.
+            ///   Retrieve a list of events, without bearer token.
             /// Expected result:
             ///   Returns HttpStatus Unauthorized.
             /// Success criteria:
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForOrg_MissingBearerToken_ReturnsForbidden()
+            public async void GetForOrg_MissingBearerToken_ReturnsUnauthorized()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&party=1337";
