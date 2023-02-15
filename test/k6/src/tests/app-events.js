@@ -3,12 +3,12 @@
     Command:
     docker-compose run k6 run /src/tests/app-events.js `
     -e env=*** `
-    -e tokenGeneratorUserName=autotest `
+    -e tokenGeneratorUserName=*** `
     -e tokenGeneratorUserPwd=*** `
     -e app=apps-test `
-    -e userId=20000000 `
-    -e partyId=50002108 `
-    -e personNumber=01014922047 `
+    -e userId=*** `
+    -e partyId=*** `
+    -e personNumber=*** `
     -e runFullTestSet=true
 */
 import { check } from "k6";
