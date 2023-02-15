@@ -6,6 +6,8 @@
     -e tokenGeneratorUserPwd=*** `
     -e env=*** `
     -e runFullTestSet=true
+
+    For use case tests omit environment variable runFullTestSet or set value to false
 */
 import { check } from "k6";
 import * as setupToken from "../setup.js";
