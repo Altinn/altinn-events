@@ -11,6 +11,7 @@
     -e personNumber=*** `
     -e runFullTestSet=true
 */
+
 import { check } from "k6";
 import * as setupToken from "../setup.js";
 import * as appEventsApi from "../api/app-events.js";
