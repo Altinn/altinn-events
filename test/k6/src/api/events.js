@@ -16,3 +16,16 @@ export function postCloudEvent(serializedCloudEvent, token) {
 
   return response;
 }
+
+export function getCloudEvents(token) {
+  var endpoint = config.platformEvents.events;
+
+  var params = apiHelpers.buildHeaderWithBearerAndContentType(
+    token,
+    "application/cloudevents+json"
+  );
+
+  var response = http.get(endpoint, params);
+
+  return response;
+}
