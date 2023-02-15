@@ -20,7 +20,7 @@ jobs:
     - name: Run events use case tests
       run:  |
               cd test/k6
-              docker-compose run k6 run /src/tests/events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
+              docker-compose run k6 run /src/tests/events/post.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
     - name: Run subscription use case tests
       run:  |
               cd test/k6
