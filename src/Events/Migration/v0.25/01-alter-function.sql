@@ -13,12 +13,12 @@ CREATE OR REPLACE FUNCTION events.getevents(
 AS $BODY$
 BEGIN
 return query
-	SELECT events.events.cloudevent
+	SELECT cast(cloudevent as text) as cloudevents
 	FROM events.events
-	WHERE (_subject = '' OR events.subject = _subject)
-	AND (_type IS NULL OR events.type ILIKE ANY(_type) )
-	AND (_source IS NULL OR events.source ILIKE ANY(_source))
-	AND (_after = '' OR events.sequenceno >(
+	WHERE (_subject IS NULL OR cloudevent->>'subject' = _subject)
+	AND (_type IS NULL OR cloudevent->>'type' ILIKE ANY(_type) )
+	AND (_source IS NULL OR cloudevent->>'source' ILIKE ANY(_source))
+	AND (_after = '' OR sequenceno >(
 		SELECT
 			case count(*)
 			when 0
@@ -26,13 +26,13 @@ return query
 			else
 				(SELECT sequenceno
 				FROM events.events
-				WHERE id = _after
+				WHERE cloudevent->>'id' = _after
 				ORDER BY sequenceno ASC
 				LIMIT 1)
 			end
 		FROM events.events
-		WHERE id = _after))
-  ORDER BY events.sequenceno
+		WHERE cloudevent->>'id' = _after))
+  ORDER BY sequenceno
   limit _size;
 END;
 $BODY$;
