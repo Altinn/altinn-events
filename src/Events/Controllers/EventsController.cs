@@ -92,8 +92,7 @@ namespace Altinn.Platform.Events.Controllers
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-
-        // [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
+        [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
         [Produces("application/cloudevents+json")]
         public async Task<ActionResult<List<CloudEvent>>> Get(
             [FromQuery] string after,

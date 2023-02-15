@@ -151,7 +151,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string content = await response.Content.ReadAsStringAsync();
-                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content);
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -170,7 +170,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetEvents_MissingBearerToken_ReturnsUnauthorized()
             {
                 // Arrange
-                string requestUri = $"{BasePath}/events?subject=%2Fparty%2F1337";
+                string requestUri = $"{BasePath}/events?after=0&subject=%2Fparty%2F1337";
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -287,7 +287,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange   
                 string expected = "The 'after' parameter must be defined.";
 
-                string requestUri = $"{BasePath}/events?size=5";
+                string requestUri = $"{BasePath}/events?size=5&subject=/party/1337";
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
