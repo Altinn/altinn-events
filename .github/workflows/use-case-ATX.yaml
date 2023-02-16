@@ -18,6 +18,8 @@ jobs:
     - name: Install xk6 and dependencies
       run: |
         cd test/k6
+        go env
+        GOPATH="/home/runner/go"
         export PATH=${PATH}:go env GOPATH/bin
         go install go.k6.io/k6@latest
         k6 version
