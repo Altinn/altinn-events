@@ -31,7 +31,8 @@ jobs:
       if: always()
       run:  |
               cd test/k6
-              ./k6 run src/tests/app-events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
+              ./k6 run src/tests/app-events.js -e env=${{ vars.ENV }} \
+              -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
     - name: Run events use case tests
       if: always()
       run:  |
