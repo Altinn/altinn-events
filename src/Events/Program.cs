@@ -224,9 +224,17 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     services.AddAuthorization(options =>
     {
-        options.AddPolicy("PlatformAccess", policy => policy.Requirements.Add(new AccessTokenRequirement()));
-        options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.publish")));
-        options.AddPolicy(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.subscribe")));
+        options.AddPolicy(
+            "PlatformAccess", 
+            policy => policy.Requirements.Add(new AccessTokenRequirement()));
+
+        options.AddPolicy(
+            AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, 
+            policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH)));
+
+        options.AddPolicy(
+            AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE, 
+            policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)));
     });
 
     services.AddControllers(opts =>

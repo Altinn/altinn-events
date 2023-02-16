@@ -33,13 +33,13 @@ Run test suite by specifying filename.
 
 For example:
 
->$> docker-compose run k6 run /src/tests/events.js -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***
+>$> docker-compose run k6 run /src/tests/events/post.js -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***
 
 The comand consists of three sections
 
 `docker-compose run` to run the test in a docker container
 
-`k6 run {path to test file}` pointing to the test file you want to run e.g. `/src/tests/events.js`
+`k6 run {path to test file}` pointing to the test file you want to run e.g. `/src/tests/events/post.js`
 
 
 `-e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***` all environment variables that should be included in the request.
