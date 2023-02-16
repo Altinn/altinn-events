@@ -123,8 +123,10 @@ namespace Altinn.Platform.Events.Repository
 
             await using NpgsqlCommand pgcom = new NpgsqlCommand(getEventsSql, conn);
             pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
+#pragma warning disable // ignore missing [Flags] attribute. See https://github.com/npgsql/npgsql/issues/2801
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
+#pragma warning restore
             pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject);
             pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
 
