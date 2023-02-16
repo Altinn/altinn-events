@@ -22,11 +22,11 @@ jobs:
         k6 version
         go install go.k6.io/xk6/cmd/xk6@latest
         xk6 build --with github.com/grafana/xk6-output-timescaledb
-    - name: Test with grafana k6 task
-      uses: grafana/k6-action@v0.2.0
-      with:
-        filename: test/k6/src/tests/events.js
-        flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
+#   - name: Test with grafana k6 task
+#     uses: grafana/k6-action@v0.2.0
+#     with:
+#       filename: test/k6/src/tests/events.js
+#       flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
     - name: Run app-events use case tests
       if: always()
       run:  |
@@ -35,8 +35,8 @@ jobs:
     - name: Run events use case tests
       if: always()
       run:  |
-              export PATH=${PATH}:/home/runner/go/bin
               cd test/k6
+              export PATH=${PATH}:/home/runner/go/bin
               k6 run /src/tests/events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
     - name: Run subscription use case tests
       if: always()
