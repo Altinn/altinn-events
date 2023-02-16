@@ -42,6 +42,12 @@ appSubscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${a
 appSubscription.endPoint = webhookEndpoint;
 genericSubscription.endPoint = webhookEndpoint;
 
+export const options = {
+  thresholds: {
+    errors: ['count<1'],
+  },
+};
+
 export function setup() {
   var orgToken = setupToken.getAltinnTokenForOrg(scopes);
   var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
@@ -248,11 +254,11 @@ export default function (data) {
   }
 }
 
-/*
+
 export function handleSummary(data) {
   let result = {};
   result[reportPath("events.xml")] = generateJUnitXML(data, "events");
 
   return result;
 }
-*/
+

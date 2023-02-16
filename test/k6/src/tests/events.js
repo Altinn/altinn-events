@@ -18,6 +18,12 @@ import { generateJUnitXML, reportPath } from "../report.js";
 import { addErrorCount } from "../errorhandler.js";
 const scopes = "altinn:events.publish";
 
+export const options = {
+  thresholds: {
+    errors: ['count<1'],
+  },
+};
+
 export function setup() {
   var token = setupToken.getAltinnTokenForOrg(scopes);
 

@@ -31,7 +31,7 @@ jobs:
       if: always()
       run:  |
               cd test/k6
-              docker-compose run k6 run /src/tests/app-events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
+              ./k6 run src/tests/app-events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
     - name: Run events use case tests
       if: always()
       run:  |
@@ -41,46 +41,46 @@ jobs:
       if: always()
       run:  |
               cd test/k6
-              docker-compose run k6 run /src/tests/subscriptions.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
+              ./k6 run src/tests/subscriptions.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }} -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
 
-  report-status:
-    name: Report status
-    runs-on: ubuntu-latest
+#  report-status:
+#    name: Report status
+#    runs-on: ubuntu-latest
 #    needs: [AT21, AT22, AT23, AT24]
-    needs: AT22
 #    if: always() && contains(join(needs.*.result, ','), 'failure')
-    steps:
-      - name: Build failure report
-        run: |
-          report=":warning: Events use case test failure in AT :warning: \n See environment(s) listed below: \n"
-
-          if [ ${{ needs.AT21.result }} = 'failure' ]; then
-            report+="AT21 \r\n"
-          fi
-
-          if [ ${{ needs.AT22.result }} = 'failure' ]; then
-            report+="AT22 \r\n"
-          fi
-
-          if [ ${{ needs.AT23.result }} = 'failure' ]; then
-            report+="AT23 \r\n"
-          fi
-
-          if [ ${{ needs.AT24.result }} = 'failure' ]; then
-            report+="AT24 \r\n"
-          fi
-
-          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "stepreport="$report >> $GITHUB_ENV
-
-      - name: Report failure to Slack
-        id: slack
-        uses: slackapi/slack-github-action@v1.23.0
-        with:
-          payload: |
-              {
-                "text": "${{ env.stepreport }}"
-              }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
-
+#    steps:
+#      - name: Build failure report
+#        run: |
+#          report=":warning: Events use case test failure in AT :warning: \n See environment(s) listed below: \n"
+#
+#          if [ ${{ needs.AT21.result }} = 'failure' ]; then
+#            report+="AT21 \r\n"
+#          fi
+#
+#          if [ ${{ needs.AT22.result }} = 'failure' ]; then
+#            report+="AT22 \r\n"
+#          fi
+#
+#          if [ ${{ needs.AT23.result }} = 'failure' ]; then
+#            report+="AT23 \r\n"
+#          fi
+#
+#          if [ ${{ needs.AT24.result }} = 'failure' ]; then
+#            report+="AT24 \r\n"
+#          fi
+#
+#          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+#          echo "stepreport="$report >> $GITHUB_ENV
+#
+#      - name: Report failure to Slack
+#        id: slack
+#        uses: slackapi/slack-github-action@v1.23.0
+#        with:
+#          payload: |
+#              {
+#                "text": "${{ env.stepreport }}"
+#              }
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+#
+#
