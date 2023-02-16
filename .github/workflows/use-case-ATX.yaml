@@ -60,6 +60,7 @@ jobs:
               -e app=apps-test \
               -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }} \
               -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
+
 #  report-status:
 #    name: Report status
 #    runs-on: ubuntu-latest

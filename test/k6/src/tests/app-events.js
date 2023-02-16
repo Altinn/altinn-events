@@ -160,7 +160,7 @@ export default function (data) {
 
 export function handleSummary(data) {
   let result = {};
-  result[reportPath("events.xml")] = generateJUnitXML(data, "platform-events");
+  result[reportPath("app-events.xml")] = generateJUnitXML(data, "app-events");
   return result;
 }
 
