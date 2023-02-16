@@ -160,11 +160,11 @@ function removePropFromCloudEvent(cloudEvent, propertyname) {
   return modifiedEvent;
 }
 
-/*
+
 export function handleSummary(data) {
   let result = {};
   result[reportPath("events.xml")] = generateJUnitXML(data, "events");
 
   return result;
 }
-*/
+
