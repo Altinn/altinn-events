@@ -13,11 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Test with grafana k6 task
-      uses: grafana/k6-action@v0.2.0
-      with:
-        filename: test/k6/src/tests/events.js
-        flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
     - uses: actions/setup-go@v3.5.0
     - run: go version
     - name: Install xk6 and dependencies
@@ -31,6 +26,11 @@ jobs:
         go install go.k6.io/xk6/cmd/xk6@latest
         echo "Rebuid k6 with timescale"
         xk6 build --with github.com/grafana/xk6-output-timescaledb
+    - name: Test with grafana k6 task
+      uses: grafana/k6-action@v0.2.0
+      with:
+        filename: test/k6/src/tests/events.js
+        flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
     - name: Run app-events use case tests
       run:  |
               cd test/k6
