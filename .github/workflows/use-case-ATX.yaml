@@ -13,19 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Test with grafana k6 task
+      uses: grafana/k6-action@v0.2.0
+      with:
+        filename: /src/tests/app-events.js
+        flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
+    - uses: actions/setup-go@v3.5.0
+    - run: go version
     - name: Install xk6 and dependencies
       run: |
         cd test/k6
-        echo "Download go"
-        curl -LO https://go.dev/dl/go1.18.3.linux-amd64.tar.gz
-        echo "Unpack go"
-        rm -f ./k6
-        sudo rm -rf ~/go && tar -C $HOME/ -xzf go1.18.3.linux-amd64.tar.gz
-        echo "Export path"
-        export GOPATH=$HOME/go
-        export PATH=$PATH:$HOME/go/bin
-        echo "Show go version"
-        go version
         echo "Install k6"
         go install go.k6.io/k6@latest
         echo "Show k6 version"
@@ -34,7 +31,6 @@ jobs:
         go install go.k6.io/xk6/cmd/xk6@latest
         echo "Rebuid k6 with timescale"
         xk6 build --with github.com/grafana/xk6-output-timescaledb
-
     - name: Run app-events use case tests
       run:  |
               cd test/k6
