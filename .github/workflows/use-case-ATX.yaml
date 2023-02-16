@@ -40,7 +40,7 @@ jobs:
               go install go.k6.io/xk6/cmd/xk6@latest
               xk6 build --with github.com/grafana/xk6-output-timescaledb
 
-              sudo k6 run src/tests/events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
+              ./k6 run src/tests/events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
     - name: Run subscription use case tests
       if: always()
       run:  |
