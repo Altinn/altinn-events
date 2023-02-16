@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
 #    needs: [AT21, AT22, AT23, AT24]
     needs: AT22
-#    if: always() && contains(join(needs.*.result, ','), 'failure')
+    if: always() && contains(join(needs.*.result, ','), 'failure')
     steps:
       - name: Build failure report
         run: |
