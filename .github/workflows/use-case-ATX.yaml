@@ -35,6 +35,7 @@ jobs:
     - name: Run events use case tests
       if: always()
       run:  |
+              export PATH=${PATH}:/home/runner/go/bin
               cd test/k6
               k6 run /src/tests/events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
     - name: Run subscription use case tests
