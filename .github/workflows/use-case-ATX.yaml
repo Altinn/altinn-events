@@ -57,7 +57,7 @@ jobs:
     steps:
       - name: Build failure report
         run: |
-          report=":warning: FileScan use case test failure in AT :warning: \n See environment(s) listed below: \n"
+          report=":warning: Events use case test failure in AT :warning: \n See environment(s) listed below: \n"
 
           if [ ${{ needs.AT21.result }} = 'failure' ]; then
             report+="AT21 \r\n"
