@@ -253,7 +253,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances based on from and party Id
+        ///   Get instances based on after and party Id
         /// Expected result:
         ///   A single instance is returned.
         /// Success criteria:
