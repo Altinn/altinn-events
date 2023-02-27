@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         environment: [AT21, AT22, AT23, AT24]
-    environment: ${{matrix.environment}}
+    environment: ${{ matrix.environment }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -29,7 +29,7 @@ jobs:
       run:  |
               cd test/k6
               docker-compose run k6 run /src/tests/subscriptions.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
-    - run: echo "${{matrix.environment}}=true" >> $GITHUB_ENV
+    - run: echo "${{ matrix.environment }}=true" >> $GITHUB_ENV
 
 
   report-status:
@@ -60,6 +60,8 @@ jobs:
 
           report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "stepreport="$report >> $GITHUB_ENV
+
+          ${{ env.stepreport }}
 
 #      - name: Report failure to Slack
 #        id: slack
