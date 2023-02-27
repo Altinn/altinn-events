@@ -8,7 +8,7 @@ on:
   - cron: '*/15 * * * *'
 
 jobs:
-  AT-matrix:
+  run:
     strategy:
       matrix:
         environment: [AT21, AT22, AT23, AT24]
