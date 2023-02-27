@@ -14,6 +14,7 @@ using CloudNative.CloudEvents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -82,10 +83,10 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Retrieve events that were registered after this event Id</param>
         /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
-        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;, &quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-%/&quot;]">
-        /// A list of the sources to include</param>
-        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
-        /// A list of the event types to include</param>
+        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;]">
+        /// Optional list of zero or more sources to include</param>
+        /// <param name="type" example="[&quot;instance.created&quot;, &quot;instance.process.completed&quot;]">
+        /// Optional list of zero or more event types to include</param>
         /// <param name="subject">Optional filter by subject. Only exact matches will be returned.</param>
         /// <param name="size">The maximum number of events to include in the response.</param>
         [HttpGet()]
@@ -95,7 +96,7 @@ namespace Altinn.Platform.Events.Controllers
         [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
         [Produces("application/cloudevents+json")]
         public async Task<ActionResult<List<CloudEvent>>> Get(
-            [FromQuery] string after,
+            [FromQuery, BindRequired] string after,
             [FromQuery] List<string> source,
             [FromQuery] List<string> type,
             [FromHeader] string subject,

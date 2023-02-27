@@ -327,7 +327,7 @@ void IncludeXmlComments(SwaggerGenOptions swaggerGenOptions)
     }
     catch (Exception e)
     {
-        logger.LogWarning(e, "Prorgam // Exception when attempting to include the XML comments file(s).");
+        logger.LogWarning(e, "Program // Exception when attempting to include the XML comments file(s).");
     }
 }
 
