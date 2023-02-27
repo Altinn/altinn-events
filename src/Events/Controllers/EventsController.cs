@@ -97,12 +97,12 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/cloudevents+json")]
         public async Task<ActionResult<List<CloudEvent>>> Get(
             [FromQuery, BindRequired] string after,
-            [FromQuery] List<string> source,
+            [FromQuery, BindRequired] List<string> source,
             [FromQuery] List<string> type,
             [FromHeader] string subject,
             [FromQuery] int size = 50)
         {
-            (bool isValid, string errorMessage) = ValidateQueryParams(after, size);
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, size, source);
 
             if (!isValid)
             {
@@ -121,7 +121,7 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size)
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size, List<string> source)
         {
             if (string.IsNullOrEmpty(after))
             {
@@ -131,6 +131,11 @@ namespace Altinn.Platform.Events.Controllers
             if (size < 1)
             {
                 return (false, "The 'size' parameter must be a number larger that 0.");
+            }
+
+            if (source.Count == 0)
+            {
+                return (false, "The 'source' parameter must contain at least one value.");
             }
 
             return (true, null);

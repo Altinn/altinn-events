@@ -17,11 +17,7 @@ using Microsoft.Extensions.Options;
 namespace Altinn.Platform.Events.Services
 {
     /// <summary>
-    /// Handles events service. 
-    /// Notice when saving cloudEvent:
-    /// - the id for the cloudEvent is created by the app
-    /// - time is set by the database when calling SaveAndPostInbound
-    ///   or by the service when calling PushToRegistrationQueue
+    /// Functionality for registering and forwarding cloud events. 
     /// </summary>
     public class EventsService : IEventsService
     {
