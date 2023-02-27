@@ -34,7 +34,7 @@ jobs:
     name: Report status
     runs-on: ubuntu-latest
     needs: test
-    if: always() && contains(join(needs.result, ','), 'failure')
+    if: always() && contains(join(needs.*.result, ','), 'failure')
     steps:
       - name: Build failure report
         run: |
