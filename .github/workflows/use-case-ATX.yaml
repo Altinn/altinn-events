@@ -61,7 +61,7 @@ jobs:
           report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "stepreport="$report >> $GITHUB_ENV
 
-          ${{ env.stepreport }}
+          echo ${{ env.stepreport }}
 
 #      - name: Report failure to Slack
 #        id: slack
