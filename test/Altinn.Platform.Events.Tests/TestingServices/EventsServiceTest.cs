@@ -116,9 +116,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances based on from and party Id
+        ///   Get events based on from and party Id
         /// Expected result:
-        ///   A single instance is returned.
+        ///   A single event is returned.
         /// Success criteria:
         ///  PartyId is coverted to correct subject and matched in the repository.
         /// </summary>
@@ -141,9 +141,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances based on after.
+        ///   Get events based on after.
         /// Expected result:
-        ///   A single instance is returned.
+        ///   A single event is returned.
         /// Success criteria:
         ///  Passes on the after parameter to the repository.
         /// </summary>
@@ -163,7 +163,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances with various input 
+        ///   Get events with various input 
         /// Expected result:
         ///   Conditions to evaluate input to repository method are evaluated.
         /// Success criteria:
@@ -196,7 +196,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances with various input 
+        ///   Get events with various input 
         /// Expected result:
         ///   Conditions to evaluate input to repository method are evaluated.
         /// Success criteria:
@@ -228,7 +228,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances without specifying source
+        ///   Get events without specifying source
         /// Expected result:
         ///   No events are returned
         /// Success criteria:
@@ -253,9 +253,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances based on after and party Id
+        ///   Get events based on after and party Id
         /// Expected result:
-        ///   A single instance is returned.
+        ///   A single event is returned.
         /// Success criteria:
         ///  PartyId is coverted to correct subject and matched in the repository.
         /// </summary>
@@ -278,9 +278,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances based on after.
+        ///   Get events based on after.
         /// Expected result:
-        ///   A single instance is returned.
+        ///   A single event is returned.
         /// Success criteria:
         ///  Passes on the after parameter to the repository.
         /// </summary>
@@ -300,7 +300,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances with various input 
+        ///   Get events with various input 
         /// Expected result:
         ///   Conditions to evaluate input to repository method are evaluated.
         /// Success criteria:
@@ -331,7 +331,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances with various input 
+        ///   Get events with various input 
         /// Expected result:
         ///   Conditions to evaluate input to repository method are evaluated.
         /// Success criteria:
@@ -361,7 +361,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Get instances without specifying source
+        ///   Get events without specifying source
         /// Expected result:
         ///   No events are returned
         /// Success criteria:
