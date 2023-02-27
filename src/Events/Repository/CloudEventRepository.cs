@@ -4,15 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-
 using Altinn.Platform.Events.Configuration;
-
 using CloudNative.CloudEvents;
-
 using Microsoft.Extensions.Options;
-
 using Npgsql;
-
 using NpgsqlTypes;
 
 namespace Altinn.Platform.Events.Repository
