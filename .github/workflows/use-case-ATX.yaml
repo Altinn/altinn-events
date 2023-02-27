@@ -17,60 +17,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-#    - name: Run app-events use case tests
-#      run:  |
-#              cd test/k6
-#              docker-compose run k6 run /src/tests/app-events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
-#    - name: Run events use case tests
-#      run:  |
-#              cd test/k6
-#              docker-compose run k6 run /src/tests/events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
-#    - name: Run subscription use case tests
-#      run:  |
-#              cd test/k6
-#              docker-compose run k6 run /src/tests/subscriptions.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
-    - run: |
-              echo "${{ matrix.environment }}Succeeded=true" >> $GITHUB_ENV
-              echo  "print env var: ${{ env.AT21Succeeded }}"
+    - name: Run app-events use case tests
+      run:  |
+              cd test/k6
+              docker-compose run k6 run /src/tests/app-events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
+    - name: Run events use case tests
+      run:  |
+              cd test/k6
+              docker-compose run k6 run /src/tests/events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
+    - name: Run subscription use case tests
+      run:  |
+              cd test/k6
+              docker-compose run k6 run /src/tests/subscriptions.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
+    - name: Build failure report
+      if: failure()
+      run: |
 
-#  report-status:
-#    name: Report status
-#    runs-on: ubuntu-latest
-#    needs: test
-#    if: always() && contains(join(needs.*.result, ','), 'failure')
-#    steps:
-#      - name: Build failure report
-#        run: |
-#          report=":warning: FileScan use case test failure in AT :warning: \n See environment(s) listed below: \n"
-#
-#          if [ ${{ env.AT21 }} == "" ]; then
-#            report+="AT21 \r\n"
-#          fi
-#
-#          if [ ${{ env.AT22 }} == "" ]; then
-#            report+="AT22 \r\n"
-#          fi
-#
-#          if [ ${{ env.AT23 }} == "" ]; then
-#            report+="AT23 \r\n"
-#          fi
-#
-#          if [ ${{ env.AT24 }} == "" ]; then
-#            report+="AT24 \r\n"
-#          fi
-#
-#          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-#          echo "stepreport="$report >> $GITHUB_ENV
-#
-#          echo ${{ env.stepreport }}
-#
-#      - name: Report failure to Slack
-#        id: slack
-#        uses: slackapi/slack-github-action@v1.23.0
-#        with:
-#          payload: |
-#              {
-#                "text": "${{ env.stepreport }}"
-#              }
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+          report=":warning: FileScan use case test failure in ${{ matrix.environment }} :warning: \n"
+          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "stepreport="$report >> $GITHUB_ENV
+    - name: Report failure to Slack
+      if: failure()
+      id: slack
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        payload: |
+            {
+              "text": "${{ env.stepreport }}"
+            }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+    
