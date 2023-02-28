@@ -51,9 +51,11 @@ function TC01_GetAllEvents(data) {
     data.token
   );
 
+
   success = check(response, {
-    "GET all cloud events. Status is 200": (r) =>
-      r.status === 200,
+    "GET all cloud events: status is 200": (r) => r.status === 200,
+    "GET all cloud events: at least 1 cloud event returned": (r) =>
+      Array.isArray(r.data) && r.data.length >= 1
   });
 
   addErrorCount(success);
@@ -71,20 +73,3 @@ export default function (data) {
     TC01_GetAllEvents(data);
   }
 }
-
-function removePropFromCloudEvent(cloudEvent, propertyname) {
-  // parse and stringify to ensure a copy of the object by value not ref
-  var modifiedEvent = JSON.parse(JSON.stringify(cloudEvent));
-  delete modifiedEvent[propertyname];
-
-  return modifiedEvent;
-}
-
-/*
-export function handleSummary(data) {
-  let result = {};
-  result[reportPath("events.xml")] = generateJUnitXML(data, "events");
-
-  return result;
-}
-*/
