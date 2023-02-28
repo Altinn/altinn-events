@@ -128,7 +128,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size = 50)
+        public async Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size)
         {
             source = source.Count > 0 ? source : null;
             type = type.Count > 0 ? type : null;

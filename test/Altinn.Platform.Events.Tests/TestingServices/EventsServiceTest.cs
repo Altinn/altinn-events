@@ -269,7 +269,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c0008", new List<string>() { }, new List<string>() { }, expectedSubject);
+            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c0008", new List<string>() { }, new List<string>() { }, expectedSubject, 50);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -292,7 +292,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", new List<string>() { }, new List<string>() { }, null);
+            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", new List<string>() { }, new List<string>() { }, null, 50);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -323,7 +323,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, new List<string>() { "https://ttd.apps.tt02.altinn.no/ttd/apps-test/" }, new List<string>() { "instance.completed" }, expectedSubject);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, new List<string>() { "https://ttd.apps.tt02.altinn.no/ttd/apps-test/" }, new List<string>() { "instance.completed" }, expectedSubject, 50);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -353,7 +353,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, new List<string>(), new List<string>(), string.Empty);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, new List<string>(), new List<string>(), string.Empty, 50);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -376,7 +376,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(registerMock: registerMock);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("1", new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, new List<string>() { }, null);
+            List<CloudEvent> actual = await eventsService.GetEvents("1", new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, new List<string>() { }, null, 50);
 
             // Assert
             registerMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>()), Times.Never);        
