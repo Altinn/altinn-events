@@ -37,7 +37,7 @@ export function setup() {
   return data;
 }
 
-// 01 - POST valid cloud event with all parameters
+// 01 - GET the first 10 cloud events published
 function TC01_GetAllEvents(data) {
   var response, success;
 
