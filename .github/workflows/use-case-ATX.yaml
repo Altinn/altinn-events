@@ -2,14 +2,16 @@ name: Use Case - AT
 
 on:
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize, reopened]
   schedule:
   - cron: '*/15 * * * *'
 
 jobs:
-  AT22:
-    environment: AT22
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [AT21, AT22, AT23, AT24]
+    environment: ${{ matrix.environment }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -61,44 +63,21 @@ jobs:
               -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }} \
               -o timescaledb=${{ secrets.PG_CONNECTIONSTRING }}
 
-#  report-status:
-#    name: Report status
-#    runs-on: ubuntu-latest
-#    needs: [AT21, AT22, AT23, AT24]
-#    if: always() && contains(join(needs.*.result, ','), 'failure')
-#    steps:
-#      - name: Build failure report
-#        run: |
-#          report=":warning: Events use case test failure in AT :warning: \n See environment(s) listed below: \n"
-#
-#          if [ ${{ needs.AT21.result }} = 'failure' ]; then
-#            report+="AT21 \r\n"
-#          fi
-#
-#          if [ ${{ needs.AT22.result }} = 'failure' ]; then
-#            report+="AT22 \r\n"
-#          fi
-#
-#          if [ ${{ needs.AT23.result }} = 'failure' ]; then
-#            report+="AT23 \r\n"
-#          fi
-#
-#          if [ ${{ needs.AT24.result }} = 'failure' ]; then
-#            report+="AT24 \r\n"
-#          fi
-#
-#          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-#          echo "stepreport="$report >> $GITHUB_ENV
-#
-#      - name: Report failure to Slack
-#        id: slack
-#        uses: slackapi/slack-github-action@v1.23.0
-#        with:
-#          payload: |
-#              {
-#                "text": "${{ env.stepreport }}"
-#              }
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
-#
-#
+    - name: Build failure report
+      if: failure()
+      run: |
+            report=":warning: Events use case test failure in ${{ matrix.environment }} :warning: \n"
+            report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "stepreport="$report >> $GITHUB_ENV
+
+    - name: Report failure to Slack
+      if: failure()
+      id: slack
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        payload: |
+            {
+              "text": "${{ env.stepreport }}"
+            }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
