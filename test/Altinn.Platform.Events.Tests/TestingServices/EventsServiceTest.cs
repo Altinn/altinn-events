@@ -379,7 +379,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             List<CloudEvent> actual = await eventsService.GetEvents("1", new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, new List<string>() { }, null, 50);
 
             // Assert
-            registerMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>()), Times.Never);        
+            registerMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
         #endregion
@@ -502,8 +502,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             if (authorizationMock == null)
             {
                 _authorizationMock
-                    .Setup(a => a.AuthorizeEvents(It.IsAny<ClaimsPrincipal>(), It.IsAny<List<CloudEvent>>()))
+                    .Setup(a => a.AuthorizeAltinnAppEvents(It.IsAny<ClaimsPrincipal>(), It.IsAny<List<CloudEvent>>()))
                     .ReturnsAsync((ClaimsPrincipal user, List<CloudEvent> events) => events);
+
+                _authorizationMock
+                  .Setup(a => a.AuthorizeEvents(It.IsAny<ClaimsPrincipal>(), It.IsAny<List<CloudEvent>>()))
+                  .ReturnsAsync((ClaimsPrincipal user, List<CloudEvent> events) => events);
 
                 authorizationMock = _authorizationMock;
             }

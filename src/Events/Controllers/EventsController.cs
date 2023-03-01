@@ -102,6 +102,11 @@ namespace Altinn.Platform.Events.Controllers
             [FromHeader] string subject,
             [FromQuery] int size = 50)
         {
+            if (!_settings.EnableExternalEvents)
+            {
+                return NotFound();
+            }
+
             (bool isValid, string errorMessage) = ValidateQueryParams(after, size, source);
 
             if (!isValid)

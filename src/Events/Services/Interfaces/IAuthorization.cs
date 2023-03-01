@@ -14,6 +14,14 @@ namespace Altinn.Platform.Events.Services.Interfaces
     public interface IAuthorization
     {
         /// <summary>
+        /// Authorizes and filters Altinn App events based on authorization
+        /// </summary>
+        /// <param name="consumer">The event consumer</param>
+        /// <param name="cloudEvents">The list of events</param>
+        /// <returns>A list of authorized events</returns>
+        public Task<List<CloudEvent>> AuthorizeAltinnAppEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents);
+
+        /// <summary>
         /// Authorizes and filters events based on authorization
         /// </summary>
         /// <param name="consumer">The event consumer</param>
