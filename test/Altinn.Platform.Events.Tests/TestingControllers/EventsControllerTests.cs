@@ -284,7 +284,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetEvents_MissingRequiredQueryParam_ReturnsBadRequest()
             {
                 // Arrange   
-                string expected = "{\"after\":[\"A value for the 'after' parameter or property was not provided.\"]}";
+                string expected = "The 'after' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&size=5&subject=/party/1337";
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
@@ -296,11 +296,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string content = await response.Content.ReadAsStringAsync();
                 ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
-                
+
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("One or more validation errors occurred.", actual.Title);
-                Assert.Equal(expected, actual.Extensions["errors"].ToString());
+                Assert.Equal(expected, actual.Detail);
             }
 
             /// <summary>
