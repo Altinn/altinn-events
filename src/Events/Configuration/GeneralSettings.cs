@@ -6,9 +6,9 @@ namespace Altinn.Platform.Events.Configuration
     public class GeneralSettings
     {
         /// <summary>
-        /// Hostname
+        /// Base Uri
         /// </summary>
-        public string Hostname { get; set; }
+        public string BaseUri { get; set; }
 
         /// <summary>
         /// Open Id Connect Well known endpoint

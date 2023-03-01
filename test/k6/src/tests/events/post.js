@@ -1,7 +1,7 @@
 /*
     Test script to platform events api with user token
     Command:
-    docker-compose run k6 run /src/tests/events.js `
+    docker-compose run k6 run /src/tests/events/post.js `
     -e tokenGeneratorUserName=autotest `
     -e tokenGeneratorUserPwd=*** `
     -e env=*** `
@@ -10,12 +10,12 @@
     For use case tests omit environment variable runFullTestSet or set value to false
 */
 import { check } from "k6";
-import * as setupToken from "../setup.js";
-import * as eventsApi from "../api/events.js";
+import * as setupToken from "../../setup.js";
+import * as eventsApi from "../../api/events.js";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
-const eventJson = JSON.parse(open("../data/events/01-event.json"));
-import { generateJUnitXML, reportPath } from "../report.js";
-import { addErrorCount } from "../errorhandler.js";
+const eventJson = JSON.parse(open("../../data/events/01-event.json"));
+import { generateJUnitXML, reportPath } from "../../report.js";
+import { addErrorCount } from "../../errorhandler.js";
 const scopes = "altinn:events.publish";
 
 export function setup() {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
@@ -78,7 +79,9 @@ namespace Altinn.Platform.Events.Controllers
             if (!subscriptionRequest.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
             {
                 // Only non Altinn App subscriptions require the additional scope
-                if (!_claimsPrincipalProvider.GetUser().HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
+                ClaimsPrincipal principal = _claimsPrincipalProvider.GetUser();
+
+                if (!principal.HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
                 {
                     return Forbid();
                 }

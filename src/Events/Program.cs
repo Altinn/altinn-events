@@ -224,8 +224,17 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     services.AddAuthorization(options =>
     {
-        options.AddPolicy("PlatformAccess", policy => policy.Requirements.Add(new AccessTokenRequirement()));
-        options.AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement("altinn:events.publish")));
+        options.AddPolicy(
+            "PlatformAccess", 
+            policy => policy.Requirements.Add(new AccessTokenRequirement()));
+
+        options.AddPolicy(
+            AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, 
+            policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH)));
+
+        options.AddPolicy(
+            AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE, 
+            policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)));
     });
 
     services.AddControllers(opts =>
@@ -318,7 +327,7 @@ void IncludeXmlComments(SwaggerGenOptions swaggerGenOptions)
     }
     catch (Exception e)
     {
-        logger.LogWarning(e, "Prorgam // Exception when attempting to include the XML comments file(s).");
+        logger.LogWarning(e, "Program // Exception when attempting to include the XML comments file(s).");
     }
 }
 

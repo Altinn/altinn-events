@@ -378,14 +378,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a cloud event, without bearer token.
+            ///   Retrieve a list of events, without bearer token.
             /// Expected result:
             ///   Returns HttpStatus Unauthorized.
             /// Success criteria:
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForOrg_MissingBearerToken_ReturnsForbidden()
+            public async void GetForOrg_MissingBearerToken_ReturnsUnauthorized()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&party=1337";
@@ -413,7 +413,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&party=1337";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337";
+                string expectedNext = $"http://localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337";
                 int expectedCount = 2;
 
                 HttpClient client = GetTestClient(new EventsServiceMock(1));
@@ -445,7 +445,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&party=1337";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337";
+                string expectedNext = $"http://localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337";
                 int expectedCount = 1;
 
                 HttpClient client = GetTestClient(new EventsServiceMock(1));
@@ -678,7 +678,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&party=1337&size=5";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&size=5";
+                string expectedNext = $"http://localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&size=5";
 
                 int expectedCount = 2;
 
@@ -711,7 +711,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&size=5";
+                string expectedNext = $"http://localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&size=5";
 
                 int expectedCount = 2;
 
@@ -746,7 +746,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&party=1337&size=5";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&size=5";
+                string expectedNext = $"http://localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&size=5";
 
                 int expectedCount = 1;
 
@@ -779,7 +779,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&party=1337&org=ttd&app=endring-av-navn-v2&size=5";
-                string expectedNext = $"https://platform.localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&org=ttd&app=endring-av-navn-v2&size=5";
+                string expectedNext = $"http://localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&party=1337&org=ttd&app=endring-av-navn-v2&size=5";
 
                 int expectedCount = 2;
 

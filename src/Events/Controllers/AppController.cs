@@ -48,7 +48,7 @@ namespace Altinn.Platform.Events.Controllers
         {
             _logger = logger;
             _eventsService = eventsService;
-            _eventsBaseUri = $"https://platform.{settings.Value.Hostname}";
+            _eventsBaseUri = settings.Value.BaseUri;
             _accessTokenSettings = accessTokenSettings.Value;
         }
 

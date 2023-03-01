@@ -4,15 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-
 using Altinn.Platform.Events.Configuration;
-
 using CloudNative.CloudEvents;
-
 using Microsoft.Extensions.Options;
-
 using Npgsql;
-
 using NpgsqlTypes;
 
 namespace Altinn.Platform.Events.Repository
@@ -26,6 +21,7 @@ namespace Altinn.Platform.Events.Repository
         private readonly string insertAppEventSql = "call events.insertappevent(@id, @source, @subject, @type, @time, @cloudevent)";
         private readonly string insertEventSql = "insert into events.events(cloudevent) VALUES ($1);";
         private readonly string getAppEventsSql = "select events.getappevents(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
+        private readonly string getEventsSql = "select events.getevents(@_subject, @_after, @_type, @_source, @_size)";
         private readonly string _connectionString;
 
         /// <summary>
@@ -98,6 +94,38 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("_to", NpgsqlDbType.TimestampTz, to ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
+
+            await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    CloudEvent cloudEvent = DeserializeAndConvertTime(reader[0].ToString());
+                    searchResult.Add(cloudEvent);
+                }
+            }
+
+            return searchResult;
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size)
+        {
+            List<CloudEvent> searchResult = new List<CloudEvent>();
+
+            await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using NpgsqlCommand pgcom = new NpgsqlCommand(getEventsSql, conn);
+            pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
+#pragma warning disable S3265 
+
+            // ignore missing [Flags] attribute on NpgsqlDbType enum.
+            // For more info: https://github.com/npgsql/npgsql/issues/2801
+            pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
+#pragma warning restore S3265
+            pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject);
             pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())

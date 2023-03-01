@@ -195,6 +195,44 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.FromResult(result);
         }
 
+        /// <inheritdoc/>
+        public Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size)
+        {
+            var tableEntries = GetTestEvents(_eventsCollection);
+
+            // logic for filtering on source and type not implemented.
+            IEnumerable<EventsTableEntry> filter = tableEntries;
+
+            if (!string.IsNullOrEmpty(after))
+            {
+                int sequenceNo = filter.Where(te => te.Id.Equals(after)).Select(te => te.SequenceNo).FirstOrDefault();
+                filter = filter.Where(te => te.SequenceNo > sequenceNo);
+            }
+
+            if (!string.IsNullOrEmpty(subject))
+            {
+                filter = filter.Where(te => te.Subject.Equals(subject));
+            }
+
+            if (source != null && source.Count > 0)
+            {
+                // requires more logic to match all fancy cases.
+                filter = filter.Where(te => source.Contains(te.Source.ToString()));
+            }
+
+            if (type != null && type.Count > 0)
+            {
+                // requires more logic to match all fancy cases.
+                filter = filter.Where(te => type.Contains(te.Type.ToString()));
+            }
+
+            List<CloudEvent> result = filter.Select(t => t.CloudEvent)
+                .Take(size)
+                .ToList();
+
+            return Task.FromResult(result);
+        }
+
         private static string GetEventsPath()
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(EventsServiceMock).Assembly.Location).LocalPath);
