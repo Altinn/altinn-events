@@ -4,10 +4,15 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Configuration;
+
 using CloudNative.CloudEvents;
+
 using Microsoft.Extensions.Options;
+
 using Npgsql;
+
 using NpgsqlTypes;
 
 namespace Altinn.Platform.Events.Repository
@@ -125,7 +130,7 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
 #pragma warning restore S3265
-            pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject);
+            pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())

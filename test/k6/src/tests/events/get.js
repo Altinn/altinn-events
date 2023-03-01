@@ -60,7 +60,6 @@ function TC01_GetAllEvents(data) {
     data.token
   );
 
-
   success = check(response, {
     "GET all cloud events: status is 200": (r) => r.status === 200,
     "GET all cloud events: at least 1 cloud event returned": (r) =>
