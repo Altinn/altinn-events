@@ -18,6 +18,12 @@ import { generateJUnitXML, reportPath } from "../../report.js";
 import { addErrorCount } from "../../errorhandler.js";
 const scopes = "altinn:events.subscribe";
 
+export const options = {
+  thresholds: {
+    errors: ['count<1'],
+  },
+};
+
 export function setup() {
   var token = setupToken.getAltinnTokenForOrg(scopes);
 
@@ -43,7 +49,7 @@ function TC01_GetAllEvents(data) {
 
   // we assume that /events/post.js has run at least once, publishing several events
 
-  response = eventsApi.getCloudEvents("0", 
+  response = eventsApi.getCloudEvents("0",
     data.cloudEvent.source,
     data.cloudEvent.type,
     data.cloudEvent.subject,
@@ -67,7 +73,7 @@ function TC01_GetAllEvents(data) {
 export default function (data) {
   if (data.runFullTestSet) {
     TC01_GetAllEvents(data);
-    
+
   } else {
     // Limited test set for use case tests
     TC01_GetAllEvents(data);

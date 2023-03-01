@@ -18,6 +18,12 @@ import * as appEventsApi from "../api/app-events.js";
 import { generateJUnitXML, reportPath } from "../report.js";
 import { addErrorCount } from "../errorhandler.js";
 
+export const options = {
+  thresholds: {
+    errors: ['count<1'],
+  },
+};
+
 export function setup() {
   var scopes = "altinn:serviceowner/instances.read";
   const app = __ENV.app.toLowerCase();
