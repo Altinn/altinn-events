@@ -149,7 +149,10 @@ namespace Altinn.Platform.Events.Repository
             var formatter = new CloudNative.CloudEvents.SystemTextJson.JsonEventFormatter();
             CloudEvent cloudEvent = formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(eventString)), null, null);
 
-            cloudEvent.Time = cloudEvent.Time.Value.ToUniversalTime();
+            if (cloudEvent.Time != null)
+            {
+                cloudEvent.Time = cloudEvent.Time.Value.ToUniversalTime();
+            }           
 
             return cloudEvent;
         }
