@@ -63,7 +63,10 @@ function TC01_GetAllEvents(data) {
   success = check(response, {
     "GET all cloud events: status is 200": (r) => r.status === 200,
     "GET all cloud events: at least 1 cloud event returned": (r) =>
-      Array.isArray(r.data) && r.data.length >= 1
+    {
+      var responseBody = JSON.parse(r.body);
+      return Array.isArray(responseBody) && responseBody.length >= 1
+    }
   });
 
   addErrorCount(success);
