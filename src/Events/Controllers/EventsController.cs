@@ -52,9 +52,9 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         /// <param name="cloudEvent">The incoming cloud event</param>
         /// <returns>The cloud event subject and id</returns>
+        [HttpPost]
         [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH)]
         [Consumes("application/cloudevents+json")]
-        [HttpPost]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
             if (!_settings.EnableExternalEvents)
@@ -89,19 +89,24 @@ namespace Altinn.Platform.Events.Controllers
         /// Optional list of zero or more event types to include</param>
         /// <param name="subject">Optional filter by subject. Only exact matches will be returned.</param>
         /// <param name="size">The maximum number of events to include in the response.</param>
-        [HttpGet()]
+        [HttpGet]
+        [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
         [Produces("application/cloudevents+json")]
         public async Task<ActionResult<List<CloudEvent>>> Get(
-            [FromQuery, BindRequired] string after,
-            [FromQuery, BindRequired] List<string> source,
+            [FromQuery] string after,
+            [FromQuery] List<string> source,
             [FromQuery] List<string> type,
             [FromHeader] string subject,
             [FromQuery] int size = 50)
         {
+            if (!_settings.EnableExternalEvents)
+            {
+                return NotFound();
+            }
+
             (bool isValid, string errorMessage) = ValidateQueryParams(after, size, source);
 
             if (!isValid)

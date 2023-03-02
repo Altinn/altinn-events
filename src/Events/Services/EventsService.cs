@@ -124,7 +124,7 @@ namespace Altinn.Platform.Events.Services
                 return events;
             }
 
-            return await _authorizationService.AuthorizeEvents(_claimsPrincipalProvider.GetUser(), events);
+            return await _authorizationService.AuthorizeAltinnAppEvents(_claimsPrincipalProvider.GetUser(), events);
         }
 
         /// <inheritdoc/>

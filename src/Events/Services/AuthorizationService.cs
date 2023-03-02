@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> AuthorizeEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents)
+        public async Task<List<CloudEvent>> AuthorizeAltinnAppEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents)
         {
             XacmlJsonRequestRoot xacmlJsonRequest = CloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
@@ -58,6 +58,14 @@ namespace Altinn.Platform.Events.Services
             }
 
             return authorizedEventsList;
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<CloudEvent>> AuthorizeEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents)
+        {
+            // Implementation of authorization is postponed until https://github.com/Altinn/altinn-events/issues/295
+            await Task.CompletedTask;
+            return cloudEvents;
         }
 
         /// <inheritdoc/>

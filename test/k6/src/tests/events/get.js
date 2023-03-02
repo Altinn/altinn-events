@@ -9,7 +9,7 @@
 
     For use case tests omit environment variable runFullTestSet or set value to false
 */
-import { check, sleep } from "k6";
+import { check } from "k6";
 import * as setupToken from "../../setup.js";
 import * as eventsApi from "../../api/events.js";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
@@ -49,14 +49,16 @@ function TC01_GetAllEvents(data) {
 
   // we assume that /events/post.js has run at least once, publishing several events
 
-  response = eventsApi.getCloudEvents("0",
-    data.cloudEvent.source,
-    data.cloudEvent.type,
-    data.cloudEvent.subject,
-    10,
+  response = eventsApi.getCloudEvents(
+    {
+      after: 0,
+      source: data.cloudEvent.source,
+      type: data.cloudEvent.type,
+      subject: data.cloudEvent.subject,
+      size: 10,
+    },
     data.token
   );
-
 
   success = check(response, {
     "GET all cloud events: status is 200": (r) => r.status === 200,
