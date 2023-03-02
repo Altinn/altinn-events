@@ -333,6 +333,24 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
+            public async Task Get_ExternalEventsDisabled_NotFoundResponse()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5&subject=/party/1337";
+
+                HttpClient client = GetTestClient(null);
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            }
+
+            [Fact]
             public async Task Post_EventMissingParameters_BadRequestResponse()
             {
                 // Arrange
