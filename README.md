@@ -1,7 +1,7 @@
-# Altinn Platform Events
+# Altinn Events
 
 ## Build status
-[![Events build status](https://dev.azure.com/brreg/altinn-studio/_apis/build/status/altinn-platform/events-master?label=platform/events)](https://dev.azure.com/brreg/altinn-studio/_build/latest?definitionId=35)
+[![Events build status](https://dev.azure.com/brreg/altinn-studio/_apis/build/status/altinn-platform/events-master?label=altinn/events)](https://dev.azure.com/brreg/altinn-studio/_build/latest?definitionId=136)
 
 
 ## Getting Started
@@ -22,7 +22,7 @@ These instructions will get you a copy of the events component up and running on
 
 ### In a docker container
 
-Clone [Altinn Platform Events repo](https://github.com/Altinn/altinn-events) and navigate to the root folder.
+Clone [Altinn Events repo](https://github.com/Altinn/altinn-events) and navigate to the root folder.
 
 ```cmd
 docker-compose up -d --build
@@ -38,9 +38,10 @@ Stop the container running Events
 docker stop altinn-events
 ```
 
-Navigate to the src/Events, and build and run the code from there, or run the solution using you selected code editor
+Navigate to src/Events, and build and run the code from there, or run the solution using you selected code editor
 
 ```cmd
+cd src/Events
 dotnet run
 ```
 
