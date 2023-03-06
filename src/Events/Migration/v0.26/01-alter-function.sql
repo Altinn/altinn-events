@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION events.getevents(
 	_alternativesubject character varying,
 	_after character varying,
 	_type text[],
-	_source text[],	
+	_source character varying,	
 	_size integer)
     RETURNS TABLE(cloudevents text)
     LANGUAGE 'plpgsql'
