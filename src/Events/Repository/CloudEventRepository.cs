@@ -98,8 +98,13 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("_from", NpgsqlDbType.TimestampTz, from ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_to", NpgsqlDbType.TimestampTz, to ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
-            pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
+#pragma warning disable S3265
+
+            // ignore missing [Flags] attribute on NpgsqlDbType enum.
+            // For more info: https://github.com/npgsql/npgsql/issues/2801
+            pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
+#pragma warning restore S3265       
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
             {
