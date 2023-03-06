@@ -37,11 +37,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
         private static EventsTableEntry NewTestEvent(
             int sequenceno,
-            string id, 
-            Uri source, 
-            string type, 
-            string subject, 
-            string alternativesubject, 
+            string id,
+            Uri source,
+            string type,
+            string subject,
+            string alternativesubject,
             string time,
             object data = null)
         {
@@ -73,12 +73,12 @@ namespace Altinn.Platform.Events.Tests.Mocks
             if (eventsCollectionNumber == 1)
             {
                 events.Add(NewTestEvent(
-                    1, 
+                    1,
                     "e31dbb11-2208-4dda-a549-92a0db8c7708",
                     new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
-                    "instance.deleted", 
-                    "/party/1337", 
-                    "/person/01038712345", 
+                    "instance.deleted",
+                    "/party/1337",
+                    "/person/01038712345",
                     "2020-10-13T11:50:29Z"));
 
                 events.Add(NewTestEvent(
@@ -88,7 +88,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     "instance.deleted",
                     "/party/1337",
                     "/person/01038712345",
-                    "2020-10-13T12:50:29Z"));                
+                    "2020-10-13T12:50:29Z"));
             }
 
             if (_eventsCollection == 2)
@@ -196,7 +196,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size)
+        public Task<List<CloudEvent>> GetEvents(string after, string source, string subject, string alternativeSubject, List<string> type, int size)
         {
             var tableEntries = GetTestEvents(_eventsCollection);
 
@@ -214,10 +214,10 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 filter = filter.Where(te => te.Subject.Equals(subject));
             }
 
-            if (source != null && source.Count > 0)
+            if (!string.IsNullOrEmpty(source))
             {
                 // requires more logic to match all fancy cases.
-                filter = filter.Where(te => source.Contains(te.Source.ToString()));
+                filter = filter.Where(te => te.Source.ToString() == source);
             }
 
             if (type != null && type.Count > 0)

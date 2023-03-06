@@ -6,6 +6,8 @@
     "subject": "/party/1337",
     "time": "2020-10-13T11:50:29Z",
     "type": "instance.deleted",
+    "alternativesubject": "/person/01038712345",
+
     "cloudEvent": {
       "id": "e31dbb11-2208-4dda-a549-92a0db8c7708",
       "source": "urn:altinn:systemx",
@@ -23,6 +25,7 @@
     "subject": "/party/1337",
     "time": "2020-10-13T11:50:29Z",
     "type": "instance.restored",
+    "alternativesubject": "/person/01038712345",
     "cloudEvent": {
       "id": "e31dbb11-2208-4dda-a549-92a0db8c8808",
       "source": "urn:altinn:systemx",

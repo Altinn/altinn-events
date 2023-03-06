@@ -128,13 +128,12 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size)
+        public async Task<List<CloudEvent>> GetEvents(string after, string source, string subject, string alternativeSubject, List<string> type, int size)
         {
-            source = source.Count > 0 ? source : null;
             type = type.Count > 0 ? type : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.GetEvents(after, source, type, subject, size);
+            List<CloudEvent> events = await _repository.GetEvents(after, source, subject, alternativeSubject, type, size);
 
             if (events.Count == 0)
             {
@@ -147,6 +146,6 @@ namespace Altinn.Platform.Events.Services
         private bool IsAppEvent(CloudEvent cloudEvent)
         {
             return !string.IsNullOrEmpty(cloudEvent.Source.Host) && cloudEvent.Source.Host.EndsWith(_settings.AppsDomain);
-        }    
+        }
     }
 }

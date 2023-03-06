@@ -269,7 +269,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c0008", new List<string>() { }, new List<string>() { }, expectedSubject, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c0008", null, expectedSubject, null, new List<string>() { }, 50);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -292,7 +292,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", new List<string>() { }, new List<string>() { }, null, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, null, new List<string>() { }, 50);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -314,16 +314,17 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var repositoryMock = new Mock<ICloudEventRepository>();
             repositoryMock.Setup(r => r.GetEvents(
                 It.IsAny<string>(), // after
-                It.Is<List<string>>(sourceFilter => sourceFilter != null),
-                It.Is<List<string>>(typeFiler => typeFiler != null),
+                It.Is<string>(sourceFilter => sourceFilter != null),
                 It.Is<string>(subject => subject.Equals(subject)),
+                It.IsAny<string>(), // alternativesubject
+                It.Is<List<string>>(typeFiler => typeFiler != null),
                 It.IsAny<int>())) // size
                 .ReturnsAsync(new List<CloudEvent>());
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, new List<string>() { "https://ttd.apps.tt02.altinn.no/ttd/apps-test/" }, new List<string>() { "instance.completed" }, expectedSubject, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, "https://ttd.apps.tt02.altinn.no/ttd/apps-test/", expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -345,15 +346,16 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             repositoryMock.Setup(r => r.GetEvents(
                 It.IsAny<string>(), // after
                 null, // sourceFilter
-                null, // typeFilter
                 string.Empty, // subject
+                string.Empty, // alternativesubject
+                null, // typeFilter
                 It.IsAny<int>())) // size
                 .ReturnsAsync(new List<CloudEvent>());
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, new List<string>(), new List<string>(), string.Empty, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, null, string.Empty, string.Empty, new List<string>(), 50);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -376,7 +378,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(registerMock: registerMock);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("1", new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, new List<string>() { }, null, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("1", "https://ttd.apps.at22.altinn.cloud/ttd/app-test/", null, null, new List<string>() { }, 50);
 
             // Assert
             registerMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
