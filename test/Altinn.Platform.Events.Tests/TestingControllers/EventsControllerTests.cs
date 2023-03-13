@@ -22,6 +22,7 @@ using Altinn.Platform.Events.UnitTest.Mocks;
 using AltinnCore.Authentication.JwtCookie;
 
 using CloudNative.CloudEvents;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -32,6 +33,7 @@ using Microsoft.IdentityModel.Logging;
 using Moq;
 
 using Xunit;
+
 using static Microsoft.Azure.KeyVault.WebKey.JsonWebKeyVerifier;
 
 namespace Altinn.Platform.Events.Tests.TestingControllers
@@ -78,7 +80,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 {
                     Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
                 };
-                
+
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
@@ -210,6 +212,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(expectedCount, actual.Count);
                 Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
             }
 
@@ -314,7 +317,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async void GetEvents_MissingSourceParam_ReturnsBadRequest()
             {
                 // Arrange   
-                string expected = "The 'source' parameter must contain at least one value.";
+                string expected = "The 'source' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5&subject=/party/1337";
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object, true);
@@ -348,6 +351,39 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with a valid set of query parameters including alternative subject as header
+            /// Expected result:
+            ///   Returns a list of events and a next header
+            /// Success criteria:
+            ///   The response has correct count. Next header is correct.
+            /// </summary>
+            [Fact]
+            public async void GetEvents_AlternativeSubjectInHeader_ReturnsListOfEventsAndNextUrl()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&after=0";
+                string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&source=urn:altinn:systemx&subject=/party/1337";
+                int expectedCount = 2;
+
+                HttpClient client = GetTestClient(new EventsServiceMock(3), true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Altinn-AlternativeSubject", "/person/01038712345");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(expectedCount, actual.Count);
+                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
             }
 
             [Fact]

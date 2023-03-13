@@ -14,7 +14,6 @@ using CloudNative.CloudEvents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -82,12 +81,12 @@ namespace Altinn.Platform.Events.Controllers
         /// Retrieves a set of events related based on query parameters.
         /// </summary>
         /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Retrieve events that were registered after this event Id</param>
-        /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
-        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;]">
-        /// Optional list of zero or more sources to include</param>
-        /// <param name="type" example="[&quot;instance.created&quot;, &quot;instance.process.completed&quot;]">
-        /// Optional list of zero or more event types to include</param>
+        /// <param name="source" example="https://ttd.apps.at22.altinn.cloud/ttd/apps-test/">
+        /// Optional source </param>
         /// <param name="subject">Optional filter by subject. Only exact matches will be returned.</param>
+        /// <param name="alternativeSubject">Optional filter by extension attribute alternative subject. Only exact matches will be returned.</param>
+        /// <param name="type" example="[&quot;instance.created&quot;, &quot;instance.process.completed&quot;]">
+        /// Optional filter by event type. </param>
         /// <param name="size">The maximum number of events to include in the response.</param>
         [HttpGet]
         [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
@@ -97,9 +96,10 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/cloudevents+json")]
         public async Task<ActionResult<List<CloudEvent>>> Get(
             [FromQuery] string after,
-            [FromQuery] List<string> source,
+            [FromQuery] string source,
+            [FromQuery] string subject,
+            [FromHeader(Name = "Altinn-AlternativeSubject")] string alternativeSubject,
             [FromQuery] List<string> type,
-            [FromHeader] string subject,
             [FromQuery] int size = 50)
         {
             if (!_settings.EnableExternalEvents)
@@ -116,8 +116,9 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                List<CloudEvent> events = await _eventsService.GetEvents(after, source, type, subject, size);
-                SetNextLink(events);
+                List<CloudEvent> events = await _eventsService.GetEvents(after, source, subject, alternativeSubject, type, size);
+                bool includeSubject = !string.IsNullOrEmpty(alternativeSubject) && string.IsNullOrEmpty(subject);
+                SetNextLink(events, includeSubject);
                 return events;
             }
             catch (PlatformHttpException e)
@@ -126,7 +127,7 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size, List<string> source)
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size, string source)
         {
             if (string.IsNullOrEmpty(after))
             {
@@ -138,15 +139,15 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "The 'size' parameter must be a number larger that 0.");
             }
 
-            if (source.Count == 0)
+            if (string.IsNullOrEmpty(source))
             {
-                return (false, "The 'source' parameter must contain at least one value.");
+                return (false, "The 'source' parameter must be defined.");
             }
 
             return (true, null);
         }
 
-        private void SetNextLink(List<CloudEvent> events)
+        private void SetNextLink(List<CloudEvent> events, bool includeSubject = false)
         {
             if (events.Count > 0)
             {
@@ -155,11 +156,17 @@ namespace Altinn.Platform.Events.Controllers
                     .Where(q => q.Key != "after")
                     .ToList();
 
-                StringBuilder nextUriBuilder = new StringBuilder($"{_eventsBaseUri}{HttpContext.Request.Path}?after={events.Last().Id}");
+                StringBuilder nextUriBuilder = new($"{_eventsBaseUri}{HttpContext.Request.Path}?after={events.Last().Id}");
 
                 foreach (KeyValuePair<string, string> queryParam in queryCollection)
                 {
                     nextUriBuilder.Append($"&{queryParam.Key}={queryParam.Value}");
+                }
+
+                if (includeSubject)
+                {
+                    var subject = events.First().Subject;
+                    nextUriBuilder.Append($"&subject={subject}");
                 }
 
                 Response.Headers.Add("next", nextUriBuilder.ToString());

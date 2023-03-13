@@ -19,6 +19,9 @@ namespace Altinn.Platform.Events.Tests.Models
         [JsonPropertyName("subject")]
         public string Subject { get; set; }
 
+        [JsonPropertyName("alternativesubject")]
+        public string AlternativeSubject { get; set; }
+
         [JsonPropertyName("time")]
         public DateTime? Time { get; set; }
 

@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Models;
 
 using CloudNative.CloudEvents;
-
-using Newtonsoft.Json;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
@@ -17,6 +17,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
     {
         private readonly int _eventsCollection;
         private readonly Dictionary<string, int> _partyLookup;
+        private readonly JsonSerializerOptions _serializerOptions;
 
         public EventsServiceMock(int eventsCollection = 1)
         {
@@ -30,6 +31,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 { "897069631", 1002 },
                 { "01039012345", 1337 },
                 { "12345678901",  1000 }
+            };
+
+            _serializerOptions = new JsonSerializerOptions()
+            {
+                PropertyNameCaseInsensitive = true
             };
         }
 
@@ -45,7 +51,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             if (File.Exists(eventsPath))
             {
                 string content = File.ReadAllText(eventsPath);
-                List<EventsTableEntry> tableEntries = JsonConvert.DeserializeObject<List<EventsTableEntry>>(content);
+                List<EventsTableEntry> tableEntries = JsonSerializer.Deserialize<List<EventsTableEntry>>(content, _serializerOptions);
 
                 // logic for filtering on source and type not implemented.
                 // source filtering is only enabled for 1 source list element.
@@ -90,14 +96,14 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
-        public Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size)
+        public Task<List<CloudEvent>> GetEvents(string after, string source, string subject, string alternativeSubject, List<string> type, int size)
         {
             string eventsPath = Path.Combine(GetEventsPath(), $@"{_eventsCollection}.json");
 
             if (File.Exists(eventsPath))
             {
                 string content = File.ReadAllText(eventsPath);
-                List<EventsTableEntry> tableEntries = JsonConvert.DeserializeObject<List<EventsTableEntry>>(content);
+                List<EventsTableEntry> tableEntries = JsonSerializer.Deserialize<List<EventsTableEntry>>(content, _serializerOptions);
 
                 // logic for filtering on source and type not implemented.
                 // source filtering is only enabled for 1 source list element.
@@ -114,9 +120,14 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     filter = filter.Where(te => te.Subject.Equals(subject));
                 }
 
-                if (source.Count == 1)
+                if (!string.IsNullOrEmpty(alternativeSubject))
                 {
-                    string pattern = "^" + Regex.Escape(source[0]).Replace("%", "*").Replace("_", ".");
+                    filter = filter.Where(te => alternativeSubject.Equals(te.AlternativeSubject));
+                }
+
+                if (!string.IsNullOrEmpty(source))
+                {
+                    string pattern = "^" + Regex.Escape(source).Replace("%", "*").Replace("_", ".");
                     filter = filter.Where(te => Regex.IsMatch(te.Source.ToString(), pattern));
                 }
 

@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Repository
         private readonly string insertAppEventSql = "call events.insertappevent(@id, @source, @subject, @type, @time, @cloudevent)";
         private readonly string insertEventSql = "insert into events.events(cloudevent) VALUES ($1);";
         private readonly string getAppEventsSql = "select events.getappevents(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
-        private readonly string getEventsSql = "select events.getevents(@_subject, @_after, @_type, @_source, @_size)";
+        private readonly string getEventsSql = "select events.getevents(@_subject, @_alternativesubject, @_after, @_type, @_source, @_size)";
         private readonly string _connectionString;
 
         /// <summary>
@@ -42,11 +42,11 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task CreateAppEvent(CloudEvent cloudEvent, string serializedCloudEvent)
         {
-            await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
             await using var transaction = await conn.BeginTransactionAsync();
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(insertAppEventSql, conn);
+            await using NpgsqlCommand pgcom = new(insertAppEventSql, conn);
             pgcom.Parameters.AddWithValue("id", cloudEvent.Id);
             pgcom.Parameters.AddWithValue("source", cloudEvent.Source.OriginalString);
             pgcom.Parameters.AddWithValue("subject", cloudEvent.Subject);
@@ -56,7 +56,7 @@ namespace Altinn.Platform.Events.Repository
 
             await pgcom.ExecuteNonQueryAsync();
 
-            await using NpgsqlCommand pgcom2 = new NpgsqlCommand(insertEventSql, conn)
+            await using NpgsqlCommand pgcom2 = new(insertEventSql, conn)
             {
                 Parameters =
                 {
@@ -72,9 +72,9 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task CreateEvent(string cloudEvent)
         {
-            await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(insertEventSql, conn)
+            await using NpgsqlCommand pgcom = new(insertEventSql, conn)
             {
                 Parameters =
                 {
@@ -87,19 +87,24 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
         {
-            List<CloudEvent> searchResult = new List<CloudEvent>();
+            List<CloudEvent> searchResult = new();
 
-            await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(getAppEventsSql, conn);
+            await using NpgsqlCommand pgcom = new(getAppEventsSql, conn);
             pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject);
             pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
             pgcom.Parameters.AddWithValue("_from", NpgsqlDbType.TimestampTz, from ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_to", NpgsqlDbType.TimestampTz, to ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
+#pragma warning disable S3265
+
+            // ignore missing [Flags] attribute on NpgsqlDbType enum.
+            // For more info: https://github.com/npgsql/npgsql/issues/2801
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
-            pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
+#pragma warning restore S3265       
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
             {
@@ -114,24 +119,25 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size)
+        public async Task<List<CloudEvent>> GetEvents(string after, string source, string subject, string alternativeSubject, List<string> type, int size)
         {
-            List<CloudEvent> searchResult = new List<CloudEvent>();
+            List<CloudEvent> searchResult = GetSearchResult();
 
-            await using NpgsqlConnection conn = new NpgsqlConnection(_connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new NpgsqlCommand(getEventsSql, conn);
+            await using NpgsqlCommand pgcom = new(getEventsSql, conn);
             pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject ?? (object)DBNull.Value);
-            pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
+            pgcom.Parameters.AddWithValue("_alternativesubject", NpgsqlDbType.Varchar, alternativeSubject ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
-#pragma warning disable S3265 
+            pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Varchar, source ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
+            #pragma warning disable S3265
 
             // ignore missing [Flags] attribute on NpgsqlDbType enum.
             // For more info: https://github.com/npgsql/npgsql/issues/2801
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
-            pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
-#pragma warning restore S3265          
+            #pragma warning restore S3265       
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
@@ -144,6 +150,11 @@ namespace Altinn.Platform.Events.Repository
             return searchResult;
         }
 
+        private static List<CloudEvent> GetSearchResult()
+        {
+            return new List<CloudEvent>();
+        }
+
         private static CloudEvent DeserializeAndConvertTime(string eventString)
         {
             var formatter = new CloudNative.CloudEvents.SystemTextJson.JsonEventFormatter();
@@ -152,7 +163,7 @@ namespace Altinn.Platform.Events.Repository
             if (cloudEvent.Time != null)
             {
                 cloudEvent.Time = cloudEvent.Time.Value.ToUniversalTime();
-            }           
+            }
 
             return cloudEvent;
         }

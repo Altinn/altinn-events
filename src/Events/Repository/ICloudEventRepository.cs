@@ -32,6 +32,6 @@ namespace Altinn.Platform.Events.Repository
         /// <summary>
         /// Calls a function to retrieve cloud events based on query params
         /// </summary>
-        Task<List<CloudEvent>> GetEvents(string after, List<string> source, List<string> type, string subject, int size);
+        Task<List<CloudEvent>> GetEvents(string after, string source, string subject, string alternativeSubject, List<string> type, int size);
     }
 }
