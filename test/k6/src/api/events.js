@@ -19,7 +19,18 @@ export function postCloudEvent(serializedCloudEvent, token) {
 
 export function getCloudEvents(queryParams, token) {
   var endpoint = config.platformEvents.events;
-  endpoint += apiHelpers.buildQueryParametersForEndpoint(queryParams);
+  return getEvents(endpoint, queryParams, token);
+}
+
+export function getEventsFromNextLink(nextLink, token) {
+  return getEvents(nextLink, null, token);
+}
+
+function getEvents(endpoint, queryParams, token) {
+  endpoint +=
+   queryParams != null
+    ? apiHelpers.buildQueryParametersForEndpoint(queryParams)
+    : "";
 
   var params = apiHelpers.buildHeaderWithBearerContentType(
     token,
@@ -30,3 +41,4 @@ export function getCloudEvents(queryParams, token) {
 
   return response;
 }
+
