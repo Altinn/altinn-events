@@ -373,7 +373,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
-                httpRequestMessage.Headers.Add("alternativesubject", "/person/01038712345");
+                httpRequestMessage.Headers.Add("Altinn-AlternativeSubject", "/person/01038712345");
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);

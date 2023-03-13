@@ -98,7 +98,7 @@ namespace Altinn.Platform.Events.Controllers
             [FromQuery] string after,
             [FromQuery] string source,
             [FromQuery] string subject,
-            [FromHeader] string alternativeSubject,
+            [FromHeader(Name = "Altinn-AlternativeSubject")] string alternativeSubject,
             [FromQuery] List<string> type,
             [FromQuery] int size = 50)
         {
