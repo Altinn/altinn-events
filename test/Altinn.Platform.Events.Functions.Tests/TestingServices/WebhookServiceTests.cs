@@ -32,12 +32,12 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             // Arrange
             string expectedPayload =
                "{" +
-               "\\\"specversion\\\":\\\"1.0\\\"," +
-               $"\\\"id\\\":\\\"{cloudEventId}\\\"," +
-               "\\\"source\\\":\\\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\\\"," +
-               "\\\"type\\\":\\\"automated.test\\\"," +
-               "\\\"atta\\\":\\\"If the wolf eats your grandma\\\"," +
-               "\\\"attb\\\":\\\"Give the wolf a banana\\\"" +
+               "\"specversion\":\"1.0\"," +
+               $"\"id\":\"{cloudEventId}\"," +
+               "\"source\":\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\"," +
+               "\"type\":\"automated.test\"," +
+               "\"atta\":\"If the wolf eats your grandma\"," +
+               "\"attb\":\"Give the wolf a banana\"" +
                "}";
 
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
@@ -74,13 +74,13 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             // Arrange
             string expectedPayload =
                "{" +
-               "\\\"text\\\": " +
-                   "\\\"{" +
+               "\"text\": " +
+                   "\"{" +
                    "\\\"specversion\\\":\\\"1.0\\\"," +
                    $"\\\"id\\\":\\\"{cloudEventId}\\\"," +
                    "\\\"source\\\":\\\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\\\"," +
                    "\\\"type\\\":\\\"automated.test\\\"" +
-                   "}\\\"" +
+                   "}\"" +
                 "}";
 
             CloudEventEnvelope input = new()
@@ -113,10 +113,10 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             // Arrange
             string expectedPayload =
                "{" +
-               "\\\"specversion\\\":\\\"1.0\\\"," +
-               $"\\\"id\\\":\\\"{cloudEventId}\\\"," +
-               "\\\"source\\\":\\\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\\\"," +
-               "\\\"type\\\":\\\"automated.test\\\"" +
+               "\"specversion\":\"1.0\"," +
+               $"\"id\":\"{cloudEventId}\"," +
+               "\"source\":\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\"," +
+               "\"type\":\"automated.test\"" +
                "}";
 
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
