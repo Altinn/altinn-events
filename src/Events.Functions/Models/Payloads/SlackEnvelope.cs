@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Functions.Models.Payloads
         public string Serialize()
         {
             string serializedCloudEvent = CloudEvent.Serialize().Replace("\"", "\\\"");
-            return CloudEvent == null ? "{ }" : string.Format("{{\"text\": \"{0}\"}}", serializedCloudEvent );
+            return CloudEvent == null ? "{ }" : string.Format("{{\"text\": \"{0}\"}}", serializedCloudEvent);
         }
     }
 }
