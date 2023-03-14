@@ -69,7 +69,7 @@ namespace Altinn.Platform.Events.Models
         /// <returns>Cloud event</returns>
         public static Subscription Deserialize(string jsonString)
         {
-            return JsonSerializer.Deserialize<Subscription>(jsonString, new JsonSerializerOptions { });
+            return JsonSerializer.Deserialize<Subscription>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
     }
 }
