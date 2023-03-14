@@ -84,7 +84,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="source" example="https://ttd.apps.at22.altinn.cloud/ttd/apps-test/">
         /// Optional source </param>
         /// <param name="subject">Optional filter by subject. Only exact matches will be returned.</param>
-        /// <param name="alternativeSubject">Optional filter by extension attribute alternative subject. Only exact matches will be returned.</param>
+        /// <param name="alternativeSubject" example="/person/16035001577">Optional filter by extension attribute alternative subject. Only exact matches will be returned.</param>
         /// <param name="type" example="[&quot;instance.created&quot;, &quot;instance.process.completed&quot;]">
         /// Optional filter by event type. </param>
         /// <param name="size">The maximum number of events to include in the response.</param>

@@ -20,7 +20,7 @@ const scopes = "altinn:events.subscribe";
 
 export const options = {
   thresholds: {
-    errors: ['count<1'],
+    errors: ["count<1"],
   },
 };
 
@@ -65,8 +65,38 @@ function TC01_GetAllEvents(data) {
     "GET all cloud events: at least 1 cloud event returned": (r) =>
     {
       var responseBody = JSON.parse(r.body);
-      return Array.isArray(responseBody) && responseBody.length >= 1
+      return Array.isArray(responseBody) && responseBody.length >= 1;
     }
+  });
+
+  addErrorCount(success);
+}
+
+// 02 - GET events and follow next link
+function TC02_GetEventsAndFollowNextLink(data) {
+  var response, success;
+
+  response = eventsApi.getCloudEvents(
+    {
+      after: 0,
+      source: data.cloudEvent.source,
+      type: data.cloudEvent.type,
+      size: 1,
+    },
+    data.token
+  );
+
+  var nextUrl = response.headers["Next"];
+
+  success = check(response, {
+    "GET cloud events: status is 200": (r) => r.status === 200,
+    "GET cloud events: next link is provided ": (r) => nextUrl,
+  });
+  addErrorCount(success);
+
+  response = eventsApi.getEventsFromNextLink(nextUrl, data.token);
+  success = check(response, {
+    "GET cloud events from next link: status is 200": (r) => r.status === 200,
   });
 
   addErrorCount(success);
@@ -74,11 +104,12 @@ function TC01_GetAllEvents(data) {
 
 /*
  * 01 - GET all existing cloud events for subject /party/1337
+ * 02 - GET events and follow next link
  */
 export default function (data) {
   if (data.runFullTestSet) {
     TC01_GetAllEvents(data);
-
+    TC02_GetEventsAndFollowNextLink(data);
   } else {
     // Limited test set for use case tests
     TC01_GetAllEvents(data);
