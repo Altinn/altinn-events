@@ -1,5 +1,4 @@
 using System;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
@@ -47,7 +46,7 @@ namespace Altinn.Platform.Events.Functions
         public async Task Run([QueueTrigger("subscription-validation", Connection = "QueueStorage")] string item, ILogger log)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
-            Subscription subscription = JsonSerializer.Deserialize<Subscription>(item);
+            Subscription subscription = Subscription.Deserialize(item);
             CloudEventEnvelope cloudEventEnvelope = CreateValidateEvent(subscription);
             await _webhookService.Send(cloudEventEnvelope);
             await _eventsClient.ValidateSubscription(cloudEventEnvelope.SubscriptionId);

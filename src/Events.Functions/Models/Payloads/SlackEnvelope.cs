@@ -25,7 +25,8 @@ namespace Altinn.Platform.Events.Functions.Models.Payloads
         /// <returns>Serialized slack envelope</returns>
         public string Serialize()
         {
-            return CloudEvent == null ? "{ }" : string.Format("{{\"text\": \"{0}\"}}", CloudEvent.Serialize());
+            string serializedCloudEvent = CloudEvent.Serialize().Replace("\"", "\\\"");
+            return CloudEvent == null ? "{ }" : string.Format("{{\"text\": \"{0}\"}}", serializedCloudEvent);
         }
     }
 }

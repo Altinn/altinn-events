@@ -76,10 +76,10 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                "{" +
                "\"text\": " +
                    "\"{" +
-                   "\"specversion\":\"1.0\"," +
-                   $"\"id\":\"{cloudEventId}\"," +
-                   "\"source\":\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\"," +
-                   "\"type\":\"automated.test\"" +
+                   "\\\"specversion\\\":\\\"1.0\\\"," +
+                   $"\\\"id\\\":\\\"{cloudEventId}\\\"," +
+                   "\\\"source\\\":\\\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\\\"," +
+                   "\\\"type\\\":\\\"automated.test\\\"" +
                    "}\"" +
                 "}";
 
