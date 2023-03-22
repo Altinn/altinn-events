@@ -27,7 +27,6 @@ namespace Altinn.Platform.Events.Controllers
     public class EventsController : ControllerBase
     {
         private readonly IEventsService _eventsService;
-        private readonly ILogger _logger;
         private readonly GeneralSettings _settings;
         private readonly string _eventsBaseUri;
 
@@ -36,11 +35,9 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         public EventsController(
             IEventsService events,
-            ILogger<EventsController> logger,
             IOptions<GeneralSettings> settings)
         {
             _eventsService = events;
-            _logger = logger;
             _settings = settings.Value;
             _eventsBaseUri = settings.Value.BaseUri;
         }
