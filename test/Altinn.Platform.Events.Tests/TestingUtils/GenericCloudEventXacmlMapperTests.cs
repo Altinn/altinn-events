@@ -1,24 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 
 using Altinn.Platform.Events.Authorization;
+using Altinn.Platform.Events.Tests.Utils;
 
 using CloudNative.CloudEvents;
 
 using Xunit;
 
+using static Altinn.Authorization.ABAC.Constants.XacmlConstants;
+
 namespace Altinn.Platform.Events.Tests.TestingUtils
 {
     public class GenericCloudEventXacmlMapperTests
     {
-        [Fact]
-        public void CreateMultipleResourceCategory_ConsecutiveCategoryIdsCreated()
+        private readonly CloudEvent _cloudEvent;
+        private readonly CloudEvent _cloudEventWithResourceInstance;
+
+        public GenericCloudEventXacmlMapperTests()
         {
-            // Arrange
-            int expectedCategoryCount = 5;
-            List<string> expectedCategoryIds = new List<string>() { "r1", "r2", "r3", "r4", "r5" };
-            var cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
+            _cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
             {
                 Id = Guid.NewGuid().ToString(),
                 Type = "system.event.occurred",
@@ -26,9 +29,80 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
                 Source = new Uri("urn:isbn:1234567890")
             };
 
-            cloudEvent["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
+            _cloudEvent["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
 
-            List<CloudEvent> events = new() { cloudEvent, cloudEvent, cloudEvent, cloudEvent, cloudEvent };
+            _cloudEventWithResourceInstance = new CloudEvent(CloudEventsSpecVersion.V1_0)
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "system.event.occurred",
+                Subject = "/person/16069412345",
+                Source = new Uri("urn:isbn:1234567890")
+            };
+
+            _cloudEventWithResourceInstance["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
+            _cloudEventWithResourceInstance["resourceinstance"] = "resourceInstanceId";
+        }
+
+        [Fact]
+        public void CreateMultiDecisionRequest_AssertActionCategory()
+        {
+            // Arrange
+            ClaimsPrincipal user = PrincipalUtil.GetClaimsPrincipal(1337, 2);
+            List<CloudEvent> events = new() { _cloudEvent };
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.Action;
+            var actualAction = actual.First();
+            var actualActionValue = actualAction.Attribute.Where(a => a.AttributeId.Equals(MatchAttributeIdentifiers.ActionId)).Select(a => a.Value).FirstOrDefault();
+
+            Assert.Single(actual);
+            Assert.Equal("a1", actualAction.Id);
+            Assert.Equal("subscribe", actualActionValue);
+        }
+
+        [Fact]
+        public void CreateMultiDecisionRequest_AssertSubjectCategory()
+        {
+            // Arrange
+            ClaimsPrincipal user = PrincipalUtil.GetClaimsPrincipal(1337, 2);
+            List<CloudEvent> events = new() { _cloudEvent };
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.AccessSubject;
+            var actualSubject = actual.First();
+
+            // only asserting id. Remaning attributes set by PEP.
+            // Should we verify to catch breaking or unexpected changes in dependency?     
+            Assert.Single(actual);
+            Assert.Equal("s1", actualSubject.Id);
+        }
+
+        [Fact]
+        public void CreateMultiDecisionRequest_AssertMultiRequest()
+        {
+            // Arrange
+            ClaimsPrincipal user = PrincipalUtil.GetClaimsPrincipal(1337, 2);
+            List<CloudEvent> events = new() { _cloudEvent, _cloudEvent, _cloudEvent, _cloudEvent };
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.MultiRequests.RequestReference;
+
+            // Assert
+            Assert.Equal(4, actual.Count);
+            Assert.Contains(actual, r => r.ReferenceId.Except(new List<string>() { "a1", "s1", "r1" }).Count() == 0);
+            Assert.Contains(actual, r => r.ReferenceId.Except(new List<string>() { "a1", "s1", "r2" }).Count() == 0);
+            Assert.Contains(actual, r => r.ReferenceId.Except(new List<string>() { "a1", "s1", "r3" }).Count() == 0);
+            Assert.Contains(actual, r => r.ReferenceId.Except(new List<string>() { "a1", "s1", "r4" }).Count() == 0);
+        }
+
+        [Fact]
+        public void CreateMultipleResourceCategory_ConsecutiveCategoryIdsCreated()
+        {
+            // Arrange
+            int expectedCategoryCount = 5;
+            List<string> expectedCategoryIds = new List<string>() { "r1", "r2", "r3", "r4", "r5" };
+
+            List<CloudEvent> events = new() { _cloudEvent, _cloudEvent, _cloudEvent, _cloudEvent, _cloudEvent };
 
             // Act
             var actual = GenericCloudEventXacmlMapper.CreateMultipleResourceCategory(events);
@@ -44,18 +118,8 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         {
             int expectedAttributeCount = 4;
 
-            var cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
-            {
-                Id = Guid.NewGuid().ToString(),
-                Type = "system.event.occurred",
-                Subject = "/person/16069412345",
-                Source = new Uri("urn:isbn:1234567890")
-            };
-
-            cloudEvent["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
-
             // Act
-            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(cloudEvent);
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEvent);
             var actualEventIdAttribute = actual.Attribute.FirstOrDefault(a => a.AttributeId.Equals("urn:altinn:event-id"));
 
             // Assert
@@ -70,22 +134,12 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         [Fact]
         public void CreateResourceCategory_CloudEventWithResourceInstance()
         {
+            // Arrange
             int expectedAttributeCount = 5;
-            string expectedResourceId = Guid.NewGuid().ToString();
-
-            var cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
-            {
-                Id = Guid.NewGuid().ToString(),
-                Type = "system.event.occurred",
-                Subject = "/person/16069412345",
-                Source = new Uri("urn:isbn:1234567890")
-            };
-
-            cloudEvent["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
-            cloudEvent["resourceinstance"] = expectedResourceId;
+            string expectedResourceId = "resourceInstanceId";
 
             // Act
-            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(cloudEvent);
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithResourceInstance);
             var actualResourceInstancedAttribute = actual.Attribute.FirstOrDefault(a => a.AttributeId.Equals("urn:altinn:resourceinstance"));
 
             // Assert
