@@ -15,7 +15,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
     /// <summary>
     /// /
     /// </summary>
-    public class CloudEventXacmlMapperTests
+    public class AppCloudEventXacmlMapperTests
     {
         /// <summary>
         /// Test creation of single event XACML event
