@@ -184,19 +184,6 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private ActionResult HandlePlatformHttpException(PlatformHttpException e)
-        {
-            if (e.Response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return NotFound();
-            }
-            else
-            {
-                _logger.LogError(e, "// AppController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
-                return Problem(e.Message, statusCode: 500);
-            }
-        }
-
         private static bool AuthorizeEventPublisher(CloudEvent cloudEvent)
         {
             // Further authorization to be implemented in Altinn/altinn-events#183
