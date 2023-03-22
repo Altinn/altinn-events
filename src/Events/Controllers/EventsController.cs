@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -61,7 +60,13 @@ namespace Altinn.Platform.Events.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEvent(cloudEvent))
+            (bool isValid, string errorMessage) = ValidateCloudEvent(cloudEvent);
+            if (!isValid)
+            {
+                return Problem(errorMessage, null, 400);
+            }
+
+            if (!AuthorizeEventPublisher(cloudEvent))
             {
                 return Forbid();
             }
@@ -117,6 +122,7 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 List<CloudEvent> events = await _eventsService.GetEvents(after, source, subject, alternativeSubject, type, size);
+
                 bool includeSubject = !string.IsNullOrEmpty(alternativeSubject) && string.IsNullOrEmpty(subject);
                 SetNextLink(events, includeSubject);
                 return events;
@@ -142,6 +148,17 @@ namespace Altinn.Platform.Events.Controllers
             if (string.IsNullOrEmpty(source))
             {
                 return (false, "The 'source' parameter must be defined.");
+            }
+
+            return (true, null);
+        }
+
+        private static (bool IsValid, string ErrorMessage) ValidateCloudEvent(CloudEvent cloudEvent)
+        {
+            string eventResource = cloudEvent["resource"].ToString();
+            if (string.IsNullOrEmpty(eventResource))
+            {
+                return (false, "A 'resource' property must be defined.");
             }
 
             return (true, null);
@@ -186,7 +203,7 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private static bool AuthorizeEvent(CloudEvent cloudEvent)
+        private static bool AuthorizeEventPublisher(CloudEvent cloudEvent)
         {
             // Further authorization to be implemented in Altinn/altinn-events#183
             return true;

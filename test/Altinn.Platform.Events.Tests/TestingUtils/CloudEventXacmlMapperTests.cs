@@ -36,7 +36,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             cloudEvents.Add(cloudEvent);
 
             // Act
-            XacmlJsonRequestRoot xacmlJsonProfile = CloudEventXacmlMapper.CreateMultiDecisionRequest(principal, cloudEvents);
+            XacmlJsonRequestRoot xacmlJsonProfile = AppCloudEventXacmlMapper.CreateMultiDecisionRequest(principal, cloudEvents);
 
             // Assert.
             Assert.NotNull(xacmlJsonProfile);
@@ -58,7 +58,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             };
 
             // Act
-            XacmlJsonRequestRoot xacmlJsonProfile = CloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, "/party/2");
+            XacmlJsonRequestRoot xacmlJsonProfile = AppCloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, "/party/2");
 
             // Assert.
             Assert.NotNull(xacmlJsonProfile);

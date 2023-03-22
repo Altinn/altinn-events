@@ -504,12 +504,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             if (authorizationMock == null)
             {
                 _authorizationMock
-                    .Setup(a => a.AuthorizeAltinnAppEvents(It.IsAny<ClaimsPrincipal>(), It.IsAny<List<CloudEvent>>()))
-                    .ReturnsAsync((ClaimsPrincipal user, List<CloudEvent> events) => events);
+                    .Setup(a => a.AuthorizeAltinnAppEvents(It.IsAny<List<CloudEvent>>()))
+                    .ReturnsAsync((List<CloudEvent> events) => events);
 
                 _authorizationMock
-                  .Setup(a => a.AuthorizeEvents(It.IsAny<ClaimsPrincipal>(), It.IsAny<List<CloudEvent>>()))
-                  .ReturnsAsync((ClaimsPrincipal user, List<CloudEvent> events) => events);
+                  .Setup(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>()))
+                  .ReturnsAsync((List<CloudEvent> events) => events);
 
                 authorizationMock = _authorizationMock;
             }

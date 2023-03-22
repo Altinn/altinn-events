@@ -22,20 +22,24 @@ namespace Altinn.Platform.Events.Services
     public class AuthorizationService : IAuthorization
     {
         private readonly IPDP _pdp;
+        private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthorizationService"/> class.
         /// </summary>
         /// <param name="pdp">The policy decision point</param>
-        public AuthorizationService(IPDP pdp)
+        /// <param name="claimsPrincipalProvider">The claims principal provider</param>
+        public AuthorizationService(IPDP pdp, IClaimsPrincipalProvider claimsPrincipalProvider)
         {
             _pdp = pdp;
+            _claimsPrincipalProvider = claimsPrincipalProvider;
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> AuthorizeAltinnAppEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents)
+        public async Task<List<CloudEvent>> AuthorizeAltinnAppEvents(List<CloudEvent> cloudEvents)
         {
-            XacmlJsonRequestRoot xacmlJsonRequest = CloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
+            ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
+            XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
             List<CloudEvent> authorizedEventsList = new List<CloudEvent>();
 
@@ -61,17 +65,24 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> AuthorizeEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents)
+        public async Task<List<CloudEvent>> AuthorizeEvents(List<CloudEvent> cloudEvents)
         {
-            // Implementation of authorization is postponed until https://github.com/Altinn/altinn-events/issues/295
+            ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
+
+            XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
+            XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+
+            // TODO: compose list of authorized events
+            List<CloudEvent> authorizedEventsList = new List<CloudEvent>();
+
             await Task.CompletedTask;
-            return cloudEvents;
+            return authorizedEventsList;
         }
 
         /// <inheritdoc/>
         public async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
         {
-            XacmlJsonRequestRoot xacmlJsonRequest = CloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
+            XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
             return ValidateResult(response);
         }

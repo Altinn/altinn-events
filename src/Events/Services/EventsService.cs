@@ -26,7 +26,6 @@ namespace Altinn.Platform.Events.Services
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
-        private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
         private readonly PlatformSettings _settings;
         private readonly ILogger<IEventsService> _logger;
 
@@ -46,7 +45,6 @@ namespace Altinn.Platform.Events.Services
             _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
-            _claimsPrincipalProvider = claimsPrincipalProvider;
             _settings = settings.Value;
             _logger = logger;
         }
@@ -124,7 +122,7 @@ namespace Altinn.Platform.Events.Services
                 return events;
             }
 
-            return await _authorizationService.AuthorizeAltinnAppEvents(_claimsPrincipalProvider.GetUser(), events);
+            return await _authorizationService.AuthorizeAltinnAppEvents(events);
         }
 
         /// <inheritdoc/>
@@ -140,7 +138,7 @@ namespace Altinn.Platform.Events.Services
                 return events;
             }
 
-            return await _authorizationService.AuthorizeEvents(_claimsPrincipalProvider.GetUser(), events);
+            return await _authorizationService.AuthorizeEvents(events);
         }
 
         private bool IsAppEvent(CloudEvent cloudEvent)
