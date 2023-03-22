@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 
+using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.UnitTest.Mocks;
@@ -18,29 +20,24 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     /// </summary>
     public class AuthorizationServiceTest
     {
-        private readonly AuthorizationService _sut;
-
-        public AuthorizationServiceTest()
-        {
-            PepWithPDPAuthorizationMockSI pdp = new();
-            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
-            _sut = new AuthorizationService(pdp, claimsPrincipalMock.Object);
-        }
-
         /// <summary>
         /// Test access to own event
         /// </summary>
         [Fact]
-        public async Task AuthorizeAccessToEventForSelf()
+        public async Task AuthorizeConsumerForAltinnAppEvent_Self()
         {
-            CloudEvent cloudEvent = new()
+            PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
+            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
+            AuthorizationService authzHelper = new AuthorizationService(pdp, claimsPrincipalMock.Object);
+
+            CloudEvent cloudEvent = new CloudEvent()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"
             };
 
             // Act
-            bool result = await _sut.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/user/1337");
+            bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/user/1337");
 
             // Assert.
             Assert.True(result);
@@ -50,16 +47,20 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Test access to own event
         /// </summary>
         [Fact]
-        public async Task AuthorizeOrgAccessToEventForUser()
+        public async Task AuthorizeConsumerForAltinnAppEvent_OrgAccessToEventForUser()
         {
-            CloudEvent cloudEvent = new()
+            PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
+            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
+            AuthorizationService authzHelper = new AuthorizationService(pdp, claimsPrincipalMock.Object);
+
+            CloudEvent cloudEvent = new CloudEvent()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"
             };
 
             // Act
-            bool result = await _sut.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/org/ttd");
+            bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/org/ttd");
 
             // Assert.
             Assert.True(result);
@@ -69,19 +70,48 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Test access to event for user for org.Not authorized
         /// </summary>
         [Fact]
-        public async Task AuthorizeOrgAccessToEventForUserNotAuthorized()
+        public async Task AuthorizeConsumerForAltinnAppEvent_OrgAccessToEventForUserNotAuthorized()
         {
-            CloudEvent cloudEvent = new()
+            PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
+            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
+            AuthorizationService authzHelper = new AuthorizationService(pdp, claimsPrincipalMock.Object);
+
+            CloudEvent cloudEvent = new CloudEvent()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"
             };
 
             // Act
-            bool result = await _sut.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/org/nav");
+            bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/org/nav");
 
             // Assert.
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task AuthorizeEvents_TC01()
+        {
+            // Arrange
+            Mock<IPDP> pdpMock = new();
+            pdpMock
+                .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+                .ReturnsAsync(new XacmlJsonResponse()); // lag en respons
+
+            var sut = GetAuthorizationService(pdpMock.Object);
+
+            // lage en liste med cloud events
+
+            // Act
+
+            // Assert
+        }
+
+        private AuthorizationService GetAuthorizationService(IPDP pdp)
+        {
+            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
+
+            return new AuthorizationService(pdp, claimsPrincipalMock.Object);
         }
     }
 }

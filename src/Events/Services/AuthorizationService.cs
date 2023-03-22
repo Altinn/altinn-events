@@ -12,8 +12,6 @@ using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
-using Azure;
-
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services
