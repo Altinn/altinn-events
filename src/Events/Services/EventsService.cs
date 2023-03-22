@@ -37,7 +37,6 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
-            IClaimsPrincipalProvider claimsPrincipalProvider,
             IOptions<PlatformSettings> settings,
             ILogger<IEventsService> logger)
         {

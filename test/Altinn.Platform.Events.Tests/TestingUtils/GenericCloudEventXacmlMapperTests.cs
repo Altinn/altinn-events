@@ -89,10 +89,10 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             // Assert
             Assert.Equal(4, actual.Count);
-            Assert.Contains(actual, r => r.ReferenceId.Except(new List<string>() { "a1", "s1", "r1" }).Count() == 0);
-            Assert.Contains(actual, r => r.ReferenceId.Except(new List<string>() { "a1", "s1", "r2" }).Count() == 0);
-            Assert.Contains(actual, r => r.ReferenceId.Except(new List<string>() { "a1", "s1", "r3" }).Count() == 0);
-            Assert.Contains(actual, r => r.ReferenceId.Except(new List<string>() { "a1", "s1", "r4" }).Count() == 0);
+            Assert.Contains(actual, r => !r.ReferenceId.Except(new List<string>() { "a1", "s1", "r1" }).Any());
+            Assert.Contains(actual, r => !r.ReferenceId.Except(new List<string>() { "a1", "s1", "r2" }).Any());
+            Assert.Contains(actual, r => !r.ReferenceId.Except(new List<string>() { "a1", "s1", "r3" }).Any());
+            Assert.Contains(actual, r => !r.ReferenceId.Except(new List<string>() { "a1", "s1", "r4" }).Any());
         }
 
         [Fact]
@@ -100,7 +100,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         {
             // Arrange
             int expectedCategoryCount = 5;
-            List<string> expectedCategoryIds = new List<string>() { "r1", "r2", "r3", "r4", "r5" };
+            List<string> expectedCategoryIds = new() { "r1", "r2", "r3", "r4", "r5" };
 
             List<CloudEvent> events = new() { _cloudEvent, _cloudEvent, _cloudEvent, _cloudEvent, _cloudEvent };
 

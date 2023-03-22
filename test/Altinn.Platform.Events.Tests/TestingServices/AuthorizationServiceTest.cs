@@ -22,8 +22,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         public AuthorizationServiceTest()
         {
-            PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new Mock<IClaimsPrincipalProvider>();
+            PepWithPDPAuthorizationMockSI pdp = new();
+            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
             _sut = new AuthorizationService(pdp, claimsPrincipalMock.Object);
         }
 
@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         [Fact]
         public async Task AuthorizeAccessToEventForSelf()
         {
-            CloudEvent cloudEvent = new CloudEvent()
+            CloudEvent cloudEvent = new()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"
@@ -52,7 +52,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         [Fact]
         public async Task AuthorizeOrgAccessToEventForUser()
         {
-            CloudEvent cloudEvent = new CloudEvent()
+            CloudEvent cloudEvent = new()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"
@@ -71,7 +71,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         [Fact]
         public async Task AuthorizeOrgAccessToEventForUserNotAuthorized()
         {
-            CloudEvent cloudEvent = new CloudEvent()
+            CloudEvent cloudEvent = new()
             {
                 Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1337"

@@ -34,7 +34,7 @@ namespace Altinn.Platform.Events.Authorization
         /// </summary>
         public static XacmlJsonRequestRoot CreateDecisionRequest(CloudEvent cloudEvent, string subject)
         {
-            XacmlJsonRequest request = new XacmlJsonRequest
+            XacmlJsonRequest request = new()
             {
                 AccessSubject = new List<XacmlJsonCategory>(),
                 Action = new List<XacmlJsonCategory>(),
@@ -70,7 +70,7 @@ namespace Altinn.Platform.Events.Authorization
             string defaultType = CloudEventXacmlMapper.DefaultType;
             string defaultIssuer = CloudEventXacmlMapper.DefaultIssuer;
 
-            XacmlJsonCategory resourceCategory = new XacmlJsonCategory
+            XacmlJsonCategory resourceCategory = new()
             {
                 Attribute = new List<XacmlJsonAttribute>()
             };
@@ -105,12 +105,12 @@ namespace Altinn.Platform.Events.Authorization
             string defaultType = CloudEventXacmlMapper.DefaultType;
             string defaultIssuer = CloudEventXacmlMapper.DefaultIssuer;
 
-            List<XacmlJsonCategory> resourcesCategories = new List<XacmlJsonCategory>();
+            List<XacmlJsonCategory> resourcesCategories = new();
             int counter = 1;
 
             foreach (CloudEvent cloudEvent in events)
             {
-                XacmlJsonCategory resourceCategory = new XacmlJsonCategory { Attribute = new List<XacmlJsonAttribute>() };
+                XacmlJsonCategory resourceCategory = new() { Attribute = new List<XacmlJsonAttribute>() };
 
                 Uri source = cloudEvent.Source;
 
