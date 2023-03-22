@@ -72,10 +72,25 @@ namespace Altinn.Platform.Events.Services
             XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
-            // TODO: compose list of authorized events
-            List<CloudEvent> authorizedEventsList = new List<CloudEvent>();
+            List<CloudEvent> authorizedEventsList = new();
+            foreach (XacmlJsonResult result in response.Response.Where(result => DecisionHelper.ValidateDecisionResult(result, consumer)))
+            {
+                string eventId = string.Empty;
 
-            await Task.CompletedTask;
+                // Loop through all attributes in Category from the response
+                foreach (var attributes in result.Category.Select(category => category.Attribute))
+                {
+                    foreach (var attribute in attributes.Where(attribute => attribute.AttributeId.Equals(AltinnXacmlUrns.EventId)))
+                    {
+                        eventId = attribute.Value;
+                    }
+                }
+
+                // Find the event that has been validated to add it to the list of authorized events.
+                CloudEvent authorizedEvent = cloudEvents.First(i => i.Id == eventId);
+                authorizedEventsList.Add(authorizedEvent);
+            }
+
             return authorizedEventsList;
         }
 

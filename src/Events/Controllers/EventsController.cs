@@ -119,18 +119,12 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            try
-            {
-                List<CloudEvent> events = await _eventsService.GetEvents(after, source, subject, alternativeSubject, type, size);
+            List<CloudEvent> events = await _eventsService.GetEvents(after, source, subject, alternativeSubject, type, size);
 
-                bool includeSubject = !string.IsNullOrEmpty(alternativeSubject) && string.IsNullOrEmpty(subject);
-                SetNextLink(events, includeSubject);
-                return events;
-            }
-            catch (PlatformHttpException e)
-            {
-                return HandlePlatformHttpException(e);
-            }
+            bool includeSubject = !string.IsNullOrEmpty(alternativeSubject) && string.IsNullOrEmpty(subject);
+            SetNextLink(events, includeSubject);
+
+            return events;
         }
 
         private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size, string source)
