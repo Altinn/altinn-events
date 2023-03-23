@@ -60,13 +60,13 @@ namespace Altinn.Platform.Events.Authorization
             XacmlJsonCategory resourceCategory = new() { Attribute = new List<XacmlJsonAttribute>() };
 
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventId, cloudEvent.Id, defaultType, defaultIssuer, true));
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute("urn:altinn:eventtype", cloudEvent.Type, defaultType, defaultIssuer));
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute("urn:altinn:eventsource", cloudEvent.Source.ToString(), defaultType, defaultIssuer));
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute("urn:altinn:resource", cloudEvent["resource"].ToString(), defaultType, defaultIssuer));
+            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventType, cloudEvent.Type, defaultType, defaultIssuer));
+            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventSource, cloudEvent.Source.ToString(), defaultType, defaultIssuer));
+            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.ResourceId, cloudEvent["resource"].ToString(), defaultType, defaultIssuer));
 
             if (cloudEvent["resourceinstance"] is not null)
             {
-                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute("urn:altinn:resourceinstance", cloudEvent["resourceinstance"].ToString(), defaultType, defaultIssuer));
+                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.ResourceInstance, cloudEvent["resourceinstance"].ToString(), defaultType, defaultIssuer));
             }
 
             return resourceCategory;
