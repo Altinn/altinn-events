@@ -82,7 +82,10 @@ namespace Altinn.Platform.Events.Services
             return false;
         }
 
-        private static List<CloudEvent> FilterAuthorizedRequests(List<CloudEvent> cloudEvents, ClaimsPrincipal consumer, XacmlJsonResponse response)
+        /// <summary>
+        /// Composes a list of events that the consumer is authorized to receive based on the provided xacml response
+        /// </summary>
+        internal static List<CloudEvent> FilterAuthorizedRequests(List<CloudEvent> cloudEvents, ClaimsPrincipal consumer, XacmlJsonResponse response)
         {
             List<CloudEvent> authorizedEventsList = new();
 

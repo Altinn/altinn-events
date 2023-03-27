@@ -90,28 +90,15 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task AuthorizeEvents_TC01()
+        public async Task FilterAuthorizedRequests_()
         {
             // Arrange
-            Mock<IPDP> pdpMock = new();
-            pdpMock
-                .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
-                .ReturnsAsync(new XacmlJsonResponse()); // lag en respons
-
-            var sut = GetAuthorizationService(pdpMock.Object);
 
             // lage en liste med cloud events
 
             // Act
 
             // Assert
-        }
-
-        private AuthorizationService GetAuthorizationService(IPDP pdp)
-        {
-            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
-
-            return new AuthorizationService(pdp, claimsPrincipalMock.Object);
         }
     }
 }
