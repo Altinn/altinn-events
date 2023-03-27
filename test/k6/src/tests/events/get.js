@@ -1,7 +1,7 @@
 /*
     Test script to platform events api with user token
     Command:
-    docker-compose run k6 run /src/tests/events/post.js `
+    docker-compose run k6 run /src/tests/events/get.js `
     -e tokenGeneratorUserName=autotest `
     -e tokenGeneratorUserPwd=*** `
     -e env=*** `
