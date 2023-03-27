@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -106,6 +105,9 @@ namespace Altinn.Platform.Events.Controllers
             {
                 return NotFound();
             }
+
+            // Maximum allowed result set size is adjusted silently.
+            size = size > 1000 ? 1000 : size;
 
             (bool isValid, string errorMessage) = ValidateQueryParams(after, size, source);
 
