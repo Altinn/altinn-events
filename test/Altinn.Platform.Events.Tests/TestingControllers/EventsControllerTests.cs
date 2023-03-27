@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -13,6 +15,7 @@ using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
+using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
@@ -158,6 +161,37 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
                 Assert.Equal(expected, actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with size > 1000
+            /// Expected result:
+            ///   Returns a list of maximum 1000 events and a next header
+            /// Success criteria:
+            ///   Event service gets size input 1000.
+            /// </summary>
+            [Fact]
+            public async void GetEvents_SizeMoreThan1000_ReturnsListOfMax1000Events()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&after=0&subject=%2Fparty%2F1337&size=1500";
+                Mock<IEventsService> eventsMock = new();
+                eventsMock
+                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 1000)))
+                    .ReturnsAsync(new List<CloudEvent>());
+
+                HttpClient client = GetTestClient(eventsMock.Object, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                eventsMock.VerifyAll();
             }
 
             /// <summary>
