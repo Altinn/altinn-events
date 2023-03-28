@@ -1,11 +1,22 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Security.Claims;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Tests.Models;
+using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
+using Altinn.Platform.Register.Models;
 
 using CloudNative.CloudEvents;
 
@@ -90,15 +101,36 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task FilterAuthorizedRequests_()
+        public async Task FilterAuthorizedRequests_PermitAll()
         {
             // Arrange
+            ClaimsPrincipal consumer = PrincipalUtil.GetClaimsPrincipal(12345, 3);
+            string testCase = "permit_all";
+            List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
+            XacmlJsonResponse response = TestdataUtil.GetXacmlJsonResponse(testCase);
 
-            // lage en liste med cloud events
-
-            // Act
+            // Act            
+            List<CloudEvent> actual = AuthorizationService.FilterAuthorizedRequests(cloudEvents, consumer, response);
 
             // Assert
+            Assert.NotEmpty(actual);
+            Assert.Equal(2, actual.Count);
+        }
+
+        [Fact]
+        public async Task FilterAuthorizedRequests_PermitOne()
+        {
+            // Arrange
+            ClaimsPrincipal consumer = PrincipalUtil.GetClaimsPrincipal(12345, 3);
+            string testCase = "permit_one";
+            List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
+            XacmlJsonResponse response = TestdataUtil.GetXacmlJsonResponse(testCase);
+
+            // Act            
+            List<CloudEvent> actual = AuthorizationService.FilterAuthorizedRequests(cloudEvents, consumer, response);
+
+            // Assert
+            Assert.Single(actual);
         }
     }
 }

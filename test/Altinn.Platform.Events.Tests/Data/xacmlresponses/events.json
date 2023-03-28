@@ -1,0 +1,21 @@
+﻿[
+  {
+    "id": "4665ff57-93d5-4bb4-83a2-8355a1cb686a",
+    "source": "urn:altinn:systemx",
+    "specversion": "1.0",
+    "type": "instance.deleted",
+    "subject": "/party/1337",
+    "alternativesubject": "/person/01038712345",
+    "time": "2020-10-13T11:50:29Z"
+  },
+  {
+    "id": "5fac27e8-6ca8-4ab0-bea5-938ba6c1016f",
+    "source": "urn:altinn:systemx",
+    "specversion": "1.0",
+    "type": "instance.deleted",
+    "subject": "/party/1337",
+    "alternativesubject": "/person/01038712345",
+    "time": "2020-10-13T12:50:29Z"
+  }
+
+]
