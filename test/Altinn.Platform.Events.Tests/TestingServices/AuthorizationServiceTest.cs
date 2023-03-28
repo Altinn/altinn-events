@@ -101,7 +101,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task FilterAuthorizedRequests_PermitAll()
+        public void FilterAuthorizedRequests_PermitAll()
         {
             // Arrange
             ClaimsPrincipal consumer = PrincipalUtil.GetClaimsPrincipal(12345, 3);
@@ -118,7 +118,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task FilterAuthorizedRequests_PermitOne()
+        public void FilterAuthorizedRequests_PermitOne()
         {
             // Arrange
             ClaimsPrincipal consumer = PrincipalUtil.GetClaimsPrincipal(12345, 3);
