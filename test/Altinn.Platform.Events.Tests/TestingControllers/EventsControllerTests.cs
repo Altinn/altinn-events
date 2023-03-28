@@ -65,7 +65,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Source = new Uri("urn:isbn:1234567890")
                 };
 
-                _validEvent["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
+                _validEvent["resource"] = "nbib.bokoversikt.api";
 
                 _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             }
