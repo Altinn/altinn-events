@@ -106,6 +106,9 @@ namespace Altinn.Platform.Events.Controllers
                 return NotFound();
             }
 
+            // Maximum allowed result set size is adjusted silently.
+            size = size > 1000 ? 1000 : size;
+
             (bool isValid, string errorMessage) = ValidateQueryParams(after, size, source);
 
             if (!isValid)
