@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
 
 using CloudNative.CloudEvents;
-
+s
 namespace Altinn.Platform.Events.Services.Interfaces
 {
     /// <summary>
