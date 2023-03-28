@@ -49,7 +49,5 @@ namespace Altinn.Platform.Events.Tests.Utils
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(TestdataUtil).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "xacmlresponses");
         }
-
     }
-
 }
