@@ -15,7 +15,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
     /// <summary>
     /// /
     /// </summary>
-    public class CloudEventXacmlMapperTests
+    public class AppCloudEventXacmlMapperTests
     {
         /// <summary>
         /// Test creation of single event XACML event
@@ -26,8 +26,8 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             // Arrange
             ClaimsPrincipal principal = GetPrincipal(1, 1);
 
-            List<CloudEvent> cloudEvents = new List<CloudEvent>();
-            CloudEvent cloudEvent = new CloudEvent()
+            List<CloudEvent> cloudEvents = new();
+            CloudEvent cloudEvent = new()
             {
                 Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1234324"
@@ -36,7 +36,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             cloudEvents.Add(cloudEvent);
 
             // Act
-            XacmlJsonRequestRoot xacmlJsonProfile = CloudEventXacmlMapper.CreateMultiDecisionRequest(principal, cloudEvents);
+            XacmlJsonRequestRoot xacmlJsonProfile = AppCloudEventXacmlMapper.CreateMultiDecisionRequest(principal, cloudEvents);
 
             // Assert.
             Assert.NotNull(xacmlJsonProfile);
@@ -51,14 +51,14 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         [Fact]
         public void CreateSingleEventRequestForConsumer()
         {
-            CloudEvent cloudEvent = new CloudEvent()
+            CloudEvent cloudEvent = new()
             {
                 Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
                 Subject = "/party/1234324"
             };
 
             // Act
-            XacmlJsonRequestRoot xacmlJsonProfile = CloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, "/party/2");
+            XacmlJsonRequestRoot xacmlJsonProfile = AppCloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, "/party/2");
 
             // Assert.
             Assert.NotNull(xacmlJsonProfile);
@@ -69,7 +69,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
         private static ClaimsPrincipal GetPrincipal(int userId, int partyId)
         {
-            List<Claim> claims = new List<Claim>();
+            List<Claim> claims = new();
             string issuer = "www.altinn.no";
             claims.Add(new Claim(AltinnCoreClaimTypes.UserId, userId.ToString(), ClaimValueTypes.String, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.UserName, "UserOne", ClaimValueTypes.String, issuer));
@@ -77,9 +77,9 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticationLevel, "2", ClaimValueTypes.Integer32, issuer));
 
-            ClaimsIdentity identity = new ClaimsIdentity("mock");
+            ClaimsIdentity identity = new("mock");
             identity.AddClaims(claims);
-            ClaimsPrincipal principal = new ClaimsPrincipal(identity);
+            ClaimsPrincipal principal = new(identity);
             return principal;
         }
     }

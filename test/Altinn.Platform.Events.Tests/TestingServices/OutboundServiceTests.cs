@@ -242,7 +242,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             if (authorizationMock == null)
             {
-                authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI());
+                Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new Mock<IClaimsPrincipalProvider>();
+
+                authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object);
             }
 
             if (memoryCache == null)

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -32,7 +31,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly IEventsQueueClient _queueMock;
         private readonly Mock<IRegisterService> _registerMock;
         private readonly Mock<IAuthorization> _authorizationMock;
-        private readonly Mock<IClaimsPrincipalProvider> _claimsPrincipalProviderMock;
         private readonly Mock<ILogger<IEventsService>> _loggerMock;
 
         public EventsServiceTest()
@@ -41,7 +39,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _queueMock = new EventsQueueClientMock();
             _registerMock = new();
             _authorizationMock = new();
-            _claimsPrincipalProviderMock = new();
             _loggerMock = new();
         }
 
@@ -504,12 +501,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             if (authorizationMock == null)
             {
                 _authorizationMock
-                    .Setup(a => a.AuthorizeAltinnAppEvents(It.IsAny<ClaimsPrincipal>(), It.IsAny<List<CloudEvent>>()))
-                    .ReturnsAsync((ClaimsPrincipal user, List<CloudEvent> events) => events);
+                    .Setup(a => a.AuthorizeAltinnAppEvents(It.IsAny<List<CloudEvent>>()))
+                    .ReturnsAsync((List<CloudEvent> events) => events);
 
                 _authorizationMock
-                  .Setup(a => a.AuthorizeEvents(It.IsAny<ClaimsPrincipal>(), It.IsAny<List<CloudEvent>>()))
-                  .ReturnsAsync((ClaimsPrincipal user, List<CloudEvent> events) => events);
+                  .Setup(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>()))
+                  .ReturnsAsync((List<CloudEvent> events) => events);
 
                 authorizationMock = _authorizationMock;
             }
@@ -525,7 +522,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 queueMock,
                 registerMock.Object,
                 authorizationMock.Object,
-                _claimsPrincipalProviderMock.Object,
                 settingsIOption,
                 loggerMock.Object);
         }

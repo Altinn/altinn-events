@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -13,7 +11,6 @@ using CloudNative.CloudEvents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Controllers
@@ -27,7 +24,6 @@ namespace Altinn.Platform.Events.Controllers
     public class EventsController : ControllerBase
     {
         private readonly IEventsService _eventsService;
-        private readonly ILogger _logger;
         private readonly GeneralSettings _settings;
         private readonly string _eventsBaseUri;
 
@@ -36,11 +32,9 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         public EventsController(
             IEventsService events,
-            ILogger<EventsController> logger,
             IOptions<GeneralSettings> settings)
         {
             _eventsService = events;
-            _logger = logger;
             _settings = settings.Value;
             _eventsBaseUri = settings.Value.BaseUri;
         }
@@ -60,7 +54,13 @@ namespace Altinn.Platform.Events.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEvent(cloudEvent))
+            (bool isValid, string errorMessage) = ValidateCloudEvent(cloudEvent);
+            if (!isValid)
+            {
+                return Problem(errorMessage, null, 400);
+            }
+
+            if (!AuthorizeEventPublisher(cloudEvent))
             {
                 return Forbid();
             }
@@ -116,17 +116,12 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            try
-            {
-                List<CloudEvent> events = await _eventsService.GetEvents(after, source, subject, alternativeSubject, type, size);
-                bool includeSubject = !string.IsNullOrEmpty(alternativeSubject) && string.IsNullOrEmpty(subject);
-                SetNextLink(events, includeSubject);
-                return events;
-            }
-            catch (PlatformHttpException e)
-            {
-                return HandlePlatformHttpException(e);
-            }
+            List<CloudEvent> events = await _eventsService.GetEvents(after, source, subject, alternativeSubject, type, size);
+
+            bool includeSubject = !string.IsNullOrEmpty(alternativeSubject) && string.IsNullOrEmpty(subject);
+            SetNextLink(events, includeSubject);
+
+            return events;
         }
 
         private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size, string source)
@@ -144,6 +139,17 @@ namespace Altinn.Platform.Events.Controllers
             if (string.IsNullOrEmpty(source))
             {
                 return (false, "The 'source' parameter must be defined.");
+            }
+
+            return (true, null);
+        }
+
+        private static (bool IsValid, string ErrorMessage) ValidateCloudEvent(CloudEvent cloudEvent)
+        {
+            string eventResource = cloudEvent["resource"].ToString();
+            if (string.IsNullOrEmpty(eventResource))
+            {
+                return (false, "A 'resource' property must be defined.");
             }
 
             return (true, null);
@@ -175,20 +181,7 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private ActionResult HandlePlatformHttpException(PlatformHttpException e)
-        {
-            if (e.Response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return NotFound();
-            }
-            else
-            {
-                _logger.LogError(e, "// AppController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
-                return Problem(e.Message, statusCode: 500);
-            }
-        }
-
-        private static bool AuthorizeEvent(CloudEvent cloudEvent)
+        private static bool AuthorizeEventPublisher(CloudEvent cloudEvent)
         {
             // Further authorization to be implemented in Altinn/altinn-events#183
             return true;

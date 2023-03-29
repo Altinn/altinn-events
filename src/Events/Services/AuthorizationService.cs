@@ -22,56 +22,44 @@ namespace Altinn.Platform.Events.Services
     public class AuthorizationService : IAuthorization
     {
         private readonly IPDP _pdp;
+        private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthorizationService"/> class.
         /// </summary>
         /// <param name="pdp">The policy decision point</param>
-        public AuthorizationService(IPDP pdp)
+        /// <param name="claimsPrincipalProvider">The claims principal provider</param>
+        public AuthorizationService(IPDP pdp, IClaimsPrincipalProvider claimsPrincipalProvider)
         {
             _pdp = pdp;
+            _claimsPrincipalProvider = claimsPrincipalProvider;
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> AuthorizeAltinnAppEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents)
+        public async Task<List<CloudEvent>> AuthorizeAltinnAppEvents(List<CloudEvent> cloudEvents)
         {
-            XacmlJsonRequestRoot xacmlJsonRequest = CloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
+            ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
+            XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
-            List<CloudEvent> authorizedEventsList = new List<CloudEvent>();
 
-            foreach (XacmlJsonResult result in response.Response.Where(result => DecisionHelper.ValidateDecisionResult(result, consumer)))
-            {
-                string eventId = string.Empty;
-
-                // Loop through all attributes in Category from the response
-                foreach (var attributes in result.Category.Select(category => category.Attribute))
-                {
-                    foreach (var attribute in attributes.Where(attribute => attribute.AttributeId.Equals(AltinnXacmlUrns.EventId)))
-                    {
-                        eventId = attribute.Value;
-                    }
-                }
-
-                // Find the instance that has been validated to add it to the list of authorized instances.
-                CloudEvent authorizedEvent = cloudEvents.First(i => i.Id == eventId);
-                authorizedEventsList.Add(authorizedEvent);
-            }
-
-            return authorizedEventsList;
+            return FilterAuthorizedRequests(cloudEvents, consumer, response);
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> AuthorizeEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents)
+        public async Task<List<CloudEvent>> AuthorizeEvents(List<CloudEvent> cloudEvents)
         {
-            // Implementation of authorization is postponed until https://github.com/Altinn/altinn-events/issues/295
-            await Task.CompletedTask;
-            return cloudEvents;
+            ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
+
+            XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
+            XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+
+            return FilterAuthorizedRequests(cloudEvents, consumer, response);
         }
 
         /// <inheritdoc/>
         public async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
         {
-            XacmlJsonRequestRoot xacmlJsonRequest = CloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
+            XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
             return ValidateResult(response);
         }
@@ -92,6 +80,34 @@ namespace Altinn.Platform.Events.Services
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Composes a list of events that the consumer is authorized to receive based on the provided xacml response
+        /// </summary>
+        internal static List<CloudEvent> FilterAuthorizedRequests(List<CloudEvent> cloudEvents, ClaimsPrincipal consumer, XacmlJsonResponse response)
+        {
+            List<CloudEvent> authorizedEventsList = new();
+
+            foreach (XacmlJsonResult result in response.Response.Where(result => DecisionHelper.ValidateDecisionResult(result, consumer)))
+            {
+                string eventId = string.Empty;
+
+                // Loop through all attributes in Category from the response
+                foreach (var attributes in result.Category.Select(category => category.Attribute))
+                {
+                    foreach (var attribute in attributes.Where(attribute => attribute.AttributeId.Equals(AltinnXacmlUrns.EventId)))
+                    {
+                        eventId = attribute.Value;
+                    }
+                }
+
+                // Find the instance that has been validated to add it to the list of authorized instances.
+                CloudEvent authorizedEvent = cloudEvents.First(i => i.Id == eventId);
+                authorizedEventsList.Add(authorizedEvent);
+            }
+
+            return authorizedEventsList;
         }
     }
 }

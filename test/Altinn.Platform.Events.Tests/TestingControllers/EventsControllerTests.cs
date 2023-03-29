@@ -37,8 +37,6 @@ using Moq;
 
 using Xunit;
 
-using static Microsoft.Azure.KeyVault.WebKey.JsonWebKeyVerifier;
-
 namespace Altinn.Platform.Events.Tests.TestingControllers
 {
     /// <summary>
@@ -67,8 +65,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Id = Guid.NewGuid().ToString(),
                     Type = "system.event.occurred",
                     Subject = "/person/16069412345",
-                    Source = new Uri("urn:isbn:1234567890"),
+                    Source = new Uri("urn:isbn:1234567890")
                 };
+
+                _validEvent["resource"] = "nbib.bokoversikt.api";
+
                 _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             }
 

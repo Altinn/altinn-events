@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -16,18 +15,16 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <summary>
         /// Authorizes and filters Altinn App events based on authorization
         /// </summary>
-        /// <param name="consumer">The event consumer</param>
         /// <param name="cloudEvents">The list of events</param>
         /// <returns>A list of authorized events</returns>
-        public Task<List<CloudEvent>> AuthorizeAltinnAppEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents);
+        public Task<List<CloudEvent>> AuthorizeAltinnAppEvents(List<CloudEvent> cloudEvents);
 
         /// <summary>
         /// Authorizes and filters events based on authorization
         /// </summary>
-        /// <param name="consumer">The event consumer</param>
         /// <param name="cloudEvents">The list of events</param>
         /// <returns>A list of authorized events</returns>
-        public Task<List<CloudEvent>> AuthorizeEvents(ClaimsPrincipal consumer, List<CloudEvent> cloudEvents);
+        public Task<List<CloudEvent>> AuthorizeEvents(List<CloudEvent> cloudEvents);
 
         /// <summary>
         /// Method to authorize access to an Altinn App event
