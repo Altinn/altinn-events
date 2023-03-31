@@ -45,7 +45,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="cloudEvent">The incoming cloud event</param>
         /// <returns>The cloud event subject and id</returns>
         [HttpPost]
-        [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH)]
+        [Authorize(Policy = AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS)]
         [Consumes("application/cloudevents+json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
@@ -88,7 +88,7 @@ namespace Altinn.Platform.Events.Controllers
         /// Optional filter by event type. </param>
         /// <param name="size">The maximum number of events to include in the response.</param>
         [HttpGet]
-        [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
+        [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_SUBSCRIBE)]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

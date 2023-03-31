@@ -12,6 +12,7 @@ using Altinn.Common.PEP.Authorization;
 using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
+using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
@@ -188,11 +189,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<PostgreSqlSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
-    services.Configure<Altinn.Platform.Events.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
+    services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.Configure<Altinn.Common.AccessToken.Configuration.KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
     services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
+    services.AddSingleton<IAuthorizationHandler, PublishScopeOrAccessTokenHandler>();
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     services.AddSingleton<ISigningKeysResolver, SigningKeysResolver>();
     services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
@@ -224,16 +226,21 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     services.AddAuthorization(options =>
     {
+        options.AddPolicy(AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS, policy =>
+        {
+            policy.Requirements.Add(new PublishScopeOrAccessTokenRequirement());
+        });
+
         options.AddPolicy(
-            "PlatformAccess", 
+            AuthorizationConstants.POLICY_PLATFORM_ACCESS,
             policy => policy.Requirements.Add(new AccessTokenRequirement()));
 
         options.AddPolicy(
-            AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, 
+            AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH,
             policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH)));
 
         options.AddPolicy(
-            AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE, 
+            AuthorizationConstants.POLICY_SCOPE_EVENTS_SUBSCRIBE,
             policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)));
     });
 

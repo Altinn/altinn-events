@@ -467,7 +467,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
-            public async Task Post_AuthorizedRequest_EventIsRegistered()
+            public async Task Post_PublishScopeIncluded_EventIsRegistered()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events";
@@ -490,6 +490,32 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
+
+            [Fact]
+            public async Task Post_PlatformAccessTokenIncluded_EventIsRegistered()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+
+                Mock<IEventsService> eventMock = new();
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                          .ReturnsAsync(Guid.NewGuid().ToString());
+
+                HttpClient client = GetTestClient(eventMock.Object, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "apps-test"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }            
 
             private HttpClient GetTestClient(IEventsService eventsService = null, bool enableExternalEvents = false)
             {
