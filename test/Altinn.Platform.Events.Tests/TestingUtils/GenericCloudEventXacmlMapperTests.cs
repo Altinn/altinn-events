@@ -146,5 +146,20 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
             Assert.Equal(expectedResourceId, actualResourceInstancedAttribute.Value);
         }
+
+        [Fact]
+        public void CreateDecisionRequest_AllCategoriesPopulated()
+        {
+            // Arrange
+            ClaimsPrincipal user = PrincipalUtil.GetClaimsPrincipal(1337, 2);
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateDecisionRequest(user, "subscribe", _cloudEvent);
+
+            // Assert
+            Assert.NotEmpty(actual.Request.Action);
+            Assert.NotEmpty(actual.Request.AccessSubject);
+            Assert.NotEmpty(actual.Request.Resource);
+        }
     }
 }
