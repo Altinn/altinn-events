@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -15,7 +13,6 @@ using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
-using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
@@ -149,7 +146,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events?size=-5&after=e31dbb11-2208-4dda-a549-92a0db8c8808";
                 string expected = "The 'size' parameter must be a number larger that 0.";
 
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, true);
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -182,7 +179,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 1000)))
                     .ReturnsAsync(new List<CloudEvent>());
 
-                HttpClient client = GetTestClient(eventsMock.Object, true);
+                HttpClient client = GetTestClient(eventsMock.Object, null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -235,7 +232,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&source=urn:altinn:systemx&subject=/party/1337";
                 int expectedCount = 2;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(3), true);
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -267,7 +264,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&source=urn:altinn:systemx&subject=/party/1337";
                 int expectedCount = 1;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(3), true);
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -298,7 +295,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&after=e31dbb11-2208-4dda-a549-92a0db8c7708&subject=/party/567890";
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
-                HttpClient client = GetTestClient(eventsService.Object, true);
+                HttpClient client = GetTestClient(eventsService.Object, null, true);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -325,7 +322,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expected = "The 'after' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&size=5&subject=/party/1337";
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, true);
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -355,7 +352,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expected = "The 'source' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5&subject=/party/1337";
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, true);
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -404,7 +401,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&source=urn:altinn:systemx&subject=/party/1337";
                 int expectedCount = 2;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(3), true);
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
@@ -433,7 +430,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Content = new StringContent(invalidEvent, Encoding.UTF8, "application/cloudevents+json")
                 };
 
-                HttpClient client = GetTestClient(null, true);
+                HttpClient client = GetTestClient(null, null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 // Act
@@ -451,7 +448,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/events";
 
-                HttpClient client = GetTestClient(null, true);
+                HttpClient client = GetTestClient(null, null, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
@@ -476,7 +473,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
                           .ReturnsAsync(Guid.NewGuid().ToString());
 
-                HttpClient client = GetTestClient(eventMock.Object, true);
+                Mock<IAuthorization> authorizationMock = new();
+                authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
+                            .ReturnsAsync(true);
+
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
@@ -501,7 +502,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
                           .ReturnsAsync(Guid.NewGuid().ToString());
 
-                HttpClient client = GetTestClient(eventMock.Object, true);
+                Mock<IAuthorization> authorizationMock = new();
+                authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
+                            .ReturnsAsync(true);
+
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object, true);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
@@ -515,13 +520,49 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            }            
+            }
 
-            private HttpClient GetTestClient(IEventsService eventsService = null, bool enableExternalEvents = false)
+            [Fact]
+            public async Task Post_UserAuthenticatedNotAuthorized_ReturnsForbidden()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+
+                Mock<IEventsService> eventMock = new();
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                          .ReturnsAsync(Guid.NewGuid().ToString());
+
+                Mock<IAuthorization> authorizationMock = new();
+                authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
+                            .ReturnsAsync(false);
+
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "apps-test"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            }
+
+            private HttpClient GetTestClient(IEventsService eventsService = null, IAuthorization authorizationService = null, bool enableExternalEvents = false)
             {
                 if (eventsService == null)
                 {
                     eventsService = new EventsServiceMock();
+                }
+
+                if (authorizationService == null)
+                {
+                    var authorizationMock = new Mock<IAuthorization>();
+                    authorizationService = authorizationMock.Object;
                 }
 
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
@@ -531,6 +572,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(eventsService);
+                        services.AddSingleton(authorizationService);
                         services.Configure<GeneralSettings>(opts => opts.EnableExternalEvents = enableExternalEvents);
 
                         // Set up mock authentication so that not well known endpoint is used

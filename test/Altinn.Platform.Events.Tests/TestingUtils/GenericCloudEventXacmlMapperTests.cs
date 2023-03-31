@@ -51,7 +51,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             List<CloudEvent> events = new() { _cloudEvent };
 
             // Act
-            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.Action;
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, "subscribe", events).Request.Action;
             var actualAction = actual.First();
             var actualActionValue = actualAction.Attribute.Where(a => a.AttributeId.Equals(MatchAttributeIdentifiers.ActionId)).Select(a => a.Value).FirstOrDefault();
 
@@ -68,7 +68,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             List<CloudEvent> events = new() { _cloudEvent };
 
             // Act
-            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.AccessSubject;
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, "subscribe", events).Request.AccessSubject;
             var actualSubject = actual.First();
 
             // only asserting id. Remaning attributes set by PEP.
@@ -85,7 +85,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             List<CloudEvent> events = new() { _cloudEvent, _cloudEvent, _cloudEvent, _cloudEvent };
 
             // Act
-            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.MultiRequests.RequestReference;
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, "subscribe", events).Request.MultiRequests.RequestReference;
 
             // Assert
             Assert.Equal(4, actual.Count);

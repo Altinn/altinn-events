@@ -27,6 +27,12 @@ namespace Altinn.Platform.Events.Services.Interfaces
         public Task<List<CloudEvent>> AuthorizeEvents(List<CloudEvent> cloudEvents);
 
         /// <summary>
+        /// Authorizes the currents user's right to publish the provided event
+        /// </summary>
+        /// <returns>A boolean indicating if the publisher is authorized or not</returns>
+        public Task<bool> AuthorizePublishEvent(CloudEvent cloudEvent);
+
+        /// <summary>
         /// Method to authorize access to an Altinn App event
         /// </summary>
         /// <param name="cloudEvent">The cloud event to authorize</param>

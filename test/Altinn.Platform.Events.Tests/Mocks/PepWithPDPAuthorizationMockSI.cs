@@ -11,14 +11,13 @@ using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
-
-using Altinn.Common.PEP.Constants;
 using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Event.Tests.Models;
-using Altinn.Platform.Storage.Interface.Models;
 using Altinn.Platform.Storage.UnitTest.Constants;
+
 using Authorization.Platform.Authorization.Models;
+
 using Newtonsoft.Json;
 
 namespace Altinn.Platform.Events.UnitTest.Mocks

@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Authorization
         /// <param name="user">The user</param>
         /// <param name="events">The list of events</param>
         /// <returns></returns>
-        public static XacmlJsonRequestRoot CreateMultiDecisionRequest(ClaimsPrincipal user, List<CloudEvent> events)
+        public static XacmlJsonRequestRoot CreateMultiDecisionReadRequest(ClaimsPrincipal user, List<CloudEvent> events)
         {
             List<string> actionTypes = new() { "read" };
 

@@ -26,15 +26,18 @@ namespace Altinn.Platform.Events.Controllers
         private readonly IEventsService _eventsService;
         private readonly GeneralSettings _settings;
         private readonly string _eventsBaseUri;
+        private readonly IAuthorization _authorizationService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsController"/> class.
         /// </summary>
         public EventsController(
             IEventsService events,
+            IAuthorization authorizationService,
             IOptions<GeneralSettings> settings)
         {
             _eventsService = events;
+            _authorizationService = authorizationService;
             _settings = settings.Value;
             _eventsBaseUri = settings.Value.BaseUri;
         }
@@ -60,7 +63,8 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            if (!AuthorizeEventPublisher(cloudEvent))
+            bool isAuthorizedToPublish = await _authorizationService.AuthorizePublishEvent(cloudEvent);
+            if (!isAuthorizedToPublish)
             {
                 return Forbid();
             }
@@ -179,12 +183,6 @@ namespace Altinn.Platform.Events.Controllers
 
                 Response.Headers.Add("next", nextUriBuilder.ToString());
             }
-        }
-
-        private static bool AuthorizeEventPublisher(CloudEvent cloudEvent)
-        {
-            // Further authorization to be implemented in Altinn/altinn-events#183
-            return true;
         }
     }
 }

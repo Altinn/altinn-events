@@ -39,7 +39,7 @@ namespace Altinn.Platform.Events.Services
         public async Task<List<CloudEvent>> AuthorizeAltinnAppEvents(List<CloudEvent> cloudEvents)
         {
             ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
-            XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
+            XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionReadRequest(consumer, cloudEvents);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
             return FilterAuthorizedRequests(cloudEvents, consumer, response);
@@ -50,10 +50,21 @@ namespace Altinn.Platform.Events.Services
         {
             ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
 
-            XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, cloudEvents);
+            XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, "subscribe", cloudEvents);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
             return FilterAuthorizedRequests(cloudEvents, consumer, response);
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> AuthorizePublishEvent(CloudEvent cloudEvent)
+        {
+            ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
+
+            XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateDecisionRequest(consumer, "publish", cloudEvent);
+            XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+
+            return ValidateResult(response);
         }
 
         /// <inheritdoc/>
