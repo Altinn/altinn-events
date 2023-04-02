@@ -132,32 +132,43 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         [Fact]
         public async Task AuthorizePublishEvent_PermitResponse_ReturnsTrue()
         {
+            // Arrange
+            Mock<IPDP> pdpMock = GetPDPMockWithRespose("Permit");
+
             // Act            
-            var sut = new AuthorizationService(GetPDPMockWithRespose("Permit"), _principalMock.Object);
+            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 
             // Assert
+            pdpMock.VerifyAll();
             Assert.True(actual);
         }
 
         [Fact]
         public async Task AuthorizePublishEvent_DenyResponse_ReturnsFalse()
         {
+            // Arrange
+            Mock<IPDP> pdpMock = GetPDPMockWithRespose("Deny");
+
             // Act            
-            var sut = new AuthorizationService(GetPDPMockWithRespose("Deny"), _principalMock.Object);
+            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 
             // Assert
+            pdpMock.VerifyAll();
             Assert.False(actual);
         }
 
         [Fact]
         public async Task AuthorizePublishEvent_IndeterminateResponse_ReturnsFalse()
         {
+            // Arrange
+            Mock<IPDP> pdpMock = GetPDPMockWithRespose("Indeterminate");
+
             // Act            
-            var sut = new AuthorizationService(GetPDPMockWithRespose("Indeterminate"), _principalMock.Object);
+            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 
@@ -165,7 +176,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.False(actual);
         }
 
-        private static IPDP GetPDPMockWithRespose(string decision)
+        private static Mock<IPDP> GetPDPMockWithRespose(string decision)
         {
             var pdpMock = new Mock<IPDP>();
             pdpMock
@@ -181,7 +192,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     }
                 });
 
-            return pdpMock.Object;
+            return pdpMock;
         }
     }
 }
