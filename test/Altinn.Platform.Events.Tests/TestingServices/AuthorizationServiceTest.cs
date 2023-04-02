@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     public class AuthorizationServiceTest
     {
         private readonly CloudEvent _cloudEvent;
-        private readonly Mock<IClaimsPrincipalProvider> _principalMock = new Mock<IClaimsPrincipalProvider>();
+        private readonly Mock<IClaimsPrincipalProvider> _principalMock = new();
 
         public AuthorizationServiceTest()
         {
@@ -32,9 +32,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             {
                 Id = Guid.NewGuid().ToString(),
                 Type = "system.event.occurred",
-                Subject = "/person/16069412345",
-                Source = new Uri("urn:isbn:1234567890")
+                Subject = "/party/1337",
+                Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd")
             };
+            _cloudEvent["resource"] = "urn:altinn:resource:ttd.endring-av-navn-v2";
 
             _principalMock
                    .Setup(p => p.GetUser())
@@ -50,14 +51,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
             AuthorizationService authzHelper = new AuthorizationService(pdp, _principalMock.Object);
 
-            CloudEvent cloudEvent = new CloudEvent()
-            {
-                Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
-                Subject = "/party/1337"
-            };
-
             // Act
-            bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/user/1337");
+            bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(_cloudEvent, "/user/1337");
 
             // Assert.
             Assert.True(result);
@@ -72,14 +67,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
             AuthorizationService authzHelper = new AuthorizationService(pdp, _principalMock.Object);
 
-            CloudEvent cloudEvent = new CloudEvent()
-            {
-                Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
-                Subject = "/party/1337"
-            };
-
             // Act
-            bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/org/ttd");
+            bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(_cloudEvent, "/org/ttd");
 
             // Assert.
             Assert.True(result);
