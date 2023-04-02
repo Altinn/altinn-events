@@ -1,22 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
 using System.Security.Claims;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platform.Events.Tests.Models;
 using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
-using Altinn.Platform.Register.Models;
 
 using CloudNative.CloudEvents;
 
@@ -31,6 +23,24 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     /// </summary>
     public class AuthorizationServiceTest
     {
+        private readonly CloudEvent _cloudEvent;
+        private readonly Mock<IClaimsPrincipalProvider> _principalMock = new Mock<IClaimsPrincipalProvider>();
+
+        public AuthorizationServiceTest()
+        {
+            _cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "system.event.occurred",
+                Subject = "/person/16069412345",
+                Source = new Uri("urn:isbn:1234567890")
+            };
+
+            _principalMock
+                   .Setup(p => p.GetUser())
+                   .Returns(PrincipalUtil.GetClaimsPrincipal(12345, 3));
+        }
+
         /// <summary>
         /// Test access to own event
         /// </summary>
@@ -38,8 +48,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task AuthorizeConsumerForAltinnAppEvent_Self()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
-            AuthorizationService authzHelper = new AuthorizationService(pdp, claimsPrincipalMock.Object);
+            AuthorizationService authzHelper = new AuthorizationService(pdp, _principalMock.Object);
 
             CloudEvent cloudEvent = new CloudEvent()
             {
@@ -61,8 +70,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task AuthorizeConsumerForAltinnAppEvent_OrgAccessToEventForUser()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
-            AuthorizationService authzHelper = new AuthorizationService(pdp, claimsPrincipalMock.Object);
+            AuthorizationService authzHelper = new AuthorizationService(pdp, _principalMock.Object);
 
             CloudEvent cloudEvent = new CloudEvent()
             {
@@ -84,8 +92,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task AuthorizeConsumerForAltinnAppEvent_OrgAccessToEventForUserNotAuthorized()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
-            AuthorizationService authzHelper = new AuthorizationService(pdp, claimsPrincipalMock.Object);
+            AuthorizationService authzHelper = new AuthorizationService(pdp, _principalMock.Object);
 
             CloudEvent cloudEvent = new CloudEvent()
             {
@@ -131,6 +138,61 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Single(actual);
+        }
+
+        [Fact]
+        public async Task AuthorizePublishEvent_PermitResponse_ReturnsTrue()
+        {
+            // Act            
+            var sut = new AuthorizationService(GetPDPMockWithRespose("Permit"), _principalMock.Object);
+
+            bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+
+            // Assert
+            Assert.True(actual);
+        }
+
+        [Fact]
+        public async Task AuthorizePublishEvent_DenyResponse_ReturnsFalse()
+        {
+            // Act            
+            var sut = new AuthorizationService(GetPDPMockWithRespose("Deny"), _principalMock.Object);
+
+            bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+
+            // Assert
+            Assert.False(actual);
+        }
+
+        [Fact]
+        public async Task AuthorizePublishEvent_IndeterminateResponse_ReturnsFalse()
+        {
+            // Act            
+            var sut = new AuthorizationService(GetPDPMockWithRespose("Indeterminate"), _principalMock.Object);
+
+            bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+
+            // Assert
+            Assert.False(actual);
+        }
+
+        private static IPDP GetPDPMockWithRespose(string decision)
+        {
+            var pdpMock = new Mock<IPDP>();
+            pdpMock
+                .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+                .ReturnsAsync(new XacmlJsonResponse
+                {
+                    Response = new List<XacmlJsonResult>()
+                    {
+                        new XacmlJsonResult
+                        {
+                            Decision = decision
+                        }
+                    }
+                });
+
+            return pdpMock.Object;
         }
     }
 }
