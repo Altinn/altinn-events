@@ -65,7 +65,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Source = new Uri("urn:isbn:1234567890")
                 };
 
-                _validEvent["resource"] = "nbib.bokoversikt.api";
+                _validEvent["resource"] = "urn:nbib:bokoversikt.api";
 
                 _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             }
@@ -440,6 +440,30 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
                 Assert.Contains("CloudEvent is missing required attributes: id (Parameter 'data')", responseMessage);
+            }
+
+            [Fact]
+            public async Task Post_ResourceIsNotUrn_BadRequestResponse()
+            {
+                // Arrange
+                string invalidEvent = "{ \"id\":\"random-id\", \"time\": \"2022-11-15T10:46:53.5339928Z\", \"type\": \"app.instance.created\", \"resource\":\"this-is.not-urn\", \"source\": \"https://ttd.apps.at21.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\", \"subject\": \"/party/50019855\", \"specversion\": \"1.0\", \"alternativesubject\": \"/person/stephanie\" }";
+                string requestUri = $"{BasePath}/events";
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(invalidEvent, Encoding.UTF8, "application/cloudevents+json")
+                };
+
+                HttpClient client = GetTestClient(null, null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Contains("'Resource' must be a valid urn.", responseMessage);
             }
 
             [Fact]

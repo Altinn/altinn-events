@@ -29,7 +29,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
                 Source = new Uri("urn:isbn:1234567890")
             };
 
-            _cloudEvent["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
+            _cloudEvent["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
 
             _cloudEventWithResourceInstance = new CloudEvent(CloudEventsSpecVersion.V1_0)
             {
@@ -39,7 +39,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
                 Source = new Uri("urn:isbn:1234567890")
             };
 
-            _cloudEventWithResourceInstance["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
+            _cloudEventWithResourceInstance["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
             _cloudEventWithResourceInstance["resourceinstance"] = "resourceInstanceId";
         }
 

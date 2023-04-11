@@ -87,7 +87,9 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventId, cloudEvent.Id, defaultType, defaultIssuer, true));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventType, cloudEvent.Type, defaultType, defaultIssuer));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventSource, cloudEvent.Source.ToString(), defaultType, defaultIssuer));
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.ResourceId, cloudEvent["resource"].ToString(), defaultType, defaultIssuer));
+            string[] cloudEventResourceParts = SplitResourceInTwoParts(cloudEvent["resource"].ToString());
+
+            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(cloudEventResourceParts[0], cloudEventResourceParts[1], defaultType, defaultIssuer));
 
             if (cloudEvent["resourceinstance"] is not null)
             {
@@ -95,6 +97,15 @@ namespace Altinn.Platform.Events.Authorization
             }
 
             return resourceCategory;
+        }
+
+        private static string[] SplitResourceInTwoParts(string resource)
+        {
+            int index = resource.LastIndexOf(':');
+            string id = resource.Substring(0, index);
+            string value = resource.Substring(index + 1);
+
+            return new string[] { id, value };
         }
     }
 }

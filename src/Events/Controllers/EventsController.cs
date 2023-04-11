@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -154,6 +155,11 @@ namespace Altinn.Platform.Events.Controllers
             if (string.IsNullOrEmpty(eventResource))
             {
                 return (false, "A 'resource' property must be defined.");
+            }
+
+            if (!UriExtensions.IsValidUrn(eventResource))
+            {
+                return (false, "'Resource' must be a valid urn.");
             }
 
             return (true, null);
