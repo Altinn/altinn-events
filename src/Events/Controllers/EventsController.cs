@@ -146,7 +146,7 @@ namespace Altinn.Platform.Events.Controllers
 
         private static (bool IsValid, string ErrorMessage) ValidateCloudEvent(CloudEvent cloudEvent)
         {
-            string eventResource = cloudEvent["resource"].ToString();
+            string eventResource = cloudEvent["resource"]?.ToString();
             if (string.IsNullOrEmpty(eventResource))
             {
                 return (false, "A 'resource' property must be defined.");
