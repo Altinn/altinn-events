@@ -523,7 +523,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
-            public async Task Post_UserAuthenticatedNotAuthorized_ReturnsForbidden()
+            public async Task Post_OrgAuthenticatedNotAuthorized_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events";
