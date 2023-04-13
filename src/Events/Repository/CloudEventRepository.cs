@@ -27,6 +27,9 @@ namespace Altinn.Platform.Events.Repository
         private readonly string insertEventSql = "insert into events.events(cloudevent) VALUES ($1);";
         private readonly string getAppEventsSql = "select events.getappevents(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
         private readonly string getEventsSql = "select events.getevents(@_subject, @_alternativesubject, @_after, @_type, @_source, @_size)";
+        private readonly string lockEventsTableSql = "LOCK TABLE events.events IN SHARE MODE";
+        private readonly string lockAppEventsTableSql = "LOCK TABLE events.events_app IN SHARE MODE";
+
         private readonly string _connectionString;
 
         /// <summary>
@@ -46,7 +49,15 @@ namespace Altinn.Platform.Events.Repository
             await conn.OpenAsync();
 
             await using var transaction = await conn.BeginTransactionAsync();
+            await using var lockCommand = new NpgsqlCommand(lockEventsTableSql, conn);
+            await lockCommand.ExecuteNonQueryAsync();
+
+            await using var lockCommandApp = new NpgsqlCommand(lockAppEventsTableSql, conn);
+            await lockCommandApp.ExecuteNonQueryAsync();
+
             await using NpgsqlCommand pgcom = new(insertAppEventSql, conn);
+            pgcom.CommandTimeout = 1;
+
             pgcom.Parameters.AddWithValue("id", cloudEvent.Id);
             pgcom.Parameters.AddWithValue("source", cloudEvent.Source.OriginalString);
             pgcom.Parameters.AddWithValue("subject", cloudEvent.Subject);
@@ -58,6 +69,7 @@ namespace Altinn.Platform.Events.Repository
 
             await using NpgsqlCommand pgcom2 = new(insertEventSql, conn)
             {
+                CommandTimeout = 1,
                 Parameters =
                 {
                     new() { Value = serializedCloudEvent, NpgsqlDbType = NpgsqlDbType.Jsonb }
@@ -74,14 +86,21 @@ namespace Altinn.Platform.Events.Repository
         {
             await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
+                      
+            await using var transaction = await conn.BeginTransactionAsync();
+            await using var lockCommand = new NpgsqlCommand(lockEventsTableSql, conn);
+            await lockCommand.ExecuteNonQueryAsync();
+
             await using NpgsqlCommand pgcom = new(insertEventSql, conn)
             {
+                CommandTimeout = 1,
                 Parameters =
                 {
                     new() { Value = cloudEvent, NpgsqlDbType = NpgsqlDbType.Jsonb }
                 }
             };
             await pgcom.ExecuteNonQueryAsync();
+            await transaction.CommitAsync();
         }
 
         /// <inheritdoc/>
@@ -132,12 +151,12 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
             pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Varchar, source ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
-            #pragma warning disable S3265
+#pragma warning disable S3265
 
             // ignore missing [Flags] attribute on NpgsqlDbType enum.
             // For more info: https://github.com/npgsql/npgsql/issues/2801
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
-            #pragma warning restore S3265       
+#pragma warning restore S3265
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
