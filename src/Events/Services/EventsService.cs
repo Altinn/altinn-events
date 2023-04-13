@@ -51,18 +51,9 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> Save(CloudEvent cloudEvent)
         {
-            var serializedEvent = cloudEvent.Serialize();
-
             try
             {
-                if (IsAppEvent(cloudEvent))
-                {
-                    await _repository.CreateAppEvent(cloudEvent, serializedEvent);
-                }
-                else
-                {
-                    await _repository.CreateEvent(serializedEvent);
-                }
+                await _repository.CreateEvent(cloudEvent.Serialize());
             }
             catch (Exception ex)
             {
@@ -138,11 +129,6 @@ namespace Altinn.Platform.Events.Services
             }
 
             return await _authorizationService.AuthorizeEvents(events);
-        }
-
-        private bool IsAppEvent(CloudEvent cloudEvent)
-        {
-            return !string.IsNullOrEmpty(cloudEvent.Source.Host) && cloudEvent.Source.Host.EndsWith(_settings.AppsDomain);
         }
     }
 }
