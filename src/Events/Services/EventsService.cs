@@ -26,7 +26,6 @@ namespace Altinn.Platform.Events.Services
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
-        private readonly PlatformSettings _settings;
         private readonly ILogger<IEventsService> _logger;
 
         /// <summary>
@@ -37,14 +36,12 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
-            IOptions<PlatformSettings> settings,
             ILogger<IEventsService> logger)
         {
             _repository = repository;
             _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
-            _settings = settings.Value;
             _logger = logger;
         }
 
