@@ -459,18 +459,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorizationMock = _authorizationMock;
             }
 
-            IOptions<PlatformSettings> settingsIOption = Options.Create(
-                new PlatformSettings()
-                {
-                    AppsDomain = "apps.altinn.no"
-                });
-
             return new EventsService(
                 repositoryMock,
                 queueMock,
                 registerMock.Object,
                 authorizationMock.Object,
-                settingsIOption,
                 loggerMock.Object);
         }
 
