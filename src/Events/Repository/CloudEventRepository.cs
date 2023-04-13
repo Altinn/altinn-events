@@ -86,7 +86,7 @@ namespace Altinn.Platform.Events.Repository
         {
             await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
-                      
+
             await using var transaction = await conn.BeginTransactionAsync();
             await using var lockCommand = new NpgsqlCommand(lockEventsTableSql, conn);
             await lockCommand.ExecuteNonQueryAsync();
