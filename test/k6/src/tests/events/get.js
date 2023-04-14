@@ -65,8 +65,10 @@ function TC01_GetAllEvents(data) {
   });
   addErrorCount(success);
 
+  if(!success){
   // only continue to parse and check content if success response code
   stopIterationOnFail(success);
+  }
 
   success = check(response, {
     "GET all cloud events: at least 1 cloud event returned": (r) => {
