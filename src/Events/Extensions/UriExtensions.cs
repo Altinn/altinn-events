@@ -12,7 +12,7 @@ namespace Altinn.Platform.Events.Extensions
     /// </summary>
     public static class UriExtensions
     {
-        private static string _urnPattern = @"^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+";
+        private static string _urnPattern = @"^urn:[a-z0-9-]{1,30}(:[a-z0-9()+,.\-;$_!\/]{1,100}){1,10}$";
 
         /// <summary>
         /// Hashes the provided uri using MD5 algorithm
@@ -78,7 +78,7 @@ namespace Altinn.Platform.Events.Extensions
         /// </summary>
         public static bool IsValidUrn(string potentialUrn)
         {
-            return Regex.IsMatch(potentialUrn, _urnPattern, RegexOptions.None, TimeSpan.FromSeconds(0.5));
+            return Uri.IsWellFormedUriString(potentialUrn, UriKind.Absolute) && Regex.IsMatch(potentialUrn, _urnPattern, RegexOptions.None, TimeSpan.FromSeconds(0.5));
         }
 
         private static string GetUrlUptoNthSegment(Uri uri, int n)

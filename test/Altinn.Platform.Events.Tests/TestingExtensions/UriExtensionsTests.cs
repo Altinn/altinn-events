@@ -125,6 +125,7 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
         [InlineData("urn:namespaceid:ttd:apps:apps-test", true)]
         [InlineData("urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66", true)]
         [InlineData("  urn:namespaceid:ttd:apps:apps-test", false)]
+        [InlineData("urn:foo::::", false)]
         public void IsValidUrn(string urn, bool expected)
         {
             bool actual = UriExtensions.IsValidUrn(urn);
