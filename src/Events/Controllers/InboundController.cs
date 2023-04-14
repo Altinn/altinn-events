@@ -1,18 +1,15 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
-using CloudNative.CloudEvents.SystemTextJson;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
@@ -25,7 +22,6 @@ namespace Altinn.Platform.Events.Controllers
     [SwaggerTag("Private API")]
     public class InboundController : ControllerBase
     {
-        private static readonly CloudEventFormatter _formatter = new JsonEventFormatter();
         private readonly IEventsService _eventsService;
         private readonly ILogger _logger;
 
@@ -45,21 +41,15 @@ namespace Altinn.Platform.Events.Controllers
         /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
-        [Consumes("application/json")]
+        [Consumes("application/cloudevents+json")]
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post()
+        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
-            var rawBody = await Request.GetRawBodyAsync(Encoding.UTF8);
-            CloudEvent cloudEvent = null;
-
             try
             {
-                cloudEvent = _formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(rawBody)), null, null);
-
                 await _eventsService.PostInbound(cloudEvent);
-
                 return Ok();
             }
             catch (Exception e)
