@@ -194,7 +194,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
     services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
-    services.AddSingleton<IAuthorizationHandler, PublishScopeOrAccessTokenHandler>();
+    services.AddSingleton<IAuthorizationHandler, PublishScopeHandler>();
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     services.AddSingleton<ISigningKeysResolver, SigningKeysResolver>();
     services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
