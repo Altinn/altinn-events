@@ -12,7 +12,7 @@ namespace Altinn.Platform.Events.Extensions
     /// </summary>
     public static class UriExtensions
     {
-        private static string _urnPattern = @"\burn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+";
+        private static string _urnPattern = @"^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+";
 
         /// <summary>
         /// Hashes the provided uri using MD5 algorithm
@@ -70,7 +70,7 @@ namespace Altinn.Platform.Events.Extensions
         /// </summary>
         public static bool IsValidUrlOrUrn(Uri uri)
         {
-            return uri.Scheme == "https" || Regex.IsMatch(uri.ToString(), _urnPattern, RegexOptions.None, TimeSpan.FromSeconds(0.5));
+            return uri.Scheme == "https" || IsValidUrn(uri.ToString());
         }
 
         /// <summary>
