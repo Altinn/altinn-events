@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
-using CloudNative.CloudEvents.SystemTextJson;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -23,8 +22,6 @@ namespace Altinn.Platform.Events.Controllers
     [SwaggerTag("Private API")]
     public class StorageController : ControllerBase
     {
-        private static readonly CloudEventFormatter _formatter = new JsonEventFormatter();
-
         private readonly IEventsService _eventsService;
         private readonly ILogger _logger;
 
