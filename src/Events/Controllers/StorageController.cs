@@ -1,9 +1,6 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -48,21 +45,16 @@ namespace Altinn.Platform.Events.Controllers
         /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
-        [Consumes("application/json")]
+        [Consumes("application/cloudevents+json")]
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post()
-        {
-            var rawBody = await Request.GetRawBodyAsync(Encoding.UTF8);
-            CloudEvent cloudEvent = null;
-
+        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
+        {          
             try
             {
-                cloudEvent = _formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(rawBody)), null, null);
-
                 await _eventsService.Save(cloudEvent);
                 return Ok();
             }

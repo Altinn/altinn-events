@@ -1,9 +1,6 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -13,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
@@ -49,21 +47,15 @@ namespace Altinn.Platform.Events.Controllers
         /// <returns>Returns HTTP 503 Service Unavailable if unable to post to outbound queue.</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
-        [Consumes("application/json")]
+        [Consumes("application/cloudevents+json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
-        public async Task<ActionResult> Post()
+        public async Task<ActionResult> Post([FromBody] CloudEvent cloudEvent)
         {
-            var rawBody = await Request.GetRawBodyAsync(Encoding.UTF8);
-            CloudEvent cloudEvent = null;
-
             try
             {
-                cloudEvent = _formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(rawBody)), null, null);
-
                 await _outboundService.PostOutbound(cloudEvent);
-
                 return Ok();
             }
             catch (Exception e)
