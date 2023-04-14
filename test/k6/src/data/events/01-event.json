@@ -1,0 +1,8 @@
+{
+    "source":"https://github.com/Altinn/altinn-events/tree/main/test/k6",
+    "specversion":"1.0",
+    "type":"automatedtest.triggered",
+    "subject":"/autotest/k6",
+    "resource":"urn:altinn:resource:ttd-altinn-events-automated-tests",
+    "time": "2022-05-12T00:02:07.541482Z"
+    }
