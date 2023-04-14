@@ -12,7 +12,7 @@ namespace Altinn.Platform.Events.Extensions
     /// </summary>
     public static class UriExtensions
     {
-        private static string _urnPattern = @"\burn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+";
+        private static string _urnPattern = @"^urn:[a-z][a-z0-9-]{0,31}(:[a-z][a-z0-9()+,.\-=@;$_!*'%#]{0,99}){1,10}\/?$";
 
         /// <summary>
         /// Hashes the provided uri using MD5 algorithm
