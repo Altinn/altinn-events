@@ -26,7 +26,6 @@ namespace Altinn.Platform.Events.Repository
         private readonly string insertEventSql = "insert into events.events(cloudevent) VALUES ($1);";
         private readonly string getAppEventsSql = "select events.getappevents(@_subject, @_after, @_from, @_to, @_type, @_source, @_size)";
         private readonly string getEventsSql = "select events.getevents(@_subject, @_alternativesubject, @_after, @_type, @_source, @_size)";
-        private readonly string lockEventsTableSql = "LOCK TABLE events.events IN SHARE MODE";
 
         private readonly string _connectionString;
 
