@@ -21,7 +21,7 @@ SELECT cast(cloudevent as text) as cloudevents
 	WHERE (_subject = '' OR cloudevent @> (select '{"subject": "' || _subject || '"}')::jsonb )
 	AND (_from IS NULL OR (cloudevent->>'time')::timestamptz >= _from)
 	AND (_to IS NULL OR (cloudevent->>'time')::timestamptz <= _to)
-	AND (cloudevent->>'time'):: timestamptz <= now() - interval '30 second'
+	AND registeredtime <= now() - interval '30 second'
 	AND (_type IS NULL OR cloudevent->>'type' ILIKE ANY(_type))
 	AND (_source IS NULL OR cloudevent->>'source' ILIKE ANY(_source))
 	AND (_after = '' OR sequenceno >(
