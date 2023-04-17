@@ -44,20 +44,14 @@ namespace Altinn.Platform.Events.Repository
             await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using var transaction = await conn.BeginTransactionAsync();
-            await using var lockCommand = new NpgsqlCommand(lockEventsTableSql, conn);
-            await lockCommand.ExecuteNonQueryAsync();
-
             await using NpgsqlCommand pgcom = new(insertEventSql, conn)
             {
-                CommandTimeout = 1,
                 Parameters =
                 {
                     new() { Value = cloudEvent, NpgsqlDbType = NpgsqlDbType.Jsonb }
                 }
             };
             await pgcom.ExecuteNonQueryAsync();
-            await transaction.CommitAsync();
         }
 
         /// <inheritdoc/>
