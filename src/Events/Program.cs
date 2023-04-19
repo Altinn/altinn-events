@@ -194,7 +194,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
     services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
-    services.AddSingleton<IAuthorizationHandler, PublishScopeHandler>();
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     services.AddSingleton<ISigningKeysResolver, SigningKeysResolver>();
     services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
@@ -228,7 +227,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         options.AddPolicy(AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS, policy =>
         {
-            policy.Requirements.Add(new PublishScopeOrAccessTokenRequirement());
+            policy.Requirements.Add(new PublishScopeOrAccessTokenRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH));
         });
 
         options.AddPolicy(
