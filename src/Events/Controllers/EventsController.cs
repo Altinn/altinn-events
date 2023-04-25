@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -26,15 +27,18 @@ namespace Altinn.Platform.Events.Controllers
         private readonly IEventsService _eventsService;
         private readonly GeneralSettings _settings;
         private readonly string _eventsBaseUri;
+        private readonly IAuthorization _authorizationService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsController"/> class.
         /// </summary>
         public EventsController(
             IEventsService events,
+            IAuthorization authorizationService,
             IOptions<GeneralSettings> settings)
         {
             _eventsService = events;
+            _authorizationService = authorizationService;
             _settings = settings.Value;
             _eventsBaseUri = settings.Value.BaseUri;
         }
@@ -45,7 +49,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="cloudEvent">The incoming cloud event</param>
         /// <returns>The cloud event subject and id</returns>
         [HttpPost]
-        [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH)]
+        [Authorize(Policy = AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS)]
         [Consumes("application/cloudevents+json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
@@ -60,7 +64,8 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            if (!AuthorizeEventPublisher(cloudEvent))
+            bool isAuthorizedToPublish = await _authorizationService.AuthorizePublishEvent(cloudEvent);
+            if (!isAuthorizedToPublish)
             {
                 return Forbid();
             }
@@ -88,7 +93,7 @@ namespace Altinn.Platform.Events.Controllers
         /// Optional filter by event type. </param>
         /// <param name="size">The maximum number of events to include in the response.</param>
         [HttpGet]
-        [Authorize(Policy = AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)]
+        [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_SUBSCRIBE)]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -152,6 +157,11 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "A 'resource' property must be defined.");
             }
 
+            if (!UriExtensions.IsValidUrn(eventResource))
+            {
+                return (false, "'Resource' must be a valid urn.");
+            }
+
             return (true, null);
         }
 
@@ -179,12 +189,6 @@ namespace Altinn.Platform.Events.Controllers
 
                 Response.Headers.Add("next", nextUriBuilder.ToString());
             }
-        }
-
-        private static bool AuthorizeEventPublisher(CloudEvent cloudEvent)
-        {
-            // Further authorization to be implemented in Altinn/altinn-events#183
-            return true;
         }
     }
 }

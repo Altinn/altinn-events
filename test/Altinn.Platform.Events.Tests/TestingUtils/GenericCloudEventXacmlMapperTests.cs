@@ -29,7 +29,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
                 Source = new Uri("urn:isbn:1234567890")
             };
 
-            _cloudEvent["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
+            _cloudEvent["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
 
             _cloudEventWithResourceInstance = new CloudEvent(CloudEventsSpecVersion.V1_0)
             {
@@ -39,7 +39,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
                 Source = new Uri("urn:isbn:1234567890")
             };
 
-            _cloudEventWithResourceInstance["resource"] = "urn:altinn:rr:nbib.bokoversikt.api";
+            _cloudEventWithResourceInstance["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
             _cloudEventWithResourceInstance["resourceinstance"] = "resourceInstanceId";
         }
 
@@ -51,7 +51,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             List<CloudEvent> events = new() { _cloudEvent };
 
             // Act
-            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.Action;
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, "subscribe", events).Request.Action;
             var actualAction = actual.First();
             var actualActionValue = actualAction.Attribute.Where(a => a.AttributeId.Equals(MatchAttributeIdentifiers.ActionId)).Select(a => a.Value).FirstOrDefault();
 
@@ -68,7 +68,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             List<CloudEvent> events = new() { _cloudEvent };
 
             // Act
-            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.AccessSubject;
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, "subscribe", events).Request.AccessSubject;
             var actualSubject = actual.First();
 
             // only asserting id. Remaning attributes set by PEP.
@@ -85,7 +85,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             List<CloudEvent> events = new() { _cloudEvent, _cloudEvent, _cloudEvent, _cloudEvent };
 
             // Act
-            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, events).Request.MultiRequests.RequestReference;
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(user, "subscribe", events).Request.MultiRequests.RequestReference;
 
             // Assert
             Assert.Equal(4, actual.Count);
@@ -145,6 +145,21 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             // Assert
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
             Assert.Equal(expectedResourceId, actualResourceInstancedAttribute.Value);
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_AllCategoriesPopulated()
+        {
+            // Arrange
+            ClaimsPrincipal user = PrincipalUtil.GetClaimsPrincipal(1337, 2);
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateDecisionRequest(user, "subscribe", _cloudEvent);
+
+            // Assert
+            Assert.NotEmpty(actual.Request.Action);
+            Assert.NotEmpty(actual.Request.AccessSubject);
+            Assert.NotEmpty(actual.Request.Resource);
         }
     }
 }

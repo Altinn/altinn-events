@@ -15,15 +15,40 @@ namespace Altinn.Platform.Events.Authorization
     public static class GenericCloudEventXacmlMapper
     {
         /// <summary>
-        /// Create XACML request for multiple 
+        /// Create XACML request for authorizing the provided action type on multiple events
         /// </summary>
         /// <param name="user">The user</param>
+        /// <param name="actionType">The action type</param>
         /// <param name="events">The list of events</param>
-        public static XacmlJsonRequestRoot CreateMultiDecisionRequest(ClaimsPrincipal user, List<CloudEvent> events)
+        public static XacmlJsonRequestRoot CreateMultiDecisionRequest(ClaimsPrincipal user, string actionType, List<CloudEvent> events)
         {
-            List<string> actionTypes = new() { "subscribe" };
+            List<string> actionTypes = new() { actionType };
             var resourceCategory = CreateMultipleResourceCategory(events);
             return CloudEventXacmlMapper.CreateMultiDecisionRequest(user, actionTypes, resourceCategory);
+        }
+
+        /// <summary>
+        /// Create XACML request for executing the provided action for the provided generic cloud event 
+        /// </summary>
+        /// <param name="user">The user</param>
+        /// <param name="actionType">The action type</param>
+        /// <param name="cloudEvent">The cloud events to publish</param>
+        public static XacmlJsonRequestRoot CreateDecisionRequest(ClaimsPrincipal user, string actionType, CloudEvent cloudEvent)
+        {
+            XacmlJsonRequest request = new()
+            {
+                AccessSubject = new List<XacmlJsonCategory>(),
+                Action = new List<XacmlJsonCategory>(),
+                Resource = new List<XacmlJsonCategory>()
+            };
+
+            request.AccessSubject.Add(DecisionHelper.CreateSubjectCategory(user.Claims));
+            request.Action.Add(CloudEventXacmlMapper.CreateActionCategory(actionType));
+            request.Resource.Add(CreateResourceCategory(cloudEvent));
+
+            XacmlJsonRequestRoot jsonRequest = new() { Request = request };
+
+            return jsonRequest;
         }
 
         /// <summary>
@@ -62,7 +87,9 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventId, cloudEvent.Id, defaultType, defaultIssuer, true));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventType, cloudEvent.Type, defaultType, defaultIssuer));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventSource, cloudEvent.Source.ToString(), defaultType, defaultIssuer));
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.ResourceId, cloudEvent["resource"].ToString(), defaultType, defaultIssuer));
+            string[] cloudEventResourceParts = SplitResourceInTwoParts(cloudEvent["resource"].ToString());
+
+            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(cloudEventResourceParts[0], cloudEventResourceParts[1], defaultType, defaultIssuer));
 
             if (cloudEvent["resourceinstance"] is not null)
             {
@@ -70,6 +97,15 @@ namespace Altinn.Platform.Events.Authorization
             }
 
             return resourceCategory;
+        }
+
+        private static string[] SplitResourceInTwoParts(string resource)
+        {
+            int index = resource.LastIndexOf(':');
+            string id = resource.Substring(0, index);
+            string value = resource.Substring(index + 1);
+
+            return new string[] { id, value };
         }
     }
 }
