@@ -76,7 +76,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
                 };
 
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
@@ -109,7 +109,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
                 };
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
@@ -136,7 +136,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
 
                 StringContent content = new StringContent(string.Empty);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
 
                 // Act
@@ -164,7 +164,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
 
                 StringContent content = new StringContent(string.Empty);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
 
                 // Act

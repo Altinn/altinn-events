@@ -15,7 +15,7 @@ import * as eventsApi from "../../api/events.js";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 const eventJson = JSON.parse(open("../../data/events/01-event.json"));
 import { generateJUnitXML, reportPath } from "../../report.js";
-import { addErrorCount } from "../../errorhandler.js";
+import { addErrorCount, stopIterationOnFail } from "../../errorhandler.js";
 const scopes = "altinn:events.subscribe";
 
 export const options = {
@@ -62,11 +62,19 @@ function TC01_GetAllEvents(data) {
 
   success = check(response, {
     "GET all cloud events: status is 200": (r) => r.status === 200,
-    "GET all cloud events: at least 1 cloud event returned": (r) =>
-    {
+  });
+  addErrorCount(success);
+
+  if(!success){
+  // only continue to parse and check content if success response code
+  stopIterationOnFail(success);
+  }
+
+  success = check(response, {
+    "GET all cloud events: at least 1 cloud event returned": (r) => {
       var responseBody = JSON.parse(r.body);
       return Array.isArray(responseBody) && responseBody.length >= 1;
-    }
+    },
   });
 
   addErrorCount(success);
