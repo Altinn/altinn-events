@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -69,14 +70,9 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
-            bool isAppSubscription = true;
+            bool isAppSubscription = IsAppSubscription(subscriptionRequest);
 
-            if (subscriptionRequest.SourceFilter == null || !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
-            {
-                return StatusCode(400, "SourceFilter must be an absolute URI");
-            }
-
-            if (!subscriptionRequest.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
+            if (!isAppSubscription)
             {
                 // Only non Altinn App subscriptions require the additional scope
                 ClaimsPrincipal principal = _claimsPrincipalProvider.GetUser();
@@ -85,8 +81,11 @@ namespace Altinn.Platform.Events.Controllers
                 {
                     return Forbid();
                 }
-
-                isAppSubscription = false;
+            }
+            
+            if (subscriptionRequest.SourceFilter != null || !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
+            {
+                return StatusCode(400, "SourceFilter must be an absolute URI");
             }
 
             if (subscriptionRequest.EndPoint == null || !Uri.IsWellFormedUriString(subscriptionRequest.EndPoint.ToString(), UriKind.Absolute))
@@ -213,6 +212,22 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             return authenticatedConsumer;
+        }
+
+        private bool IsAppSubscription(SubscriptionRequestModel subscription)
+        {
+            if (subscription.ResourceFilter != null &&
+                 subscription.ResourceFilter.StartsWith(_settings.AppResourcePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            else if (!string.IsNullOrEmpty(subscription.SourceFilter.ToString()) &&
+                subscription.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

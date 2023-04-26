@@ -30,6 +30,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange 
             var input = new Subscription
             {
+                ResourceFilter = "urn:altinn:resource:some-service",
                 SubjectFilter = subjectFilter,
                 EndPoint = new Uri(endpoint),
                 SourceFilter = new Uri(sourceFilter)
@@ -56,6 +57,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var input = new Subscription
             {
                 SubjectFilter = "/dog/bruno",
+                ResourceFilter = "urn:altinn:resource:some-service",
                 EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
                 SourceFilter = new Uri("https://doggy-daycare.no/booking"),
                 AlternativeSubjectFilter = "/object/123456"
@@ -72,7 +74,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_InvalidUrnProvidedAsEn_ReturnsError()
+        public async Task CreateSubscription_InvalidUrnProvidedAsSourceFilter_ReturnsError()
         {
             // Arrange 
             string expectedErrorMessage = "Source filter must be a valid URN or a URL using https scheme.";
@@ -80,6 +82,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var input = new Subscription
             {
                 SubjectFilter = "/dog/bruno",
+                ResourceFilter = "urn:altinn:resource:some-service",
                 EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
                 SourceFilter = new Uri("telnet://ole:qwerty@altinn.no:45432/")
             };

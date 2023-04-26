@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -10,6 +11,8 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Models;
+
+using Microsoft.Extensions.Options;
 
 using Moq;
 
@@ -163,7 +166,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorization,
                 register,
                 new EventsQueueClientMock(),
-                claimsPrincipalProvider);
+                claimsPrincipalProvider,
+                Options.Create(new PlatformSettings { }));
         }
     }
 }

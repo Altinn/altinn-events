@@ -555,7 +555,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding/", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
 
                 Mock<IAppSubscriptionService> serivceMock = new();
                 serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 2 }, null));

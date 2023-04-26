@@ -1,12 +1,16 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platorm.Events.Extensions;
+
+using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -24,6 +28,8 @@ namespace Altinn.Platform.Events.Services
         private const string OrgPrefix = "/org/";
         private const string PartyPrefix = "/party/";
 
+        private readonly string _appResourcePrefix;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
@@ -33,7 +39,8 @@ namespace Altinn.Platform.Events.Services
             IAuthorization authorization,
             IRegisterService register,
             IEventsQueueClient queue,
-            IClaimsPrincipalProvider claimsPrincipalProvider)
+            IClaimsPrincipalProvider claimsPrincipalProvider,
+            IOptions<PlatformSettings> settings)
             : base(
                   repository,
                   register,
@@ -44,6 +51,7 @@ namespace Altinn.Platform.Events.Services
             _authorization = authorization;
             _register = register;
             _claimsPrincipalProvider = claimsPrincipalProvider;
+            _appResourcePrefix = settings.Value.AppResourcePrefix;
         }
 
         /// <inheritdoc/>
@@ -60,6 +68,8 @@ namespace Altinn.Platform.Events.Services
                 return (null, new ServiceError(400, message));
             }
 
+            SetResourceFilterIfEmpty(eventsSubscription);
+
             if (!AuthorizeIdentityForConsumer(eventsSubscription))
             {
                 var errorMessage = "Not authorized to create a subscription on behalf of " + eventsSubscription.Consumer;
@@ -73,6 +83,21 @@ namespace Altinn.Platform.Events.Services
             }
 
             return await CompleteSubscriptionCreation(eventsSubscription);
+        }
+
+        private void SetResourceFilterIfEmpty(Subscription eventsSubscription)
+        {
+            if (!string.IsNullOrEmpty(eventsSubscription.ResourceFilter))
+            {
+                return;
+            }
+
+            // making assumptions about absolute path as it has been validated as app url before this point
+            string[] pathParams = eventsSubscription.SourceFilter.AbsolutePath.Split("/");
+            string org = pathParams[1];
+            string app = pathParams[2];
+
+            eventsSubscription.ResourceFilter = string.Concat(_appResourcePrefix, org, '.', app);
         }
 
         /// <summary>
@@ -116,8 +141,14 @@ namespace Altinn.Platform.Events.Services
                 return false;
             }
 
+            if (string.IsNullOrEmpty(eventsSubscription.ResourceFilter) && string.IsNullOrEmpty(eventsSubscription.SourceFilter.ToString()))
+            {
+                message = "A source or resource filter is required";
+                return false;
+            }
+
             string absolutePath = eventsSubscription.SourceFilter.AbsolutePath;
-            if (string.IsNullOrEmpty(absolutePath) || absolutePath.Split("/").Length != 3)
+            if (!string.IsNullOrEmpty(absolutePath) && absolutePath.Split("/").Length != 3)
             {
                 message = "A valid app id is required in Source filter {environment}/{org}/{app}";
                 return false;
