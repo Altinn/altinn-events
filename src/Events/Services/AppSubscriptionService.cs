@@ -86,17 +86,17 @@ namespace Altinn.Platform.Events.Services
 
         private void SetResourceFilterIfEmpty(Subscription eventsSubscription)
         {
-            if (!string.IsNullOrEmpty(eventsSubscription.ResourceFilter))
-            {
-                return;
-            }
+            eventsSubscription.ResourceFilter = GetResourceFilterFromSource(eventsSubscription.SourceFilter);
+        }
 
+        private string GetResourceFilterFromSource(Uri sourceFilter)
+        {
             // making assumptions about absolute path as it has been validated as app url before this point
-            string[] pathParams = eventsSubscription.SourceFilter.AbsolutePath.Split("/");
+            string[] pathParams = sourceFilter.AbsolutePath.Split("/");
             string org = pathParams[1];
             string app = pathParams[2];
 
-            eventsSubscription.ResourceFilter = string.Concat(_appResourcePrefix, org, '.', app);
+            return string.Concat(_appResourcePrefix, org, '.', app);
         }
 
         /// <summary>
@@ -140,16 +140,18 @@ namespace Altinn.Platform.Events.Services
                 return false;
             }
 
-            if (string.IsNullOrEmpty(eventsSubscription.ResourceFilter) && string.IsNullOrEmpty(eventsSubscription.SourceFilter.ToString()))
-            {
-                message = "A source or resource filter is required";
-                return false;
-            }
-
             string absolutePath = eventsSubscription.SourceFilter.AbsolutePath;
             if (!string.IsNullOrEmpty(absolutePath) && absolutePath.Split("/").Length != 3)
             {
                 message = "A valid app id is required in Source filter {environment}/{org}/{app}";
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(eventsSubscription.ResourceFilter) &&
+                !string.IsNullOrEmpty(eventsSubscription.SourceFilter.ToString()) &&
+                !GetResourceFilterFromSource(eventsSubscription.SourceFilter).Equals(eventsSubscription.ResourceFilter))
+            {
+                message = "Provided resource filter and source filter are not compatible";
                 return false;
             }
 

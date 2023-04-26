@@ -129,6 +129,56 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorCode, actual.ErrorCode);
         }
 
+        [Fact]
+        public async Task CreateSubscription_MissingResouce_PopulatedBasedOnSource()
+        {
+            // Arrange
+            string expectedErrorMessage = "A valid subject to the authenticated identity is required";
+            int expectedErrorCode = 400;
+            int subscriptionId = 1337;
+
+            var subs = new Subscription
+            {
+                Id = subscriptionId,
+                AlternativeSubjectFilter = "/person/14029112345"
+            };
+
+            var sut = GetAppSubscriptionService();
+
+            // Act
+            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+            Assert.Equal(expectedErrorCode, actual.ErrorCode);
+        }
+
+        [Fact]
+        public async Task CreateSubscription_ExistingResource_ResourceNotReplaced()
+        {
+            // Arrange
+            string expectedErrorMessage = "A valid subject to the authenticated identity is required";
+            int expectedErrorCode = 400;
+            int subscriptionId = 1337;
+
+            var subs = new Subscription
+            {
+                Id = subscriptionId,
+                AlternativeSubjectFilter = "/person/14029112345"
+            };
+
+            var sut = GetAppSubscriptionService();
+
+            // Act
+            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+            Assert.Equal(expectedErrorCode, actual.ErrorCode);
+        }
+
         private static AppSubscriptionService GetAppSubscriptionService(
             IRegisterService register = null,
             IProfile profile = null,

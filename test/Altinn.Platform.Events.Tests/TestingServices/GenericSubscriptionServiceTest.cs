@@ -97,6 +97,28 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
+        [Fact]
+        public async Task CreateSubscription_MissingResourceFilter_ReturnsError()
+        {
+            // Arrange 
+            string expectedErrorMessage = "Resource filter is required.";
+
+            var input = new Subscription
+            {
+                SubjectFilter = "/dog/bruno",
+                EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
+            };
+
+            var sut = GetGenericSubscriptionService();
+
+            // Act
+            (var _, ServiceError actual) = await sut.CreateSubscription(input);
+
+            // Assert
+            Assert.Equal(400, actual.ErrorCode);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+        }
+
         private static GenericSubscriptionService GetGenericSubscriptionService(
             Mock<ISubscriptionRepository> repoMock = null)
         {
