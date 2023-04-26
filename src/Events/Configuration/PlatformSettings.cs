@@ -32,6 +32,5 @@ namespace Altinn.Platform.Events.Configuration
         /// The urn prefix for Altinn App resources
         /// </summary>
         public string AppResourcePrefix { get; set; } = "urn:altinn:resource.altinnapp.";
-
     }
 }
