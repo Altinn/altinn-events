@@ -97,6 +97,22 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
+        public async Task AuthorizeConsumerForGenericEvent_PdpIsCalledWithXacmlRequestRoot()
+        {
+            // Arrange
+            Mock<IPDP> pdpMock = GetPDPMockWithRespose("Permit");
+
+            // Act            
+            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
+
+            bool actual = await sut.AuthorizeConsumerForGenericEvent(_cloudEvent, "/org/ttd/");
+
+            // Assert
+            pdpMock.VerifyAll();
+            Assert.True(actual);
+        }
+
+        [Fact]
         public void FilterAuthorizedRequests_PermitAll()
         {
             // Arrange
