@@ -30,7 +30,7 @@ namespace Altinn.Platform.Events.Services
         private readonly PlatformSettings _platformSettings;
 
         private readonly IMemoryCache _memoryCache;
-        private readonly MemoryCacheEntryOptions _orgAuthorizationEntryOptions;
+        private readonly MemoryCacheEntryOptions _consumerAuthorizationEntryOptions;
 
         private readonly ILogger<IOutboundService> _logger;
 
@@ -52,7 +52,7 @@ namespace Altinn.Platform.Events.Services
             _memoryCache = memoryCache;
             _logger = logger;
 
-            _orgAuthorizationEntryOptions = new MemoryCacheEntryOptions()
+            _consumerAuthorizationEntryOptions = new MemoryCacheEntryOptions()
               .SetPriority(CacheItemPriority.High)
               .SetAbsoluteExpiration(
                   new TimeSpan(0, 0, _platformSettings.SubscriptionCachingLifetimeInSeconds));
@@ -67,7 +67,7 @@ namespace Altinn.Platform.Events.Services
             {
                 eventSource = GetSourceFilter(cloudEvent.Source);
             }
-           
+
             List<Subscription> subscriptions = await _subscriptionRepository.GetSubscriptions(
                  eventSource.GetMD5HashSets(),
                  eventSource.ToString(),
@@ -88,13 +88,13 @@ namespace Altinn.Platform.Events.Services
 
         private async Task AuthorizeAndEnqueueOutbound(CloudEvent cloudEvent, Subscription subscription)
         {
-            var authorized = 
+            var authorized =
                 IsAppEvent(cloudEvent)
                 ? await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer)
                 : await AuthorizeConsumerForGenericEvent(cloudEvent, subscription.Consumer);
 
-            if (authorized) 
-            { 
+            if (authorized)
+            {
                 CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
 
                 var receipt = await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
@@ -113,7 +113,7 @@ namespace Altinn.Platform.Events.Services
             if (!_memoryCache.TryGetValue(cacheKey, out bool isAuthorized))
             {
                 isAuthorized = await _authorizationService.AuthorizeConsumerForAltinnAppEvent(cloudEvent, consumer);
-                _memoryCache.Set(cacheKey, isAuthorized, _orgAuthorizationEntryOptions);
+                _memoryCache.Set(cacheKey, isAuthorized, _consumerAuthorizationEntryOptions);
             }
 
             return isAuthorized;
@@ -121,7 +121,15 @@ namespace Altinn.Platform.Events.Services
 
         private async Task<bool> AuthorizeConsumerForGenericEvent(CloudEvent cloudEvent, string consumer)
         {
-            return await Task.FromResult(true);
+            string cacheKey = GetAuthorizationCacheKey(cloudEvent.GetResource(), consumer);
+
+            if (!_memoryCache.TryGetValue(cacheKey, out bool isAuthorized))
+            {
+                isAuthorized = await _authorizationService.AuthorizeConsumerForGenericEvent(cloudEvent, consumer);
+                _memoryCache.Set(cacheKey, isAuthorized, _consumerAuthorizationEntryOptions);
+            }
+
+            return isAuthorized;
         }
 
         private static CloudEventEnvelope MapToEnvelope(CloudEvent cloudEvent, Subscription subscription)
@@ -136,6 +144,16 @@ namespace Altinn.Platform.Events.Services
             };
 
             return cloudEventEnvelope;
+        }
+
+        private static string GetAuthorizationCacheKey(string resource, string consumer)
+        {
+            if (resource == null)
+            {
+                return null;
+            }
+
+            return "authorizationdecision:re:" + resource + "co:" + consumer;
         }
 
         private static string GetAltinnAppAuthorizationCacheKey(string sourceFilter, string consumer)

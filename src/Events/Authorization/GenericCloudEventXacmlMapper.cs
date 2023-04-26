@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Constants;
 using Altinn.Common.PEP.Helpers;
+using Altinn.Platform.Events.Extensions;
 
 using CloudNative.CloudEvents;
 
@@ -35,6 +36,22 @@ namespace Altinn.Platform.Events.Authorization
         /// <param name="cloudEvent">The cloud events to publish</param>
         public static XacmlJsonRequestRoot CreateDecisionRequest(ClaimsPrincipal user, string actionType, CloudEvent cloudEvent)
         {
+            return CreateDecitionRequest(DecisionHelper.CreateSubjectCategory(user.Claims), actionType, cloudEvent);
+        }
+
+        /// <summary>
+        /// Create XACML request for executing the provided action for the provided generic cloud event 
+        /// </summary>
+        /// <param name="consumer">The consumer of the cloud event</param>
+        /// <param name="actionType">The action type</param>
+        /// <param name="cloudEvent">The cloud events to publish</param>
+        public static XacmlJsonRequestRoot CreateDecisionRequest(string consumer, string actionType, CloudEvent cloudEvent)
+        {
+            return CreateDecitionRequest(XacmlMapperHelper.CreateSubjectAttributes(consumer), actionType, cloudEvent);
+        }
+
+        private static XacmlJsonRequestRoot CreateDecitionRequest(XacmlJsonCategory subjectAttributes, string actionType, CloudEvent cloudEvent)
+        {
             XacmlJsonRequest request = new()
             {
                 AccessSubject = new List<XacmlJsonCategory>(),
@@ -42,7 +59,7 @@ namespace Altinn.Platform.Events.Authorization
                 Resource = new List<XacmlJsonCategory>()
             };
 
-            request.AccessSubject.Add(DecisionHelper.CreateSubjectCategory(user.Claims));
+            request.AccessSubject.Add(subjectAttributes);
             request.Action.Add(CloudEventXacmlMapper.CreateActionCategory(actionType));
             request.Resource.Add(CreateResourceCategory(cloudEvent));
 
@@ -87,7 +104,7 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventId, cloudEvent.Id, defaultType, defaultIssuer, true));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventType, cloudEvent.Type, defaultType, defaultIssuer));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventSource, cloudEvent.Source.ToString(), defaultType, defaultIssuer));
-            string[] cloudEventResourceParts = SplitResourceInTwoParts(cloudEvent["resource"].ToString());
+            string[] cloudEventResourceParts = SplitResourceInTwoParts(cloudEvent.GetResource());
 
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(cloudEventResourceParts[0], cloudEventResourceParts[1], defaultType, defaultIssuer));
 
