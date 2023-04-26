@@ -302,6 +302,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
                     Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
@@ -399,21 +400,22 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
-            /// Post invalid subscription for org with missing sourceFilter
+            /// Post invalid subscription for org missing resourceFilter
             /// Expected result:
             /// Returns HttpStatus badrequest
             /// Success criteria:
             /// The response has correct status and correct responseId.
             /// </summary>
             [Fact]
-            public async Task Post_GivenSubscriptionWithoutSourceFilter_ReturnsBadRequest()
+            public async Task Post_GivenSubscriptionWithoutResourceFilter_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
                 SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest(string.Empty, "https://www.app-event.no/hook", subjectFilter: "/party/133");
 
                 HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084", "altinn:events.subscribe"));
+
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
                     Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
@@ -523,7 +525,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund/", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
 
                 Mock<IGenericSubscriptionService> serivceMock = new();
                 serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 1 }, null));
@@ -810,7 +812,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 try
                 {
-                    sourceFilterUri = new Uri(sourceFilter);
+                    sourceFilterUri = new Uri(sourceFilter, UriKind.Absolute);
                 }
                 catch
                 {

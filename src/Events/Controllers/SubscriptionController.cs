@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platorm.Events.Extensions;
@@ -70,6 +71,11 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
+            if (subscriptionRequest.SourceFilter != null && !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
+            {
+                return StatusCode(400, "SourceFilter must be an absolute URI");
+            }
+
             bool isAppSubscription = IsAppSubscription(subscriptionRequest);
 
             if (!isAppSubscription)
@@ -82,15 +88,15 @@ namespace Altinn.Platform.Events.Controllers
                     return Forbid();
                 }
             }
-            
-            if (subscriptionRequest.SourceFilter != null || !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
-            {
-                return StatusCode(400, "SourceFilter must be an absolute URI");
-            }
 
             if (subscriptionRequest.EndPoint == null || !Uri.IsWellFormedUriString(subscriptionRequest.EndPoint.ToString(), UriKind.Absolute))
             {
                 return StatusCode(400, "Missing or invalid endpoint to push events towards");
+            }
+
+            if (subscriptionRequest.ResourceFilter != null && !UriExtensions.IsValidUrn(subscriptionRequest.ResourceFilter))
+            {
+                return StatusCode(400, "Resource filter must be a valid urn");
             }
 
             Subscription eventsSubscription = _mapper.Map<Subscription>(subscriptionRequest);
@@ -222,6 +228,7 @@ namespace Altinn.Platform.Events.Controllers
                 return true;
             }
             else if (!string.IsNullOrEmpty(subscription.SourceFilter.ToString()) &&
+
                 subscription.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
             {
                 return true;
