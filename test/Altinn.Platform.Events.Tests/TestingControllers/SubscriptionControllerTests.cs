@@ -302,7 +302,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
-
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
                 {
                     Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
@@ -525,7 +524,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund/", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
 
                 Mock<IGenericSubscriptionService> serivceMock = new();
                 serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 1 }, null));
@@ -557,7 +556,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding/", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
 
                 Mock<IAppSubscriptionService> serivceMock = new();
                 serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 2 }, null));
@@ -812,7 +811,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 try
                 {
-                    sourceFilterUri = new Uri(sourceFilter, UriKind.Absolute);
+                    sourceFilterUri = new Uri(sourceFilter);
                 }
                 catch
                 {
