@@ -28,7 +28,7 @@ namespace Altinn.Platform.Events.Authorization
         }
 
         /// <summary>
-        /// Create XACML request for executing the provided action for the provided generic cloud event 
+        /// Create XACML request for executing the provided action for the provided generic cloud event
         /// </summary>
         /// <param name="user">The user</param>
         /// <param name="actionType">The action type</param>
@@ -75,7 +75,7 @@ namespace Altinn.Platform.Events.Authorization
         /// Creates a resource category for a cloud event.
         /// </summary>
         /// <remarks>
-        /// If id is required this should be included by the caller. 
+        /// If id is required this should be included by the caller.
         /// Attribute eventId is tagged with `includeInResponse`</remarks>
         internal static XacmlJsonCategory CreateResourceCategory(CloudEvent cloudEvent)
         {
@@ -87,9 +87,13 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventId, cloudEvent.Id, defaultType, defaultIssuer, true));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventType, cloudEvent.Type, defaultType, defaultIssuer));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventSource, cloudEvent.Source.ToString(), defaultType, defaultIssuer));
-            string[] cloudEventResourceParts = SplitResourceInTwoParts(cloudEvent["resource"].ToString());
 
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(cloudEventResourceParts[0], cloudEventResourceParts[1], defaultType, defaultIssuer));
+            if (cloudEvent["resource"] is not null)
+            {
+                string[] cloudEventResourceParts = SplitResourceInTwoParts(cloudEvent["resource"].ToString());
+
+                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(cloudEventResourceParts[0], cloudEventResourceParts[1], defaultType, defaultIssuer));
+            }
 
             if (cloudEvent["resourceinstance"] is not null)
             {
