@@ -36,7 +36,7 @@ namespace Altinn.Platform.Events.Authorization
         /// <param name="cloudEvent">The cloud events to publish</param>
         public static XacmlJsonRequestRoot CreateDecisionRequest(ClaimsPrincipal user, string actionType, CloudEvent cloudEvent)
         {
-            return CreateDecitionRequest(DecisionHelper.CreateSubjectCategory(user.Claims), actionType, cloudEvent);
+            return CreateDecisionRequest(DecisionHelper.CreateSubjectCategory(user.Claims), actionType, cloudEvent);
         }
 
         /// <summary>
@@ -47,10 +47,10 @@ namespace Altinn.Platform.Events.Authorization
         /// <param name="cloudEvent">The cloud events to publish</param>
         public static XacmlJsonRequestRoot CreateDecisionRequest(string consumer, string actionType, CloudEvent cloudEvent)
         {
-            return CreateDecitionRequest(XacmlMapperHelper.CreateSubjectAttributes(consumer), actionType, cloudEvent);
+            return CreateDecisionRequest(XacmlMapperHelper.CreateSubjectAttributes(consumer), actionType, cloudEvent);
         }
 
-        private static XacmlJsonRequestRoot CreateDecitionRequest(XacmlJsonCategory subjectAttributes, string actionType, CloudEvent cloudEvent)
+        private static XacmlJsonRequestRoot CreateDecisionRequest(XacmlJsonCategory subjectAttributes, string actionType, CloudEvent cloudEvent)
         {
             XacmlJsonRequest request = new()
             {

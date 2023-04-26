@@ -1,4 +1,5 @@
 ﻿using System.Text;
+
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
 
@@ -29,5 +30,16 @@ namespace Altinn.Platform.Events.Extensions
         /// Retrieves the resource instance from the cloud event. Returns null if it isn't defined.
         /// </summary>
         public static string GetResourceInstance(this CloudEvent cloudEvent) => cloudEvent["resourceinstance"]?.ToString();
+
+        /// <summary>
+        /// Sets the resource extension attribute of the cloud event
+        /// </summary>
+        public static void SetResource(this CloudEvent cloudEvent, string resource)
+        {
+            if (!string.IsNullOrEmpty(resource))
+            {
+                cloudEvent["resource"] = resource;
+            }
+        }
     }
 }
