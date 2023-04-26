@@ -148,13 +148,25 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         }
 
         [Fact]
-        public void CreateDecisionRequest_AllCategoriesPopulated()
+        public void CreateDecisionRequest_ClaimsPrincipalConsumer_AllCategoriesPopulated()
         {
             // Arrange
             ClaimsPrincipal user = PrincipalUtil.GetClaimsPrincipal(1337, 2);
 
             // Act
             var actual = GenericCloudEventXacmlMapper.CreateDecisionRequest(user, "subscribe", _cloudEvent);
+
+            // Assert
+            Assert.NotEmpty(actual.Request.Action);
+            Assert.NotEmpty(actual.Request.AccessSubject);
+            Assert.NotEmpty(actual.Request.Resource);
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_StringConsumer_AllCategoriesPopulated()
+        {
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateDecisionRequest("/org/ttd", "subscribe", _cloudEvent);
 
             // Assert
             Assert.NotEmpty(actual.Request.Action);

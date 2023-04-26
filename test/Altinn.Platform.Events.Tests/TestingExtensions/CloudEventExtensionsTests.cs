@@ -89,5 +89,45 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
             // Assert
             Assert.Null(actual);
         }
+
+        [Fact]
+        public void SetResource_ResourceNotDefined_AttributeSet()
+        {
+            // Arrange
+            CloudEvent ce = new(CloudEventsSpecVersion.V1_0)
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "system.event.occurred",
+                Subject = "/person/16069412345",
+                Source = new Uri("urn:isbn:1234567890")
+            };
+
+            // Act
+            ce.SetResourceIfNull("urn:altinn:resource:some-resource");
+
+            // Assert
+            Assert.NotNull(ce.GetResource());
+        }
+
+        [Fact]
+        public void SetResource_ResourceAlreadyDefined_AttributeSet()
+        {
+            // Arrange
+            CloudEvent ce = new(CloudEventsSpecVersion.V1_0)
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "system.event.occurred",
+                Subject = "/person/16069412345",
+                Source = new Uri("urn:isbn:1234567890")
+            };
+
+            ce["resource"] = "urn:altinn:resource:some-resource";
+
+            // Act
+            ce.SetResourceIfNull("urn:altinn:resource:some-other-resource");
+
+            // Assert
+            Assert.Equal("urn:altinn:resource:some-resource", ce.GetResource());
+        }
     }
 }

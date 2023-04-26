@@ -34,9 +34,9 @@ namespace Altinn.Platform.Events.Extensions
         /// <summary>
         /// Sets the resource extension attribute of the cloud event
         /// </summary>
-        public static void SetResource(this CloudEvent cloudEvent, string resource)
+        public static void SetResourceIfNull(this CloudEvent cloudEvent, string resource)
         {
-            if (!string.IsNullOrEmpty(resource))
+            if (cloudEvent.GetResource() == null && !string.IsNullOrEmpty(resource))
             {
                 cloudEvent["resource"] = resource;
             }

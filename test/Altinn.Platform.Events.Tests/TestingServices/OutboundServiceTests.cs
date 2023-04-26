@@ -343,7 +343,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Data = "something/extra",
             };
 
-            cloudEvent.SetResource("urn:altinn:resource:testresource");
+            cloudEvent.SetResourceIfNull("urn:altinn:resource:testresource");
 
             return cloudEvent;
         }
