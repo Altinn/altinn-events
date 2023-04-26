@@ -61,7 +61,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         }
 
         [Fact]
-        public void CreateMultiDecisionRequest_AssertSubjectCategory()
+        public void CreateMultiDecisionRequest_ClaimsPrincipal_AssertSubjectCategory()
         {
             // Arrange
             ClaimsPrincipal user = PrincipalUtil.GetClaimsPrincipal(1337, 2);
