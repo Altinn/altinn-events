@@ -148,11 +148,6 @@ namespace Altinn.Platform.Events.Services
 
         private static string GetAuthorizationCacheKey(string resource, string consumer)
         {
-            if (resource == null)
-            {
-                return null;
-            }
-
             return "authorizationdecision:re:" + resource + "co:" + consumer;
         }
 
