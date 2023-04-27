@@ -51,7 +51,7 @@ RETURN query
         events.subscription s
     WHERE
         s.resourcefilter = _resourcefilter
-        AND s.sourcefilter = _sourcefilter
+        AND (s.sourcefilter IS NULL OR s.sourcefilter = _sourcefilter)
         AND (_subjectfilter IS NULL OR s.subjectfilter = _subjectfilter)
         AND (_typefilter IS NULL OR s.typefilter = _typefilter)
         AND s.consumer = _consumer

@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
+
 using Microsoft.Extensions.Options;
+
 using Npgsql;
+
 using NpgsqlTypes;
 
 namespace Altinn.Platform.Events.Repository
@@ -72,7 +76,7 @@ namespace Altinn.Platform.Events.Repository
 
             pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter);
 
-            pgcom.Parameters.AddWithNullableString("sourcefilter", eventsSubscription.SourceFilter.AbsoluteUri);
+            pgcom.Parameters.AddWithNullableString("sourcefilter", eventsSubscription.SourceFilter?.AbsoluteUri);
             pgcom.Parameters.AddWithNullableString("subjectfilter", eventsSubscription.SubjectFilter);
             pgcom.Parameters.AddWithNullableString("typefilter", eventsSubscription.TypeFilter);
 
@@ -188,11 +192,13 @@ namespace Altinn.Platform.Events.Repository
 
         private static Subscription GetSubscription(NpgsqlDataReader reader)
         {
+            var sourceFilter = reader.GetValue<string>("sourcefilter");
+
             Subscription subscription = new Subscription
             {
                 Id = reader.GetValue<int>("id"),
                 ResourceFilter = reader.GetValue<string>("resourcefilter"),
-                SourceFilter = new Uri(reader.GetValue<string>("sourcefilter")),
+                SourceFilter = sourceFilter != null ? new Uri(sourceFilter) : null,
                 SubjectFilter = reader.GetValue<string>("subjectfilter"),
                 TypeFilter = reader.GetValue<string>("typefilter"),
                 Consumer = reader.GetValue<string>("consumer"),

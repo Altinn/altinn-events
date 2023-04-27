@@ -226,7 +226,7 @@ namespace Altinn.Platform.Events.Controllers
             {
                 return true;
             }
-            else if (!string.IsNullOrEmpty(subscription.SourceFilter.ToString()) &&
+            else if (!string.IsNullOrEmpty(subscription.SourceFilter?.ToString()) &&
 
                 subscription.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
             {
