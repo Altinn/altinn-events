@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -155,18 +156,67 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_ExistingResource_ResourceNotReplaced()
+        public async Task CreateSubscription_ExistingResource_ResourceUnchanged()
         {
             // Arrange
-            string expectedErrorMessage = "A valid subject to the authenticated identity is required";
-            int expectedErrorCode = 400;
-            int subscriptionId = 1337;
+            string expected = "urn:altinn:resource:altinnapp.skd.mva-melding";
 
             var subs = new Subscription
             {
-                Id = subscriptionId,
-                AlternativeSubjectFilter = "/person/14029112345"
+                ResourceFilter = "urn:altinn:resource:altinnapp.skd.mva-melding",
+                SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
+                AlternativeSubjectFilter = "/person/01039012345"
             };
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
+                    .ReturnsAsync(1337);
+
+            Mock<IProfile> profileMock = new();
+            profileMock
+                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
+                    .ReturnsAsync(new UserProfile
+                    {
+                        Party = new Party { SSN = "01039012345" }
+                    });
+
+            var sut = GetAppSubscriptionService(
+                profile: profileMock.Object,
+                register: registerMock.Object);
+
+            // Act
+            (Subscription subscription, ServiceError error) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.Equal(expected, subscription.ResourceFilter);
+        }
+
+        [Fact]
+        public async Task CreateSubscription_NonMatchingResourceAndSourceExistingResource_Error()
+        {
+            // Arrange
+            string expectedErrorMessage = "Provided resource filter and source filter are not compatible";
+            int expectedErrorCode = 400;
+            var subs = new Subscription
+            {
+                ResourceFilter = "urn:altinn:resource:altinnapp.skd.skattemelding",
+                SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
+                AlternativeSubjectFilter = "/person/01039012345"
+            };
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
+                    .ReturnsAsync(1337);
+
+            Mock<IProfile> profileMock = new();
+            profileMock
+                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
+                    .ReturnsAsync(new UserProfile
+                    {
+                        Party = new Party { SSN = "01039012345" }
+                    });
 
             var sut = GetAppSubscriptionService();
 

@@ -343,6 +343,38 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
+            /// Post invalid subscription with resource notfor user with persn as subject
+            /// Expected result:
+            /// Returns HttpStatus created
+            /// Success criteria:
+            /// The response has correct status and correct responseId.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionWithInvalidResource_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "https://www.ttd.no/hook", alternativeSubjectFilter: "/person/01039012345");
+
+                cloudEventSubscription.ResourceFilter = "some-service";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("\"Resource filter must be a valid urn\"", responseMessage);
+            }
+
+            /// <summary>
             /// Post invalid subscription for user with person as subject. User missing required role.
             /// Expected result:
             /// Returns HttpStatus Forbidden
