@@ -46,7 +46,7 @@ namespace Altinn.Platform.Events.Repository
             await using NpgsqlCommand pgcom = new NpgsqlCommand(insertSubscriptionSql, conn);
             pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter);
 
-            pgcom.Parameters.AddWithNullableString("sourcefilter", eventsSubscription.SourceFilter.AbsoluteUri);
+            pgcom.Parameters.AddWithNullableString("sourcefilter", eventsSubscription.SourceFilter?.AbsoluteUri);
             pgcom.Parameters.AddWithNullableString("subjectfilter", eventsSubscription.SubjectFilter);
             pgcom.Parameters.AddWithNullableString("typefilter", eventsSubscription.TypeFilter);
 
@@ -54,7 +54,7 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
             pgcom.Parameters.AddWithValue("createdby", eventsSubscription.CreatedBy);
             pgcom.Parameters.AddWithValue("validated", false);
-            pgcom.Parameters.AddWithValue("sourcefilterhash", sourceFilterHash);
+            pgcom.Parameters.AddWithNullableString("sourcefilterhash", sourceFilterHash);
 
             await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();
             await reader.ReadAsync();

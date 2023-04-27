@@ -57,15 +57,15 @@ namespace Altinn.Platform.Events.Services
                 return false;
             }
 
-            if (eventsSubscription.SourceFilter != null && !UriExtensions.IsValidUrlOrUrn(eventsSubscription.SourceFilter))
+            if (eventsSubscription.SourceFilter != null)
             {
-                message = "Source filter must be a valid URN or a URL using https scheme.";
+                message = "Source filter is not supported for subscriptions on this resource.";
                 return false;
             }
 
             if (!string.IsNullOrEmpty(eventsSubscription.AlternativeSubjectFilter))
             {
-                message = "AlternativeSubject is not supported for subscriptions on generic event sources.";
+                message = "AlternativeSubject is not supported for subscriptions on this resource.";
                 return false;
             }
 

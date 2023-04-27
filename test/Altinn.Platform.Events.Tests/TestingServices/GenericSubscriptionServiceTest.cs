@@ -22,10 +22,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     public class GenericSubscriptionServiceTest
     {
         [Theory]
-        [InlineData("https://fantastiske-hundepassere.no/events", "https://doggy-daycare.no/booking", "/dog/bruno")]
-        [InlineData("https://fantastiske-hundepassere.no", "https://doggy-daycare.no/booking", "/dog/bruno")]
-        [InlineData("https://fantastiske-hundepassere.no", "https://doggy-daycare.no", "/dog/bruno")]
-        public async Task CreateSubscription_ValidAndAuthorizedSubscription_ReturnsNewSubscription(string endpoint, string sourceFilter, string subjectFilter)
+        [InlineData("https://fantastiske-hundepassere.no/events", "/dog/bruno")]
+        [InlineData("https://fantastiske-hundepassere.no", "/dog/bruno")]
+        public async Task CreateSubscription_ValidAndAuthorizedSubscription_ReturnsNewSubscription(string endpoint, string subjectFilter)
         {
             // Arrange 
             var input = new Subscription
@@ -33,7 +32,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 ResourceFilter = "urn:altinn:resource:some-service",
                 SubjectFilter = subjectFilter,
                 EndPoint = new Uri(endpoint),
-                SourceFilter = new Uri(sourceFilter)
             };
 
             Mock<ISubscriptionRepository> repoMock = new();
@@ -52,14 +50,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_AlternaticSubjectFilterProvided_ReturnsError()
         {
             // Arrange 
-            string expectedErrorMessage = "AlternativeSubject is not supported for subscriptions on generic event sources.";
+            string expectedErrorMessage = "AlternativeSubject is not supported for subscriptions on this resource.";
 
             var input = new Subscription
             {
                 SubjectFilter = "/dog/bruno",
                 ResourceFilter = "urn:altinn:resource:some-service",
                 EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
-                SourceFilter = new Uri("https://doggy-daycare.no/booking"),
                 AlternativeSubjectFilter = "/object/123456"
             };
 
@@ -77,7 +74,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_InvalidUrnProvidedAsSourceFilter_ReturnsError()
         {
             // Arrange 
-            string expectedErrorMessage = "Source filter must be a valid URN or a URL using https scheme.";
+            string expectedErrorMessage = "Source filter is not supported for subscriptions on this resource.";
 
             var input = new Subscription
             {
