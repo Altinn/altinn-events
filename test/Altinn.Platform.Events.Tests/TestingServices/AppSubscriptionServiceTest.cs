@@ -156,6 +156,45 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
+        public async Task CreateSubscription_InvalidAppSourceFilter_ReturnsError()
+        {
+            // Arrange
+            string expectedErrorMessage = "A valid app id is required in Source filter {environment}/{org}/{app}";
+            int expectedErrorCode = 400;
+
+            var subs = new Subscription
+            {
+                SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding/instances/1337"),
+                AlternativeSubjectFilter = "/person/01039012345"
+            };
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
+                    .ReturnsAsync(1337);
+
+            Mock<IProfile> profileMock = new();
+            profileMock
+                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
+                    .ReturnsAsync(new UserProfile
+                    {
+                        Party = new Party { SSN = "01039012345" }
+                    });
+
+            var sut = GetAppSubscriptionService(
+                profile: profileMock.Object,
+                register: registerMock.Object);
+
+            // Act
+            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+            Assert.Equal(expectedErrorCode, actual.ErrorCode);
+        }
+
+        [Fact]
         public async Task CreateSubscription_ExistingResource_ResourceUnchanged()
         {
             // Arrange
@@ -186,14 +225,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 register: registerMock.Object);
 
             // Act
-            (Subscription subscription, ServiceError error) = await sut.CreateSubscription(subs);
+            (Subscription subscription, ServiceError _) = await sut.CreateSubscription(subs);
 
             // Assert
             Assert.Equal(expected, subscription.ResourceFilter);
         }
 
         [Fact]
-        public async Task CreateSubscription_NonMatchingResourceAndSourceExistingResource_Error()
+        public async Task CreateSubscription_NonMatchingResourceAndSourceExistingResource_ReturnsError()
         {
             // Arrange
             string expectedErrorMessage = "Provided resource filter and source filter are not compatible";
