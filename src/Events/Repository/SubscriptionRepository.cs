@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Repository
     {
         private readonly string findSubscriptionSql = "select * from events.find_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl)";
         private readonly string insertSubscriptionSql = "select * from events.insert_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated, @sourcefilterhash)";
-        private readonly string getSubscriptionSql = "select * from events.getsubscription(@_id)";
+        private readonly string getSubscriptionSql = "select * from events.getsubscription_v2(@_id)";
         private readonly string deleteSubscription = "call events.deletesubscription(@_id)";
         private readonly string setValidSubscription = "call events.setvalidsubscription(@_id)";
         private readonly string getSubscriptionsSql = "select * from events.getsubscriptions_v2($1, $2, $3)";
