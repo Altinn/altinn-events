@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -115,13 +116,52 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
                 .ReturnsAsync(new QueuePostReceipt { Success = true });
 
-            var service = GetOutboundService(queueMock.Object);
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeConsumerForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent);
 
             // Assert
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(1));
+        }
+
+        /// <summary>
+        /// Scenario: Event without subject is to be pushed
+        /// Expected result: Method returns successfully
+        /// Success criteria: Subscription repository is called to retrieve subscriptions.
+        /// </summary>
+        /// <remarks>
+        /// A workaround for generic events untill full support is in place. 
+        /// This test should start failing once altinn/altinn-events#109 is implemented. 
+        /// The test may then be removed.
+        /// </remarks>
+        [Fact]
+        public async void PostOutboundEventWithoutSubject_ConsumerNotAuthorized_NotAddedToQueue()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed");
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeConsumerForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .ReturnsAsync(false);
+
+            var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent);
+
+            // Assert
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
         }
 
         /// <summary>
@@ -302,6 +342,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Subject = subject,
                 Data = "something/extra",
             };
+
+            cloudEvent.SetResourceIfNotDefined("urn:altinn:resource:testresource");
 
             return cloudEvent;
         }

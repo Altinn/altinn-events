@@ -68,13 +68,21 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
+        public async Task<bool> AuthorizeConsumerForGenericEvent(CloudEvent cloudEvent, string consumer)
+        {
+            XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateDecisionRequest(consumer, "subscribe", cloudEvent);
+            XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+            return ValidateResult(response);
+        }
+
+        /// <inheritdoc/>
         public async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
         {
             XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
             return ValidateResult(response);
         }
-
+       
         /// <inheritdoc/>
         public async Task<bool> AuthorizeConsumerForEventsSubcription(Subscription subscription)
         {
