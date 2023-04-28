@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
@@ -32,11 +33,11 @@ namespace Altinn.Platform.Events.Extensions
         public static string GetResourceInstance(this CloudEvent cloudEvent) => cloudEvent["resourceinstance"]?.ToString();
 
         /// <summary>
-        /// Sets the resource extension attribute of the cloud event
+        /// Sets the resource extension attribute of the cloud event if it is undefiend
         /// </summary>
-        public static void SetResourceIfNull(this CloudEvent cloudEvent, string resource)
+        public static void SetResourceIfNotDefined(this CloudEvent cloudEvent, string resource)
         {
-            if (cloudEvent.GetResource() == null && !string.IsNullOrEmpty(resource))
+            if (cloudEvent.GetResource() == null)
             {
                 cloudEvent["resource"] = resource;
             }
