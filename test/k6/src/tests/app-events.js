@@ -20,7 +20,7 @@ import { addErrorCount } from "../errorhandler.js";
 
 export const options = {
   thresholds: {
-    errors: ['count<1'],
+    errors: ["count<1"],
   },
 };
 
@@ -140,19 +140,24 @@ function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
  * 04 - GET app events for party from 'next'
  */
 export default function (data) {
-  if (data.runFullTestSet) {
-    let nextUrl = TC01_GetAppEventsForOrg(data);
+  try {
+    if (data.runFullTestSet) {
+      let nextUrl = TC01_GetAppEventsForOrg(data);
 
-    TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl);
+      TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl);
 
-    nextUrl = TC03_GetAppEventsForParty(data);
+      nextUrl = TC03_GetAppEventsForParty(data);
 
-    TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
-  } else {
-    // Limited test set for use case tests
-    let nextUrl = TC03_GetAppEventsForParty(data);
+      TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
+    } else {
+      // Limited test set for use case tests
+      let nextUrl = TC03_GetAppEventsForParty(data);
 
-    TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
+      TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
+    }
+  } catch (error) {
+    addErrorCount(false);
+    throw error;
   }
 }
 

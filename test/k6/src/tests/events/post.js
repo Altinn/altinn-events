@@ -20,7 +20,7 @@ const scopes = "altinn:events.publish";
 
 export const options = {
   thresholds: {
-    errors: ['count<1'],
+    errors: ["count<1"],
   },
 };
 
@@ -141,20 +141,25 @@ function TC05_PostCloudEventWithoutRequiredScopes(data) {
  * 05 - POST cloud event without required scope
  */
 export default function (data) {
-  if (data.runFullTestSet) {
-    TC01_POstValidCloudEventWithAllParameters(data);
+  try {
+    if (data.runFullTestSet) {
+      TC01_POstValidCloudEventWithAllParameters(data);
 
-    TC02_PostValidCloudEventWithoutSubject(data);
+      TC02_PostValidCloudEventWithoutSubject(data);
 
-    TC03_PostValidCloudEventWithoutTIme(data);
+      TC03_PostValidCloudEventWithoutTIme(data);
 
-    TC04_PostCloudEventWithoutBearerToken(data);
+      TC04_PostCloudEventWithoutBearerToken(data);
 
-    TC05_PostCloudEventWithoutRequiredScopes(data);
-  } else {
-    // Limited test set for use case tests
+      TC05_PostCloudEventWithoutRequiredScopes(data);
+    } else {
+      // Limited test set for use case tests
 
-    TC01_POstValidCloudEventWithAllParameters(data);
+      TC01_POstValidCloudEventWithAllParameters(data);
+    }
+  } catch (error) {
+    addErrorCount(false);
+    throw error;
   }
 }
 

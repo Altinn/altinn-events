@@ -44,26 +44,26 @@ genericSubscription.endPoint = webhookEndpoint;
 
 export const options = {
   thresholds: {
-    errors: ['count<1'],
+    errors: ["count<1"],
   },
 };
 
 export function setup() {
-  var orgToken = setupToken.getAltinnTokenForOrg(scopes);
-  var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
+    var orgToken = setupToken.getAltinnTokenForOrg(scopes);
+    var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
 
-  var data = {
-    runFullTestSet: runFullTestSet,
-    orgToken: orgToken,
-    orgTokenWithoutSubScope: orgTokenWithoutSubScope,
-    org: org,
-    app: app,
-    appSubscription: JSON.stringify(appSubscription),
-    genericSubscription: JSON.stringify(genericSubscription),
-    webhookEndpoint: webhookEndpoint,
-  };
+    var data = {
+      runFullTestSet: runFullTestSet,
+      orgToken: orgToken,
+      orgTokenWithoutSubScope: orgTokenWithoutSubScope,
+      org: org,
+      app: app,
+      appSubscription: JSON.stringify(appSubscription),
+      genericSubscription: JSON.stringify(genericSubscription),
+      webhookEndpoint: webhookEndpoint,
+    };
 
-  return data;
+    return data;
 }
 
 // 01 - POST new subscription for app event source
@@ -223,34 +223,40 @@ function TC08_PostSubscriptionForExternalEventSourceWithoutScope(data) {
  * 08 - POST subscription for external event source without required scope
  */
 export default function (data) {
-  if (data.runFullTestSet) {
-    const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
+  try {
+    if (data.runFullTestSet) {
+      const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
 
-    const currentSubscriptionCount = TC02_GetExistingSubscriptionsForOrg(data);
+      const currentSubscriptionCount =
+        TC02_GetExistingSubscriptionsForOrg(data);
 
-    TC03_PostExistingSubscription(data);
+      TC03_PostExistingSubscription(data);
 
-    TC04_GetExistingSubscriptionsForOrg(data, currentSubscriptionCount);
+      TC04_GetExistingSubscriptionsForOrg(data, currentSubscriptionCount);
 
-    TC05_GetSubscriptionById(data, appSubscriptionId);
+      TC05_GetSubscriptionById(data, appSubscriptionId);
 
-    TC06_DeleteSubscription(data, appSubscriptionId);
+      TC06_DeleteSubscription(data, appSubscriptionId);
 
-    const genericSubscriptionId =
-      TC07_PostSubscriptionExternalEventSource(data);
+      const genericSubscriptionId =
+        TC07_PostSubscriptionExternalEventSource(data);
 
-    TC06_DeleteSubscription(data, genericSubscriptionId);
+      TC06_DeleteSubscription(data, genericSubscriptionId);
 
-    TC08_PostSubscriptionForExternalEventSourceWithoutScope(data);
-  } else {
-    // Limited test set for use case tests
-    const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
+      TC08_PostSubscriptionForExternalEventSourceWithoutScope(data);
+    } else {
+      // Limited test set for use case tests
+      const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
 
-    TC02_GetExistingSubscriptionsForOrg(data);
+      TC02_GetExistingSubscriptionsForOrg(data);
 
-    TC05_GetSubscriptionById(data, appSubscriptionId);
+      TC05_GetSubscriptionById(data, appSubscriptionId);
 
-    TC06_DeleteSubscription(data, appSubscriptionId);
+      TC06_DeleteSubscription(data, appSubscriptionId);
+    }
+  } catch (error) {
+    addErrorCount(false);
+    throw error;
   }
 }
 

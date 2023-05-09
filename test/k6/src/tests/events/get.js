@@ -65,9 +65,9 @@ function TC01_GetAllEvents(data) {
   });
   addErrorCount(success);
 
-  if(!success){
-  // only continue to parse and check content if success response code
-  stopIterationOnFail(success);
+  if (!success) {
+    // only continue to parse and check content if success response code
+    stopIterationOnFail(success);
   }
 
   success = check(response, {
@@ -115,11 +115,16 @@ function TC02_GetEventsAndFollowNextLink(data) {
  * 02 - GET events and follow next link
  */
 export default function (data) {
-  if (data.runFullTestSet) {
-    TC01_GetAllEvents(data);
-    TC02_GetEventsAndFollowNextLink(data);
-  } else {
-    // Limited test set for use case tests
-    TC01_GetAllEvents(data);
+  try {
+    if (data.runFullTestSet) {
+      TC01_GetAllEvents(data);
+      TC02_GetEventsAndFollowNextLink(data);
+    } else {
+      // Limited test set for use case tests
+      TC01_GetAllEvents(data);
+    }
+  } catch (error) {
+    addErrorCount(false);
+    throw error;
   }
 }
