@@ -39,7 +39,7 @@ export function buildHeaderWithBasic(token){
     return params;
 }
 
-export function buildHeaderWithBearerContentType(token, contentType) {
+export function buildHeaderWithBearerAndContentType(token, contentType) {
   var params = {
     headers: {
       Authorization: "Bearer " + token,
