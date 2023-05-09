@@ -1,8 +1,6 @@
 name: Use Case - TT02
 
 on:
-  pull_request:
-    types: [opened, reopened]
   workflow_dispatch:
   schedule:
   - cron: '*/15 * * * *'
