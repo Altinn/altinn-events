@@ -275,20 +275,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             ISubscriptionRepository repository = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null)
         {
-            if (register == null)
-            {
-                register = new RegisterServiceMock();
-            }
+            register ??= new RegisterServiceMock();
 
-            if (profile == null)
-            {
-                profile = new ProfileMockSI(register);
-            }
+            profile ??= new ProfileMockSI(register);
 
-            if (authorization == null)
-            {
-                authorization = new Mock<IAuthorization>().Object;
-            }
+            authorization ??= new Mock<IAuthorization>().Object;
 
             if (claimsPrincipalProvider == null)
             {
