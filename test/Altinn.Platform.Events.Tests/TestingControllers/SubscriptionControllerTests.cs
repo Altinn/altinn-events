@@ -319,7 +319,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Expected result:
             /// Returns HttpStatus created
             /// Success criteria:
-            /// The response has correct status and correct responseId.
+            /// The response has correct status.
             /// </summary>
             [Fact]
             public async Task Post_GivenSubscriptionUserWithValidPersonSubject_ReturnsCreated()
@@ -345,9 +345,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// <summary>
             /// Post invalid subscription with resource notfor user with persn as subject
             /// Expected result:
-            /// Returns HttpStatus created
+            /// Returns bad request 
             /// Success criteria:
-            /// The response has correct status and correct responseId.
+            /// The response has correct status and expected response message.
             /// </summary>
             [Fact]
             public async Task Post_GivenSubscriptionWithInvalidResource_ReturnsBadRequest()
@@ -377,12 +377,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// <summary>
             /// Post invalid subscription for user with person as subject. User missing required role.
             /// Expected result:
-            /// Returns HttpStatus Forbidden
+            /// Returns HttpStatus Bad request
             /// Success criteria:
-            /// The response has correct status and correct responseId.
+            /// The response has correct status and expected response message.
             /// </summary>
             [Fact]
-            public async Task Post_GivenSubscriptionUserWithInvalidPersonSubject_ReturnsCreated()
+            public async Task Post_GivenSubscriptionUserWithInvalidPersonSubject_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
@@ -397,17 +397,19 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("\"A valid subject to the authenticated identity is required\"", responseMessage);
             }
 
             /// <summary>
             /// Post invalid subscription for org with invalid subject
             /// Expected result:
-            /// Returns HttpStatus badrequest
+            /// Returns HttpStatus bad request
             /// Success criteria:
-            /// The response has correct status and correct responseId.
+            /// The response has correct status.
             /// </summary>
             [Fact]
             public async Task Post_GivenSubscriptionOrgWithInvalidSubject_ReturnsBadRequest()
@@ -433,16 +435,16 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// <summary>
             /// Post invalid subscription for org missing resourceFilter
             /// Expected result:
-            /// Returns HttpStatus badrequest
+            /// Returns HttpStatus bad request
             /// Success criteria:
-            /// The response has correct status and correct responseId.
+            /// The response has correct status and expected response message.
             /// </summary>
             [Fact]
-            public async Task Post_GivenSubscriptionWithoutResourceFilter_ReturnsBadRequest()
+            public async Task Post_GivenGenericSubscriptionWithoutResourceFilter_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest(string.Empty, "https://www.app-event.no/hook", subjectFilter: "/party/133");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://external-source.com", "https://www.app-event.no/hook", subjectFilter: "/party/133");
 
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084", "altinn:events.subscribe"));
@@ -454,9 +456,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("\"Resource filter is required.\"", responseMessage);
             }
 
             /// <summary>
@@ -464,14 +468,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Expected result:
             /// Returns HttpStatus badrequest
             /// Success criteria:
-            /// The response has correct status and correct responseId.
+            /// The response has correct status and expected response message.
             /// </summary>
             [Fact]
             public async Task Post_GivenSubscriptionWithoutEndpoint_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.app-event.no/hook", subjectFilter: "/party/133");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", null, subjectFilter: "/party/133");
 
                 cloudEventSubscription.EndPoint = null;
 
@@ -484,9 +488,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("\"Missing or invalid endpoint to push events towards\"", responseMessage);
+
             }
 
             /// <summary>
@@ -494,7 +501,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Expected result:
             /// Returns HttpStatus Unauthorized
             /// Success criteria:
-            /// The response has correct status and correct responseId.
+            /// The response has correct status.
             /// </summary>
             [Fact]
             public async Task Post_GivenMissingBearerToken_ReturnsUnauthorized()
@@ -521,7 +528,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Expected result:
             /// Returns HttpStatus forbidden
             /// Success criteria:
-            /// The response has correct status and correct responseId.
+            /// The response has correct status.
             /// </summary>
             [Fact]
             public async Task Post_GivenSubscriptionForExternalEventWithoutScope_ReturnsForbidden()
@@ -852,7 +859,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 SubscriptionRequestModel subscription = new SubscriptionRequestModel()
                 {
-                    EndPoint = new Uri(endpoint),
+                    EndPoint = (endpoint == null) ? null : new Uri(endpoint),
                     AlternativeSubjectFilter = alternativeSubjectFilter,
                     SubjectFilter = subjectFilter,
                     SourceFilter = sourceFilterUri
