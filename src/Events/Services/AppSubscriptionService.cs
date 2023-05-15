@@ -86,7 +86,7 @@ namespace Altinn.Platform.Events.Services
 
         private void SetResourceFilterIfEmpty(Subscription eventsSubscription)
         {
-            eventsSubscription.ResourceFilter = GetResourceFilterFromSource(eventsSubscription.SourceFilter);
+            eventsSubscription.ResourceFilter ??= GetResourceFilterFromSource(eventsSubscription.SourceFilter);
         }
 
         private string GetResourceFilterFromSource(Uri sourceFilter)
