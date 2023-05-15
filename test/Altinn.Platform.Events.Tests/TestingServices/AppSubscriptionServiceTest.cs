@@ -131,7 +131,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_MissingResouce_PopulatedBasedOnSource()
+        public async Task CreateSubscription_InvalidSubjectForConsumer_ReturnsError()
         {
             // Arrange
             string expectedErrorMessage = "A valid subject to the authenticated identity is required";
