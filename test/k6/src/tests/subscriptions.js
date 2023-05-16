@@ -12,7 +12,7 @@
     For use case tests omit environment variable runFullTestSet or set value to false
     */
 
-import { check } from "k6";
+import { check, sleep } from "k6";
 import * as subscriptionsApi from "../api/subscriptions.js";
 import * as config from "../config.js";
 import { addErrorCount } from "../errorhandler.js";
@@ -49,21 +49,21 @@ export const options = {
 };
 
 export function setup() {
-    var orgToken = setupToken.getAltinnTokenForOrg(scopes);
-    var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
+  var orgToken = setupToken.getAltinnTokenForOrg(scopes);
+  var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
 
-    var data = {
-      runFullTestSet: runFullTestSet,
-      orgToken: orgToken,
-      orgTokenWithoutSubScope: orgTokenWithoutSubScope,
-      org: org,
-      app: app,
-      appSubscription: JSON.stringify(appSubscription),
-      genericSubscription: JSON.stringify(genericSubscription),
-      webhookEndpoint: webhookEndpoint,
-    };
+  var data = {
+    runFullTestSet: runFullTestSet,
+    orgToken: orgToken,
+    orgTokenWithoutSubScope: orgTokenWithoutSubScope,
+    org: org,
+    app: app,
+    appSubscription: JSON.stringify(appSubscription),
+    genericSubscription: JSON.stringify(genericSubscription),
+    webhookEndpoint: webhookEndpoint,
+  };
 
-    return data;
+  return data;
 }
 
 // 01 - POST new subscription for app event source
@@ -145,7 +145,7 @@ function TC04_GetExistingSubscriptionsForOrg(data, expectedSubscriptionCount) {
   addErrorCount(success);
 }
 
-// 05 - GET subscriptions by id
+// 05 - GET subscription by id
 function TC05_GetSubscriptionById(data, subscriptionId) {
   var response, success;
 
@@ -154,8 +154,12 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     data.orgToken
   );
 
+  var subscription = JSON.parse(response.body);
+
   success = check(response, {
     "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200,
+    "05 - Get subscription by id. Returned subscription is validated":
+      subscription.validated,
   });
 
   addErrorCount(success);
@@ -233,6 +237,7 @@ export default function (data) {
       TC03_PostExistingSubscription(data);
 
       TC04_GetExistingSubscriptionsForOrg(data, currentSubscriptionCount);
+      sleep(15);
 
       TC05_GetSubscriptionById(data, appSubscriptionId);
 
