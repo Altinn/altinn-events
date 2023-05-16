@@ -493,7 +493,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
                 Assert.Equal("\"Missing or invalid endpoint to push events towards\"", responseMessage);
-
             }
 
             /// <summary>
