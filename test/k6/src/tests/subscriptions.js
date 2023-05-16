@@ -147,6 +147,9 @@ function TC04_GetExistingSubscriptionsForOrg(data, expectedSubscriptionCount) {
 
 // 05 - GET subscription by id
 function TC05_GetSubscriptionById(data, subscriptionId) {
+  // delay to ensure subscription has time to be validated
+  sleep(15);
+
   var response, success;
 
   response = subscriptionsApi.getSubscriptionById(
@@ -237,7 +240,6 @@ export default function (data) {
       TC03_PostExistingSubscription(data);
 
       TC04_GetExistingSubscriptionsForOrg(data, currentSubscriptionCount);
-      sleep(15);
 
       TC05_GetSubscriptionById(data, appSubscriptionId);
 
