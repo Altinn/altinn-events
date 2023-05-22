@@ -6,7 +6,7 @@
       -e tokenGeneratorUserName=autotest `
       -e tokenGeneratorUserPwd=*** `
       -e app=apps-test `
-      -e webhookEndpoint=***** `
+      -e webhookEndpointToken=***** `
       -e runFullTestSet=true
 
     For use case tests omit environment variable runFullTestSet or set value to false
@@ -14,6 +14,7 @@
 
 import { check, sleep } from "k6";
 import * as subscriptionsApi from "../api/subscriptions.js";
+import * as webhooksiteApi from "../api/webhooksite.js";
 import * as config from "../config.js";
 import { addErrorCount } from "../errorhandler.js";
 import { generateJUnitXML, reportPath } from "../report.js";
@@ -30,7 +31,7 @@ const genericSubscription = JSON.parse(
 const scopes = "altinn:events.publish,altinn:events.subscribe";
 const subsetScopes = "altinn:serviceowner/instances.read";
 
-const webhookEndpoint = __ENV.webhookEndpoint;
+const webhookEndpoint = "https://webhook.site/" + __ENV.webhookEndpointToken;
 
 const org = "ttd";
 const app = __ENV.app.toLowerCase();
@@ -49,6 +50,13 @@ export const options = {
 };
 
 export function setup() {
+  // delete existing requests from webhook site
+  try {
+    webhooksiteApi.deleteAllRequests(__ENV.webhookEndpointToken);
+  } catch (error) {
+    // Ignore exception. We can handle cleanup failing once in a while.
+  }
+
   var orgToken = setupToken.getAltinnTokenForOrg(scopes);
   var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
 
