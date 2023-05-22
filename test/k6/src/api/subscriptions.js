@@ -3,12 +3,6 @@ import { stopIterationOnFail } from "../errorhandler.js";
 import * as apiHelpers from "../apiHelpers.js";
 import * as config from "../config.js";
 
-export function hello(token){
-  var endpoint = config.platformEvents.subscriptions;
-  return getSubscriptions(endpoint, token);
-
-}
-
 export function getAllSubscriptions(token) {
   var endpoint = config.platformEvents.subscriptions;
   return getSubscriptions(endpoint, token);
