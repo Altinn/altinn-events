@@ -1,0 +1,25 @@
+name: Use Case - Test
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened, assigned, converted_to_draft]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [AT24]
+    environment: ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run subscription use case tests
+      run:  |
+              cd test/k6
+              docker-compose run k6 run /src/tests/subscriptions-test.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e webhookEndpointToken=${{ secrets.WEBHOOK_ENDPOINT_TOKEN }}
+
+
+
+
