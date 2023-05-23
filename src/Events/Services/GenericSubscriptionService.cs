@@ -51,15 +51,21 @@ namespace Altinn.Platform.Events.Services
 
         private static bool ValidateSubscription(Subscription eventsSubscription, out string message)
         {
-            if (!UriExtensions.IsValidUrlOrUrn(eventsSubscription.SourceFilter))
+            if (string.IsNullOrEmpty(eventsSubscription.ResourceFilter))
             {
-                message = "Source filter must be a valid URN or a URL using https scheme.";
+                message = "Resource filter is required.";
+                return false;
+            }
+
+            if (eventsSubscription.SourceFilter != null)
+            {
+                message = "Source filter is not supported for subscriptions on this resource.";
                 return false;
             }
 
             if (!string.IsNullOrEmpty(eventsSubscription.AlternativeSubjectFilter))
             {
-                message = "AlternativeSubject is not supported for subscriptions on generic event sources.";
+                message = "AlternativeSubject is not supported for subscriptions on this resource.";
                 return false;
             }
 

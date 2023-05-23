@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platorm.Events.Extensions;
@@ -69,14 +70,14 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
-            bool isAppSubscription = true;
-
-            if (subscriptionRequest.SourceFilter == null || !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
+            if (subscriptionRequest.SourceFilter != null && !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
             {
                 return StatusCode(400, "SourceFilter must be an absolute URI");
             }
 
-            if (!subscriptionRequest.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
+            bool isAppSubscription = IsAppSubscription(subscriptionRequest);
+
+            if (!isAppSubscription)
             {
                 // Only non Altinn App subscriptions require the additional scope
                 ClaimsPrincipal principal = _claimsPrincipalProvider.GetUser();
@@ -85,13 +86,16 @@ namespace Altinn.Platform.Events.Controllers
                 {
                     return Forbid();
                 }
-
-                isAppSubscription = false;
             }
 
             if (subscriptionRequest.EndPoint == null || !Uri.IsWellFormedUriString(subscriptionRequest.EndPoint.ToString(), UriKind.Absolute))
             {
                 return StatusCode(400, "Missing or invalid endpoint to push events towards");
+            }
+
+            if (subscriptionRequest.ResourceFilter != null && !UriExtensions.IsValidUrn(subscriptionRequest.ResourceFilter))
+            {
+                return StatusCode(400, "Resource filter must be a valid urn");
             }
 
             Subscription eventsSubscription = _mapper.Map<Subscription>(subscriptionRequest);
@@ -213,6 +217,23 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             return authenticatedConsumer;
+        }
+
+        private bool IsAppSubscription(SubscriptionRequestModel subscription)
+        {
+            if (subscription.ResourceFilter != null &&
+                 subscription.ResourceFilter.StartsWith(_settings.AppResourcePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            else if (!string.IsNullOrEmpty(subscription.SourceFilter?.ToString()) &&
+
+                subscription.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

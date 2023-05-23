@@ -47,7 +47,7 @@ namespace Altinn.Platform.Events.Services
         {
             Subscription subscription = await _repository.FindSubscription(eventsSubscription, CancellationToken.None);
 
-            subscription ??= await _repository.CreateSubscription(eventsSubscription, eventsSubscription.SourceFilter.GetMD5Hash());
+            subscription ??= await _repository.CreateSubscription(eventsSubscription, eventsSubscription.SourceFilter?.GetMD5Hash());
 
             await _queue.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
             return (subscription, null);
