@@ -864,7 +864,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 return client;
             }
 
-            private static SubscriptionRequestModel GetEventsSubscriptionRequest(string? sourceFilter, string endpoint, string subjectFilter = null, string alternativeSubjectFilter = null, string resourceFilter = null)
+            private static SubscriptionRequestModel GetEventsSubscriptionRequest(string sourceFilter, string endpoint, string subjectFilter = null, string alternativeSubjectFilter = null, string resourceFilter = null)
             {
                 SubscriptionRequestModel subscription = new SubscriptionRequestModel()
                 {
@@ -874,7 +874,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     ResourceFilter = resourceFilter
                 };
 
-                if (sourceFilter != null)
+                if (!string.IsNullOrEmpty(sourceFilter))
                 {
                     Uri sourceFilterUri;
 
