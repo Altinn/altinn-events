@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -340,6 +338,29 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Post_GivenAppSubscriptionWithoutSourceFilter_BadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest(null, "https://www.ttd.no/hook", alternativeSubjectFilter: "/person/01039012345", resourceFilter: "urn:altinn:resource:altinnapp.ttd.apps-test");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("\"A valid app id is required in Source filter {environment}/{org}/{app}\"", responseMessage);
             }
 
             /// <summary>
@@ -843,26 +864,31 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 return client;
             }
 
-            private static SubscriptionRequestModel GetEventsSubscriptionRequest(string sourceFilter, string endpoint, string subjectFilter = null, string alternativeSubjectFilter = null)
+            private static SubscriptionRequestModel GetEventsSubscriptionRequest(string? sourceFilter, string endpoint, string subjectFilter = null, string alternativeSubjectFilter = null, string resourceFilter = null)
             {
-                Uri sourceFilterUri;
-
-                try
-                {
-                    sourceFilterUri = new Uri(sourceFilter);
-                }
-                catch
-                {
-                    sourceFilterUri = new Uri(sourceFilter, UriKind.Relative);
-                }
-
                 SubscriptionRequestModel subscription = new SubscriptionRequestModel()
                 {
                     EndPoint = (endpoint == null) ? null : new Uri(endpoint),
                     AlternativeSubjectFilter = alternativeSubjectFilter,
                     SubjectFilter = subjectFilter,
-                    SourceFilter = sourceFilterUri
+                    ResourceFilter = resourceFilter
                 };
+
+                if (sourceFilter != null)
+                {
+                    Uri sourceFilterUri;
+
+                    try
+                    {
+                        sourceFilterUri = new Uri(sourceFilter);
+                    }
+                    catch
+                    {
+                        sourceFilterUri = new Uri(sourceFilter, UriKind.Relative);
+                    }
+
+                    subscription.SourceFilter = sourceFilterUri;
+                }
 
                 return subscription;
             }
