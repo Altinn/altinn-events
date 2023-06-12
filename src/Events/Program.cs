@@ -183,8 +183,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddAutoMapper(typeof(Program));
 
     services.AddMemoryCache();
-    services.AddHealthChecks()
-        .AddCheck<HealthCheck>("events_health_check");
+    services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
 
     if (config.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
     {
