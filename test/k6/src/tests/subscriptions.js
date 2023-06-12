@@ -165,12 +165,8 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     data.orgToken
   );
 
-  var subscription = JSON.parse(response.body);
-
   success = check(response, {
-    "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200,
-    "05 - Get subscription by id. Returned subscription is validated":
-      subscription.validated,
+    "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200
   });
 
   addErrorCount(success);

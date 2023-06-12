@@ -923,7 +923,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                        services.AddSingleton<ISigningKeysResolver, SigningKeyResolverMock>();
+                        services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
                         services.AddSingleton<IPDP, PepWithPDPAuthorizationMockSI>();
                     });
                 }).CreateClient();
