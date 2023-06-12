@@ -185,6 +185,14 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
 
+    if (config.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
+    {
+        services.AddHealthChecks()
+            .AddNpgSql(string.Format(
+                config.GetValue<string>("PostgreSQLSettings:ConnectionString"),
+                config.GetValue<string>("PostgreSQLSettings:EventsDbPwd")));
+    }
+
     services.AddSingleton(config);
     services.Configure<PostgreSqlSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
