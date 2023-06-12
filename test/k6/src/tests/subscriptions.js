@@ -196,7 +196,6 @@ function TC07_PostSubscriptionExternalEventSource(data) {
     data.orgToken
   );
 
-  console.log(response.body);
   var subscription = JSON.parse(response.body);
   success = check(response, {
     "07 - POST subscription for external event source. Status is 201": (r) =>
