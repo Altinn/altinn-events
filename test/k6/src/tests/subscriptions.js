@@ -255,7 +255,9 @@ export default function (data) {
       const genericSubscriptionId =
         TC07_PostSubscriptionExternalEventSource(data);
 
-      TC06_DeleteSubscription(data, genericSubscriptionId);
+      if (genericSubscriptionId) {
+        TC06_DeleteSubscription(data, genericSubscriptionId);
+      }
 
       TC08_PostSubscriptionForExternalEventSourceWithoutScope(data);
     } else {
