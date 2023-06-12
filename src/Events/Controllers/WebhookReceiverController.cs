@@ -5,15 +5,16 @@ using CloudNative.CloudEvents;
 
 using Microsoft.AspNetCore.Mvc;
 
+using Swashbuckle.AspNetCore.Annotations;
+
 namespace Altinn.Platform.Events.Controllers
 {
     /// <summary>
-    /// Controller solely for testing purposes. 
-    /// Used as webhook endpoint for testing push of events
+    /// Controller for supporting automated tests.
     /// </summary>
     [ExcludeFromCodeCoverage]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [Route("events/api/v1/webhookreceiver")]
+    [Route("events/api/v1/tests/webhookreceiver")]
+    [SwaggerTag("Private API")]
     public class WebhookReceiverController : ControllerBase
     {
         /// <summary>
