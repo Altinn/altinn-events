@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Controllers
         /// Accepts an http post request and responds OK if request body can be deserialized into a cloud event.
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
+        public ActionResult Post([FromBody] CloudEvent cloudEvent)
         {
             return Ok();
         }
