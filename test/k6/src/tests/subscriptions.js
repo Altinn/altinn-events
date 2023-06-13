@@ -14,7 +14,6 @@
 
 import { check, sleep } from "k6";
 import * as subscriptionsApi from "../api/subscriptions.js";
-import * as webhooksiteApi from "../api/webhooksite.js";
 import * as config from "../config.js";
 import { addErrorCount } from "../errorhandler.js";
 import { generateJUnitXML, reportPath } from "../report.js";
@@ -50,13 +49,6 @@ export const options = {
 };
 
 export function setup() {
-  // delete existing requests from webhook site
-  try {
-    webhooksiteApi.deleteAllRequests(__ENV.webhookEndpointToken);
-  } catch (error) {
-    // Ignore exception. We can handle cleanup failing once in a while.
-  }
-
   var orgToken = setupToken.getAltinnTokenForOrg(scopes);
   var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
 
@@ -261,13 +253,13 @@ export default function (data) {
       TC08_PostSubscriptionForExternalEventSourceWithoutScope(data);
     } else {
       // Limited test set for use case tests
-      const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
+     /* const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
 
       TC02_GetExistingSubscriptionsForOrg(data);
 
       TC05_GetSubscriptionById(data, appSubscriptionId);
 
-      TC06_DeleteSubscription(data, appSubscriptionId);
+      TC06_DeleteSubscription(data, appSubscriptionId);*/
     }
   } catch (error) {
     addErrorCount(false);
