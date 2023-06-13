@@ -6,7 +6,7 @@
       -e tokenGeneratorUserName=autotest `
       -e tokenGeneratorUserPwd=*** `
       -e app=apps-test `
-      -e webhookEndpointToken=***** `
+      -e webhookEndpoint=***** `
       -e runFullTestSet=true
 
     For use case tests omit environment variable runFullTestSet or set value to false
@@ -31,7 +31,7 @@ const genericSubscription = JSON.parse(
 const scopes = "altinn:events.publish,altinn:events.subscribe";
 const subsetScopes = "altinn:serviceowner/instances.read";
 
-const webhookEndpoint = "https://webhook.site/" + __ENV.webhookEndpointToken;
+const webhookEndpoint = __ENV.webhookEndpoint;
 
 const org = "ttd";
 const app = __ENV.app.toLowerCase();
@@ -165,10 +165,13 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     data.orgToken
   );
 
-  success = check(response, {
-    "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200
-  });
+  var subscription = JSON.parse(response.body);
 
+  success = check(response, {
+    "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200,
+    "05 - Get subscription by id. Returned subscription is validated":
+      subscription.validated,
+  });
   addErrorCount(success);
 }
 
@@ -177,7 +180,6 @@ function TC06_DeleteSubscription(data, subscriptionId) {
   var response, success;
 
   response = subscriptionsApi.deleteSubscription(subscriptionId, data.orgToken);
-
   success = check(response, {
     "06 - DELETE subscription. Status is 200.": (r) => r.status === 200,
   });
@@ -252,7 +254,9 @@ export default function (data) {
       const genericSubscriptionId =
         TC07_PostSubscriptionExternalEventSource(data);
 
-      TC06_DeleteSubscription(data, genericSubscriptionId);
+      if (genericSubscriptionId) {
+        TC06_DeleteSubscription(data, genericSubscriptionId);
+      }
 
       TC08_PostSubscriptionForExternalEventSourceWithoutScope(data);
     } else {
