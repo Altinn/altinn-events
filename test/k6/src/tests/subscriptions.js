@@ -253,13 +253,13 @@ export default function (data) {
       TC08_PostSubscriptionForExternalEventSourceWithoutScope(data);
     } else {
       // Limited test set for use case tests
-     /* const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
+      const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
 
       TC02_GetExistingSubscriptionsForOrg(data);
 
       TC05_GetSubscriptionById(data, appSubscriptionId);
 
-      TC06_DeleteSubscription(data, appSubscriptionId);*/
+      TC06_DeleteSubscription(data, appSubscriptionId);
     }
   } catch (error) {
     addErrorCount(false);
