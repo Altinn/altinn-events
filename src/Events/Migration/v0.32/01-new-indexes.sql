@@ -9,6 +9,8 @@ CREATE INDEX IF NOT EXISTS idx_events_cloudevent_source
     ON events.events ((cloudevent ->> 'source'));
 CREATE INDEX IF NOT EXISTS idx_events_cloudevent_type
     ON events.events ((cloudevent ->> 'type'));
+CREATE INDEX IF NOT EXISTS idx_events_cloudevent_time
+    ON events.events ((cloudevent ->> 'time'));
 
 -- Drop redundant GIN index
 DROP INDEX IF EXISTS events.idx_gin_events_computed_cloudevent;
