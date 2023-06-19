@@ -58,7 +58,6 @@ CREATE OR REPLACE FUNCTION events.getevents(
 	_after character varying,
 	_type text[],
 	_source character varying,
-	_resource character varying,
 	_size integer)
     RETURNS TABLE(cloudevents text)
     LANGUAGE 'plpgsql'
