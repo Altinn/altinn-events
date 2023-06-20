@@ -1,7 +1,7 @@
 # Altinn Events
 
 Create and subscribe to events from apps or other sources.  
-Documentation: https://docs.altinn.studio/api/events/  
+Documentation: https://docs.altinn.studio/events
 
 ## Build status
 [![Events build status](https://dev.azure.com/brreg/altinn-studio/_apis/build/status/altinn-platform/events-master?label=altinn/events)](https://dev.azure.com/brreg/altinn-studio/_build/latest?definitionId=136)
