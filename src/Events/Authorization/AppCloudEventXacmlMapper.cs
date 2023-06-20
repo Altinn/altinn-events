@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Constants;
 using Altinn.Common.PEP.Helpers;
+using Altinn.Platform.Events.Extensions;
 
 using CloudNative.CloudEvents;
 
@@ -41,20 +42,7 @@ namespace Altinn.Platform.Events.Authorization
                 Resource = new List<XacmlJsonCategory>()
             };
 
-            string org = null;
-            string app = null;
-            string instanceOwnerPartyId = null;
-            string instanceGuid = null;
-
-            string[] pathParams = cloudEvent.Source.AbsolutePath.Split("/");
-
-            if (pathParams.Length > 5)
-            {
-                org = pathParams[1];
-                app = pathParams[2];
-                instanceOwnerPartyId = pathParams[4];
-                instanceGuid = pathParams[5];
-            }
+            (string org, string app, string instanceOwnerPartyId, string instanceGuid) = AppCloudEventExtensions.GetPropertiesFromAppSource(cloudEvent.Source);
 
             request.AccessSubject.Add(XacmlMapperHelper.CreateSubjectAttributes(subject));
             request.Action.Add(CloudEventXacmlMapper.CreateActionCategory("read"));
