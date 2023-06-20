@@ -119,7 +119,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_Unauthorized_ReturnsError()
         {
             // Arrange 
-            string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service and subject filter: .";
+            string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service.";
 
             var input = new Subscription
             {
