@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Constants;
 using Altinn.Common.PEP.Helpers;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 
 using static Altinn.Authorization.ABAC.Constants.XacmlConstants;
@@ -27,6 +28,9 @@ namespace Altinn.Platform.Events.Authorization
         /// </summary>
         public static XacmlJsonRequestRoot CreateDecisionRequest(Subscription subscription)
         {
+            bool isAppSubs = subscription.ResourceFilter.StartsWith(AuthorizationConstants.AppResourcePrefix);
+            string action = isAppSubs ? "read" : "subscribe";
+
             XacmlJsonRequest request = new()
             {
                 AccessSubject = new List<XacmlJsonCategory>(),
@@ -34,20 +38,9 @@ namespace Altinn.Platform.Events.Authorization
                 Resource = new List<XacmlJsonCategory>()
             };
 
-            string org = null;
-            string app = null;
-
-            string[] pathParams = subscription.SourceFilter.AbsolutePath.Split("/");
-
-            if (pathParams.Length > 2)
-            {
-                org = pathParams[1];
-                app = pathParams[2];
-            }
-
             request.AccessSubject.Add(XacmlMapperHelper.CreateSubjectAttributes(subscription.Consumer));
-            request.Action.Add(CreateActionCategory("read"));
-            request.Resource.Add(CreateEventsResourceCategory(org, app, subscription.SubjectFilter));
+            request.Action.Add(CreateActionCategory(action));
+            request.Resource.Add(CreateResourceCategory(subscription, isAppSubs));
 
             XacmlJsonRequestRoot jsonRequest = new() { Request = request };
 
@@ -66,13 +59,30 @@ namespace Altinn.Platform.Events.Authorization
             return actionAttributes;
         }
 
-        private static XacmlJsonCategory CreateEventsResourceCategory(string org, string app, string subscriptionSubjectFilter)
+        private static XacmlJsonCategory CreateResourceCategory(Subscription subscription, bool isAppEventSubs)
         {
             XacmlJsonCategory resourceCategory = new()
             {
                 Attribute = new List<XacmlJsonAttribute>()
             };
 
+            string[] cloudEventResourceParts = XacmlMapperHelper.SplitResourceInTwoParts(subscription.ResourceFilter);
+
+            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(cloudEventResourceParts[0], cloudEventResourceParts[1], DefaultType, DefaultIssuer));
+
+            if (isAppEventSubs)
+            {
+                string[] resourceAttParts = cloudEventResourceParts[1].Split('.');
+                string org = resourceAttParts[1];
+                string app = resourceAttParts[2];
+                AddAppResourceAttributes(resourceCategory, subscription, org, app);
+            }
+
+            return resourceCategory;
+        }
+
+        private static XacmlJsonCategory AddAppResourceAttributes(XacmlJsonCategory resourceCategory, Subscription subscription, string org, string app)
+        {
             if (!string.IsNullOrWhiteSpace(org))
             {
                 resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.OrgId, org, DefaultType, DefaultIssuer));
@@ -83,11 +93,11 @@ namespace Altinn.Platform.Events.Authorization
                 resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppId, app, DefaultType, DefaultIssuer));
             }
 
-            if (!string.IsNullOrEmpty(subscriptionSubjectFilter))
+            if (!string.IsNullOrEmpty(subscription.SubjectFilter))
             {
-                string partyId = subscriptionSubjectFilter.Replace(PartyPrefix, string.Empty);
-                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, partyId, ClaimValueTypes.Integer, DefaultIssuer));                 
-            }           
+                string partyId = subscription.SubjectFilter.Replace(PartyPrefix, string.Empty);
+                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, partyId, ClaimValueTypes.Integer, DefaultIssuer));
+            }
 
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppResource, "events", DefaultType, DefaultIssuer));
 

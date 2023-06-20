@@ -50,5 +50,24 @@ namespace Altinn.Platform.Events.Authorization
 
             return category;
         }
+
+        /// <summary>
+        /// Splits the resource attribute at the final ':'
+        /// </summary>
+        /// <param name="resource">The resource string</param>
+        /// <returns>A string array with two items</returns>
+        /// <remarks>
+        /// First entry should be used as the attribute id in the xacml request
+        /// Second entry should be used as the atttribute value in the xaml request
+        /// For an Altinn App resource second entry is on format altinnapp.{org}.{app}
+        /// </remarks>
+        public static string[] SplitResourceInTwoParts(string resource)
+        {
+            int index = resource.LastIndexOf(':');
+            string id = resource.Substring(0, index);
+            string value = resource.Substring(index + 1);
+
+            return new string[] { id, value };
+        }
     }
 }

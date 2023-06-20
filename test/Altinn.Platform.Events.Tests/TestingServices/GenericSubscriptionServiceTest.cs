@@ -117,11 +117,17 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         private static GenericSubscriptionService GetGenericSubscriptionService(
-            Mock<ISubscriptionRepository> repoMock = null)
+            Mock<ISubscriptionRepository> repoMock = null, bool isAuthorized = true)
+
         {
             var claimsProviderMock = new Mock<IClaimsPrincipalProvider>();
             claimsProviderMock.Setup(
                 s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "1234567892"));
+
+            var authorizationMock = new Mock<IAuthorization>();
+            authorizationMock.Setup(
+                a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .ReturnsAsync(true);
 
             if (repoMock == null)
             {
@@ -130,21 +136,22 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             repoMock
                  .Setup(r => r.FindSubscription(It.IsAny<Subscription>(), It.IsAny<CancellationToken>()))
-                 .ReturnsAsync((Subscription)null);
+                         .ReturnsAsync((Subscription)null);
 
             repoMock
                 .Setup(r => r.CreateSubscription(It.IsAny<Subscription>(), It.IsAny<string>()))
-                .ReturnsAsync((Subscription s, string _) =>
-                {
-                    s.Id = new Random().Next(1, int.MaxValue);
-                    s.Created = DateTime.Now;
+                        .ReturnsAsync((Subscription s, string _) =>
+                        {
+                            s.Id = new Random().Next(1, int.MaxValue);
+                            s.Created = DateTime.Now;
 
-                    return s;
-                });
+                            return s;
+                        });
 
             return new GenericSubscriptionService(
                 repoMock.Object,
                 new Mock<IRegisterService>().Object,
+                authorizationMock.Object,
                 new EventsQueueClientMock(),
                 claimsProviderMock.Object)
             {

@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
-using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -11,12 +10,15 @@ namespace Altinn.Platform.Events.Services
     /// <inheritdoc/>
     public class GenericSubscriptionService : SubscriptionService, IGenericSubscriptionService
     {
+        private readonly IAuthorization _authorization;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
         public GenericSubscriptionService(
             ISubscriptionRepository repository,
             IRegisterService register,
+            IAuthorization authorization,
             IEventsQueueClient queue,
             IClaimsPrincipalProvider claimsPrincipalProvider)
 
@@ -26,6 +28,7 @@ namespace Altinn.Platform.Events.Services
                   queue,
                   claimsPrincipalProvider)
         {
+            _authorization = authorization;
         }
 
         /// <inheritdoc/>
@@ -40,9 +43,9 @@ namespace Altinn.Platform.Events.Services
                 return (null, new ServiceError(400, message));
             }
 
-            if (!AuthorizeSubscription())
+            if (!await _authorization.AuthorizeConsumerForEventsSubcription(eventsSubscription))
             {
-                var errorMessage = $"Not authorized to create a subscription with source {eventsSubscription.SourceFilter} and/ subject filter: {eventsSubscription.SubjectFilter}.";
+                var errorMessage = $"Not authorized to create a subscription for resource {eventsSubscription.ResourceFilter} and/ subject filter: {eventsSubscription.SubjectFilter}.";
                 return (null, new ServiceError(401, errorMessage));
             }
 
@@ -70,12 +73,6 @@ namespace Altinn.Platform.Events.Services
             }
 
             message = null;
-            return true;
-        }
-
-        private static bool AuthorizeSubscription()
-        {
-            // Further authorization to be implemented in Altinn/altinn-events#259
             return true;
         }
     }
