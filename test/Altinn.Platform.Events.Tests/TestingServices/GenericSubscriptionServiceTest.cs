@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -116,9 +115,29 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
-        private static GenericSubscriptionService GetGenericSubscriptionService(
-            Mock<ISubscriptionRepository> repoMock = null, bool isAuthorized = true)
+        [Fact]
+        public async Task CreateSubscription_Unauthorized_ReturnsError()
+        {
+            // Arrange 
+            string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service and subject filter: .";
 
+            var input = new Subscription
+            {
+                ResourceFilter = "urn:altinn:resource:some-service",
+                EndPoint = new Uri("https://automated.com"),
+            };
+
+            var sut = GetGenericSubscriptionService(isAuthorized: false);
+
+            // Act
+            (var _, ServiceError actual) = await sut.CreateSubscription(input);
+
+            // Assert
+            Assert.Equal(401, actual.ErrorCode);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+        }
+
+        private static GenericSubscriptionService GetGenericSubscriptionService(Mock<ISubscriptionRepository> repoMock = null, bool isAuthorized = true)
         {
             var claimsProviderMock = new Mock<IClaimsPrincipalProvider>();
             claimsProviderMock.Setup(
@@ -127,7 +146,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var authorizationMock = new Mock<IAuthorization>();
             authorizationMock.Setup(
                 a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
-                .ReturnsAsync(true);
+                .ReturnsAsync(isAuthorized);
 
             if (repoMock == null)
             {

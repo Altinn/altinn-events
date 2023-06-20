@@ -81,7 +81,7 @@ namespace Altinn.Platform.Events.Authorization
             return resourceCategory;
         }
 
-        private static XacmlJsonCategory AddAppResourceAttributes(XacmlJsonCategory resourceCategory, string subscriptionSubjectFilter, string org, string app)
+        private static void AddAppResourceAttributes(XacmlJsonCategory resourceCategory, string subscriptionSubjectFilter, string org, string app)
         {
             if (!string.IsNullOrWhiteSpace(org))
             {
@@ -100,8 +100,6 @@ namespace Altinn.Platform.Events.Authorization
             }
 
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppResource, "events", DefaultType, DefaultIssuer));
-
-            return resourceCategory;
         }
     }
 }

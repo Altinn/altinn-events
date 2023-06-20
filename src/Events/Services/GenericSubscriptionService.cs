@@ -45,7 +45,7 @@ namespace Altinn.Platform.Events.Services
 
             if (!await _authorization.AuthorizeConsumerForEventsSubcription(eventsSubscription))
             {
-                var errorMessage = $"Not authorized to create a subscription for resource {eventsSubscription.ResourceFilter} and/ subject filter: {eventsSubscription.SubjectFilter}.";
+                var errorMessage = $"Not authorized to create a subscription for resource {eventsSubscription.ResourceFilter} and subject filter: {eventsSubscription.SubjectFilter}.";
                 return (null, new ServiceError(401, errorMessage));
             }
 
