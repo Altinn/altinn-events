@@ -59,7 +59,6 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
             Assert.Equal(expextedSpecVersion, actual.SpecVersion.VersionId);
             Assert.Equal(expectedResource, actualResourceValue);
             Assert.Equal(expectedResourceInstance, actualResourceInstanceValue);
-
         }
     }
 }

@@ -86,7 +86,7 @@ namespace Altinn.Platform.Events.Services
             eventsSubscription.ResourceFilter ??= GetResourceFilterFromSource(eventsSubscription.SourceFilter);
         }
 
-        private string GetResourceFilterFromSource(Uri sourceFilter)
+        private static string GetResourceFilterFromSource(Uri sourceFilter)
         {
             // making assumptions about absolute path as it has been validated as app url before this point
             string[] pathParams = sourceFilter.AbsolutePath.Split("/");
