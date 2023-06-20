@@ -1,5 +1,6 @@
 ﻿using System;
 
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 
 using CloudNative.CloudEvents;
@@ -11,12 +12,13 @@ namespace Altinn.Platform.Events.Extensions
     /// </summary>
     public static class AppCloudEventExtensions
     {
-        private static string _appResourcePrefix = "urn:altinn:resource:altinnapp.";  
-
         /// <summary>
         /// Create a Cloud Event based of the AppCloudEventRequestModel
         /// </summary>
         /// <returns>A cloud event</returns>
+        /// <remarks>
+        /// Assumes validation of the cloud event has already been completd.
+        /// </remarks>
         public static CloudEvent CreateEvent(this AppCloudEventRequestModel appEvent)
         {
             var cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
@@ -30,7 +32,7 @@ namespace Altinn.Platform.Events.Extensions
 
             var sourceProperties = GetPropertiesFromAppSource(appEvent.Source);
 
-            cloudEvent.SetAttributeFromString("resource", $"{_appResourcePrefix}{sourceProperties.Org}.{sourceProperties.App}");
+            cloudEvent.SetAttributeFromString("resource", $"{AuthorizationConstants.AppResourcePrefix}{sourceProperties.Org}.{sourceProperties.App}");
             cloudEvent.SetAttributeFromString("resourceinstance", $"{sourceProperties.InstanceOwnerPartyId}/{sourceProperties.InstanceGuid}");
 
             if (!string.IsNullOrEmpty(appEvent.AlternativeSubject))

@@ -27,8 +27,6 @@ namespace Altinn.Platform.Events.Services
         private const string OrgPrefix = "/org/";
         private const string PartyPrefix = "/party/";
 
-        private readonly string _appResourcePrefix;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
@@ -50,7 +48,6 @@ namespace Altinn.Platform.Events.Services
             _authorization = authorization;
             _register = register;
             _claimsPrincipalProvider = claimsPrincipalProvider;
-            _appResourcePrefix = settings.Value.AppResourcePrefix;
         }
 
         /// <inheritdoc/>
@@ -96,7 +93,7 @@ namespace Altinn.Platform.Events.Services
             string org = pathParams[1];
             string app = pathParams[2];
 
-            return string.Concat(_appResourcePrefix, org, '.', app);
+            return string.Concat(AuthorizationConstants.AppResourcePrefix, org, '.', app);
         }
 
         /// <summary>
