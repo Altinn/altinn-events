@@ -81,7 +81,7 @@ namespace Altinn.Platform.Events.Authorization
             return resourceCategory;
         }
 
-        private static XacmlJsonCategory AddAppResourceAttributes(XacmlJsonCategory resourceCategory, string subjectFilter, string org, string app)
+        private static XacmlJsonCategory AddAppResourceAttributes(XacmlJsonCategory resourceCategory, string subscriptionSubjectFilter, string org, string app)
         {
             if (!string.IsNullOrWhiteSpace(org))
             {
@@ -93,9 +93,9 @@ namespace Altinn.Platform.Events.Authorization
                 resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppId, app, DefaultType, DefaultIssuer));
             }
 
-            if (!string.IsNullOrEmpty(subjectFilter))
+            if (!string.IsNullOrEmpty(subscriptionSubjectFilter))
             {
-                string partyId = subjectFilter.Replace(PartyPrefix, string.Empty);
+                string partyId = subscriptionSubjectFilter.Replace(PartyPrefix, string.Empty);
                 resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, partyId, ClaimValueTypes.Integer, DefaultIssuer));
             }
 
