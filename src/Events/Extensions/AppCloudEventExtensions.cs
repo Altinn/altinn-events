@@ -65,7 +65,6 @@ namespace Altinn.Platform.Events.Extensions
             }
 
             return (org, app, instanceOwnerPartyId, instanceGuid);
-
         }
     }
 }
