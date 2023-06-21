@@ -9,9 +9,6 @@ CREATE OR REPLACE FUNCTION events.getappevents(
 	_size integer)
     RETURNS TABLE(cloudevents text)
     LANGUAGE 'plpgsql'
-    --COST 100
-    --VOLATILE PARALLEL UNSAFE
-    ROWS 1000
 
 AS $BODY$
 DECLARE
@@ -31,7 +28,7 @@ IF _after IS NOT NULL AND _after <> '' THEN
 	FROM events.events
 	WHERE cloudevent->>'id' = _after;
 END IF;
-return query
+RETURN query
 	SELECT cast(cloudevent as text) as cloudevents
 		FROM events.events
 		WHERE (_subject IS NULL OR _subject = '' OR cloudevent->>'subject' = _subject)
