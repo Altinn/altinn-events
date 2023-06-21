@@ -34,7 +34,7 @@ END IF;
 return query
 	SELECT cast(cloudevent as text) as cloudevents
 		FROM events.events
-		WHERE (_subject IS NULL OR cloudevent->>'subject' = _subject)
+		WHERE (_subject IS NULL OR _subject = '' OR cloudevent->>'subject' = _subject)
 			AND (_from IS NULL OR cloudevent->>'time' >= _from::text)
 			AND (_to IS NULL OR cloudevent->>'time' <= _to::text)
 			AND registeredtime <= now() - interval '30 second'
