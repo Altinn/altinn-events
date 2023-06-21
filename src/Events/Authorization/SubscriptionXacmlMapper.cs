@@ -66,13 +66,13 @@ namespace Altinn.Platform.Events.Authorization
                 Attribute = new List<XacmlJsonAttribute>()
             };
 
-            string[] cloudEventResourceParts = XacmlMapperHelper.SplitResourceInTwoParts(subscription.ResourceFilter);
+            (string resourceFilterId, string resourceFilterValue) = XacmlMapperHelper.SplitResourceInTwoParts(subscription.ResourceFilter);
 
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(cloudEventResourceParts[0], cloudEventResourceParts[1], DefaultType, DefaultIssuer));
+            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(resourceFilterId, resourceFilterValue, DefaultType, DefaultIssuer));
 
             if (isAppEventSubs)
             {
-                string[] resourceAttParts = cloudEventResourceParts[1].Split('.');
+                string[] resourceAttParts = resourceFilterValue.Split('.');
                 string org = resourceAttParts[1];
                 string app = resourceAttParts[2];
                 AddAppResourceAttributes(resourceCategory, subscription.SubjectFilter, org, app);

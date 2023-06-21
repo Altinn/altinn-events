@@ -61,13 +61,13 @@ namespace Altinn.Platform.Events.Authorization
         /// Second entry should be used as the atttribute value in the xaml request
         /// For an Altinn App resource second entry is on format altinnapp.{org}.{app}
         /// </remarks>
-        public static string[] SplitResourceInTwoParts(string resource)
+        public static (string AttributeId, string AttributeValue) SplitResourceInTwoParts(string resource)
         {
             int index = resource.LastIndexOf(':');
             string id = resource.Substring(0, index);
             string value = resource.Substring(index + 1);
 
-            return new string[] { id, value };
+            return (id, value);
         }
     }
 }
