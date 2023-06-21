@@ -222,7 +222,7 @@ namespace Altinn.Platform.Events.Controllers
         private bool IsAppSubscription(SubscriptionRequestModel subscription)
         {
             if (subscription.ResourceFilter != null &&
-                 subscription.ResourceFilter.StartsWith(_settings.AppResourcePrefix, StringComparison.OrdinalIgnoreCase))
+                 subscription.ResourceFilter.StartsWith(AuthorizationConstants.AppResourcePrefix, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }

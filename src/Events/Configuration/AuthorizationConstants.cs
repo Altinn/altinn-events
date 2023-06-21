@@ -33,6 +33,11 @@
         /// <summary>
         /// Scope for allowing subscribing to events
         /// </summary>
-        public const string SCOPE_EVENTS_SUBSCRIBE = "altinn:events.subscribe";        
+        public const string SCOPE_EVENTS_SUBSCRIBE = "altinn:events.subscribe";
+
+        /// <summary>
+        /// The urn prefix for Altinn App resources
+        /// </summary>
+        public const string AppResourcePrefix = "urn:altinn:resource:altinnapp.";
     }
 }

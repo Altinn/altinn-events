@@ -27,10 +27,5 @@ namespace Altinn.Platform.Events.Configuration
         /// The lifetime to cache subscriptions
         /// </summary>
         public int SubscriptionCachingLifetimeInSeconds { get; set; }
-
-        /// <summary>
-        /// The urn prefix for Altinn App resources
-        /// </summary>
-        public string AppResourcePrefix { get; set; } = "urn:altinn:resource:altinnapp.";
     }
 }
