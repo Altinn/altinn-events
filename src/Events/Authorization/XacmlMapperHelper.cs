@@ -55,7 +55,7 @@ namespace Altinn.Platform.Events.Authorization
         /// Splits the resource attribute at the final ':'
         /// </summary>
         /// <param name="resource">The resource string</param>
-        /// <returns>A string array with two items</returns>
+        /// <returns>A tuple conaining the attribute id and attribute value</returns>
         /// <remarks>
         /// First entry should be used as the attribute id in the xacml request
         /// Second entry should be used as the atttribute value in the xaml request
