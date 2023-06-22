@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -185,6 +186,44 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Act            
             var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
+
+            bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+
+            // Assert
+            Assert.False(actual);
+        }
+
+        [Fact]
+        public async Task AuthorizePublishEventWithAdminScope_IndeterminateResponse_ReturnsTrue()
+        {
+            // Arrange
+            Mock<IPDP> pdpMock = GetPDPMockWithRespose("Indeterminate");
+            Mock<IClaimsPrincipalProvider> principalMock = new();
+            principalMock
+                .Setup(p => p.GetUser())
+                .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678","altinn:events.publish.admin", "AuthenticationTypes.Federation"));
+
+            // Act
+            var sut = new AuthorizationService(pdpMock.Object, principalMock.Object);
+
+            bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+
+            // Assert
+            Assert.True(actual);
+        }
+
+        [Fact]
+        public async Task AuthorizePublishEventWithFakedAdminScope_IndeterminateResponse_ReturnsFalse()
+        {
+            // Arrange
+            Mock<IPDP> pdpMock = GetPDPMockWithRespose("Indeterminate");
+            Mock<IClaimsPrincipalProvider> principalMock = new();
+            principalMock
+                .Setup(p => p.GetUser())
+                .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678","somerandomprefix:altinn:events.publish.admin", "AuthenticationTypes.Federation"));
+
+            // Act
+            var sut = new AuthorizationService(pdpMock.Object, principalMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 

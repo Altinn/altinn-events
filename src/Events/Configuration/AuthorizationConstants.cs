@@ -36,6 +36,11 @@
         public const string SCOPE_EVENTS_SUBSCRIBE = "altinn:events.subscribe";
 
         /// <summary>
+        /// Scope for allowing administrators to publish events without Altinn Authorization
+        /// </summary>
+        public const string SCOPE_EVENTS_ADMIN_PUBLISH = "altinn:events.publish.admin";
+
+        /// <summary>
         /// The urn prefix for Altinn App resources
         /// </summary>
         public const string AppResourcePrefix = "urn:altinn:resource:altinnapp.";
