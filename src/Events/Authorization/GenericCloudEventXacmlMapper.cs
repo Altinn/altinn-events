@@ -15,6 +15,10 @@ namespace Altinn.Platform.Events.Authorization
     /// </summary>
     public static class GenericCloudEventXacmlMapper
     {
+        private const string SubjectTypeOrg = "org";
+        private const string SubjectTypePerson = "person";
+        private const string SubjectTypeParty = "party";
+
         /// <summary>
         /// Create XACML request for authorizing the provided action type on multiple events
         /// </summary>
@@ -113,6 +117,8 @@ namespace Altinn.Platform.Events.Authorization
                 resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.ResourceInstance, cloudEvent["resourceinstance"].ToString(), defaultType, defaultIssuer));
             }
 
+            AddResourceReporteeAttributeFromCloudEventSubject(cloudEvent, resourceCategory);
+
             return resourceCategory;
         }
 
@@ -123,6 +129,54 @@ namespace Altinn.Platform.Events.Authorization
             string value = resource.Substring(index + 1);
 
             return new string[] { id, value };
+        }
+
+        // If we have a subject property in the CloudEvent, we map the CloudEvent subject as a XACML resource attribute.
+        // A recognized subject property value begins with one of the prefixes "/org/", "/person/" or "/party/", which
+        // is mapped to the appropriate attribute URNs. This will enable the PDP to enrich the request
+        // with roles etc. that the user has in the context of the CloudEvent subject (aka reportee). Note we do not
+        // attempt to lookup the partyId if given /org/ or /person/, as this is up to the PDP to do if the particular
+        // policy requires it (ie. it needs to check rules containing subject attributes for roles and/or access groups).
+        //
+        // Also note that this requires a XACML subject attribute that the PDP understands in order to look up the user's
+        // roles/access groups for that particular reportee, typically "urn:altinn:userid". This claim is present on all
+        // Altinn tokens, so it should be available in most cases, and will also in future Maskinporten-with-system-user
+        // tokens.  We do not check for this here though, as the PDP might add support for handling ie. urn:altinn:ssn
+        // attributes at some point.
+        private static void AddResourceReporteeAttributeFromCloudEventSubject(CloudEvent cloudEvent, XacmlJsonCategory resourceCategory)
+        {
+            if (string.IsNullOrEmpty(cloudEvent.Subject))
+            {
+                return;
+            }
+
+            string defaultType = CloudEventXacmlMapper.DefaultType;
+            string defaultIssuer = CloudEventXacmlMapper.DefaultIssuer;
+
+            (string subjectType, string subjectValue) = GetSubjectTypeAndValue(cloudEvent.Subject);
+            if (subjectValue == null)
+            {
+                return;
+            }
+
+            switch (subjectType)
+            {
+                case SubjectTypeOrg:
+                    resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.OrganizationNumber, subjectValue, defaultType, defaultIssuer));
+                    break;
+                case SubjectTypePerson:
+                    resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.Ssn, subjectValue, defaultType, defaultIssuer));
+                    break;
+                case SubjectTypeParty:
+                    resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.PartyId, subjectValue, defaultType, defaultIssuer));
+                    break;
+            }
+        }
+
+        private static (string SubjectType, string SubjectValue) GetSubjectTypeAndValue(string subject)
+        {
+            string[] subjectParts = subject.Split('/');
+            return subjectParts.Length != 3 ? (null, null) : (subjectParts[1], subjectParts[2]);
         }
     }
 }
