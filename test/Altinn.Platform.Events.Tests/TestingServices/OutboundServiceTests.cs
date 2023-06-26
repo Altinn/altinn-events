@@ -227,7 +227,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(2));
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(4));
         }
 
         /// <summary>
