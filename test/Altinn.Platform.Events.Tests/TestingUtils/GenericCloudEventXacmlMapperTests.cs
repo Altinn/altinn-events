@@ -20,6 +20,8 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         private readonly CloudEvent _cloudEventWithResourceInstance;
         private readonly CloudEvent _cloudEventWithOrgSubject;
         private readonly CloudEvent _cloudEventWithPartySubject;
+        private readonly CloudEvent _cloudEventWithNoSubject;
+        private readonly CloudEvent _cloudEventWithUnknownSubject;
 
         public GenericCloudEventXacmlMapperTests()
         {
@@ -38,6 +40,12 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             _cloudEventWithPartySubject = _cloudEvent.Clone();
             _cloudEventWithPartySubject.Subject = "/party/5123456";
+
+            _cloudEventWithNoSubject = _cloudEvent.Clone();
+            _cloudEventWithNoSubject.Subject = null;
+
+            _cloudEventWithUnknownSubject = _cloudEvent.Clone();
+            _cloudEventWithUnknownSubject.Subject = "foobar";
 
             _cloudEventWithResourceInstance = new CloudEvent(CloudEventsSpecVersion.V1_0)
             {
@@ -196,6 +204,32 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             // Assert
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
             Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:organizationnumber"));
+        }
+
+        [Fact]
+        public void CreateResourceCategory_CloudEventWithNoSubject()
+        {
+            // Arrange
+            int expectedAttributeCount = 4;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithNoSubject);
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
+        }
+
+        [Fact]
+        public void CreateResourceCategory_CloudEventWithUnknownSubject()
+        {
+            // Arrange
+            int expectedAttributeCount = 4;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithUnknownSubject);
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
         }
 
         [Fact]
