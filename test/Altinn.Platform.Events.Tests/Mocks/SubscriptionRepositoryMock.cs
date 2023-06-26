@@ -28,7 +28,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
         public Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash)
         {
-            Random rnd = new Random();
+            Random rnd = new();
             eventsSubscription.Id = rnd.Next(1, int.MaxValue);
             eventsSubscription.Created = DateTime.Now;
             return Task.FromResult(eventsSubscription);
@@ -73,8 +73,10 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.CompletedTask;
         }
 
-        public Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct)
+        public Task<List<Subscription>> GetSubscriptions(string resource, string subject, string type, CancellationToken ct)
         {
+            List<Subscription> subscriptions = new();
+
             string subscriptionsPath = Path.Combine(GetSubscriptionPath(), "1.json");
             List<SubscriptionTableEntry> subscriptionEntries = null;
             if (File.Exists(subscriptionsPath))
@@ -87,18 +89,18 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 subscriptionEntries = new List<SubscriptionTableEntry>();
             }
 
-            List<Subscription> subscriptions = subscriptionEntries
-                .Where(s => sourceFilterHashes.Contains(s.SourceFilterHash)
+            subscriptions = subscriptionEntries
+                .Where(s => s.ResourceFilter == resource
                     && (string.IsNullOrEmpty(s.TypeFilter) || s.TypeFilter.Equals(type))
                     && (string.IsNullOrEmpty(s.SubjectFilter) || s.SubjectFilter.Equals(subject)))
                 .Select(s =>
-                    new Subscription 
+                    new Subscription
                     {
                         Id = s.Id,
                         SourceFilter = s.SourceFilter,
                         AlternativeSubjectFilter = s.AlternativeSubjectFilter,
                         Consumer = s.Consumer,
-                        EndPoint = s.EndPoint                        
+                        EndPoint = s.EndPoint
                     })
                 .ToList();
 
