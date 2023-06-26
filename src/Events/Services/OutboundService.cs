@@ -179,7 +179,12 @@ namespace Altinn.Platform.Events.Services
 
         private bool IsAppEvent(CloudEvent cloudEvent)
         {
-            return !string.IsNullOrEmpty(cloudEvent.Source.Host) && cloudEvent.Source.Host.EndsWith(_platformSettings.AppsDomain);
+            return cloudEvent.Source != null
+                   && !string.IsNullOrEmpty(cloudEvent.Source.Host) 
+                   && cloudEvent.Source.Host.EndsWith(_platformSettings.AppsDomain) 
+                   &&
+                   (string.IsNullOrEmpty(cloudEvent.Source?.Query) ||
+                    cloudEvent.Source.Query.ToLowerInvariant().Contains("isgenericevent=true") != true);
         }
     }
 }
