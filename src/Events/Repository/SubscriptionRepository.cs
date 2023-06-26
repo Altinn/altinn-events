@@ -48,7 +48,7 @@ namespace Altinn.Platform.Events.Repository
             await conn.OpenAsync();
 
             await using NpgsqlCommand pgcom = new(insertSubscriptionSql, conn);
-            pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter);
+            pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter.ToLower());
 
             pgcom.Parameters.AddWithNullableString("sourcefilter", eventsSubscription.SourceFilter?.AbsoluteUri);
             pgcom.Parameters.AddWithNullableString("subjectfilter", eventsSubscription.SubjectFilter);
@@ -74,7 +74,7 @@ namespace Altinn.Platform.Events.Repository
 
             await using NpgsqlCommand pgcom = new(findSubscriptionSql, conn);
 
-            pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter);
+            pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter.ToLower());
 
             pgcom.Parameters.AddWithNullableString("sourcefilter", eventsSubscription.SourceFilter?.AbsoluteUri);
             pgcom.Parameters.AddWithNullableString("subjectfilter", eventsSubscription.SubjectFilter);
