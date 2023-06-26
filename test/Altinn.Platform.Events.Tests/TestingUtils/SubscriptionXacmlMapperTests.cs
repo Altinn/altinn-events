@@ -18,17 +18,18 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         /// Test creation of XACML request for events subscription. Org subject.
         /// </summary>
         [Fact]
-        public void CreateSingleEventRequestUserForOrg()
+        public void CreateAppSubscriptionRequesWithSubjectForOrg()
         {
             // Arrange
             Subscription subscription = new()
             {
                 EndPoint = new Uri("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
                 SourceFilter = new Uri("https://ttd.apps.altinn.no/ttd/apps-test"),
+                ResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test",
                 AlternativeSubjectFilter = "/org/897069650",
                 SubjectFilter = "/party/500000",
                 TypeFilter = "app.instance.process.completed",
-                Consumer = "/user/1337"
+                Consumer = "/org/ttd"
             };
 
             // Act
@@ -36,7 +37,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             int actualResourceAttCount = xacmlJsonProfile.Request.Resource.First().Attribute.Count;
 
             // Assert
-            int expectedResourceAttCount = 4;
+            int expectedResourceAttCount = 5;
 
             Assert.NotNull(xacmlJsonProfile);
             Assert.Single(xacmlJsonProfile.Request.Resource);
@@ -51,27 +52,69 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             string actualAppId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:app").Select(a => a.Value).First();
             Assert.Equal("apps-test", actualAppId);
 
-            string actualpartyId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:partyid").Select(a => a.Value).First();
-            Assert.Equal("500000", actualpartyId);
+            string actualPartyId = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:partyid").Select(a => a.Value).First();
+            Assert.Equal("500000", actualPartyId);
+
+            string actualResource = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:resource").Select(a => a.Value).First();
+            Assert.Equal("altinnapp.ttd.apps-test", actualResource);
 
             Assert.Single(xacmlJsonProfile.Request.Action);
             Assert.Equal("read", xacmlJsonProfile.Request.Action.First().Attribute.First().Value);
 
             Assert.Single(xacmlJsonProfile.Request.AccessSubject);
-            string actualSubjectValue = xacmlJsonProfile.Request.AccessSubject.First().Attribute.Where(a => a.AttributeId == "urn:altinn:userid").Select(a => a.Value).First();
-            Assert.Equal("1337", actualSubjectValue);
+            string actualSubjectValue = xacmlJsonProfile.Request.AccessSubject.First().Attribute.Where(a => a.AttributeId == "urn:altinn:org").Select(a => a.Value).First();
+            Assert.Equal("ttd", actualSubjectValue);
         }
 
         /// <summary>
-        /// Test creation of XACML request for events subscription. Person subject.
+        /// Test creation of XACML request for events subscription. Org subject.
         /// </summary>
         [Fact]
-        public void CreateSingleEventRequestUserForPerson()
+        public void CreateSubscriptionRequesWithSubjectForOrg()
         {
             // Arrange
             Subscription subscription = new()
             {
                 EndPoint = new Uri("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
+                ResourceFilter = "urn:altinn:resource:automated-tests",
+                AlternativeSubjectFilter = "/org/897069650",
+                TypeFilter = "random.event.type",
+                Consumer = "/org/ttd"
+            };
+
+            // Act
+            XacmlJsonRequestRoot xacmlJsonProfile = SubscriptionXacmlMapper.CreateDecisionRequest(subscription);
+            int actualResourceAttCount = xacmlJsonProfile.Request.Resource.First().Attribute.Count;
+
+            // Assert
+            int expectedResourceAttCount = 1;
+
+            Assert.NotNull(xacmlJsonProfile);
+            Assert.Single(xacmlJsonProfile.Request.Resource);
+            Assert.Equal(expectedResourceAttCount, actualResourceAttCount);
+
+            string actualResource = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:resource").Select(a => a.Value).First();
+            Assert.Equal("automated-tests", actualResource);
+
+            Assert.Single(xacmlJsonProfile.Request.Action);
+            Assert.Equal("subscribe", xacmlJsonProfile.Request.Action.First().Attribute.First().Value);
+
+            Assert.Single(xacmlJsonProfile.Request.AccessSubject);
+            string actualSubjectValue = xacmlJsonProfile.Request.AccessSubject.First().Attribute.Where(a => a.AttributeId == "urn:altinn:org").Select(a => a.Value).First();
+            Assert.Equal("ttd", actualSubjectValue);
+        }
+
+        /// <summary>
+        /// Test creation of XACML request for events subscription. User subject.
+        /// </summary>
+        [Fact]
+        public void CreateAppSubscriptionRequesWithSubjectForUser()
+        {
+            // Arrange
+            Subscription subscription = new()
+            {
+                EndPoint = new Uri("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
+                ResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test",
                 SourceFilter = new Uri("https://ttd.apps.altinn.no/ttd/apps-test"),
                 AlternativeSubjectFilter = "/person/01039012345",
                 SubjectFilter = "/party/54321",
