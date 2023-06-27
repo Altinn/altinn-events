@@ -20,6 +20,7 @@ namespace Altinn.Platform.Events.Services
         private readonly IEventsQueueClient _queue;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
         private readonly IRegisterService _register;
+        private readonly IAuthorization _authorization;
 
         private const string UserPrefix = "/user/";
         private const string OrgPrefix = "/org/";
@@ -31,11 +32,13 @@ namespace Altinn.Platform.Events.Services
         public SubscriptionService(
             ISubscriptionRepository repository,
             IRegisterService register,
+            IAuthorization authorization,
             IEventsQueueClient queue,
             IClaimsPrincipalProvider claimsPrincipalProvider)
         {
             _repository = repository;
             _register = register;
+            _authorization = authorization;
             _queue = queue;
             _claimsPrincipalProvider = claimsPrincipalProvider;
         }
@@ -45,6 +48,12 @@ namespace Altinn.Platform.Events.Services
         /// </summary>       
         internal async Task<(Subscription Subscription, ServiceError Error)> CompleteSubscriptionCreation(Subscription eventsSubscription)
         {
+            if (!await _authorization.AuthorizeConsumerForEventsSubcription(eventsSubscription))
+            {
+                var errorMessage = $"Not authorized to create a subscription for resource {eventsSubscription.ResourceFilter}.";
+                return (null, new ServiceError(401, errorMessage));
+            }
+
             Subscription subscription = await _repository.FindSubscription(eventsSubscription, CancellationToken.None);
 
             subscription ??= await _repository.CreateSubscription(eventsSubscription, eventsSubscription.SourceFilter?.GetMD5Hash());

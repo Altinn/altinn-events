@@ -10,10 +10,6 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
-using Altinn.Platform.Profile.Models;
-using Altinn.Platform.Register.Models;
-
-using Microsoft.Extensions.Options;
 
 using Moq;
 
@@ -26,6 +22,22 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     /// </summary>
     public class AppSubscriptionServiceTest
     {
+        private readonly Mock<IAuthorization> _authTrueMock;
+        private readonly Mock<IAuthorization> _authFalseMock;
+
+        public AppSubscriptionServiceTest()
+        {
+            _authTrueMock = new();
+            _authTrueMock
+                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .ReturnsAsync(true);
+
+            _authFalseMock = new();
+            _authFalseMock
+                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .ReturnsAsync(false);
+        }
+
         [Fact]
         public async Task CreateSubscription_OrgAsAlternativeSubject_SubjectFilterPopulated()
         {
@@ -45,20 +57,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.Is<string>(s => s.Equals("897069631")), It.IsAny<string>()))
                 .ReturnsAsync(500700);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                .ReturnsAsync(new UserProfile { Party = new Party { SSN = "01039012345" } });
-
-            Mock<IAuthorization> authzMock = new();
-            authzMock
-                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
-                .ReturnsAsync(true);
-
             var sut = GetAppSubscriptionService(
-                profile: profileMock.Object,
                 register: registerMock.Object,
-                authorization: authzMock.Object);
+                authorization: _authTrueMock.Object);
 
             // Act
             (Subscription actual, ServiceError _) = await sut.CreateSubscription(subs);
@@ -88,14 +89,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
                 .ReturnsAsync(1337);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                .ReturnsAsync(new UserProfile { Party = new Party { SSN = "01039012345" } });
-
             var sut = GetAppSubscriptionService(
-                profile: profileMock.Object,
-                register: registerMock.Object);
+                register: registerMock.Object,
+                authorization: _authTrueMock.Object);
 
             // Act
             (Subscription actual, ServiceError _) = await sut.CreateSubscription(subs);
@@ -173,16 +169,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
                     .ReturnsAsync(1337);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                    .ReturnsAsync(new UserProfile
-                    {
-                        Party = new Party { SSN = "01039012345" }
-                    });
-
             var sut = GetAppSubscriptionService(
-                profile: profileMock.Object,
                 register: registerMock.Object);
 
             // Act
@@ -212,17 +199,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
                     .ReturnsAsync(1337);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                    .ReturnsAsync(new UserProfile
-                    {
-                        Party = new Party { SSN = "01039012345" }
-                    });
-
             var sut = GetAppSubscriptionService(
-                profile: profileMock.Object,
-                register: registerMock.Object);
+                register: registerMock.Object,
+                authorization: _authTrueMock.Object);
 
             // Act
             (Subscription subscription, ServiceError _) = await sut.CreateSubscription(subs);
@@ -249,14 +228,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
                     .ReturnsAsync(1337);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                    .ReturnsAsync(new UserProfile
-                    {
-                        Party = new Party { SSN = "01039012345" }
-                    });
-
             var sut = GetAppSubscriptionService();
 
             // Act
@@ -270,14 +241,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static AppSubscriptionService GetAppSubscriptionService(
             IRegisterService register = null,
-            IProfile profile = null,
             IAuthorization authorization = null,
             ISubscriptionRepository repository = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null)
         {
             register ??= new RegisterServiceMock();
-
-            profile ??= new ProfileMockSI(register);
 
             authorization ??= new Mock<IAuthorization>().Object;
 
@@ -292,12 +260,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             return new AppSubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
-                profile,
                 authorization,
                 register,
                 new EventsQueueClientMock(),
-                claimsPrincipalProvider,
-                Options.Create(new PlatformSettings { }));
+                claimsPrincipalProvider);
         }
     }
 }

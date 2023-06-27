@@ -152,11 +152,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private static SubscriptionService GetSubscriptionService(
             ISubscriptionRepository repository = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null,
-            IRegisterService registerMock = null)
+            IRegisterService registerMock = null,
+            bool authorizationDecision = true)
         {
+            var authoriationMock = new Mock<IAuthorization>();
+            authoriationMock
+                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .ReturnsAsync(authorizationDecision);
+
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
                 registerMock ?? new Mock<IRegisterService>().Object,
+                authoriationMock.Object,
                 new EventsQueueClientMock(),
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
         }
