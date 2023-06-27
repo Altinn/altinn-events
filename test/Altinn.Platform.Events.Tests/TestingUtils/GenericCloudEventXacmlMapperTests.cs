@@ -18,10 +18,11 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
     {
         private readonly CloudEvent _cloudEvent;
         private readonly CloudEvent _cloudEventWithResourceInstance;
-        private readonly CloudEvent _cloudEventWithOrgSubject;
+        private readonly CloudEvent _cloudEventWithOrgNoSubject;
         private readonly CloudEvent _cloudEventWithPartySubject;
         private readonly CloudEvent _cloudEventWithNoSubject;
         private readonly CloudEvent _cloudEventWithUnknownSubject;
+        private readonly CloudEvent _cloudEventWithOrgSubject;
 
         public GenericCloudEventXacmlMapperTests()
         {
@@ -35,8 +36,11 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             _cloudEvent["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
 
+            _cloudEventWithOrgNoSubject = _cloudEvent.Clone();
+            _cloudEventWithOrgNoSubject.Subject = "/org/912345678";
+
             _cloudEventWithOrgSubject = _cloudEvent.Clone();
-            _cloudEventWithOrgSubject.Subject = "/org/912345678";
+            _cloudEventWithOrgSubject.Subject = "/org/ttd";
 
             _cloudEventWithPartySubject = _cloudEvent.Clone();
             _cloudEventWithPartySubject.Subject = "/party/5123456";
@@ -193,6 +197,20 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         }
 
         [Fact]
+        public void CreateResourceCategory_CloudEventWithOrgNoSubject()
+        {
+            // Arrange
+            int expectedAttributeCount = 5;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithOrgNoSubject);
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:organizationnumber"));
+        }
+
+        [Fact]
         public void CreateResourceCategory_CloudEventWithOrgSubject()
         {
             // Arrange
@@ -203,7 +221,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             // Assert
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
-            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:organizationnumber"));
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:org"));
         }
 
         [Fact]

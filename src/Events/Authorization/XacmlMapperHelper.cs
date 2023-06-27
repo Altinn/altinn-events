@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
@@ -109,8 +110,14 @@ namespace Altinn.Platform.Events.Authorization
 
             switch (subjectType)
             {
+                case UserPrefix:
+                    // TODO! ClaimUserId Should be in AltinnXacmlUrns
+                    resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimUserId, subjectValue, defaultType, defaultIssuer));
+                    break;
                 case OrgPrefix:
-                    resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.OrganizationNumber, subjectValue, defaultType, defaultIssuer));
+                    // TODO! We probably shouldn't be using /org/ for both service owner identifiers and organization numbers
+                    string claimValue = subjectValue.Length == 9 && subjectValue.All(char.IsAsciiDigit) ? AltinnXacmlUrns.OrganizationNumber : AltinnXacmlUrns.OrgId;
+                    resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(claimValue, subjectValue, defaultType, defaultIssuer));
                     break;
                 case PersonPrefix:
                     resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.Ssn, subjectValue, defaultType, defaultIssuer));
