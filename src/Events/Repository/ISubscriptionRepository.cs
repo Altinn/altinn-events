@@ -36,14 +36,14 @@ namespace Altinn.Platform.Events.Repository
         Task DeleteSubscription(int id);
 
         /// <summary>
-        /// Set a subscription as Valid
+        /// Set a subscription as valid
         /// </summary>
         Task SetValidSubscription(int id);
 
         /// <summary>
-        /// Gets subscriptions by source, subject and type of a cloud event
+        /// Gets subscriptions by resource, subject and type of a cloud event
         /// </summary>
-        Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct);
+        Task<List<Subscription>> GetSubscriptions(string resource, string subject, string type, CancellationToken ct);
 
         /// <summary>
         /// Gets subscriptions for a given consumer
