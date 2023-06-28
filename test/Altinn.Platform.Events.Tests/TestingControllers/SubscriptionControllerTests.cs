@@ -558,7 +558,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
                         services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
                         services.AddSingleton<IPDP, PepWithPDPAuthorizationMockSI>();
-
                     });
                 }).CreateClient();
 
