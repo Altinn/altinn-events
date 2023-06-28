@@ -392,9 +392,7 @@ void Configure(IConfiguration config)
 
     app.UseMiddleware<EnableRequestBodyBufferingMiddleware>();
 
-    app.UseEndpoints(endpoints =>
-    {
-        endpoints.MapControllers();
-        endpoints.MapHealthChecks("/health");
-    });
+    app.MapControllers();
+
+    app.MapHealthChecks("/health");
 }
