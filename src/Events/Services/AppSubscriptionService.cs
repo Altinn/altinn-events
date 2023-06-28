@@ -55,12 +55,6 @@ namespace Altinn.Platform.Events.Services
 
             SetResourceFilterIfEmpty(eventsSubscription);
 
-            if (!AuthorizeIdentityForConsumer(eventsSubscription))
-            {
-                var errorMessage = "Not authorized to create a subscription on behalf of " + eventsSubscription.Consumer;
-                return (null, new ServiceError(401, errorMessage));
-            }
-
             return await CompleteSubscriptionCreation(eventsSubscription);
         }
 
@@ -123,7 +117,7 @@ namespace Altinn.Platform.Events.Services
             string absolutePath = eventsSubscription.SourceFilter?.AbsolutePath;
             if (absolutePath == null || absolutePath.Split("/").Length != 3)
             {
-                message = "A valid app id is required in Source filter {environment}/{org}/{app}";
+                message = "A valid app id is required in source filter {environment}/{org}/{app}";
                 return false;
             }
 
@@ -136,20 +130,6 @@ namespace Altinn.Platform.Events.Services
             }
 
             message = null;
-            return true;
-        }
-
-        /// <summary>
-        /// Validate that the identity (user, organization or org) is authorized to create subscriptions for given consumer. Currently
-        /// it needs to match. In future we need to add validation of business rules. (yet to be defined)
-        /// </summary>
-        private static bool AuthorizeIdentityForConsumer(Subscription eventsSubscription)
-        {
-            if (!eventsSubscription.CreatedBy.Equals(eventsSubscription.Consumer))
-            {
-                return false;
-            }
-
             return true;
         }
 

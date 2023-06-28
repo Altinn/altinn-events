@@ -71,10 +71,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_PersonAsAlternativeSubject_SubjectFilterPopulated()
+        public async Task CreateSubscription_PersonAsAlternativeSubject_SubjectFilterAndResourceFilterPopulated()
         {
             // Arrange
             string expectedSubjectFilter = "/party/1337";
+            string expectedResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test";
             int subscriptionId = 1337;
 
             var subs = new Subscription
@@ -98,6 +99,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal(expectedSubjectFilter, actual.SubjectFilter);
+            Assert.Equal(expectedResourceFilter, actual.ResourceFilter);
         }
 
         [Fact]
@@ -155,7 +157,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_InvalidAppSourceFilter_ReturnsError()
         {
             // Arrange
-            string expectedErrorMessage = "A valid app id is required in Source filter {environment}/{org}/{app}";
+            string expectedErrorMessage = "A valid app id is required in source filter {environment}/{org}/{app}";
             int expectedErrorCode = 400;
 
             var subs = new Subscription
@@ -171,6 +173,35 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var sut = GetAppSubscriptionService(
                 register: registerMock.Object);
+
+            // Act
+            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+            Assert.Equal(expectedErrorCode, actual.ErrorCode);
+        }
+
+        [Fact]
+        public async Task CreateSubscription_NonMatchingResourceAndSourceExistingResource_ReturnsError()
+        {
+            // Arrange
+            string expectedErrorMessage = "Provided resource filter and source filter are not compatible";
+            int expectedErrorCode = 400;
+            var subs = new Subscription
+            {
+                ResourceFilter = "urn:altinn:resource:altinnapp.skd.skattemelding",
+                SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
+                AlternativeSubjectFilter = "/person/01039012345"
+            };
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
+                    .ReturnsAsync(1337);
+
+            var sut = GetAppSubscriptionService();
 
             // Act
             (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
@@ -208,35 +239,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Equal(expected, subscription.ResourceFilter);
-        }
-
-        [Fact]
-        public async Task CreateSubscription_NonMatchingResourceAndSourceExistingResource_ReturnsError()
-        {
-            // Arrange
-            string expectedErrorMessage = "Provided resource filter and source filter are not compatible";
-            int expectedErrorCode = 400;
-            var subs = new Subscription
-            {
-                ResourceFilter = "urn:altinn:resource:altinnapp.skd.skattemelding",
-                SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
-                AlternativeSubjectFilter = "/person/01039012345"
-            };
-
-            Mock<IRegisterService> registerMock = new();
-            registerMock
-                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
-                    .ReturnsAsync(1337);
-
-            var sut = GetAppSubscriptionService();
-
-            // Act
-            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
-
-            // Assert
-            Assert.NotNull(actual);
-            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
-            Assert.Equal(expectedErrorCode, actual.ErrorCode);
         }
 
         private static AppSubscriptionService GetAppSubscriptionService(
