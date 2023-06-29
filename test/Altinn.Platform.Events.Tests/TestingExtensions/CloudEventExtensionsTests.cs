@@ -7,6 +7,7 @@ using CloudNative.CloudEvents;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingExtensions;
+
 public class CloudEventExtensionsTests
 {
     [Fact]
