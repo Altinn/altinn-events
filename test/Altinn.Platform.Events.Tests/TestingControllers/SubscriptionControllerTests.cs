@@ -58,584 +58,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
-            /// Scenario:
-            ///   Post a valid EventsSubscription for SKD
-            /// Expected result:
-            ///   Returns HttpStatus Created and the url with object for the resource created.
-            /// Success criteria:
-            ///   The response has correct status and correct responseId.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenValidSubscription_ReturnsStatusCreatedAndCorrectData()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-
-                string content = response.Content.ReadAsStringAsync().Result;
-                Assert.Contains(cloudEventSubscription.SourceFilter.AbsoluteUri, content);
-            }
-
-            /// <summary>
-            /// Scenario: Invalid path that includes / at end
-            /// Expected: Returns bad request
-            /// </summary>
-            /// <returns></returns>
-            [Fact]
-            public async Task Post_GivenInvalidCloudEventSubscription_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding/", "https://www.skatteetaten.no/hook");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario: Invalid source provided relative URI, absolute requied
-            /// Expected: Returns bad request
-            /// </summary>        
-            [Fact]
-            public async Task Post_GivenInvalidSubscription_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("skd/flyttemelding", "https://www.skatteetaten.no/hook");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post a valid EventsSubscription for SKD
-            /// Expected result:
-            ///   Returns HttpStatus Created and the url with object for the resource created.
-            /// Success criteria:
-            ///   The response has correct status and correct responseId.
-            /// </summary>
-            [Fact]
-            public async Task Post_OrgSubscriptionWithMissing_ReturnsStatusCreatedAndCorrectData()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/", "https://www.skatteetaten.no/hook");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post an invalid eventssubscription for user 1337. 
-            /// Expected result:
-            ///   Returns HttpStatus BadRequest because it is missing subject. This is not allowed as end user
-            /// Success criteria:
-            ///   The response has correct status and correct responseId.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenInvalidValidSubscriptionUser_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/", "https://www.skatteetaten.no/hook");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post an invalid eventssubscription for user 1337. 
-            /// Expected result:
-            ///   Returns HttpStatus BadRequest because it is missing subject. This is not allowed as end user
-            /// Success criteria:
-            ///   The response has correct status and correct responseId.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenValidSubscriptionUser_ReturnsCreated()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/person/01039012345");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post an invalid eventssubscription for organization 950474084. 
-            /// Expected result:
-            ///   Returns HttpStatus BadRequest because it is mismatch between subject and identity
-            /// Success criteria:
-            ///   The response has correct status
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionOrganizationWithInvalidSubject_ReturnsNotAuthorized()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/org/950474084");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "897069651"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Post valid subscription for organization
-            /// Expected result:
-            /// Returns HttpStatus created
-            /// Success criteria:
-            /// The response has correct status and correct responseId.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionOrganizationWithValidSubject_ReturnsCreated()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/org/950474084");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
-                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Post valid subscription for user with organization as subject
-            /// Expected result:
-            /// Returns HttpStatus created
-            /// Success criteria:
-            /// The response has correct status and correct responseId.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionUserWithValidOrganizationSubject_ReturnsCreated()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "https://www.ttd.no/hook", alternativeSubjectFilter: "/org/897069650");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Post valid subscription for user with persn as subject
-            /// Expected result:
-            /// Returns HttpStatus created
-            /// Success criteria:
-            /// The response has correct status.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionUserWithValidPersonSubject_ReturnsCreated()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "https://www.ttd.no/hook", alternativeSubjectFilter: "/person/01039012345");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            }
-
-            [Fact]
-            public async Task Post_GivenAppSubscriptionWithoutSourceFilter_BadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest(null, "https://www.ttd.no/hook", alternativeSubjectFilter: "/person/01039012345", resourceFilter: "urn:altinn:resource:altinnapp.ttd.apps-test");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseMessage = await response.Content.ReadAsStringAsync();
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("\"A valid app id is required in Source filter {environment}/{org}/{app}\"", responseMessage);
-            }
-
-            /// <summary>
-            /// Post invalid subscription with resource notfor user with persn as subject
-            /// Expected result:
-            /// Returns bad request 
-            /// Success criteria:
-            /// The response has correct status and expected response message.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionWithInvalidResource_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "https://www.ttd.no/hook", alternativeSubjectFilter: "/person/01039012345");
-
-                cloudEventSubscription.ResourceFilter = "some-service";
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseMessage = await response.Content.ReadAsStringAsync();
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("\"Resource filter must be a valid urn\"", responseMessage);
-            }
-
-            /// <summary>
-            /// Post invalid subscription for user with person as subject. User missing required role.
-            /// Expected result:
-            /// Returns HttpStatus Bad request
-            /// Success criteria:
-            /// The response has correct status and expected response message.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionUserWithInvalidPersonSubject_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "https://www.ttd.no/hook", alternativeSubjectFilter: "/person/16069412345");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseMessage = await response.Content.ReadAsStringAsync();
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("\"A valid subject to the authenticated identity is required\"", responseMessage);
-            }
-
-            /// <summary>
-            /// Post invalid subscription for org with invalid subject
-            /// Expected result:
-            /// Returns HttpStatus bad request
-            /// Success criteria:
-            /// The response has correct status.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionOrgWithInvalidSubject_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Post invalid subscription for org missing resourceFilter
-            /// Expected result:
-            /// Returns HttpStatus bad request
-            /// Success criteria:
-            /// The response has correct status and expected response message.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenGenericSubscriptionWithoutResourceFilter_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://external-source.com", "https://www.app-event.no/hook", subjectFilter: "/party/133");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084", "altinn:events.subscribe"));
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseMessage = await response.Content.ReadAsStringAsync();
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("\"Resource filter is required.\"", responseMessage);
-            }
-
-            /// <summary>
-            /// Post invalid subscription for org with missing endpoint
-            /// Expected result:
-            /// Returns HttpStatus badrequest
-            /// Success criteria:
-            /// The response has correct status and expected response message.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionWithoutEndpoint_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", null, subjectFilter: "/party/133");
-
-                cloudEventSubscription.EndPoint = null;
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseMessage = await response.Content.ReadAsStringAsync();
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("\"Missing or invalid endpoint to push events towards\"", responseMessage);
-            }
-
-            /// <summary>
-            /// Post missing bearer token
-            /// Expected result:
-            /// Returns HttpStatus Unauthorized
-            /// Success criteria:
-            /// The response has correct status.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenMissingBearerToken_ReturnsUnauthorized()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
-
-                HttpClient client = GetTestClient();
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Post valid subscription for an external event. Missing required scope in token.
-            /// Expected result:
-            /// Returns HttpStatus forbidden
-            /// Success criteria:
-            /// The response has correct status.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionForExternalEventWithoutScope_ReturnsForbidden()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Post valid subscription for an external event. 
-            /// Expected result:
-            /// Service for creating generic subscription is called.
-            /// Success criteria:
-            /// The expected method in the service is called.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionForExternalEvent_RightServiceMethodIsCalled()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
-
-                Mock<IGenericSubscriptionService> serivceMock = new();
-                serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 1 }, null));
-
-                HttpClient client = GetTestClient(genericSubscriptionServiceMock: serivceMock.Object);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084", "altinn:events.subscribe"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                serivceMock.Verify(s => s.CreateSubscription(It.IsAny<Subscription>()), Times.Once);
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Post valid subscription for an external event. 
-            /// Expected result:
-            /// Service for creating app subscription is called.
-            /// Success criteria:
-            /// The expected method in the service is called.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionForAppEvent_RightServiceMethodIsCalled()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
-
-                Mock<IAppSubscriptionService> serivceMock = new();
-                serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 2 }, null));
-
-                HttpClient client = GetTestClient(appSubscriptionServiceMock: serivceMock.Object);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084", "altinn:events.subscribe"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                serivceMock.Verify(s => s.CreateSubscription(It.IsAny<Subscription>()), Times.Once);
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            }
-
-            /// <summary>
             /// Gets a specific subscription
             /// Expected result:
             /// Returns HttpStatus ok
@@ -650,29 +72,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
-                {
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Deletes a subscription that user is authorized for
-            /// Expected result:
-            /// Return httpStatus ok
-            /// </summary>
-            [Fact]
-            public async Task Delete_GivenSubscriptionOrganizationWithValidSubject_ReturnsCreated()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions/16";
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri)
                 {
                 };
 
@@ -706,49 +105,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Deletes a subscription that user is authorized for
-            /// Expected result:
-            /// Return httpStatus ok
-            /// </summary>
-            [Fact]
-            public async Task Delete_GivenSubscriptionOrganizationWithInvalidCreatedBy_ReturnsUnAuthorized()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions/16";
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "897069652"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri)
-                {
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            }
-
-            [Fact]
-            public async Task ValidateSubscription_ReturnsOk()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions/validate/16";
-                HttpClient client = GetTestClient();
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
-                {
-                };
-
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("platform", "events"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
 
             [Fact]
@@ -830,8 +186,351 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(0, actual.Count);
             }
 
+            /// <summary>
+            /// Deletes a subscription that user is authorized for
+            /// Expected result:
+            /// Return httpStatus ok
+            /// </summary>
+            [Fact]
+            public async Task Delete_GivenSubscriptionOrganizationWithValidSubject_ReturnsCreated()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions/16";
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri)
+                {
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Deletes a subscription that user is authorized for
+            /// Expected result:
+            /// Return httpStatus ok
+            /// </summary>
+            [Fact]
+            public async Task Delete_GivenSubscriptionOrganizationWithInvalidCreatedBy_ReturnsUnAuthorized()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions/16";
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "897069652"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri)
+                {
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task ValidateSubscription_ReturnsOk()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions/validate/16";
+                HttpClient client = GetTestClient();
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
+                {
+                };
+
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("platform", "events"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Post valid subscription for a generic event. Missing required scope in token.
+            /// Expected result:
+            /// Returns HttpStatus forbidden
+            /// Success criteria:
+            /// The response has correct status.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenenericSubscriptionWithoutScope_ReturnsForbidden()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Post missing bearer token
+            /// Expected result:
+            /// Returns HttpStatus Unauthorized
+            /// Success criteria:
+            /// The response has correct status.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenMissingBearerToken_ReturnsUnauthorized()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
+
+                HttpClient client = GetTestClient();
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Post invalid subscription for org with missing endpoint
+            /// Expected result:
+            /// Returns HttpStatus badrequest
+            /// Success criteria:
+            /// The response has correct status and expected response message.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionWithoutEndpoint_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", null, subjectFilter: "/party/133");
+
+                cloudEventSubscription.EndPoint = null;
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("\"Missing or invalid endpoint to push events towards\"", responseMessage);
+            }
+
+            /// <summary>
+            /// Post invalid subscription with resource notfor user with persn as subject
+            /// Expected result:
+            /// Returns bad request 
+            /// Success criteria:
+            /// The response has correct status and expected response message.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionWithInvalidUrnResource_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2", "https://www.ttd.no/hook", alternativeSubjectFilter: "/person/01039012345");
+
+                cloudEventSubscription.ResourceFilter = "some-service";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseMessage = await response.Content.ReadAsStringAsync();
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("\"Resource filter must be a valid urn\"", responseMessage);
+            }
+
+            /// <summary>
+            /// Scenario: Invalid source provided relative URI, absolute requied
+            /// Expected: Returns bad request
+            /// </summary>        
+            [Fact]
+            public async Task Post_GivenSubscriptionWithRelativeUriSource_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("skd/flyttemelding", "https://www.skatteetaten.no/hook");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Post valid subscription for an external event. 
+            /// Expected result:
+            /// Service for creating generic subscription is called.
+            /// Success criteria:
+            /// The expected method in the service is called.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionForExternalEvent_RightServiceMethodIsCalled()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://hunderpasseren.no/by/bronnoysund", "https://www.skatteetaten.no/hook", subjectFilter: "/hund/ascii");
+
+                Mock<IGenericSubscriptionService> serivceMock = new();
+                serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 1 }, null));
+
+                HttpClient client = GetTestClient(genericSubscriptionServiceMock: serivceMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084", "altinn:events.subscribe"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                serivceMock.Verify(s => s.CreateSubscription(It.IsAny<Subscription>()), Times.Once);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Post valid subscription for an external event. 
+            /// Expected result:
+            /// Service for creating app subscription is called.
+            /// Success criteria:
+            /// The expected method in the service is called.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionForAppEvent_RightServiceMethodIsCalled()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
+
+                Mock<IAppSubscriptionService> serivceMock = new();
+                serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 2 }, null));
+
+                HttpClient client = GetTestClient(appSubscriptionServiceMock: serivceMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084", "altinn:events.subscribe"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                serivceMock.Verify(s => s.CreateSubscription(It.IsAny<Subscription>()), Times.Once);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid EventsSubscription for SKD
+            /// Expected result:
+            ///   Returns HttpStatus Created and the url with object for the resource created.
+            /// Success criteria:
+            ///   The response has correct status and correct responseId.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenValidAppSubscription_ReturnsStatusCreatedAndCorrectData()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook");
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+                string content = response.Content.ReadAsStringAsync().Result;
+                Assert.Contains(cloudEventSubscription.SourceFilter.AbsoluteUri, content);
+            }
+
+            /// <summary>
+            /// Post valid subscription for an external event. 
+            /// Expected result:
+            /// Service for creating app subscription is called.
+            /// Success criteria:
+            /// The expected method in the service is called.
+            /// </summary>
+            [Fact]
+            public async Task Post_SubscriptionServiceReturnsError_ErrorCodeReturned()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
+
+                Mock<IAppSubscriptionService> serivceMock = new();
+                serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>()))
+                            .ReturnsAsync((null, new ServiceError(500)));
+
+                HttpClient client = GetTestClient(appSubscriptionServiceMock: serivceMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd", "950474084", "altinn:events.subscribe"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+            }
+
             private HttpClient GetTestClient(IAppSubscriptionService appSubscriptionServiceMock = null, IGenericSubscriptionService genericSubscriptionServiceMock = null)
             {
+                Mock<IAuthorization> authorization = new();
+                authorization
+                    .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                    .ReturnsAsync(true);
+
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
                     builder.ConfigureTestServices(services =>
@@ -846,6 +545,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                             services.AddSingleton(genericSubscriptionServiceMock);
                         }
 
+                        services.AddSingleton(authorization.Object);
                         services.AddSingleton<IRegisterService, RegisterServiceMock>();
                         services.AddSingleton<IProfile, ProfileMockSI>();
 

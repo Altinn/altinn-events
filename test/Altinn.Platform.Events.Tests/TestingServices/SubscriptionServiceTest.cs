@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -37,6 +40,28 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
+        public async Task CreateSubscription_Unauthorized_ReturnsError()
+        {
+            // Arrange 
+            string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service.";
+
+            var input = new Subscription
+            {
+                ResourceFilter = "urn:altinn:resource:some-service",
+                EndPoint = new Uri("https://automated.com"),
+            };
+
+            var sut = GetSubscriptionService(authorizationDecision: false);
+
+            // Act
+            (var _, ServiceError actual) = await sut.CompleteSubscriptionCreation(input);
+
+            // Assert
+            Assert.Equal(401, actual.ErrorCode);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+        }
+
+        [Fact]
         public async Task CompleteSubscriptionCreation_SubscriptionAlreadyExists_ReturnExisting()
         {
             // Arrange
@@ -57,7 +82,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync(subscription);
 
             SubscriptionService subscriptionService =
-                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
+                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
             // Act
             var result = await subscriptionService.CompleteSubscriptionCreation(subscription);
@@ -92,14 +117,26 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     It.Is<string>(s => s.Equals("03E4D9CA0902493533E9C62AB437EF50"))))
                 .ReturnsAsync(subscription);
 
+            Mock<IEventsQueueClient> queueMock = new();
+
+            queueMock
+                .Setup(q => q.EnqueueSubscriptionValidation(It.Is<string>(s => CheckSubscriptionId(s, 645187))));
+
             // Act
             SubscriptionService subscriptionService =
-                  GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProviderMock.Object);
+                  GetSubscriptionService(_repositoryMock.Object, queueMock: queueMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
             var result = await subscriptionService.CompleteSubscriptionCreation(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
+            queueMock.VerifyAll();
+        }
+
+        private static bool CheckSubscriptionId(string serializedSubscription, int expectedId)
+        {
+            var subscription = JsonSerializer.Deserialize<Subscription>(serializedSubscription);
+            return expectedId == subscription.Id;
         }
 
         [Theory]
@@ -133,7 +170,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync(1337);
 
             SubscriptionService subscriptionService =
-             GetSubscriptionService(null, claimsPrincipalProviderMock.Object, registerMock.Object);
+             GetSubscriptionService(registerMock: registerMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
             // Act
             var actualEntity = await subscriptionService.GetEntityFromPrincipal();
@@ -151,13 +188,21 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static SubscriptionService GetSubscriptionService(
             ISubscriptionRepository repository = null,
-            IClaimsPrincipalProvider claimsPrincipalProvider = null,
-            IRegisterService registerMock = null)
+            IRegisterService registerMock = null,
+            bool authorizationDecision = true,
+            IEventsQueueClient queueMock = null,
+            IClaimsPrincipalProvider claimsPrincipalProvider = null)
         {
+            var authoriationMock = new Mock<IAuthorization>();
+            authoriationMock
+                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .ReturnsAsync(authorizationDecision);
+
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
                 registerMock ?? new Mock<IRegisterService>().Object,
-                new EventsQueueClientMock(),
+                authoriationMock.Object,
+                queueMock ?? new Mock<IEventsQueueClient>().Object,
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
         }
     }

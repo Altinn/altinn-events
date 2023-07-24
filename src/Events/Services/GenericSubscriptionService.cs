@@ -10,8 +10,6 @@ namespace Altinn.Platform.Events.Services
     /// <inheritdoc/>
     public class GenericSubscriptionService : SubscriptionService, IGenericSubscriptionService
     {
-        private readonly IAuthorization _authorization;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
@@ -25,10 +23,10 @@ namespace Altinn.Platform.Events.Services
             : base(
                   repository,
                   register,
+                  authorization,
                   queue,
                   claimsPrincipalProvider)
         {
-            _authorization = authorization;
         }
 
         /// <inheritdoc/>
@@ -41,12 +39,6 @@ namespace Altinn.Platform.Events.Services
             if (!ValidateSubscription(eventsSubscription, out string message))
             {
                 return (null, new ServiceError(400, message));
-            }
-
-            if (!await _authorization.AuthorizeConsumerForEventsSubcription(eventsSubscription))
-            {
-                var errorMessage = $"Not authorized to create a subscription for resource {eventsSubscription.ResourceFilter}.";
-                return (null, new ServiceError(401, errorMessage));
             }
 
             return await CompleteSubscriptionCreation(eventsSubscription);

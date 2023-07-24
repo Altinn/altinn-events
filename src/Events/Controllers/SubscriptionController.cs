@@ -161,7 +161,7 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Method to validate an specific subscription. Only avaiable from validation function.
+        /// Method to validate a specific subscription. Only avaiable from validation function.
         /// </summary>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPut("validate/{id}")]
