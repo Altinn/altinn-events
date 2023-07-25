@@ -103,6 +103,37 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
+        public async Task CreateSubscription_NoSourceFilter_SubscriptionCreated()
+        {
+            // Arrange
+            string expectedSubjectFilter = "/party/1337";
+            int subscriptionId = 1337;
+
+            var subs = new Subscription
+            {
+                Id = subscriptionId,
+                AlternativeSubjectFilter = "/person/01039012345",
+                ResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test"
+            };
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
+                .ReturnsAsync(1337);
+
+            var sut = GetAppSubscriptionService(
+                register: registerMock.Object,
+                authorization: _authTrueMock.Object);
+
+            // Act
+            (Subscription actual, ServiceError _) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(expectedSubjectFilter, actual.SubjectFilter);
+        }
+
+        [Fact]
         public async Task CreateSubscription_NonExistentAlternativeSubject_ReturnsError()
         {
             // Arrange

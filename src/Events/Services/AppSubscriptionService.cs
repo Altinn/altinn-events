@@ -122,7 +122,7 @@ namespace Altinn.Platform.Events.Services
             }
 
             if (!string.IsNullOrEmpty(eventsSubscription.ResourceFilter) &&
-                !string.IsNullOrEmpty(eventsSubscription.SourceFilter.ToString()) &&
+                !string.IsNullOrEmpty(eventsSubscription.SourceFilter?.ToString()) &&
                 !GetResourceFilterFromSource(eventsSubscription.SourceFilter).Equals(eventsSubscription.ResourceFilter))
             {
                 message = "Provided resource filter and source filter are not compatible";
