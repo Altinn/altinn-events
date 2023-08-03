@@ -1,5 +1,7 @@
 ﻿#nullable enable
 
+using System;
+
 using Altinn.Common.AccessToken;
 using Altinn.Common.PEP.Authorization;
 
@@ -18,8 +20,12 @@ public class PublishScopeOrAccessTokenRequirement : IAccessTokenRequirement, ISc
     /// </summary>
     public PublishScopeOrAccessTokenRequirement(string scope)
     {
+        ApprovedIssuers = Array.Empty<string>();
         Scope = new string[] { scope };
     }
+
+    /// <inheritdoc/>
+    public string[] ApprovedIssuers { get; set; }
 
     /// <inheritdoc/>
     public string[] Scope { get; set; }
