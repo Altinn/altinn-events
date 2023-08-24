@@ -201,7 +201,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IClaimsPrincipalProvider> principalMock = new();
             principalMock
                 .Setup(p => p.GetUser())
-                .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678","altinn:events.publish.admin", "AuthenticationTypes.Federation"));
+                .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678", "altinn:events.publish.admin", "AuthenticationTypes.Federation"));
 
             // Act
             var sut = new AuthorizationService(pdpMock.Object, principalMock.Object);
@@ -220,7 +220,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IClaimsPrincipalProvider> principalMock = new();
             principalMock
                 .Setup(p => p.GetUser())
-                .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678","somerandomprefix:altinn:events.publish.admin", "AuthenticationTypes.Federation"));
+                .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678", "somerandomprefix:altinn:events.publish.admin", "AuthenticationTypes.Federation"));
 
             // Act
             var sut = new AuthorizationService(pdpMock.Object, principalMock.Object);
