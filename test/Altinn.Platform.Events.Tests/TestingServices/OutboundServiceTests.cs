@@ -267,7 +267,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                    It.IsAny<EventId>(),
                    It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// OutboundService // EnqueueOutbound // Failed to send event envelope", StringComparison.InvariantCultureIgnoreCase)),
                    It.IsAny<Exception>(),
-                   It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                   It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                Times.Once);
             queueMock.VerifyAll();
         }

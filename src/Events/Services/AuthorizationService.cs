@@ -9,9 +9,10 @@ using Altinn.Common.PEP.Constants;
 using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Authorization;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
-
+using Altinn.Platorm.Events.Extensions;
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services
@@ -60,6 +61,11 @@ namespace Altinn.Platform.Events.Services
         public async Task<bool> AuthorizePublishEvent(CloudEvent cloudEvent)
         {
             ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
+
+            if (consumer.HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_ADMIN_PUBLISH))
+            {
+                return true;
+            }
 
             XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateDecisionRequest(consumer, "publish", cloudEvent);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
