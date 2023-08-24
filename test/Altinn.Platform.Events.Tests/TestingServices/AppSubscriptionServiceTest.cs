@@ -10,10 +10,6 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
-using Altinn.Platform.Profile.Models;
-using Altinn.Platform.Register.Models;
-
-using Microsoft.Extensions.Options;
 
 using Moq;
 
@@ -26,6 +22,22 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     /// </summary>
     public class AppSubscriptionServiceTest
     {
+        private readonly Mock<IAuthorization> _authTrueMock;
+        private readonly Mock<IAuthorization> _authFalseMock;
+
+        public AppSubscriptionServiceTest()
+        {
+            _authTrueMock = new();
+            _authTrueMock
+                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .ReturnsAsync(true);
+
+            _authFalseMock = new();
+            _authFalseMock
+                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .ReturnsAsync(false);
+        }
+
         [Fact]
         public async Task CreateSubscription_OrgAsAlternativeSubject_SubjectFilterPopulated()
         {
@@ -45,20 +57,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.Is<string>(s => s.Equals("897069631")), It.IsAny<string>()))
                 .ReturnsAsync(500700);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                .ReturnsAsync(new UserProfile { Party = new Party { SSN = "01039012345" } });
-
-            Mock<IAuthorization> authzMock = new();
-            authzMock
-                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
-                .ReturnsAsync(true);
-
             var sut = GetAppSubscriptionService(
-                profile: profileMock.Object,
                 register: registerMock.Object,
-                authorization: authzMock.Object);
+                authorization: _authTrueMock.Object);
 
             // Act
             (Subscription actual, ServiceError _) = await sut.CreateSubscription(subs);
@@ -70,10 +71,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_PersonAsAlternativeSubject_SubjectFilterPopulated()
+        public async Task CreateSubscription_PersonAsAlternativeSubject_SubjectFilterAndResourceFilterPopulated()
         {
             // Arrange
             string expectedSubjectFilter = "/party/1337";
+            string expectedResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test";
             int subscriptionId = 1337;
 
             var subs = new Subscription
@@ -88,19 +90,46 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
                 .ReturnsAsync(1337);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                .ReturnsAsync(new UserProfile { Party = new Party { SSN = "01039012345" } });
-
             var sut = GetAppSubscriptionService(
-                profile: profileMock.Object,
-                register: registerMock.Object);
+                register: registerMock.Object,
+                authorization: _authTrueMock.Object);
 
             // Act
             (Subscription actual, ServiceError _) = await sut.CreateSubscription(subs);
 
             // Assert
+            Assert.Equal(expectedSubjectFilter, actual.SubjectFilter);
+            Assert.Equal(expectedResourceFilter, actual.ResourceFilter);
+        }
+
+        [Fact]
+        public async Task CreateSubscription_NoSourceFilter_SubscriptionCreated()
+        {
+            // Arrange
+            string expectedSubjectFilter = "/party/1337";
+            int subscriptionId = 1337;
+
+            var subs = new Subscription
+            {
+                Id = subscriptionId,
+                AlternativeSubjectFilter = "/person/01039012345",
+                ResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test"
+            };
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
+                .ReturnsAsync(1337);
+
+            var sut = GetAppSubscriptionService(
+                register: registerMock.Object,
+                authorization: _authTrueMock.Object);
+
+            // Act
+            (Subscription actual, ServiceError _) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
             Assert.Equal(expectedSubjectFilter, actual.SubjectFilter);
         }
 
@@ -159,7 +188,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_InvalidAppSourceFilter_ReturnsError()
         {
             // Arrange
-            string expectedErrorMessage = "A valid app id is required in Source filter {environment}/{org}/{app}";
+            string expectedErrorMessage = "A valid app id is required in source filter {environment}/{org}/{app}";
             int expectedErrorCode = 400;
 
             var subs = new Subscription
@@ -173,17 +202,37 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
                     .ReturnsAsync(1337);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                    .ReturnsAsync(new UserProfile
-                    {
-                        Party = new Party { SSN = "01039012345" }
-                    });
-
             var sut = GetAppSubscriptionService(
-                profile: profileMock.Object,
                 register: registerMock.Object);
+
+            // Act
+            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+            Assert.Equal(expectedErrorCode, actual.ErrorCode);
+        }
+
+        [Fact]
+        public async Task CreateSubscription_NonMatchingResourceAndSourceExistingResource_ReturnsError()
+        {
+            // Arrange
+            string expectedErrorMessage = "Provided resource filter and source filter are not compatible";
+            int expectedErrorCode = 400;
+            var subs = new Subscription
+            {
+                ResourceFilter = "urn:altinn:resource:altinnapp.skd.skattemelding",
+                SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
+                AlternativeSubjectFilter = "/person/01039012345"
+            };
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
+                    .ReturnsAsync(1337);
+
+            var sut = GetAppSubscriptionService();
 
             // Act
             (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
@@ -212,17 +261,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
                     .ReturnsAsync(1337);
 
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                    .ReturnsAsync(new UserProfile
-                    {
-                        Party = new Party { SSN = "01039012345" }
-                    });
-
             var sut = GetAppSubscriptionService(
-                profile: profileMock.Object,
-                register: registerMock.Object);
+                register: registerMock.Object,
+                authorization: _authTrueMock.Object);
 
             // Act
             (Subscription subscription, ServiceError _) = await sut.CreateSubscription(subs);
@@ -231,53 +272,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expected, subscription.ResourceFilter);
         }
 
-        [Fact]
-        public async Task CreateSubscription_NonMatchingResourceAndSourceExistingResource_ReturnsError()
-        {
-            // Arrange
-            string expectedErrorMessage = "Provided resource filter and source filter are not compatible";
-            int expectedErrorCode = 400;
-            var subs = new Subscription
-            {
-                ResourceFilter = "urn:altinn:resource:altinnapp.skd.skattemelding",
-                SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
-                AlternativeSubjectFilter = "/person/01039012345"
-            };
-
-            Mock<IRegisterService> registerMock = new();
-            registerMock
-                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
-                    .ReturnsAsync(1337);
-
-            Mock<IProfile> profileMock = new();
-            profileMock
-                .Setup(p => p.GetUserProfile(It.IsAny<int>()))
-                    .ReturnsAsync(new UserProfile
-                    {
-                        Party = new Party { SSN = "01039012345" }
-                    });
-
-            var sut = GetAppSubscriptionService();
-
-            // Act
-            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
-
-            // Assert
-            Assert.NotNull(actual);
-            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
-            Assert.Equal(expectedErrorCode, actual.ErrorCode);
-        }
-
         private static AppSubscriptionService GetAppSubscriptionService(
             IRegisterService register = null,
-            IProfile profile = null,
             IAuthorization authorization = null,
             ISubscriptionRepository repository = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null)
         {
             register ??= new RegisterServiceMock();
-
-            profile ??= new ProfileMockSI(register);
 
             authorization ??= new Mock<IAuthorization>().Object;
 
@@ -292,12 +293,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             return new AppSubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
-                profile,
                 authorization,
                 register,
                 new EventsQueueClientMock(),
-                claimsPrincipalProvider,
-                Options.Create(new PlatformSettings { }));
+                claimsPrincipalProvider);
         }
     }
 }

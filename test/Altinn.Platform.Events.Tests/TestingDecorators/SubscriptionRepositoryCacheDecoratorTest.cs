@@ -26,25 +26,19 @@ namespace Altinn.Platform.Events.Tests.TestingDecorators
             (IMemoryCache cache, SubscriptionRepositoryCachingDecorator sut) = GetCacheAndDecorator(repositoryMock);
 
             cache.Set(
-               "subscription:so:https://ttd.apps.altinn.no/lagmannsretten/avgjorelser/instances/1234/1234567su:testsubjectty:event.automated",
+               "subscription:re:resourcesu:testsubjectty:event.automated",
                new List<Subscription> { new Subscription { Id = 1337 } });
 
             // Act 
             var actual = await sut.GetSubscriptions(
-                new List<string>()
-                {
-                    "BF560CE4ACD7C31DB0AB3C6FAF5BB48D",
-                    "19059A8F7DD02B4740E2B0620B60F467",
-                    "749D55F595A039FB8412D10DD995E37E"
-                },
-                "https://ttd.apps.altinn.no/lagmannsretten/avgjorelser/instances/1234/1234567",
+                "resource",
                 "testsubject",
                 "event.automated",
                 CancellationToken.None);
 
             // Assert
             repositoryMock.Verify(
-                r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
                 Times.Never);
 
             Assert.Single(actual);
@@ -56,7 +50,6 @@ namespace Altinn.Platform.Events.Tests.TestingDecorators
             // Arrange
             var repositoryMock = new Mock<ISubscriptionRepository>();
             repositoryMock.Setup(r => r.GetSubscriptions(
-              It.IsAny<List<string>>(),
               It.IsAny<string>(),
               It.IsAny<string>(),
               It.IsAny<string>(),
@@ -65,24 +58,18 @@ namespace Altinn.Platform.Events.Tests.TestingDecorators
 
             (IMemoryCache cache, SubscriptionRepositoryCachingDecorator sut) = GetCacheAndDecorator(repositoryMock);
 
-            string expectedCacheKey = "subscription:so:https://ttd.apps.altinn.no/lagmannsretten/avgjorelser/instances/1234/1234567su:testsubjectty:event.automated";
+            string expectedCacheKey = "subscription:re:resourcesu:testsubjectty:event.automated";
 
             // Act 
             var actual = await sut.GetSubscriptions(
-                new List<string>()
-                {
-                    "BF560CE4ACD7C31DB0AB3C6FAF5BB48D",
-                    "19059A8F7DD02B4740E2B0620B60F467",
-                    "749D55F595A039FB8412D10DD995E37E"
-                },
-                "https://ttd.apps.altinn.no/lagmannsretten/avgjorelser/instances/1234/1234567",
+                "resource",
                 "testsubject",
                 "event.automated",
                 CancellationToken.None);
 
             // Assert
             repositoryMock.Verify(
-                r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+                r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
                 Times.Once);
             Assert.Single(actual);
 

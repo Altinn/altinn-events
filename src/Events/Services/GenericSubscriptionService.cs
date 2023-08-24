@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
-using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -17,12 +16,14 @@ namespace Altinn.Platform.Events.Services
         public GenericSubscriptionService(
             ISubscriptionRepository repository,
             IRegisterService register,
+            IAuthorization authorization,
             IEventsQueueClient queue,
             IClaimsPrincipalProvider claimsPrincipalProvider)
 
             : base(
                   repository,
                   register,
+                  authorization,
                   queue,
                   claimsPrincipalProvider)
         {
@@ -38,12 +39,6 @@ namespace Altinn.Platform.Events.Services
             if (!ValidateSubscription(eventsSubscription, out string message))
             {
                 return (null, new ServiceError(400, message));
-            }
-
-            if (!AuthorizeSubscription())
-            {
-                var errorMessage = $"Not authorized to create a subscription with source {eventsSubscription.SourceFilter} and/ subject filter: {eventsSubscription.SubjectFilter}.";
-                return (null, new ServiceError(401, errorMessage));
             }
 
             return await CompleteSubscriptionCreation(eventsSubscription);
@@ -70,12 +65,6 @@ namespace Altinn.Platform.Events.Services
             }
 
             message = null;
-            return true;
-        }
-
-        private static bool AuthorizeSubscription()
-        {
-            // Further authorization to be implemented in Altinn/altinn-events#259
             return true;
         }
     }

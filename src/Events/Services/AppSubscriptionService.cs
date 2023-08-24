@@ -6,10 +6,7 @@ using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platform.Profile.Models;
 using Altinn.Platorm.Events.Extensions;
-
-using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -17,35 +14,27 @@ namespace Altinn.Platform.Events.Services
     public class AppSubscriptionService : SubscriptionService, IAppSubscriptionService
     {
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
-        private readonly IProfile _profile;
         private readonly IRegisterService _register;
-        private readonly IAuthorization _authorization;
 
         private const string OrganisationPrefix = "/org/";
         private const string PersonPrefix = "/person/";
-        private const string UserPrefix = "/user/";
-        private const string OrgPrefix = "/org/";
-        private const string PartyPrefix = "/party/";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
         public AppSubscriptionService(
             ISubscriptionRepository repository,
-            IProfile profile,
             IAuthorization authorization,
             IRegisterService register,
             IEventsQueueClient queue,
-            IClaimsPrincipalProvider claimsPrincipalProvider,
-            IOptions<PlatformSettings> settings)
+            IClaimsPrincipalProvider claimsPrincipalProvider)
             : base(
                   repository,
                   register,
+                  authorization,
                   queue,
                   claimsPrincipalProvider)
         {
-            _profile = profile;
-            _authorization = authorization;
             _register = register;
             _claimsPrincipalProvider = claimsPrincipalProvider;
         }
@@ -65,18 +54,6 @@ namespace Altinn.Platform.Events.Services
             }
 
             SetResourceFilterIfEmpty(eventsSubscription);
-
-            if (!AuthorizeIdentityForConsumer(eventsSubscription))
-            {
-                var errorMessage = "Not authorized to create a subscription on behalf of " + eventsSubscription.Consumer;
-                return (null, new ServiceError(401, errorMessage));
-            }
-
-            if (!await AuthorizeSubjectForConsumer(eventsSubscription))
-            {
-                var errorMessage = "Not authorized to create a subscription with subject " + eventsSubscription.AlternativeSubjectFilter;
-                return (null, new ServiceError(401, errorMessage));
-            }
 
             return await CompleteSubscriptionCreation(eventsSubscription);
         }
@@ -138,14 +115,14 @@ namespace Altinn.Platform.Events.Services
             }
 
             string absolutePath = eventsSubscription.SourceFilter?.AbsolutePath;
-            if (absolutePath == null || absolutePath.Split("/").Length != 3)
+            if (absolutePath != null && absolutePath.Split("/").Length != 3)
             {
-                message = "A valid app id is required in Source filter {environment}/{org}/{app}";
+                message = "A valid app id is required in source filter {environment}/{org}/{app}";
                 return false;
             }
 
             if (!string.IsNullOrEmpty(eventsSubscription.ResourceFilter) &&
-                !string.IsNullOrEmpty(eventsSubscription.SourceFilter.ToString()) &&
+                !string.IsNullOrEmpty(eventsSubscription.SourceFilter?.ToString()) &&
                 !GetResourceFilterFromSource(eventsSubscription.SourceFilter).Equals(eventsSubscription.ResourceFilter))
             {
                 message = "Provided resource filter and source filter are not compatible";
@@ -154,56 +131,6 @@ namespace Altinn.Platform.Events.Services
 
             message = null;
             return true;
-        }
-
-        /// <summary>
-        /// Validate that the identity (user, organization or org) is authorized to create subscriptions for given consumer. Currently
-        /// it needs to match. In future we need to add validation of business rules. (yet to be defined)
-        /// </summary>
-        private static bool AuthorizeIdentityForConsumer(Subscription eventsSubscription)
-        {
-            if (!eventsSubscription.CreatedBy.Equals(eventsSubscription.Consumer))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Validates that the identity (user, organization or org) is authorized to create subscriptions for a given subject.
-        ///  Subscriptions created by org do not need subject.
-        /// </summary>
-        private async Task<bool> AuthorizeSubjectForConsumer(Subscription eventsSubscription)
-        {
-            if (eventsSubscription.CreatedBy.StartsWith(UserPrefix))
-            {
-                int userId = Convert.ToInt32(eventsSubscription.CreatedBy.Replace(UserPrefix, string.Empty));
-                UserProfile profile = await _profile.GetUserProfile(userId);
-                string ssn = PersonPrefix + profile.Party.SSN;
-
-                if (ssn.Equals(eventsSubscription.AlternativeSubjectFilter))
-                {
-                    return true;
-                }
-
-                bool hasRoleAccess = await _authorization.AuthorizeConsumerForEventsSubcription(eventsSubscription);
-
-                if (hasRoleAccess)
-                {
-                    return true;
-                }
-            }
-            else if (eventsSubscription.CreatedBy.StartsWith(OrgPrefix) && string.IsNullOrEmpty(eventsSubscription.SubjectFilter))
-            {
-                return true;
-            }
-            else if (eventsSubscription.CreatedBy.StartsWith(PartyPrefix) && !string.IsNullOrEmpty(eventsSubscription.SubjectFilter) && eventsSubscription.SubjectFilter.Equals(eventsSubscription.Consumer))
-            {
-                return true;
-            }
-
-            return false;
         }
 
         private async Task<string> GetPartyFromAlternativeSubject(string alternativeSubject)

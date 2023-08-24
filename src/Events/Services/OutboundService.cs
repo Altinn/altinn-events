@@ -61,16 +61,8 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task PostOutbound(CloudEvent cloudEvent)
         {
-            Uri eventSource = cloudEvent.Source;
-
-            if (IsAppEvent(cloudEvent))
-            {
-                eventSource = GetSourceFilter(cloudEvent.Source);
-            }
-
             List<Subscription> subscriptions = await _subscriptionRepository.GetSubscriptions(
-                 eventSource.GetMD5HashSets(),
-                 eventSource.ToString(),
+                 cloudEvent.GetResource(),
                  cloudEvent.Subject,
                  cloudEvent.Type,
                  CancellationToken.None);
@@ -177,9 +169,9 @@ namespace Altinn.Platform.Events.Services
             }
         }
 
-        private bool IsAppEvent(CloudEvent cloudEvent)
+        private static bool IsAppEvent(CloudEvent cloudEvent)
         {
-            return !string.IsNullOrEmpty(cloudEvent.Source.Host) && cloudEvent.Source.Host.EndsWith(_platformSettings.AppsDomain);
+            return cloudEvent.GetResource().StartsWith(AuthorizationConstants.AppResourcePrefix);
         }
     }
 }
