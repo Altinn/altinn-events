@@ -60,7 +60,7 @@ namespace Altinn.Platform.Events.Services
 
             if (!string.IsNullOrEmpty(eventsSubscription.AlternativeSubjectFilter))
             {
-                message = "AlternativeSubject is not supported for subscriptions on this resource.";
+                message = "AlternativeSubjectFilter is not supported for subscriptions on this resource.";
                 return false;
             }
 
