@@ -99,7 +99,7 @@ namespace Altinn.Platform.Events.Repository
             await using NpgsqlCommand pgcom = new(getEventsSql, conn);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, resource);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, subject ?? (object)DBNull.Value);
-            pgcom.Parameters.AddWithValue( NpgsqlDbType.Varchar, alternativeSubject ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, alternativeSubject ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, after);
 #pragma warning disable S3265
 

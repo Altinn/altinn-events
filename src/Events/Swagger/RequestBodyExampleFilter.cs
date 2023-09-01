@@ -52,7 +52,7 @@ namespace Altinn.Platform.Events.Swagger
                 ("Instance created event without alternative subject",
                 CreateOpenApiObject(new List<(string Name, string Value)>()
                 {
-                     ("resource", "urn:altinn:resource:altinnapp.ttd.apps-test"),
+                    ("resource", "urn:altinn:resource:altinnapp.ttd.apps-test"),
                     ("resourceinstance", "50067592/f3c92d96-0eb3-4532-a16f-bcafd94bde3a"),
                     ("source", "https://ttd.apps.altinn.no/ttd/apps-test/instances/50067592/f3c92d96-0eb3-4532-a16f-bcafd94bde3a"),
                     ("specversion",  "1.0"),
