@@ -1,8 +1,4 @@
-﻿using System.Net;
-using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
-
-using Altinn.Common.AccessTokenClient.Services;
+﻿using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Clients;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
@@ -16,15 +12,18 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Functions.Tests.TestingClients
 {
     public class EventsClientTests
     {
-        Mock<ILogger<IEventsClient>> _loggerMock = new Mock<ILogger<IEventsClient>>();
-        Mock<IKeyVaultService> _kvMock = new Mock<IKeyVaultService>();
-        Mock<IAccessTokenGenerator> _atgMock = new Mock<IAccessTokenGenerator>();
+        private readonly Mock<ILogger<IEventsClient>> _loggerMock = new Mock<ILogger<IEventsClient>>();
+        private readonly Mock<IKeyVaultService> _kvMock = new Mock<IKeyVaultService>();
+        private readonly Mock<IAccessTokenGenerator> _atgMock = new Mock<IAccessTokenGenerator>();
 
         CloudEvent _cloudEvent = new(CloudEventsSpecVersion.V1_0)
         {

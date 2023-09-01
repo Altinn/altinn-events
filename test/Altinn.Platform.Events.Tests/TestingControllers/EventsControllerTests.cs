@@ -626,7 +626,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
             }
 
-
             private HttpClient GetTestClient(IEventsService eventsService = null, IAuthorization authorizationService = null, bool enableExternalEvents = false)
             {
                 if (eventsService == null)

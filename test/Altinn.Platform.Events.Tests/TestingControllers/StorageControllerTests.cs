@@ -63,7 +63,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status code.
             /// </summary>
             [Fact]
-            public async void Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
+            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
@@ -97,7 +97,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_RepositoryThrowsException_ReturnsInternalServerError()
+            public async Task Post_RepositoryThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
@@ -128,7 +128,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_MissingBearerToken_ReturnsForbidden()
+            public async Task Post_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
@@ -154,7 +154,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_MissingAccessToken_ReturnsForbidden()
+            public async Task Post_MissingAccessToken_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
