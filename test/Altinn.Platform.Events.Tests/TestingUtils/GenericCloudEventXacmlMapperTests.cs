@@ -120,7 +120,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             // Act
             var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEvent);
-            var actualEventIdAttribute = actual.Attribute.FirstOrDefault(a => a.AttributeId.Equals("urn:altinn:event-id"));
+            var actualEventIdAttribute = actual.Attribute.Find(a => a.AttributeId.Equals("urn:altinn:event-id"));
 
             // Assert
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
@@ -140,7 +140,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             // Act
             var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithResourceInstance);
-            var actualResourceInstancedAttribute = actual.Attribute.FirstOrDefault(a => a.AttributeId.Equals("urn:altinn:resourceinstance"));
+            var actualResourceInstancedAttribute = actual.Attribute.Find(a => a.AttributeId.Equals("urn:altinn:resourceinstance"));
 
             // Assert
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);

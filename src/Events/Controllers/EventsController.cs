@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -84,9 +85,9 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Retrieves a set of events related based on query parameters.
         /// </summary>
+        /// <param name="resource" example="https://ttd.apps.at22.altinn.cloud/ttd/apps-test/">
+        /// Required resource attribute</param>
         /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Retrieve events that were registered after this event Id</param>
-        /// <param name="source" example="https://ttd.apps.at22.altinn.cloud/ttd/apps-test/">
-        /// Optional source </param>
         /// <param name="subject">Optional filter by subject. Only exact matches will be returned.</param>
         /// <param name="alternativeSubject" example="/person/16035001577">Optional filter by extension attribute alternative subject. Only exact matches will be returned.</param>
         /// <param name="type" example="[&quot;instance.created&quot;, &quot;instance.process.completed&quot;]">
@@ -99,8 +100,8 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [Produces("application/cloudevents+json")]
         public async Task<ActionResult<List<CloudEvent>>> Get(
+            [FromQuery, Required] string resource,
             [FromQuery] string after,
-            [FromQuery] string source,
             [FromQuery] string subject,
             [FromHeader(Name = "Altinn-AlternativeSubject")] string alternativeSubject,
             [FromQuery] List<string> type,
@@ -114,14 +115,14 @@ namespace Altinn.Platform.Events.Controllers
             // Maximum allowed result set size is adjusted silently.
             size = size > 1000 ? 1000 : size;
 
-            (bool isValid, string errorMessage) = ValidateQueryParams(after, size, source);
+            (bool isValid, string errorMessage) = ValidateQueryParams(resource, after, size);
 
             if (!isValid)
             {
                 return Problem(errorMessage, null, 400);
             }
 
-            List<CloudEvent> events = await _eventsService.GetEvents(after, source, subject, alternativeSubject, type, size);
+            List<CloudEvent> events = await _eventsService.GetEvents(resource, after, subject, alternativeSubject, type, size);
 
             bool includeSubject = !string.IsNullOrEmpty(alternativeSubject) && string.IsNullOrEmpty(subject);
             SetNextLink(events, includeSubject);
@@ -129,8 +130,13 @@ namespace Altinn.Platform.Events.Controllers
             return events;
         }
 
-        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, int size, string source)
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string resource, string after, int size)
         {
+            if (!resource.StartsWith("urn:altinn:resource:"))
+            {
+                return (false, "The 'resource' parameter must begin with `urn:altinn:resource:`");
+            }
+
             if (string.IsNullOrEmpty(after))
             {
                 return (false, "The 'after' parameter must be defined.");
@@ -139,11 +145,6 @@ namespace Altinn.Platform.Events.Controllers
             if (size < 1)
             {
                 return (false, "The 'size' parameter must be a number larger that 0.");
-            }
-
-            if (string.IsNullOrEmpty(source))
-            {
-                return (false, "The 'source' parameter must be defined.");
             }
 
             return (true, null);

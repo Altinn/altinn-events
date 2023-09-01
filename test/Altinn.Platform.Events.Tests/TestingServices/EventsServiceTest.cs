@@ -310,8 +310,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             string expectedSubject = "/party/50";
             var repositoryMock = new Mock<ICloudEventRepository>();
             repositoryMock.Setup(r => r.GetEvents(
+                It.Is<string>(resource => resource != null),
                 It.IsAny<string>(), // after
-                It.Is<string>(sourceFilter => sourceFilter != null),
                 It.Is<string>(subject => subject.Equals(subject)),
                 It.IsAny<string>(), // alternativesubject
                 It.Is<List<string>>(typeFiler => typeFiler != null),
@@ -321,7 +321,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, "https://ttd.apps.tt02.altinn.no/ttd/apps-test/", expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:altinnapp.ttd.apps-test", null, expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -341,8 +341,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             var repositoryMock = new Mock<ICloudEventRepository>();
             repositoryMock.Setup(r => r.GetEvents(
+                It.IsAny<string>(), // resource
                 It.IsAny<string>(), // after
-                null, // sourceFilter
                 string.Empty, // subject
                 string.Empty, // alternativesubject
                 null, // typeFilter

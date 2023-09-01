@@ -131,293 +131,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
             }
 
-            /// <summary>
-            /// Scenario:
-            ///   Get events with negative size.
-            /// Expected result:
-            ///   Returns HttpStatus BadRequest.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_SizeIsLessThanZero_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?size=-5&after=e31dbb11-2208-4dda-a549-92a0db8c8808";
-                string expected = "The 'size' parameter must be a number larger that 0.";
-
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string content = await response.Content.ReadAsStringAsync();
-                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual.Detail);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Get events with size > 1000
-            /// Expected result:
-            ///   Returns a list of maximum 1000 events and a next header
-            /// Success criteria:
-            ///   Event service gets size input 1000.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_SizeMoreThan1000_ReturnsListOfMax1000Events()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&after=0&subject=%2Fparty%2F1337&size=1500";
-                Mock<IEventsService> eventsMock = new();
-                eventsMock
-                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 1000)))
-                    .ReturnsAsync(new List<CloudEvent>());
-
-                HttpClient client = GetTestClient(eventsMock.Object, null, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                eventsMock.VerifyAll();
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Retrieve a list of events, without bearer token.
-            /// Expected result:
-            ///   Returns HttpStatus Unauthorized.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_MissingBearerToken_ReturnsUnauthorized()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?after=0&subject=%2Fparty%2F1337";
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Get events with  a valid set of query parameters
-            /// Expected result:
-            ///   Returns a list of events and a next header
-            /// Success criteria:
-            ///   The response has correct count. Next header is correct.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_ValidRequest_ReturnsListOfEventsAndNextUrl()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&after=0&subject=%2Fparty%2F1337";
-                string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&source=urn:altinn:systemx&subject=/party/1337";
-                int expectedCount = 2;
-
-                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.Equal(expectedCount, actual.Count);
-                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   TTD org Get events with  a valid set of query parameters
-            /// Expected result:
-            ///   Returns a list of events and a next header
-            /// Success criteria:
-            ///   The response has correct count. Next header is corrcect.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_ValidRequest_ReturnsNextHeaderWithReplacesAfterParameter()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&after=e31dbb11-2208-4dda-a549-92a0db8c7708&subject=/party/1337";
-                string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&source=urn:altinn:systemx&subject=/party/1337";
-                int expectedCount = 1;
-
-                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<List<object>>(responseString);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.Equal(expectedCount, actual.Count);
-                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Get events, service throws exception.
-            /// Expected result:
-            ///   Status code is 500 Internal server error
-            /// Success criteria:
-            ///   Correct status code is returned.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_ServiceThrowsException_ReturnsInternalServerError()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&after=e31dbb11-2208-4dda-a549-92a0db8c7708&subject=/party/567890";
-                Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
-                HttpClient client = GetTestClient(eventsService.Object, null, true);
-
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Get events without defined after in query.
-            /// Expected result:
-            ///   Returns HttpStatus BadRequest.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_MissingRequiredQueryParam_ReturnsBadRequest()
-            {
-                // Arrange   
-                string expected = "The 'after' parameter must be defined.";
-
-                string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&size=5&subject=/party/1337";
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string content = await response.Content.ReadAsStringAsync();
-                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual.Detail);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Get events without defined after in query.
-            /// Expected result:
-            ///   Returns HttpStatus BadRequest.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_MissingSourceParam_ReturnsBadRequest()
-            {
-                // Arrange   
-                string expected = "The 'source' parameter must be defined.";
-
-                string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5&subject=/party/1337";
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string content = await response.Content.ReadAsStringAsync();
-                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual.Detail);
-            }
-
-            [Fact]
-            public async Task Get_ExternalEventsDisabled_NotFoundResponse()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5&subject=/party/1337";
-
-                HttpClient client = GetTestClient(null);
-
-                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Get events with a valid set of query parameters including alternative subject as header
-            /// Expected result:
-            ///   Returns a list of events and a next header
-            /// Success criteria:
-            ///   The response has correct count. Next header is correct.
-            /// </summary>
-            [Fact]
-            public async void GetEvents_AlternativeSubjectInHeader_ReturnsListOfEventsAndNextUrl()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?source=urn:altinn:systemx&after=0";
-                string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&source=urn:altinn:systemx&subject=/party/1337";
-                int expectedCount = 2;
-
-                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
-                httpRequestMessage.Headers.Add("Altinn-AlternativeSubject", "/person/01038712345");
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseString = await response.Content.ReadAsStringAsync();
-                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.Equal(expectedCount, actual.Count);
-                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
-            }
-
             [Fact]
             public async Task Post_EventMissingParameters_BadRequestResponse()
             {
@@ -575,6 +288,344 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
+
+            /// <summary>
+            /// Scenario:
+            ///   Retrieve a list of events, without bearer token.
+            /// Expected result:
+            ///   Returns HttpStatus Unauthorized.
+            /// Success criteria:
+            ///   The response has correct status.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_MissingBearerToken_ReturnsUnauthorized()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?after=0&subject=%2Fparty%2F1337";
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Get_ValidTokenInvalidScope_ForbiddenResponse()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708&size=5&subject=/party/1337&resource=urn:altinn:resource:test";
+
+                HttpClient client = GetTestClient(null);
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events:invalid"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            }
+
+            [Fact]
+            public async Task Get_ExternalEventsDisabled_NotFoundResponse()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708&size=5&subject=/party/1337&resource=urn:altinn:resource:test";
+
+                HttpClient client = GetTestClient(null);
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with size > 1000
+            /// Expected result:
+            ///   Returns a list of maximum 1000 events and a next header
+            /// Success criteria:
+            ///   Event service gets size input 1000.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_SizeMoreThan1000_ReturnsListOfMax1000Events()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=0&subject=%2Fparty%2F1337&size=1500";
+                Mock<IEventsService> eventsMock = new();
+                eventsMock
+                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 1000)))
+                    .ReturnsAsync(new List<CloudEvent>());
+
+                HttpClient client = GetTestClient(eventsMock.Object, null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                eventsMock.VerifyAll();
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with negative size.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest.
+            /// Success criteria:
+            ///   The response has correct status.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_SizeIsLessThanZero_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:test&size=-5&after=e31dbb11-2208-4dda-a549-92a0db8c8808";
+                string expected = "The 'size' parameter must be a number larger that 0.";
+
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal(expected, actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events without defined after in query.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest.
+            /// Success criteria:
+            ///   The response has correct status.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_MissingRequiredQueryParam_After_ReturnsBadRequest()
+            {
+                // Arrange   
+                string expected = "The 'after' parameter must be defined.";
+
+                string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&size=5&subject=/party/1337";
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal(expected, actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events without defined resource in query.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest.
+            /// Success criteria:
+            ///   The response has correct status.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_MissingRequiredQueryParam_Resource_ReturnsBadRequest()
+            {
+                // Arrange   
+                string expected = "The resource field is required.";
+                string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5&subject=/party/1337";
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Contains(expected, content);
+                Assert.NotNull(actual.Extensions["errors"]);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with a resource not matching required format
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest.
+            /// Success criteria:
+            ///   The response has correct status.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_InvalidResourceFormat_ReturnsBadRequest()
+            {
+                // Arrange   
+                string expected = "The 'resource' parameter must begin with `urn:altinn:resource:`";
+
+                string requestUri = $"{BasePath}/events?resource=random&after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5";
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal(expected, actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with  a valid set of query parameters
+            /// Expected result:
+            ///   Returns a list of events and a next header
+            /// Success criteria:
+            ///   The response has correct count. Next header is correct.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_ValidRequest_ReturnsListOfEventsAndNextUrl()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=0&subject=%2Fparty%2F1337";
+                string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&resource=urn:altinn:resource:systemx&subject=/party/1337";
+                int expectedCount = 2;
+
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(expectedCount, actual.Count);
+                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   TTD org Get events with  a valid set of query parameters
+            /// Expected result:
+            ///   Returns a list of events and a next header
+            /// Success criteria:
+            ///   The response has correct count. Next header is corrcect.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_ValidRequest_ReturnsNextHeaderWithReplacedAfterParameter()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=e31dbb11-2208-4dda-a549-92a0db8c7708&subject=/party/1337";
+                string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&resource=urn:altinn:resource:systemx&subject=/party/1337";
+                int expectedCount = 1;
+
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<List<object>>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(expectedCount, actual.Count);
+                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events, service throws exception.
+            /// Expected result:
+            ///   Status code is 500 Internal server error
+            /// Success criteria:
+            ///   Correct status code is returned.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_ServiceThrowsException_ReturnsInternalServerError()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=e31dbb11-2208-4dda-a549-92a0db8c7708&subject=/party/567890";
+                Mock<IEventsService> eventsService = new Mock<IEventsService>();
+                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
+                HttpClient client = GetTestClient(eventsService.Object, null, true);
+
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with a valid set of query parameters including alternative subject as header
+            /// Expected result:
+            ///   Returns a list of events and a next header
+            /// Success criteria:
+            ///   The response has correct count. Next header is correct.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_AlternativeSubjectInHeader_ReturnsListOfEventsAndNextUrl()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=0";
+                string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&resource=urn:altinn:resource:systemx&subject=/party/1337";
+                int expectedCount = 2;
+
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Altinn-AlternativeSubject", "/person/01038712345");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+                Assert.Equal(expectedCount, actual.Count);
+                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
+            }
+
 
             private HttpClient GetTestClient(IEventsService eventsService = null, IAuthorization authorizationService = null, bool enableExternalEvents = false)
             {
