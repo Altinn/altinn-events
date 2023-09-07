@@ -105,9 +105,9 @@ namespace Altinn.Platform.Events.Repository
 
             // ignore missing [Flags] attribute on NpgsqlDbType enum.
             // For more info: https://github.com/npgsql/npgsql/issues/2801
-            pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
 #pragma warning restore S3265
-            pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Integer, size);
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
             {
