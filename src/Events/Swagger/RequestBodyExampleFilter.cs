@@ -41,6 +41,8 @@ namespace Altinn.Platform.Events.Swagger
                 ("Instance created event with alternative subject",
                 CreateOpenApiObject(new List<(string Name, string Value)>()
                 {
+                    ("resource", "urn:altinn:resource:altinnapp.ttd.apps-test"),
+                    ("resourceinstance", "50015641/a72223a3-926b-4095-a2a6-bacc10815f2d"),
                     ("source", "https://ttd.apps.altinn.no/ttd/apps-test/instances/50015641/a72223a3-926b-4095-a2a6-bacc10815f2d"),
                     ("specversion",  "1.0"),
                     ("type",  "app.instance.created"),
@@ -50,6 +52,8 @@ namespace Altinn.Platform.Events.Swagger
                 ("Instance created event without alternative subject",
                 CreateOpenApiObject(new List<(string Name, string Value)>()
                 {
+                    ("resource", "urn:altinn:resource:altinnapp.ttd.apps-test"),
+                    ("resourceinstance", "50067592/f3c92d96-0eb3-4532-a16f-bcafd94bde3a"),
                     ("source", "https://ttd.apps.altinn.no/ttd/apps-test/instances/50067592/f3c92d96-0eb3-4532-a16f-bcafd94bde3a"),
                     ("specversion",  "1.0"),
                     ("type",  "app.instance.created"),
@@ -76,7 +80,7 @@ namespace Altinn.Platform.Events.Swagger
                     ("alternativeSubjectFilter", "/person/01017512345"),
                     ("typeFilter", "app.instance.process.completed")
                  })),
-                 ("End user (system) subscribing to events regarding an organisation",
+                 ("End user (system) subscribing to events from a specific regarding an organisation",
                  CreateOpenApiObject(new List<(string Name, string Value)>()
                  {
                     ("endpoint", "https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
@@ -96,7 +100,7 @@ namespace Altinn.Platform.Events.Swagger
                  CreateOpenApiObject(new List<(string Name, string Value)>()
                  {
                      ("endpoint", "https://hooks.slack.com/services/TSRSASBVNF3/ADRRSDSSSAahttsasdfasFO3w83456ss"),
-                     ("sourceFilter", "https://ttd.apps.altinn.no/ttd/apps-test")
+                     ("resourceFilter", "urn:altinn:resource:altinnapp.ttd.apps-test")
                  }))
             };
 

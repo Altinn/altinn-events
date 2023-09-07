@@ -106,7 +106,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// The test may then be removed.
         /// </remarks>
         [Fact]
-        public async void PostOutboundEventWithoutSubject_TwoMatchingSubscriptions_AddedToQueue()
+        public async Task PostOutboundEventWithoutSubject_TwoMatchingSubscriptions_AddedToQueue()
         {
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed", "urn:altinn:resource:test-source");
@@ -140,7 +140,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// The test may then be removed.
         /// </remarks>
         [Fact]
-        public async void PostOutboundEventWithoutSubject_ConsumerNotAuthorized_NotAddedToQueue()
+        public async Task PostOutboundEventWithoutSubject_ConsumerNotAuthorized_NotAddedToQueue()
         {
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed", "urn:altinn:resource:test-source");
@@ -169,7 +169,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Success criteria: QueueClient is never called to send the outbound event
         /// </summary>
         [Fact]
-        public async void PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
+        public async Task PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
         {
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2");
@@ -207,7 +207,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   The enqueue is called for the queue client excactly twice
         /// </summary>
         [Fact]
-        public async void Push_TwoMatchingAndValidSubscriptions_AddedToQueue()
+        public async Task Push_TwoMatchingAndValidSubscriptions_AddedToQueue()
         {
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2");
@@ -239,7 +239,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   Log message starts with expected string.
         /// </summary>
         [Fact]
-        public async void Push_QueueReportsFailure_ErrorIsLogged()
+        public async Task Push_QueueReportsFailure_ErrorIsLogged()
         {
             // Arrange
             CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1", "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2");

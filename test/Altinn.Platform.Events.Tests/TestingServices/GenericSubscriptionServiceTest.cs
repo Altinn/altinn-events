@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_AlternaticSubjectFilterProvided_ReturnsError()
         {
             // Arrange 
-            string expectedErrorMessage = "AlternativeSubject is not supported for subscriptions on this resource.";
+            string expectedErrorMessage = "AlternativeSubject filter is not supported for subscriptions on this resource.";
 
             var input = new Subscription
             {
