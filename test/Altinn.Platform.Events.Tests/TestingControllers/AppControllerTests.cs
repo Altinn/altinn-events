@@ -92,7 +92,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-                string content = response.Content.ReadAsStringAsync().Result;
+                string content = await response.Content.ReadAsStringAsync();
             }
 
             /// <summary>
