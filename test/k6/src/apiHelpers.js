@@ -19,24 +19,24 @@ export function buildQueryParametersForEndpoint(queryparams) {
   return query;
 }
 
-export function buildHeaderWithBearer(token){
-    var params = {
-        headers: {
-          Authorization: "Bearer " + token
-        }
-      };
+export function buildHeaderWithBearer(token) {
+  var params = {
+    headers: {
+      Authorization: "Bearer " + token
+    }
+  };
 
-      return params;
+  return params;
 }
 
-export function buildHeaderWithBasic(token){
+export function buildHeaderWithBasic(token) {
   var params = {
-      headers: {
-        Authorization: "Basic " + token
-      }
-    };
+    headers: {
+      Authorization: "Basic " + token
+    }
+  };
 
-    return params;
+  return params;
 }
 
 export function buildHeaderWithBearerAndContentType(token, contentType) {
@@ -44,6 +44,26 @@ export function buildHeaderWithBearerAndContentType(token, contentType) {
     headers: {
       Authorization: "Bearer " + token,
       "Content-Type": contentType
+    }
+  };
+
+  return params;
+}
+
+export function buildHeaderWithContentType(contentType) {
+  var params = {
+    headers: {
+      "Content-Type": contentType
+    }
+  };
+
+  return params;
+}
+
+export function buildHeaderWithCookie(name, value) {
+  var params = {
+    headers: {
+      Cookie: name + "=" + value,
     }
   };
 

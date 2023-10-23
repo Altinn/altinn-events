@@ -4,6 +4,9 @@
     docker-compose run k6 run /src/tests/events/get.js `
     -e tokenGeneratorUserName=autotest `
     -e tokenGeneratorUserPwd=*** `
+    -e mpClientId=*** `
+    -e mpKid=altinn-usecase-events `
+    -e encodedJwk=*** `
     -e env=*** `
     -e runFullTestSet=true
 
@@ -16,7 +19,7 @@ import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 const eventJson = JSON.parse(open("../../data/events/01-event.json"));
 import { generateJUnitXML, reportPath } from "../../report.js";
 import { addErrorCount, stopIterationOnFail } from "../../errorhandler.js";
-const scopes = "altinn:events.subscribe";
+const scopes = "altinn:events.subscribe altinn:serviceowner";
 
 export const options = {
     thresholds: {
@@ -48,7 +51,6 @@ function TC01_GetAllEvents(data) {
     var response, success;
 
     // we assume that /events/post.js has run at least once, publishing several events
-
     response = eventsApi.getCloudEvents(
         {
             after: 0,
@@ -60,7 +62,6 @@ function TC01_GetAllEvents(data) {
         },
         data.token
     );
-
     success = check(response, {
         "GET all cloud events: status is 200": (r) => r.status === 200,
     });

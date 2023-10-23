@@ -5,10 +5,15 @@
     -e env=*** `
     -e tokenGeneratorUserName=*** `
     -e tokenGeneratorUserPwd=*** `
+    -e mpClientId=*** `
+    -e mpKid=altinn-usecase-events `
+    -e encodedJwk=*** `
     -e app=apps-test `
     -e userId=*** `
     -e partyId=*** `
     -e personNumber=*** `
+    -e userName=*** `
+    -e userPassword=*** `
     -e runFullTestSet=true
 */
 
@@ -25,20 +30,20 @@ export const options = {
 };
 
 export function setup() {
-  var scopes = "altinn:serviceowner/instances.read";
+  var scopes = "altinn:serviceowner";
   const app = __ENV.app.toLowerCase();
   const org = "ttd";
-  const partyId = __ENV.partyId;
+  let partyId = __ENV.partyId;
 
   const runFullTestSet = __ENV.runFullTestSet
     ? __ENV.runFullTestSet.toLowerCase().includes("true")
     : false;
 
-  var userToken = setupToken.getAltinnTokenForUser(
-    __ENV.userId,
-    partyId,
-    __ENV.personNumber
-  );
+  var userToken = setupToken.getAltinnTokenForUser();
+
+  if (!partyId) {
+    partyId = setupToken.getPartyIdFromTokenClaim(userToken);
+  }
 
   var orgToken = setupToken.getAltinnTokenForOrg(scopes, org);
 
