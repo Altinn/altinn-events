@@ -4,6 +4,9 @@
     docker-compose run k6 run /src/tests/events/post.js `
     -e tokenGeneratorUserName=autotest `
     -e tokenGeneratorUserPwd=*** `
+    -e mpClientId=*** `
+    -e mpKid=altinn-usecase-events `
+    -e encodedJwk=*** `
     -e env=*** `
     -e runFullTestSet=true
 
@@ -16,7 +19,7 @@ import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 const eventJson = JSON.parse(open("../../data/events/01-event.json"));
 import { generateJUnitXML, reportPath } from "../../report.js";
 import { addErrorCount } from "../../errorhandler.js";
-const scopes = "altinn:events.publish";
+const scopes = "altinn:events.publish altinn:serviceowner";
 
 export const options = {
   thresholds: {
@@ -82,7 +85,7 @@ function TC02_PostValidCloudEventWithoutSubject(data) {
 }
 
 // 03 - POST valid cloud event without time
-function TC03_PostValidCloudEventWithoutTIme(data) {
+function TC03_PostValidCloudEventWithoutTime(data) {
   var response, success;
 
   var cloudEventWithoutTime = removePropFromCloudEvent(data.cloudEvent, "time");
@@ -118,11 +121,11 @@ function TC04_PostCloudEventWithoutBearerToken(data) {
 function TC05_PostCloudEventWithoutRequiredScopes(data) {
   var response, success;
 
-  var scopeLessToken = setupToken.getAltinnTokenForOrg();
+  var incorrectScopeToken = setupToken.getAltinnTokenForOrg('altinn:serviceowner');
 
   response = eventsApi.postCloudEvent(
     JSON.stringify(data.cloudEvent),
-    scopeLessToken
+    incorrectScopeToken
   );
 
   success = check(response, {
@@ -147,7 +150,7 @@ export default function (data) {
 
       TC02_PostValidCloudEventWithoutSubject(data);
 
-      TC03_PostValidCloudEventWithoutTIme(data);
+      TC03_PostValidCloudEventWithoutTime(data);
 
       TC04_PostCloudEventWithoutBearerToken(data);
 
