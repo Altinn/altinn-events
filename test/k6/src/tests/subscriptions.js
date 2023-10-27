@@ -30,7 +30,7 @@ const genericSubscription = JSON.parse(
   open("../data/subscriptions/02-generic-subscription.json")
 );
 
-const scopes = "altinn:events.publish altinn:events.subscribe";
+const scopes = "altinn:serviceowner altinn:events.publish altinn:events.subscribe";
 
 const webhookEndpoint = __ENV.webhookEndpoint;
 
@@ -77,6 +77,7 @@ function TC01_PostNewSubscriptionForAppEventSource(data) {
     data.orgToken
   );
 
+  console.log(response);
   var subscription = JSON.parse(response.body);
   success = check(response, {
     "01 - POST new subscription for app event source. Status is 201": (r) =>

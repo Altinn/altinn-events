@@ -64,5 +64,3 @@ $webhookToken =((Invoke-Webrequest @params).Content  | ConvertFrom-Json).uuid
 
 $webhookEndpoint= "https://webhook.site/" + $webhookToken + "/"
 ```
-
-
