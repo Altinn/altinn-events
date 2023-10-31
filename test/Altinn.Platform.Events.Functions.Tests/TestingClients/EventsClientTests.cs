@@ -1,4 +1,7 @@
-﻿using Altinn.Common.AccessTokenClient.Services;
+﻿using System.Net;
+using System.Security.Cryptography.X509Certificates;
+
+using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Clients;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
@@ -12,9 +15,6 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-
 using Xunit;
 
 namespace Altinn.Platform.Events.Functions.Tests.TestingClients
@@ -25,24 +25,23 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
         private readonly Mock<IKeyVaultService> _kvMock = new Mock<IKeyVaultService>();
         private readonly Mock<IAccessTokenGenerator> _atgMock = new Mock<IAccessTokenGenerator>();
 
-        CloudEvent _cloudEvent = new(CloudEventsSpecVersion.V1_0)
+        private CloudEvent _cloudEvent = new(CloudEventsSpecVersion.V1_0)
         {
             Id = "1337",
             Source = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
             Type = "automated.test"
         };
 
-        IOptions<PlatformSettings> _platformSettings = Options.Create(new PlatformSettings
+        private IOptions<PlatformSettings> _platformSettings = Options.Create(new PlatformSettings
         {
             ApiEventsEndpoint = "https://platform.test.altinn.cloud/events/api/v1/"
         });
 
-        IOptions<KeyVaultSettings> _kvSettings = Options.Create(new KeyVaultSettings
+        private IOptions<KeyVaultSettings> _kvSettings = Options.Create(new KeyVaultSettings
         {
             KeyVaultURI = "https://vg.no",
             PlatformCertSecretId = "secretId"
         });
-
 
         public EventsClientTests()
         {
@@ -88,17 +87,18 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             var sut = CreateTestInstance(handlerMock.Object);
 
             // Act
-
             await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.SaveCloudEvent(_cloudEvent));
 
             // Assert
             handlerMock.VerifyAll();
-            _loggerMock.Verify(x => x.Log(
+            _loggerMock.Verify(
+                x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("SaveCloudEvent with id 1337 failed with status code ServiceUnavailable")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once);
         }
 
         /// <summary>
@@ -132,17 +132,18 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             var sut = CreateTestInstance(handlerMock.Object);
 
             // Act
-
             await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.PostInbound(_cloudEvent));
 
             // Assert
             handlerMock.VerifyAll();
-            _loggerMock.Verify(x => x.Log(
+            _loggerMock.Verify(
+                x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("PostInbound event with id 1337 failed with status code ServiceUnavailable")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), 
+                Times.Once);
         }
 
         /// <summary>
@@ -176,19 +177,19 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             var sut = CreateTestInstance(handlerMock.Object);
 
             // Act
-
             await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.PostOutbound(_cloudEvent));
 
             // Assert
             handlerMock.VerifyAll();
-            _loggerMock.Verify(x => x.Log(
+            _loggerMock.Verify(
+                x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("PostOutbound event with id 1337 failed with status code ServiceUnavailable")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), 
+                Times.Once);
         }
-
 
         /// <summary>
         /// Verify that the endpoint the client sends a request to is set correctly
@@ -221,17 +222,18 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             var sut = CreateTestInstance(handlerMock.Object);
 
             // Act
-
             await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.ValidateSubscription(1337));
 
             // Assert
             handlerMock.VerifyAll();
-            _loggerMock.Verify(x => x.Log(
+            _loggerMock.Verify(
+                x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Validate subscription with id 1337 failed with status code ServiceUnavailable")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once);
         }
 
         [Fact]
@@ -245,17 +247,18 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             var sut = CreateTestInstance(handlerMock.Object);
 
             // Act
-
             await sut.ValidateSubscription(1337);
 
             // Assert
             handlerMock.VerifyAll();
-            _loggerMock.Verify(x => x.Log(
+            _loggerMock.Verify(
+                x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Attempting to validate non existing subscription 1337")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                Times.Once);
         }
 
         private static Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpStatusCode statusCode)
@@ -271,7 +274,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 })
                 .Verifiable();
 
-            return messageHandlerMock; ;
+            return messageHandlerMock;
         }
 
         private EventsClient CreateTestInstance(HttpMessageHandler messageHandlerMock)

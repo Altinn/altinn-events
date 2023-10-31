@@ -23,9 +23,23 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(Configuration)'=='Debug'">
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.507">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <AdditionalFiles Include="..\..\stylecop.json">
+      <Link>stylecop.json</Link>
+    </AdditionalFiles>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Events.Functions\Altinn.Platform.Events.Functions.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+  
 </Project>
