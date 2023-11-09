@@ -14,7 +14,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
         [Fact]
         public async Task Run_ConfirmDeserializationOCloudEventEnvelope_CloudEventPersisted()
         {
-
             // Arrange
             CloudEventEnvelope actualServiceInput = null;
 
@@ -31,7 +30,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                     " \"subject\": \"/party/50002108\"," +
                     " \"time\": \"2023-01-17T16:09:07.3146561Z\"," +
                     " \"alternativesubject\": \"/person/01014922047\"}}";
-
 
             Mock<IWebhookService> clientMock = new();
             clientMock.Setup(wh => wh.Send(It.Is<CloudEventEnvelope>(cee => cee.CloudEvent != null)))

@@ -31,7 +31,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             _serializedSubscription = "{\"EndPoint\":\"https://hooks.slack.com/services/org/channel\",\"Id\":1337,\"SourceFilter\":null,\"SubjectFilter\":null,\"AlternativeSubjectFilter\":null,\"TypeFilter\":null,\"Consumer\":\"/org/ttd\",\"CreatedBy\":null,\"Created\":\"0001-01-01T00:00:00\"}";
         }
 
-
         [Fact]
         public void CreateValidateEvent_SubscriptionMappedCorrectlyIntoCloudEventEnvelope()
         {
@@ -49,7 +48,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                 null,
                 null);
 
-
             // Act
             var actual = sut.CreateValidateEvent(_subscription);
 
@@ -63,7 +61,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
         [Fact]
         public async Task Run_SendWebhookSucceeds_ValidateSubscriptionCalled()
         {
-
             // Arrange
             Mock<IWebhookService> webhookServiceMock = new();
             webhookServiceMock.Setup(wh => wh.Send(It.IsAny<CloudEventEnvelope>()))
@@ -90,7 +87,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
         [Fact]
         public async Task Run_SendWebhookFails_ValidateSubscriptionNotCalled()
         {
-
             // Arrange
             Mock<IWebhookService> webhookServiceMock = new();
             webhookServiceMock.Setup(wh => wh.Send(It.IsAny<CloudEventEnvelope>()))

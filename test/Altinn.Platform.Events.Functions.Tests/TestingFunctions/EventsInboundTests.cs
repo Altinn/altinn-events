@@ -13,7 +13,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
         [Fact]
         public async Task Run_ConfirmDeserializationOfEvent_AlternativeSubject()
         {
-
             // Arrange
             string serializedCloudEvent = "{" +
                 "\"id\":\"f276d3da-9b72-492b-9fee-9cf71e2826a2\"," +
@@ -35,14 +34,12 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             await sut.Run(serializedCloudEvent, null);
 
             // Assert
-
             clientMock.VerifyAll();
         }
 
         [Fact]
         public async Task Run_ConfirmDeserializationOfEvent_TwoExtensionAttributes()
         {
-
             // Arrange
             string serializedCloudEvent = "{" +
                 "\"id\":\"f276d3da-9b72-492b-9fee-9cf71e2826a2\"," +
@@ -52,7 +49,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                 "\"extenstionatt1\":\"Stephanie er kul\"," +
                 "\"extenstionatt2\":\"2.718281828\"" +
                 "}";
-
 
             Mock<IEventsClient> clientMock = new();
             clientMock.Setup(c => c.PostOutbound(It.Is<CloudEvent>(c => AssertExpectedCloudEvent(c, 2, "extenstionatt1", "Stephanie er kul"))))
@@ -64,14 +60,12 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             await sut.Run(serializedCloudEvent, null);
 
             // Assert
-
             clientMock.VerifyAll();
         }
 
         [Fact]
         public async Task Run_ConfirmDeserializationOfEvent_DataPropertiesPerserved()
         {
-
             // Arrange
             CloudEvent serviceInput = null;
 
@@ -86,7 +80,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                 "\"dataschema\":\"https://github.com/cloudevents\"" +
                 "}";
 
-
             Mock<IEventsClient> clientMock = new();
             clientMock.Setup(c => c.PostOutbound(It.IsAny<CloudEvent>()))
                 .Callback<CloudEvent>(e => serviceInput = e)
@@ -98,7 +91,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             await sut.Run(serializedCloudEvent, null);
 
             // Assert
-
             clientMock.VerifyAll();
             Assert.NotNull(serviceInput);
             Assert.Contains("<heading>Reminder</heading>", serviceInput.Data.ToString());

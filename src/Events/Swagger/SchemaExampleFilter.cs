@@ -68,7 +68,8 @@ namespace Altinn.Platform.Events.Swagger
                                 ["consumer"] = new OpenApiString("/user/12345"),
                                 ["createdBy"] = new OpenApiString("/user/12345"),
                                 ["created"] = new OpenApiString("2022-07-27T13:14:14.395226Z")
-                            },            new OpenApiObject
+                            },
+                            new OpenApiObject
                             {
                                 ["endPoint"] = new OpenApiString("https://hooks.slack.com/services/ID/CODE"),
                                 ["id"] = new OpenApiInteger(2),

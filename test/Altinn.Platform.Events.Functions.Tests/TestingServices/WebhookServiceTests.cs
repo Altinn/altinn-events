@@ -1,4 +1,6 @@
-﻿using Altinn.Platform.Events.Functions.Models;
+﻿using System.Net;
+
+using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
@@ -9,22 +11,19 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 
-using System.Net;
-
 using Xunit;
 
 namespace Altinn.Platform.Events.Functions.Tests.TestingServices
 {
     public class WebhookServiceTests
     {
-        private const string cloudEventId = "1337";
+        private const string _cloudEventId = "1337";
         private CloudEvent _minimalCloudEvent = new(CloudEventsSpecVersion.V1_0)
         {
-            Id = cloudEventId,
+            Id = _cloudEventId,
             Source = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
             Type = "automated.test"
         };
-
 
         [Fact]
         public void GetPayload_CloudEventExtentionAttributesPersisted()
@@ -33,7 +32,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             string expectedPayload =
                "{" +
                "\"specversion\":\"1.0\"," +
-               $"\"id\":\"{cloudEventId}\"," +
+               $"\"id\":\"{_cloudEventId}\"," +
                "\"source\":\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\"," +
                "\"type\":\"automated.test\"," +
                "\"atta\":\"If the wolf eats your grandma\"," +
@@ -42,7 +41,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
 
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
-                Id = cloudEventId,
+                Id = _cloudEventId,
                 Source = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
                 Type = "automated.test"
             };
@@ -77,7 +76,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                "\"text\": " +
                    "\"{" +
                    "\\\"specversion\\\":\\\"1.0\\\"," +
-                   $"\\\"id\\\":\\\"{cloudEventId}\\\"," +
+                   $"\\\"id\\\":\\\"{_cloudEventId}\\\"," +
                    "\\\"source\\\":\\\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\\\"," +
                    "\\\"type\\\":\\\"automated.test\\\"" +
                    "}\"" +
@@ -87,7 +86,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             {
                 CloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
                 {
-                    Id = cloudEventId,
+                    Id = _cloudEventId,
                     Source = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
                     Type = "automated.test"
                 },
@@ -104,7 +103,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
 
             // Assert
             Assert.Equal(expectedPayload, actual);
-
         }
 
         [Fact]
@@ -114,14 +112,14 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             string expectedPayload =
                "{" +
                "\"specversion\":\"1.0\"," +
-               $"\"id\":\"{cloudEventId}\"," +
+               $"\"id\":\"{_cloudEventId}\"," +
                "\"source\":\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\"," +
                "\"type\":\"automated.test\"" +
                "}";
 
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
-                Id = cloudEventId,
+                Id = _cloudEventId,
                 Source = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
                 Type = "automated.test"
             };
@@ -162,7 +160,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             // Act
             await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.Send(cloudEventEnvelope));
 
-
             // Assert
             loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(2));
             handlerMock.VerifyAll();
@@ -186,7 +183,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             // Act
             await sut.Send(cloudEventEnvelope);
 
-
             // Assert
             loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
             handlerMock.VerifyAll();
@@ -204,7 +200,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 })
                 .Verifiable();
 
-            return messageHandlerMock; ;
+            return messageHandlerMock;
         }
     }
 }
