@@ -9,7 +9,7 @@ WORKDIR Events/
 RUN dotnet build Altinn.Platform.Events.csproj -c Release -o /app_output
 RUN dotnet publish Altinn.Platform.Events.csproj -c Release -o /app_output
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0.14-alpine3.18 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.0-alpine3.18 AS final
 EXPOSE 5080
 WORKDIR /app
 COPY --from=build /app_output .
