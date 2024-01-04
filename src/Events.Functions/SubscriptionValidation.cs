@@ -10,7 +10,6 @@ using Altinn.Platform.Events.Models;
 using CloudNative.CloudEvents;
 
 using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Functions
@@ -42,9 +41,7 @@ namespace Altinn.Platform.Events.Functions
         /// it will call subscription service
         /// </summary>
         [FunctionName("SubscriptionValidation")]
-#pragma warning disable IDE0060 // Remove unused parameter
-        public async Task Run([QueueTrigger("subscription-validation", Connection = "QueueStorage")] string item, ILogger log)
-#pragma warning restore IDE0060 // Remove unused parameter
+        public async Task Run([QueueTrigger("subscription-validation", Connection = "QueueStorage")] string item)
         {
             Subscription subscription = Subscription.Deserialize(item);
             CloudEventEnvelope cloudEventEnvelope = CreateValidateEvent(subscription);

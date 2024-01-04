@@ -31,7 +31,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             EventsInbound sut = new EventsInbound(clientMock.Object);
 
             // Act
-            await sut.Run(serializedCloudEvent, null);
+            await sut.Run(serializedCloudEvent);
 
             // Assert
             clientMock.VerifyAll();
@@ -57,7 +57,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             EventsInbound sut = new EventsInbound(clientMock.Object);
 
             // Act
-            await sut.Run(serializedCloudEvent, null);
+            await sut.Run(serializedCloudEvent);
 
             // Assert
             clientMock.VerifyAll();
@@ -88,7 +88,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             EventsInbound sut = new EventsInbound(clientMock.Object);
 
             // Act
-            await sut.Run(serializedCloudEvent, null);
+            await sut.Run(serializedCloudEvent);
 
             // Assert
             clientMock.VerifyAll();

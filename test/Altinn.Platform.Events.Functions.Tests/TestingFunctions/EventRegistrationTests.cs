@@ -42,7 +42,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             // Act
             try
             {
-                await sut.Run(serializedCloudEvent, null);
+                await sut.Run(serializedCloudEvent);
             }
             catch (HttpRequestException)
             {
@@ -69,7 +69,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             EventsRegistration sut = new EventsRegistration(clientMock.Object);
 
             // Act
-            await sut.Run(serializedCloudEvent, null);
+            await sut.Run(serializedCloudEvent);
 
             // Assert
             clientMock.Verify(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()), Times.Once);

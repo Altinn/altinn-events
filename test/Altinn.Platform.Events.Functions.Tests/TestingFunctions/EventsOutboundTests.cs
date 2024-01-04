@@ -39,7 +39,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             var sut = new EventsOutbound(clientMock.Object);
 
             // Act
-            await sut.Run(serializedCloudEnvelope, null);
+            await sut.Run(serializedCloudEnvelope);
 
             // Assert
             clientMock.VerifyAll();

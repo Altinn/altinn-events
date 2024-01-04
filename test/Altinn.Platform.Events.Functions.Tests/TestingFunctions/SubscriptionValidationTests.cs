@@ -77,7 +77,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                 clientMock.Object);
 
             // Act
-            await sut.Run(_serializedSubscription, null);
+            await sut.Run(_serializedSubscription);
 
             // Assert
             webhookServiceMock.VerifyAll();
@@ -105,7 +105,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             // Act
             try
             {
-                await sut.Run(_serializedSubscription, null);
+                await sut.Run(_serializedSubscription);
             }
             catch (HttpRequestException)
             {
