@@ -5,7 +5,6 @@ using Altinn.Platform.Events.Functions.Extensions;
 using CloudNative.CloudEvents;
 
 using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions
 {
