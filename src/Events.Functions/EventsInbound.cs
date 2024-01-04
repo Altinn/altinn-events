@@ -6,7 +6,6 @@ using Altinn.Platform.Events.Functions.Extensions;
 using CloudNative.CloudEvents;
 
 using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions
 {
@@ -29,9 +28,7 @@ namespace Altinn.Platform.Events.Functions
         /// Retrieves messages from events-inbound queue and push events controller
         /// </summary>
         [FunctionName("EventsInbound")]
-#pragma warning disable IDE0060 // Remove unused parameter
-        public async Task Run([QueueTrigger("events-inbound", Connection = "QueueStorage")] string item, ILogger log)
-#pragma warning restore IDE0060 // Remove unused parameter
+        public async Task Run([QueueTrigger("events-inbound", Connection = "QueueStorage")] string item)
         {
             CloudEvent cloudEvent = item.DeserializeToCloudEvent();
             await _eventsClient.PostOutbound(cloudEvent);
