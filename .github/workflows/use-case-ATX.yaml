@@ -21,7 +21,7 @@ jobs:
     - name: Run app-events use case tests
       uses: grafana/k6-action@v0.3.1
       with:
-        filename: test/k6/tests/app-events.js
+        filename: test/k6/src/tests/app-events.js
         flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
     - name: Run events use case tests (POST)
       if: always()
