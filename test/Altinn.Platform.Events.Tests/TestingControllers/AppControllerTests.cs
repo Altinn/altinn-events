@@ -515,7 +515,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -545,7 +545,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -881,7 +881,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("The 'From' parameter must specify timezone.", actual.Detail);
+                Assert.StartsWith("The 'From' parameter must specify timezone.", actual.Extensions["detail"].ToString());
             }
 
             /// <summary>
@@ -911,7 +911,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("The 'To' parameter must specify timezone.", actual.Detail);
+                Assert.StartsWith("The 'To' parameter must specify timezone.", actual.Extensions["detail"].ToString());
             }
 
             private HttpClient GetTestClient(IEventsService eventsService)
