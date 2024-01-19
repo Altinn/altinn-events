@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken;
+using Altinn.Common.AccessToken.Configuration;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Common.PEP.Authorization;
@@ -26,7 +27,6 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Swagger;
 using Altinn.Platform.Telemetry;
 
-using AltinnCore.Authentication.Constants;
 using AltinnCore.Authentication.JwtCookie;
 
 using Azure.Identity;

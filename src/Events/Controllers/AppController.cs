@@ -251,7 +251,7 @@ namespace Altinn.Platform.Events.Controllers
                     nextUriBuilder.Append($"&{queryParam.Key}={queryParam.Value}");
                 }
 
-                Response.Headers.Add("next", nextUriBuilder.ToString());
+                Response.Headers["next"] = nextUriBuilder.ToString();
             }
         }
 

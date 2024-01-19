@@ -1,6 +1,5 @@
 using System;
 using System.Net.Http;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
 namespace Altinn.Platform.Events.Exceptions
@@ -8,7 +7,6 @@ namespace Altinn.Platform.Events.Exceptions
     /// <summary>
     /// Exception class to hold exceptions when talking to the platform REST services
     /// </summary>
-    [Serializable]
     public class PlatformHttpException : Exception
     {
         /// <summary>
@@ -37,13 +35,6 @@ namespace Altinn.Platform.Events.Exceptions
         public PlatformHttpException(HttpResponseMessage response, string message) : base(message)
         {
             this.Response = response;
-        }
-
-        /// <summary>
-        /// Add serialization info.
-        /// </summary>
-        protected PlatformHttpException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
         }
     }
 }
