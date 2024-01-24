@@ -188,7 +188,7 @@ namespace Altinn.Platform.Events.Controllers
                     nextUriBuilder.Append($"&subject={subject}");
                 }
 
-                Response.Headers.Add("next", nextUriBuilder.ToString());
+                Response.Headers["next"] = nextUriBuilder.ToString();
             }
         }
     }
