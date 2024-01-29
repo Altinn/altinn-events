@@ -44,6 +44,32 @@ namespace Altinn.Platform.Events.Tests.Utils
             return null;
         }
 
+        public static CloudEvent Clone(this CloudEvent cloudEvent)
+        {
+            CloudEvent copy = new CloudEvent(cloudEvent.SpecVersion)
+            {
+                Id = cloudEvent.Id,
+                Data = cloudEvent.Data,
+                DataContentType = cloudEvent.DataContentType,
+                DataSchema = cloudEvent.DataSchema,
+                Source = cloudEvent.Source,
+                Subject = cloudEvent.Subject,
+                Time = cloudEvent.Time,
+                Type = cloudEvent.Type
+            };
+            if (cloudEvent["resource"] is not null)
+            {
+                copy["resource"] = cloudEvent["resource"];
+            }
+
+            if (cloudEvent["resourceinstance"] is not null)
+            {
+                copy["resourceinstance"] = cloudEvent["resourceinstance"];
+            }
+
+            return copy;
+        }
+
         private static string GetXacmlResponsePath()
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(TestdataUtil).Assembly.Location).LocalPath);

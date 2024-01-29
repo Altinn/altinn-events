@@ -8,8 +8,6 @@ using Altinn.Platform.Events.Extensions;
 
 using CloudNative.CloudEvents;
 
-using Microsoft.ApplicationInsights.AspNetCore;
-
 namespace Altinn.Platform.Events.Authorization
 {
     /// <summary>
@@ -114,6 +112,8 @@ namespace Altinn.Platform.Events.Authorization
             {
                 resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.ResourceInstance, cloudEvent["resourceinstance"].ToString(), defaultType, defaultIssuer));
             }
+
+            XacmlMapperHelper.AddResourceReporteeAttributeFromCloudEventSubject(cloudEvent, resourceCategory);
 
             return resourceCategory;
         }
