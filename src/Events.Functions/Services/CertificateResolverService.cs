@@ -1,11 +1,7 @@
 using System;
-using System.IO;
-using System.Net;
-using System.Net.Http;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
-using Altinn.Common.AccessTokenClient.Configuration;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -14,8 +10,10 @@ using Microsoft.Extensions.Options;
 namespace Altinn.Platform.Events.Functions.Services
 {
     /// <summary>
-    /// Class to resolve certificate to sign JWT token uses as Access token
+    /// Class to resolve certificate to generate an access token
     /// </summary>
+    /// <remarks>This class is excluded from code coverage because it has no logic to be tested.</remarks>
+    [ExcludeFromCodeCoverage]
     public class CertificateResolverService : ICertificateResolverService
     {
         private readonly ILogger<ICertificateResolverService> _logger;
