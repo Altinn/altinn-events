@@ -24,6 +24,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
         private readonly Mock<ILogger<IEventsClient>> _loggerMock = new Mock<ILogger<IEventsClient>>();
         private readonly Mock<IKeyVaultService> _kvMock = new Mock<IKeyVaultService>();
         private readonly Mock<IAccessTokenGenerator> _atgMock = new Mock<IAccessTokenGenerator>();
+        private readonly Mock<ICertificateResolverService> _srMock = new Mock<ICertificateResolverService>();
 
         private CloudEvent _cloudEvent = new(CloudEventsSpecVersion.V1_0)
         {
@@ -64,9 +65,8 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             var sut = new EventsClient(
                 new HttpClient(handlerMock.Object),
                 _atgMock.Object,
-                _kvMock.Object,
+                _srMock.Object,
                 _platformSettings,
-                _kvSettings,
                 _loggerMock.Object);
 
             // Act
@@ -282,9 +282,8 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             return new EventsClient(
                   new HttpClient(messageHandlerMock),
                   _atgMock.Object,
-                  _kvMock.Object,
+                  _srMock.Object,
                   _platformSettings,
-                  _kvSettings,
                   _loggerMock.Object);
         }
     }

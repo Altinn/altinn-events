@@ -40,6 +40,7 @@ namespace Altinn.Platform.Events.Functions
             builder.Services.AddSingleton<IQueueProcessorFactory, CustomQueueProcessorFactory>();
             builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
             builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
+            builder.Services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
             builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
             builder.Services.AddHttpClient<IEventsClient, EventsClient>();
             builder.Services.AddHttpClient<IWebhookService, WebhookService>();
