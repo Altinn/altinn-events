@@ -22,8 +22,8 @@ namespace Altinn.Platform.Events.Functions.Services
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
         private DateTime _expiryTime;
-        private static X509Certificate2 _cachedX509Certificate = null;
-        private static readonly object _lockObject = new object();
+        private X509Certificate2 _cachedX509Certificate = null;
+        private readonly object _lockObject = new object();
 
         /// <summary>
         /// Default constructor
