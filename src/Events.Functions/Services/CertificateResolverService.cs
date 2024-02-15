@@ -17,6 +17,7 @@ namespace Altinn.Platform.Events.Functions.Services
     public class CertificateResolverService : ICertificateResolverService
     {
         private readonly ILogger<ICertificateResolverService> _logger;
+        private readonly CertificateResolverSettings _certificateResolverSettings;
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
         private DateTime _expiryTime;
@@ -26,15 +27,18 @@ namespace Altinn.Platform.Events.Functions.Services
         /// <summary>
         /// Default constructor
         /// </summary>
-       /// <param name="logger">The logger</param>
+        /// <param name="logger">The logger</param>
+        /// <param name="certificateResolverSettings">Settings for certificate resolver</param>
         /// <param name="keyVaultService">Key vault service</param>
         /// <param name="keyVaultSettings">Key vault settings</param>
         public CertificateResolverService(
             ILogger<ICertificateResolverService> logger,
+            IOptions<CertificateResolverSettings> certificateResolverSettings,
             IKeyVaultService keyVaultService,
             IOptions<KeyVaultSettings> keyVaultSettings)
         {
             _logger = logger;
+            _certificateResolverSettings = certificateResolverSettings.Value;
             _keyVaultService = keyVaultService;
             _keyVaultSettings = keyVaultSettings.Value;
             _expiryTime = DateTime.MinValue;
@@ -60,7 +64,7 @@ namespace Altinn.Platform.Events.Functions.Services
                         X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
                 }
 
-                _expiryTime = DateTime.UtcNow.AddHours(1); // Set the expiry time to one hour from now
+                _expiryTime = DateTime.UtcNow.AddHours(_certificateResolverSettings.CacheCertLifetimeInSeconds - 5); // Set the expiry time to one hour from now
                 _logger.LogInformation("Generated new access token.");
             }
 
