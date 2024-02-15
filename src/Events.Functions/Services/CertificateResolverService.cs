@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Functions.Services
                         X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
                 }
 
-                _expiryTime = DateTime.UtcNow.AddHours(_certificateResolverSettings.CacheCertLifetimeInSeconds - 5); // Set the expiry time to one hour from now
+                _expiryTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds - 5); // Set the expiry time to one hour from now
                 _logger.LogInformation("Generated new access token.");
             }
 
