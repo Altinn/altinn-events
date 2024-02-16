@@ -8,8 +8,6 @@ using Altinn.Platform.Events.Extensions;
 
 using CloudNative.CloudEvents;
 
-using Microsoft.ApplicationInsights.AspNetCore;
-
 namespace Altinn.Platform.Events.Authorization
 {
     /// <summary>

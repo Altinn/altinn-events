@@ -29,8 +29,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <summary>
         /// Retrieves all subscriptions for the given consumer
         /// </summary>
-        /// <param name="consumer">The subscription consumer</param>
-        /// <returns>A list of subscriptions</returns>
-        public Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions(string consumer);
+        /// <returns>A list of subscriptions created by the current user.</returns>
+        public Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions();
     }
 }

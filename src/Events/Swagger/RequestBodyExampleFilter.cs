@@ -85,7 +85,7 @@ namespace Altinn.Platform.Events.Swagger
                  {
                     ("endpoint", "https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
                     ("sourceFilter", "https://skd.apps.altinn.no/skd/mva-melding"),
-                    ("alternativeSubjectFilter", "/org/897069651"),
+                    ("alternativeSubjectFilter", "/organisation/897069651"),
                     ("typeFilter", "app.instance.process.completed")
                  })),
                  ("Org subscription to events of all their apps",

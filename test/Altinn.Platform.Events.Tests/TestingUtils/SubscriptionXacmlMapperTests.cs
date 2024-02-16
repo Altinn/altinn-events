@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
                 EndPoint = new Uri("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
                 SourceFilter = new Uri("https://ttd.apps.altinn.no/ttd/apps-test"),
                 ResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test",
-                AlternativeSubjectFilter = "/org/897069650",
+                AlternativeSubjectFilter = "/organisation/897069650",
                 SubjectFilter = "/party/500000",
                 TypeFilter = "app.instance.process.completed",
                 Consumer = "/org/ttd"
@@ -77,7 +77,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             {
                 EndPoint = new Uri("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
                 ResourceFilter = "urn:altinn:resource:automated-tests",
-                AlternativeSubjectFilter = "/org/897069650",
+                AlternativeSubjectFilter = "/organisation/897069650",
                 TypeFilter = "random.event.type",
                 Consumer = "/org/ttd"
             };
