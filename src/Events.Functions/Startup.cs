@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions;
 using Altinn.Platform.Events.Functions.Clients;
@@ -25,6 +26,8 @@ namespace Altinn.Platform.Events.Functions
         /// <summary>
         /// Gets functions project configuration
         /// </summary>
+        /// <remarks>This class is excluded from code coverage because it has no logic to be tested.</remarks>
+        [ExcludeFromCodeCoverage]
         public void Configure(IWebJobsBuilder builder)
         {
             builder.Services.AddOptions<PlatformSettings>()
