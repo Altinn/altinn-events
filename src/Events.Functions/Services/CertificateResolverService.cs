@@ -48,12 +48,11 @@ namespace Altinn.Platform.Events.Functions.Services
         /// <returns></returns>
         public async Task<X509Certificate2> GetCertificateAsync()
         {
-#pragma warning disable S125 // Noncompliant code: Excluded from SonarCloud analysis as it is hard to test private property
             if (_reloadTime > DateTime.UtcNow && _cachedX509Certificate != null)
             {
                 return _cachedX509Certificate;
             }
-#pragma warning restore S125 // Noncompliant code: Excluded from SonarCloud analysis as it is hard to test private property
+
             string certBase64 = await _keyVaultService.GetCertificateAsync(
                 _keyVaultSettings.KeyVaultURI,
                 _keyVaultSettings.PlatformCertSecretId);
@@ -65,6 +64,7 @@ namespace Altinn.Platform.Events.Functions.Services
                     (string)null,
                     X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
                 _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds);
+                _logger.LogInformation("Certificate reloaded.");
             }
 
             return _cachedX509Certificate;
