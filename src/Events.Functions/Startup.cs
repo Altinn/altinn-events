@@ -37,6 +37,11 @@ namespace Altinn.Platform.Events.Functions
             {
                 configuration.GetSection("KeyVault").Bind(settings);
             });
+            builder.Services.AddOptions<CertificateResolverSettings>()
+            .Configure<IConfiguration>((settings, configuration) =>
+            {
+                configuration.GetSection("CertificateResolver").Bind(settings);
+            });
             builder.Services.AddSingleton<IQueueProcessorFactory, CustomQueueProcessorFactory>();
             builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
             builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
