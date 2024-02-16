@@ -70,12 +70,9 @@ namespace Altinn.Platform.Events.Controllers
 
             bool isAppSubscription = IsAppSubscription(subscriptionRequest);
 
-            if (!isAppSubscription)
+            if (!isAppSubscription && !User.HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
             {
-                if (!User.HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
-                {
-                    return Forbid();
-                }
+                return Forbid();
             }
 
             if (subscriptionRequest.EndPoint == null || !Uri.IsWellFormedUriString(subscriptionRequest.EndPoint.ToString(), UriKind.Absolute))
