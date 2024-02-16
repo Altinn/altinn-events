@@ -48,21 +48,23 @@ namespace Altinn.Platform.Events.Functions.Services
         /// <returns></returns>
         public async Task<X509Certificate2> GetCertificateAsync()
         {
-            if (DateTime.UtcNow > _reloadTime || _cachedX509Certificate == null)
+#pragma warning disable S125 // Noncompliant code: Excluded from SonarCloud analysis as it is hard to test private property
+            if (_reloadTime > DateTime.UtcNow && _cachedX509Certificate != null)
             {
-                string certBase64 = await _keyVaultService.GetCertificateAsync(
-                    _keyVaultSettings.KeyVaultURI,
-                    _keyVaultSettings.PlatformCertSecretId);
+                return _cachedX509Certificate;
+            }
+#pragma warning restore S125 // Noncompliant code: Excluded from SonarCloud analysis as it is hard to test private property
+            string certBase64 = await _keyVaultService.GetCertificateAsync(
+                _keyVaultSettings.KeyVaultURI,
+                _keyVaultSettings.PlatformCertSecretId);
 
-                lock (_lockObject)
-                {
-                    _cachedX509Certificate = new X509Certificate2(
-                        Convert.FromBase64String(certBase64),
-                        (string)null,
-                        X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
-                    _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds); // Set the expiry time to one hour from now
-                    _logger.LogInformation("Generated new access token.");
-                }
+            lock (_lockObject)
+            {
+                _cachedX509Certificate = new X509Certificate2(
+                    Convert.FromBase64String(certBase64),
+                    (string)null,
+                    X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds);
             }
 
             return _cachedX509Certificate;
