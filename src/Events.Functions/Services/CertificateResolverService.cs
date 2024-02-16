@@ -12,8 +12,6 @@ namespace Altinn.Platform.Events.Functions.Services
     /// <summary>
     /// Class to resolve certificate to generate an access token
     /// </summary>
-    /// <remarks>This class is excluded from code coverage because it has no logic to be tested.</remarks>
-    [ExcludeFromCodeCoverage]
     public class CertificateResolverService : ICertificateResolverService
     {
         private readonly ILogger<ICertificateResolverService> _logger;
