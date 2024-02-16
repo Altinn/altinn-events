@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Functions.Services
         private readonly CertificateResolverSettings _certificateResolverSettings;
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
-        private DateTime _expiryTime;
+        private DateTime _reloadTime;
         private X509Certificate2 _cachedX509Certificate = null;
         private readonly object _lockObject = new object();
 
@@ -41,7 +41,7 @@ namespace Altinn.Platform.Events.Functions.Services
             _certificateResolverSettings = certificateResolverSettings.Value;
             _keyVaultService = keyVaultService;
             _keyVaultSettings = keyVaultSettings.Value;
-            _expiryTime = DateTime.MinValue;
+            _reloadTime = DateTime.MinValue;
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Functions.Services
         /// <returns></returns>
         public async Task<X509Certificate2> GetCertificateAsync()
         {
-            if (_expiryTime > DateTime.UtcNow && _cachedX509Certificate != null)
+            if (_reloadTime > DateTime.UtcNow && _cachedX509Certificate != null)
             {
                 return _cachedX509Certificate;
             }
@@ -65,7 +65,7 @@ namespace Altinn.Platform.Events.Functions.Services
                     Convert.FromBase64String(certBase64),
                     (string)null,
                     X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
-                _expiryTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds - 5); // Set the expiry time to one hour from now
+                _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds); // Set the expiry time to one hour from now
                 _logger.LogInformation("Generated new access token.");
             }
 
