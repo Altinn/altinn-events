@@ -23,7 +23,7 @@ public static class XacmlMapperHelper
     private const string ClaimOrg = "urn:altinn:org";
     private const string ClaimPartyID = "urn:altinn:partyid";
 
-    // Using z in organization on purpose, it's what Authorization is using
+    // urn:altinn:organizationnumber is a value defined by Authorization so we need to use 'z' here.
     private const string ClaimOrganizationNumber = "urn:altinn:organizationnumber";
 
     /// <summary>
