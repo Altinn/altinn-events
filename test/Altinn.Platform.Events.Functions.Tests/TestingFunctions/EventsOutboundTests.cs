@@ -19,7 +19,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
 
             string serializedCloudEnvelope = "{" +
                 "\"Pushed\": \"2023-01-17T16:09:10.9090958+00:00\"," +
-                "  \"Endpoint\": \"https://hooks.slack.com/services/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\"," +
+                "  \"Endpoint\": \"https://hooks.slack.com/services/weebhook-endpoint\"," +
                 "  \"Consumer\": \"/org/ttd\"," +
                 "  \"SubscriptionId\": 427," +
                 "  \"CloudEvent\": {" +
