@@ -1,7 +1,7 @@
 # Labels for pull requests
 
 review/db-migration:
-  - all:
+  - any:
     - changed-files:
         - any-glob-to-any-file:
           - 'src/Events/Migration/**'
