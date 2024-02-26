@@ -99,7 +99,7 @@ namespace Altinn.Platform.Events.Swagger
                  ("Subscription with Slack webhook",
                  CreateOpenApiObject(new List<(string Name, string Value)>()
                  {
-                     ("endpoint", "https://hooks.slack.com/services/TSRSASBVNF3/ADRRSDSSSAahttsasdfasFO3w83456ss"),
+                     ("endpoint", "https://hooks.slack.com/services/{include-webhook}"),
                      ("resourceFilter", "urn:altinn:resource:altinnapp.ttd.apps-test")
                  }))
             };
