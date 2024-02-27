@@ -243,7 +243,7 @@ export default function (data) {
 
       TC05_GetSubscriptionById(data, appSubscriptionId);
 
-   //   TC06_DeleteSubscription(data, appSubscriptionId);
+      TC06_DeleteSubscription(data, appSubscriptionId);
 
       const genericSubscriptionId =
         TC07_PostSubscriptionExternalEventSource(data);
