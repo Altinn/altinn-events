@@ -77,7 +77,6 @@ function TC01_PostNewSubscriptionForAppEventSource(data) {
     data.orgToken
   );
 
-  console.log(response);
   var subscription = JSON.parse(response.body);
   success = check(response, {
     "01 - POST new subscription for app event source. Status is 201": (r) =>
@@ -244,7 +243,7 @@ export default function (data) {
 
       TC05_GetSubscriptionById(data, appSubscriptionId);
 
-      TC06_DeleteSubscription(data, appSubscriptionId);
+   //   TC06_DeleteSubscription(data, appSubscriptionId);
 
       const genericSubscriptionId =
         TC07_PostSubscriptionExternalEventSource(data);
