@@ -133,9 +133,11 @@ namespace Altinn.Platform.Events.Services
         {
             int partyId = 0;
 
-            /* Both OrgPrefix and OrganisationPrefix is assumed to give us the organisation number of an 
-             * organisation. OrgPrefix is NOT for the application owner acronym like it is many other 
-             * places. OrgPrefix was kept as is when adding OrganisationPrefix for backwards compability.
+            /* Both OrgPrefix and OrganisationPrefix is assumed to give us the organisation number of an
+             * actor (instance owner). OrganisationPrefix is new while OrgPrefix was kept for backwards 
+             * compability. There is a good chance that end user systems are using OrgPrefix to filter 
+             * events for customers. We want to change over to OrganisationPrefix because OrgPrefix
+             * is generally associated with the application owner acronym.
              */
 
             if (alternativeSubject.StartsWith(OrgPrefix))
@@ -143,15 +145,15 @@ namespace Altinn.Platform.Events.Services
                 string orgNo = alternativeSubject.Replace(OrgPrefix, string.Empty);
                 partyId = await _register.PartyLookup(orgNo, null);
             }
-            else if (alternativeSubject.StartsWith(PersonPrefix))
-            {
-                string personNo = alternativeSubject.Replace(PersonPrefix, string.Empty);
-                partyId = await _register.PartyLookup(null, personNo);
-            }
             else if (alternativeSubject.StartsWith(OrganisationPrefix))
             {
                 string orgNo = alternativeSubject.Replace(OrganisationPrefix, string.Empty);
                 partyId = await _register.PartyLookup(orgNo, null);
+            }
+            else if (alternativeSubject.StartsWith(PersonPrefix))
+            {
+                string personNo = alternativeSubject.Replace(PersonPrefix, string.Empty);
+                partyId = await _register.PartyLookup(null, personNo);
             }
 
             if (partyId != 0)
