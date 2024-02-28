@@ -13,7 +13,7 @@ public class XacmlMapperHelperTests
     [InlineData("/user/342345", "urn:altinn:userid", "342345")]
     [InlineData("/org/ttd", "urn:altinn:org", "ttd")]
     [InlineData("/party/532345", "urn:altinn:partyid", "532345")]
-    [InlineData("/organisation/876765454", "urn:altinn:organizationnumber", "876765454")]
+    [InlineData("/organisation/876765454", "urn:altinn:organization:identifier-no", "876765454")]
     public void CreateSubjectAttributes_Assert_correct_attribute_id_and_value(string subject, string attributId, string value)
     {
         // Act

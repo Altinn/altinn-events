@@ -23,8 +23,8 @@ public static class XacmlMapperHelper
     private const string ClaimOrg = "urn:altinn:org";
     private const string ClaimPartyID = "urn:altinn:partyid";
 
-    // urn:altinn:organizationnumber is a value defined by Authorization so we need to use 'z' here.
-    private const string ClaimOrganizationNumber = "urn:altinn:organizationnumber";
+    // urn:altinn:organization:identifier-no is a value defined by Authorization so we need to use 'z' here.
+    private const string ClaimOrganizationNumber = "urn:altinn:organization:identifier-no";
 
     /// <summary>
     /// Generates subject attribute list
