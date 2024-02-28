@@ -126,10 +126,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
                 .ReturnsAsync(isAuthorized);
 
-            if (repoMock == null)
-            {
-                repoMock = new();
-            }
+            repoMock ??= new();
 
             repoMock
                  .Setup(r => r.FindSubscription(It.IsAny<Subscription>(), It.IsAny<CancellationToken>()))
@@ -146,13 +143,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                         });
 
             return new GenericSubscriptionService(
-                repoMock.Object,
-                new Mock<IRegisterService>().Object,
-                authorizationMock.Object,
-                new EventsQueueClientMock(),
-                claimsProviderMock.Object)
-            {
-            };
+                repoMock.Object, authorizationMock.Object, new EventsQueueClientMock(), claimsProviderMock.Object);
         }
     }
 }

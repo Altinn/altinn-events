@@ -16,8 +16,9 @@ namespace Altinn.Platform.Events.Services
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
         private readonly IRegisterService _register;
 
-        private const string OrganisationPrefix = "/org/";
+        private const string OrgPrefix = "/org/";
         private const string PersonPrefix = "/person/";
+        private const string OrganisationPrefix = "/organisation/";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
@@ -28,12 +29,7 @@ namespace Altinn.Platform.Events.Services
             IRegisterService register,
             IEventsQueueClient queue,
             IClaimsPrincipalProvider claimsPrincipalProvider)
-            : base(
-                  repository,
-                  register,
-                  authorization,
-                  queue,
-                  claimsPrincipalProvider)
+            : base(repository, authorization, queue, claimsPrincipalProvider)
         {
             _register = register;
             _claimsPrincipalProvider = claimsPrincipalProvider;
@@ -44,7 +40,7 @@ namespace Altinn.Platform.Events.Services
         {
             await EnrichSubject(eventsSubscription);
 
-            var currentEntity = await GetEntityFromPrincipal();
+            string currentEntity = GetEntityFromPrincipal();
             eventsSubscription.CreatedBy = currentEntity;
             eventsSubscription.Consumer = currentEntity;
 
@@ -137,7 +133,19 @@ namespace Altinn.Platform.Events.Services
         {
             int partyId = 0;
 
-            if (alternativeSubject.StartsWith(OrganisationPrefix))
+            /* Both OrgPrefix and OrganisationPrefix is assumed to give us the organisation number of an
+             * actor (instance owner). OrganisationPrefix is new while OrgPrefix was kept for backwards 
+             * compability. There is a good chance that end user systems are using OrgPrefix to filter 
+             * events for customers. We want to change over to OrganisationPrefix because OrgPrefix
+             * is generally associated with the application owner acronym.
+             */
+
+            if (alternativeSubject.StartsWith(OrgPrefix))
+            {
+                string orgNo = alternativeSubject.Replace(OrgPrefix, string.Empty);
+                partyId = await _register.PartyLookup(orgNo, null);
+            }
+            else if (alternativeSubject.StartsWith(OrganisationPrefix))
             {
                 string orgNo = alternativeSubject.Replace(OrganisationPrefix, string.Empty);
                 partyId = await _register.PartyLookup(orgNo, null);

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,25 +18,22 @@ namespace Altinn.Platform.Events.Services
         private readonly ISubscriptionRepository _repository;
         private readonly IEventsQueueClient _queue;
         private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
-        private readonly IRegisterService _register;
         private readonly IAuthorization _authorization;
 
-        private const string UserPrefix = "/user/";
         private const string OrgPrefix = "/org/";
-        private const string PartyPrefix = "/party/";
+        private const string UserPrefix = "/user/";
+        private const string OrganisationPrefix = "/organisation/";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
         /// </summary>
         public SubscriptionService(
             ISubscriptionRepository repository,
-            IRegisterService register,
             IAuthorization authorization,
             IEventsQueueClient queue,
             IClaimsPrincipalProvider claimsPrincipalProvider)
         {
             _repository = repository;
-            _register = register;
             _authorization = authorization;
             _queue = queue;
             _claimsPrincipalProvider = claimsPrincipalProvider;
@@ -45,7 +41,7 @@ namespace Altinn.Platform.Events.Services
 
         /// <summary>
         /// Completes the common tasks related to creating a subcription once the producer specific services are completed
-        /// </summary>       
+        /// </summary>
         internal async Task<(Subscription Subscription, ServiceError Error)> CompleteSubscriptionCreation(Subscription eventsSubscription)
         {
             if (!await _authorization.AuthorizeConsumerForEventsSubcription(eventsSubscription))
@@ -72,7 +68,7 @@ namespace Altinn.Platform.Events.Services
                 return error;
             }
 
-            if (!await AuthorizeAccessToSubscription(subscription))
+            if (!AuthorizeAccessToSubscription(subscription))
             {
                 error = new ServiceError(401);
 
@@ -93,7 +89,7 @@ namespace Altinn.Platform.Events.Services
                 return (null, new ServiceError(404));
             }
 
-            if (!await AuthorizeAccessToSubscription(subscription))
+            if (!AuthorizeAccessToSubscription(subscription))
             {
                 return (null, new ServiceError(401));
             }
@@ -102,8 +98,9 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions(string consumer)
+        public async Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions()
         {
+            string consumer = GetEntityFromPrincipal();
             var subscriptions = await _repository.GetSubscriptionsByConsumer(consumer, true);
             return (subscriptions, null);
         }
@@ -124,9 +121,9 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <summary>
-        /// Retrieves the current entity based on the claims principal
+        /// Retrieves the current entity based on the claims principal.
         /// </summary>
-        internal async Task<string> GetEntityFromPrincipal()
+        internal string GetEntityFromPrincipal()
         {
             var user = _claimsPrincipalProvider.GetUser();
 
@@ -142,19 +139,18 @@ namespace Altinn.Platform.Events.Services
                 return UserPrefix + userId.Value;
             }
 
-            string organization = user.GetOrgNumber();
-            if (!string.IsNullOrEmpty(organization))
+            string organisation = user.GetOrgNumber();
+            if (!string.IsNullOrEmpty(organisation))
             {
-                int partyId = await _register.PartyLookup(organization, null);
-                return PartyPrefix + partyId;
+                return OrganisationPrefix + organisation;
             }
 
             return null;
         }
 
-        private async Task<bool> AuthorizeAccessToSubscription(Subscription eventsSubscription)
+        private bool AuthorizeAccessToSubscription(Subscription eventsSubscription)
         {
-            string currentIdenity = await GetEntityFromPrincipal();
+            string currentIdenity = GetEntityFromPrincipal();
             return eventsSubscription.CreatedBy.Equals(currentIdenity);
         }
     }

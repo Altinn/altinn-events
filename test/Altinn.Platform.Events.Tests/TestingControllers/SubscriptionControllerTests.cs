@@ -64,16 +64,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Scenario: 
             /// </summary>
             [Fact]
-            public async Task Get_GivenSubscriptionOrganizationWithValidSubject_ReturnsOk()
+            public async Task Get_GivenSubscriptionOrganisationWithValidSubject_ReturnsOk()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/12";
 
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "950474084"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
-                {
-                };
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -89,16 +87,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Scenario: 
             /// </summary>
             [Fact]
-            public async Task Get_GivenSubscriptionOrganizationWithInvalidCreatedBy_ReturnsUnauthorizd()
+            public async Task Get_GivenSubscriptionOrganisationWithInvalidCreatedBy_ReturnsUnauthorizd()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/12";
 
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "897069652"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri)
-                {
-                };
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -192,7 +188,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Return httpStatus ok
             /// </summary>
             [Fact]
-            public async Task Delete_GivenSubscriptionOrganizationWithValidSubject_ReturnsCreated()
+            public async Task Delete_GivenSubscriptionOrganisationWithValidSubject_ReturnsCreated()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/16";
@@ -215,15 +211,13 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Return httpStatus ok
             /// </summary>
             [Fact]
-            public async Task Delete_GivenSubscriptionOrganizationWithInvalidCreatedBy_ReturnsUnAuthorized()
+            public async Task Delete_GivenSubscriptionOrganisationWithInvalidCreatedBy_ReturnsUnAuthorized()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/16";
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken(null, "897069652"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri)
-                {
-                };
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri);
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -239,9 +233,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/subscriptions/validate/16";
                 HttpClient client = GetTestClient();
 
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
-                {
-                };
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri);
 
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("platform", "events"));
 
@@ -292,7 +284,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organisation/960474084");
 
                 HttpClient client = GetTestClient();
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
@@ -374,7 +366,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// <summary>
             /// Scenario: Invalid source provided relative URI, absolute requied
             /// Expected: Returns bad request
-            /// </summary>        
+            /// </summary>
             [Fact]
             public async Task Post_GivenSubscriptionWithRelativeUriSource_ReturnsBadRequest()
             {
@@ -440,7 +432,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organisation/960474084");
 
                 Mock<IAppSubscriptionService> serivceMock = new();
                 serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>())).ReturnsAsync((new Subscription { Id = 2 }, null));
@@ -504,7 +496,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organization/960474084");
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", "https://www.skatteetaten.no/hook", alternativeSubjectFilter: "/organisation/960474084");
 
                 Mock<IAppSubscriptionService> serivceMock = new();
                 serivceMock.Setup(s => s.CreateSubscription(It.IsAny<Subscription>()))

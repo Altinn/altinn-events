@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             {
                 Id = subscriptionId,
                 SourceFilter = new System.Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
-                AlternativeSubjectFilter = "/org/897069631"
+                AlternativeSubjectFilter = "/organisation/897069631"
             };
 
             Mock<IRegisterService> registerMock = new();

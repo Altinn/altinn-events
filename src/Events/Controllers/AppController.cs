@@ -95,7 +95,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Retrieves a set of events related to an application owner based on query parameters.
         /// </summary>
-        /// <param name="org">The organisation short code</param>
+        /// <param name="org">The application owner acronym</param>
         /// <param name="app">The name of the app</param>
         /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter even that should be included</param>
         /// <param name="from" example="2022-02-14 07:22:19Z">The lower limit for when the cloud event was created in UTC</param>

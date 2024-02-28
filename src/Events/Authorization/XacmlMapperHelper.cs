@@ -17,15 +17,17 @@ public static class XacmlMapperHelper
     private const string UserPrefix = "/user/";
     private const string OrgPrefix = "/org/";
     private const string PartyPrefix = "/party/";
-    private const string OrganizationPrefix = "/organization/";
+    private const string OrganisationPrefix = "/organisation/";
 
     private const string ClaimUserId = "urn:altinn:userid";
     private const string ClaimOrg = "urn:altinn:org";
     private const string ClaimPartyID = "urn:altinn:partyid";
-    private const string ClaimOrganizationNumber = "urn:altinn:organizationnumber";
+
+    // urn:altinn:organization:identifier-no is a value defined by Authorization so we need to use 'z' here.
+    private const string ClaimOrganizationNumber = "urn:altinn:organization:identifier-no";
 
     /// <summary>
-    /// Generates subject attribute list 
+    /// Generates subject attribute list
     /// </summary>
     /// <returns>The XacmlJsonCategory or the subject</returns>
     public static XacmlJsonCategory CreateSubjectAttributes(string subject)
@@ -50,9 +52,9 @@ public static class XacmlMapperHelper
             string value = subject.Replace(PartyPrefix, string.Empty);
             category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer));
         }
-        else if (subject.StartsWith(OrganizationPrefix))
+        else if (subject.StartsWith(OrganisationPrefix))
         {
-            string value = subject.Replace(OrganizationPrefix, string.Empty);
+            string value = subject.Replace(OrganisationPrefix, string.Empty);
             category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrganizationNumber, value, ClaimValueTypes.String, DefaultIssuer));
         }
 
