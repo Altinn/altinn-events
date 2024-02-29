@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
@@ -10,6 +11,7 @@ using Altinn.Platorm.Events.Extensions;
 
 using AutoMapper;
 
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -93,6 +95,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (error != null)
             {
+                AddQueryModelToTelemetry(subscriptionRequest);
                 return StatusCode(error.ErrorCode, error.ErrorMessage);
             }
 
@@ -201,6 +204,18 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             return false;
+        }
+
+        private void AddQueryModelToTelemetry(SubscriptionRequestModel subscriptionRequest)
+        {
+            RequestTelemetry requestTelemetry = HttpContext.Features.Get<RequestTelemetry>();
+
+            if (requestTelemetry == null)
+            {
+                return;
+            }
+
+            requestTelemetry.Properties.Add("subscription.request", JsonSerializer.Serialize(subscriptionRequest));
         }
     }
 }
