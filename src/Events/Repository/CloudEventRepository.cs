@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Repository
     public class CloudEventRepository : ICloudEventRepository
     {
         private readonly string insertEventSql = "insert into events.events(cloudevent) VALUES ($1);";
-        private readonly string getAppEventsSql = "select events.getappevents(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
+        private readonly string getAppEventsSql = "select events.getappevents_v2(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
         private readonly string getEventsSql = "select events.getevents($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
         private readonly string _connectionString;
 
@@ -63,18 +63,18 @@ namespace Altinn.Platform.Events.Repository
             await conn.OpenAsync();
 
             await using NpgsqlCommand pgcom = new(getAppEventsSql, conn);
+
+            // ignore missing [Flags] attribute on NpgsqlDbType enum.
+            // For more info: https://github.com/npgsql/npgsql/issues/2801
+#pragma warning disable S3265
             pgcom.Parameters.AddWithValue("_subject", NpgsqlDbType.Varchar, subject ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_after", NpgsqlDbType.Varchar, after);
             pgcom.Parameters.AddWithValue("_from", NpgsqlDbType.TimestampTz, from ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_to", NpgsqlDbType.TimestampTz, to ?? (object)DBNull.Value);
-            pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
-            pgcom.Parameters.AddWithValue("_resource", NpgsqlDbType.Text, resource ?? (object)DBNull.Value);
-#pragma warning disable S3265
-
-            // ignore missing [Flags] attribute on NpgsqlDbType enum.
-            // For more info: https://github.com/npgsql/npgsql/issues/2801
             pgcom.Parameters.AddWithValue("_type", NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("_source", NpgsqlDbType.Array | NpgsqlDbType.Text, source ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("_resource", NpgsqlDbType.Text, resource ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("_size", NpgsqlDbType.Integer, size);
 #pragma warning restore S3265       
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())

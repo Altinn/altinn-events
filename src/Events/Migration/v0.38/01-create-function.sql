@@ -1,5 +1,4 @@
-DROP FUNCTION IF EXISTS events.getappevents(character varying, character varying, timestamp with time zone, timestamp with time zone, text[], text[], integer);
-CREATE OR REPLACE FUNCTION events.getappevents(
+CREATE OR REPLACE FUNCTION events.getappevents_v2(
 	_subject character varying,
 	_after character varying,
 	_from timestamp with time zone,
