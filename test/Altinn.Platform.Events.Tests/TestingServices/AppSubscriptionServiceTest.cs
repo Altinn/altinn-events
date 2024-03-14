@@ -75,7 +75,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             string expectedSubjectFilter = "/party/1337";
-            string expectedResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test";
+            string expectedResourceFilter = "urn:altinn:resource:app_ttd_apps-test";
             int subscriptionId = 1337;
 
             var subs = new Subscription
@@ -113,7 +113,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             {
                 Id = subscriptionId,
                 AlternativeSubjectFilter = "/person/01039012345",
-                ResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test"
+                ResourceFilter = "urn:altinn:resource:app_ttd_apps-test"
             };
 
             Mock<IRegisterService> registerMock = new();
@@ -222,7 +222,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             int expectedErrorCode = 400;
             var subs = new Subscription
             {
-                ResourceFilter = "urn:altinn:resource:altinnapp.skd.skattemelding",
+                ResourceFilter = "urn:altinn:resource:app_skd_mva-melding",
                 SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
                 AlternativeSubjectFilter = "/person/01039012345"
             };
@@ -247,11 +247,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_ExistingResource_ResourceUnchanged()
         {
             // Arrange
-            string expected = "urn:altinn:resource:altinnapp.skd.mva-melding";
+            string expected = "urn:altinn:resource:app_skd_mva-melding";
 
             var subs = new Subscription
             {
-                ResourceFilter = "urn:altinn:resource:altinnapp.skd.mva-melding",
+                ResourceFilter = "urn:altinn:resource:app_skd_mva-melding",
                 SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
                 AlternativeSubjectFilter = "/person/01039012345"
             };

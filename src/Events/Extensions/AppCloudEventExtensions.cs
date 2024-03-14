@@ -32,7 +32,7 @@ namespace Altinn.Platform.Events.Extensions
 
             var sourceProperties = GetPropertiesFromAppSource(appEvent.Source);
 
-            cloudEvent.SetAttributeFromString("resource", $"{AuthorizationConstants.AppResourcePrefix}{sourceProperties.Org}.{sourceProperties.App}");
+            cloudEvent.SetAttributeFromString("resource", $"{AuthorizationConstants.AppResourcePrefix}{sourceProperties.Org}_{sourceProperties.App}");
             cloudEvent.SetAttributeFromString("resourceinstance", $"{sourceProperties.InstanceOwnerPartyId}/{sourceProperties.InstanceGuid}");
 
             if (!string.IsNullOrEmpty(appEvent.AlternativeSubject))
