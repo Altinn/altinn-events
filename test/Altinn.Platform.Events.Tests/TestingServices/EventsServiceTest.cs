@@ -209,10 +209,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 It.IsAny<string>(), // afer
                 It.IsAny<DateTime?>(), // from
                 It.IsAny<DateTime?>(), // to
-                string.Empty, // subject
-                null, // sourceFilter
+                It.IsAny<string>(), // subject
+                It.IsAny<List<string>>(), // sourceFilter
                 It.IsAny<string>(), // resource
-                null, // typeFilter
+                It.IsAny<List<string>>(), // typeFilter
                 It.IsAny<int>())) // size
                 .ReturnsAsync(new List<CloudEvent>());
 
