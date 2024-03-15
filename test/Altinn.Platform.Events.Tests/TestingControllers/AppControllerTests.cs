@@ -882,6 +882,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
                 Assert.StartsWith("The 'From' parameter must specify timezone.", actual.Detail);
             }
 
