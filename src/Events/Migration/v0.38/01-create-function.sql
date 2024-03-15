@@ -21,9 +21,9 @@ IF _after IS NOT NULL AND _after <> '' THEN
 		when 0
 			then 0
 		else
-			(SELECT sequenceno FROM events.events
-			WHERE cloudevent->>'id' = _after
-			ORDER BY sequenceno ASC)
+			(SELECT MIN(sequenceno)
+			FROM events.events
+			WHERE cloudevent->>'id' = _after)
 		end
 	INTO _sequenceno
 	FROM events.events
