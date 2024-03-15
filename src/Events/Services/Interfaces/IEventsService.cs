@@ -37,7 +37,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <summary>
         /// Gets list of cloud events based on query params
         /// </summary>
-        Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, string unit, string person, int size = 50);
+        Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size = 50);
 
         /// <summary>
         /// Gets list of cloud events based on query params

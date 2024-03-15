@@ -142,7 +142,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, string subject, List<string> source, List<string> type, int size)
+        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, string subject, List<string> source, string resource, List<string> type, int size)
         {
             var tableEntries = GetTestEvents(_eventsCollection);
 
@@ -180,6 +180,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
             {
                 // requires more logic to match all fancy cases.
                 filter = filter.Where(te => type.Contains(te.Type.ToString()));
+            }
+
+            if (!string.IsNullOrEmpty(resource))
+            {
+                filter = filter.Where(te => te.Resource.Equals(resource));
             }
 
             List<CloudEvent> result = filter.Select(t => t.CloudEvent)
