@@ -139,7 +139,7 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            string resource = $"urn:altinn:resource:altinnapp.{org}.{app}";
+            string resource = $"{AuthorizationConstants.AppResourcePrefix}{org}.{app}";
 
             try
             {
