@@ -56,7 +56,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             Assert.Equal("500000", actualPartyId);
 
             string actualResource = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:resource").Select(a => a.Value).First();
-            Assert.Equal("altinnapp.ttd.apps-test", actualResource);
+            Assert.Equal("app_ttd_apps-test", actualResource);
 
             Assert.Single(xacmlJsonProfile.Request.Action);
             Assert.Equal("read", xacmlJsonProfile.Request.Action.First().Attribute.First().Value);

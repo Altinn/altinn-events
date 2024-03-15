@@ -222,7 +222,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             int expectedErrorCode = 400;
             var subs = new Subscription
             {
-                ResourceFilter = "urn:altinn:resource:app_skd_mva-melding",
+                ResourceFilter = "urn:altinn:resource:app_skd_skatt-melding",
                 SourceFilter = new Uri("https://skd.apps.altinn.no/skd/mva-melding"),
                 AlternativeSubjectFilter = "/person/01039012345"
             };
