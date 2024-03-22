@@ -72,7 +72,7 @@ namespace Altinn.Platform.Events.Authorization
 
             if (isAppEventSubs)
             {
-                string[] resourceAttParts = resourceFilterValue.Split('.');
+                string[] resourceAttParts = resourceFilterValue.Split('_');
                 string org = resourceAttParts[1];
                 string app = resourceAttParts[2];
                 AddAppResourceAttributes(resourceCategory, subscription.SubjectFilter, org, app);

@@ -8,7 +8,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_endring-av-navn-v2"
   },
   {
     "Id": "2",
@@ -19,7 +19,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "24690D7ACB24017710F5195C7BB7418F",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v1"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_endring-av-navn-v1"
   },
   {
     "Id": "3",
@@ -30,7 +30,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "A136FC1463711052A267E476C1D3C2EB",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.test-app"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_test-app"
   },
   {
     "Id": "4",
@@ -41,7 +41,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "BE8868823D8C8A943CD7D05649170E55",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.new-app"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_new-app"
   },
   {
     "Id": "5",
@@ -52,7 +52,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_endring-av-navn-v2"
   },
   {
     "Id": "6",
@@ -63,7 +63,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_endring-av-navn-v2"
   },
   {
     "Id": "7",
@@ -74,7 +74,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_endring-av-navn-v2"
   },
   {
     "Id": "8",
@@ -85,7 +85,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "77F5221E44324A57FA31C184C87D6D53",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_endring-av-navn"
   },
   {
     "Id": "9",
@@ -96,7 +96,7 @@
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "",
-    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
+    "ResourceFilter": "urn:altinn:resource:app_ttd_endring-av-navn-v2"
   },
   {
     "Id": "10",

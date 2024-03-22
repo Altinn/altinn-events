@@ -45,7 +45,7 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
             };
 
             string expextedSpecVersion = "1.0";
-            string expectedResource = "urn:altinn:resource:altinnapp.ttd.apps-test";
+            string expectedResource = "urn:altinn:resource:app_ttd_apps-test";
             string expectedResourceInstance = "50002108/7806177e-5594-431b-8240-f173d92ed84d";
 
             // Act

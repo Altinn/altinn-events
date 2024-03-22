@@ -66,7 +66,7 @@ namespace Altinn.Platform.Events.Services
             string org = pathParams[1];
             string app = pathParams[2];
 
-            return string.Concat(AuthorizationConstants.AppResourcePrefix, org, '.', app);
+            return string.Concat(AuthorizationConstants.AppResourcePrefix, org, '_', app);
         }
 
         /// <summary>
