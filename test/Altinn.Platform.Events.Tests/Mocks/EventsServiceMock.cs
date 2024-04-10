@@ -39,7 +39,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             };
         }
 
-        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, string unit, string person, int size)
+        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size)
         {
             if (partyId <= 0)
             {
@@ -79,10 +79,15 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     filter = filter.Where(te => te.Subject.Equals(subject));
                 }
 
-                if (source.Count == 1)
+                if (source?.Count == 1)
                 {
                     string pattern = "^" + Regex.Escape(source[0]).Replace("%", "*").Replace("_", ".");
                     filter = filter.Where(te => Regex.IsMatch(te.Source.ToString(), pattern));
+                }
+
+                if (!string.IsNullOrEmpty(resource))
+                {
+                    filter = filter.Where(te => te.Resource.Equals(resource));
                 }
 
                 List<CloudEvent> result = filter.Select(t => t.CloudEvent)

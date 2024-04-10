@@ -139,11 +139,11 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            var source = new List<string> { $"%{org}/{app}%" };
+            string resource = $"{AuthorizationConstants.AppResourcePrefix}{org}.{app}";
 
             try
             {
-                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
+                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, null, resource, type, unit, person, size);
                 SetNextLink(events);
 
                 return events;
@@ -200,7 +200,7 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, type, unit, person, size);
+                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, null, type, unit, person, size);
                 SetNextLink(events);
                 return events;
             }
