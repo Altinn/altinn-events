@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Functions
         /// <summary>
         /// Changes . notation inresource for Altinn App events to use _.
         /// </summary>
-        internal void EnsureCorrectResourceFormat(CloudEvent cloudEvent)
+        internal static void EnsureCorrectResourceFormat(CloudEvent cloudEvent)
         {
             if (cloudEvent["resource"].ToString().StartsWith("urn:altinn:resource:altinnapp."))
             {
