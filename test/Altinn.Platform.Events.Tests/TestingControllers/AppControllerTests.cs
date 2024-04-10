@@ -878,7 +878,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -909,7 +909,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
