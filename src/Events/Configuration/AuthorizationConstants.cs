@@ -44,5 +44,10 @@
         /// The urn prefix for Altinn App resources
         /// </summary>
         public const string AppResourcePrefix = "urn:altinn:resource:app_";
+
+        /// <summary>
+        /// The urn prefix for Altinn App resources
+        /// </summary>
+        public const string AppResourceTemplate = "urn:altinn:resource:app_{0}_{1}";
     }
 }

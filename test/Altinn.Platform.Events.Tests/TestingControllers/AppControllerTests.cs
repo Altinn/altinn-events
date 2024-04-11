@@ -70,7 +70,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status and correct responseId.
             /// </summary>
             [Fact]
-            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
+            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreated()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -92,8 +92,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-
-                string content = await response.Content.ReadAsStringAsync();
             }
 
             /// <summary>

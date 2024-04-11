@@ -64,7 +64,7 @@
     "id": "e31dbb11-2208-4dda-a549-92a0db8c0008",
     "resource": "urn:altinn:resource:app_nav_app",
     "source": "https://nav.apps.altinn.no/nav/app/instances/12345/e31dbb11-2208-4dda-a549-92a0db8c0008",
-    "subject": "/party/12345",
+    "subject": "/party/54321",
     "time": "2020-06-17T08:50:29.463221Z",
     "type": "instance.saved",
     "cloudEvent": {
@@ -73,7 +73,7 @@
       "source": "https://nav.apps.altinn.no/nav/app/instances/12345/e31dbb11-2208-4dda-a549-92a0db8c0008",
       "specversion": "1.0",
       "type": "instance.saved",
-      "subject": "/party/12345",
+      "subject": "/party/54321",
       "alternativesubject": "/person/01038712345",
       "data": "data field",
       "time": "2020-06-17T08:50:29.463221Z"
