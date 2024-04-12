@@ -50,14 +50,14 @@ namespace Altinn.Platorm.Events.Extensions
         /// </summary>
         public static bool HasRequiredScope(this ClaimsPrincipal user, string requiredScope)
         {
-            string contextScope = user.Identities
-              ?.FirstOrDefault(i => i.AuthenticationType != null && i.AuthenticationType.Equals("AuthenticationTypes.Federation"))?.Claims
-              .Where(c => c.Type.Equals("urn:altinn:scope"))?
-              .Select(c => c.Value).FirstOrDefault();
+            string[] contextScopes = user.Identities
+                ?.FirstOrDefault(i => i.AuthenticationType != null && i.AuthenticationType.Equals("AuthenticationTypes.Federation"))?.Claims
+                .Where(c => c.Type.Equals("urn:altinn:scope"))?
+                .Select(c => c.Value).FirstOrDefault()?.Split(' ');
 
-            contextScope ??= user.Claims.Where(c => c.Type.Equals("scope")).Select(c => c.Value).FirstOrDefault();
+            contextScopes ??= user.Claims.Where(c => c.Type.Equals("scope")).Select(c => c.Value).FirstOrDefault()?.Split(' ');
 
-            if (!string.IsNullOrWhiteSpace(contextScope) && contextScope.Contains(requiredScope, StringComparison.InvariantCultureIgnoreCase))
+            if (contextScopes is not null && contextScopes.Any(x => x.Equals(requiredScope, StringComparison.InvariantCultureIgnoreCase)))
             {
                 return true;
             }

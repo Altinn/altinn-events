@@ -29,9 +29,7 @@ namespace Altinn.Platform.Events.Functions.Clients
 
         private readonly IAccessTokenGenerator _accessTokenGenerator;
 
-        private readonly IKeyVaultService _keyVaultService;
-
-        private readonly KeyVaultSettings _keyVaultSettings;
+        private readonly ICertificateResolverService _certificateResolverService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsClient"/> class.
@@ -39,15 +37,13 @@ namespace Altinn.Platform.Events.Functions.Clients
         public EventsClient(
             HttpClient httpClient,
             IAccessTokenGenerator accessTokenGenerator,
-            IKeyVaultService keyVaultService,
+            ICertificateResolverService certificateResolverService,
             IOptions<PlatformSettings> eventsConfig,
-            IOptions<KeyVaultSettings> keyVaultSettings,
             ILogger<IEventsClient> logger)
         {
             _client = httpClient;
             _accessTokenGenerator = accessTokenGenerator;
-            _keyVaultService = keyVaultService;
-            _keyVaultSettings = keyVaultSettings.Value;
+            _certificateResolverService = certificateResolverService;
 
             var platformSettings = eventsConfig.Value;
             _client.BaseAddress = new Uri(platformSettings.ApiEventsEndpoint);
@@ -60,15 +56,8 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// <returns></returns>
         protected async Task<string> GenerateAccessToken()
         {
-            string certBase64 =
-                await _keyVaultService.GetCertificateAsync(
-                    _keyVaultSettings.KeyVaultURI,
-                    _keyVaultSettings.PlatformCertSecretId);
-            string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events", new X509Certificate2(
-                Convert.FromBase64String(certBase64),
-                (string)null,
-                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable));
-            return accessToken;
+            X509Certificate2 certificate = await _certificateResolverService.GetCertificateAsync();
+            return _accessTokenGenerator.GenerateAccessToken("platform", "events", certificate);
         }
 
         /// <inheritdoc/>

@@ -10,6 +10,9 @@ namespace Altinn.Platform.Events.Tests.Models
         [JsonPropertyName("id")]
         public string Id { get; set; }
 
+        [JsonPropertyName("resource")]
+        public string Resource { get; set; }
+
         [JsonPropertyName("source")]
         public Uri Source { get; set; }
 

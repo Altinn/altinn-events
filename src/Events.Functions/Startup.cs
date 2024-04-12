@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions;
 using Altinn.Platform.Events.Functions.Clients;
@@ -25,6 +26,8 @@ namespace Altinn.Platform.Events.Functions
         /// <summary>
         /// Gets functions project configuration
         /// </summary>
+        /// <remarks>This class is excluded from code coverage because it has no logic to be tested.</remarks>
+        [ExcludeFromCodeCoverage]
         public void Configure(IWebJobsBuilder builder)
         {
             builder.Services.AddOptions<PlatformSettings>()
@@ -37,9 +40,15 @@ namespace Altinn.Platform.Events.Functions
             {
                 configuration.GetSection("KeyVault").Bind(settings);
             });
+            builder.Services.AddOptions<CertificateResolverSettings>()
+            .Configure<IConfiguration>((settings, configuration) =>
+            {
+                configuration.GetSection("CertificateResolver").Bind(settings);
+            });
             builder.Services.AddSingleton<IQueueProcessorFactory, CustomQueueProcessorFactory>();
             builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
             builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
+            builder.Services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
             builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
             builder.Services.AddHttpClient<IEventsClient, EventsClient>();
             builder.Services.AddHttpClient<IWebhookService, WebhookService>();

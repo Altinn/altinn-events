@@ -129,7 +129,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetAppEvents(string.Empty, new DateTime(2020, 06, 17), null, 54321, new List<string>() { }, new List<string>() { }, null, null);
+            List<CloudEvent> actual = await eventsService.GetAppEvents(string.Empty, new DateTime(2020, 06, 17), null, 54321, new List<string>() { }, null, new List<string>() { }, null, null);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -152,7 +152,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetAppEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, 0, new List<string>() { }, new List<string>() { }, null, null);
+            List<CloudEvent> actual = await eventsService.GetAppEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, 0, new List<string>() { }, null, new List<string>() { }, null, null);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -178,6 +178,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 It.IsAny<DateTime?>(), // to
                 It.Is<string>(subject => subject.Equals($"/party/{partyId}")),
                 It.Is<List<string>>(sourceFilter => sourceFilter != null),
+                It.IsAny<string>(), // resource
                 It.Is<List<string>>(typeFiler => typeFiler != null),
                 It.IsAny<int>())) // size
                 .ReturnsAsync(new List<CloudEvent>());
@@ -185,7 +186,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetAppEvents(null, null, null, partyId, new List<string>() { "https://ttd.apps.tt02.altinn.no/ttd/apps-test/" }, new List<string>() { "instance.completed" }, null, null);
+            List<CloudEvent> actual = await eventsService.GetAppEvents(null, null, null, partyId, new List<string>() { "https://ttd.apps.tt02.altinn.no/ttd/apps-test/" }, null, new List<string>() { "instance.completed" }, null, null);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -208,16 +209,17 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 It.IsAny<string>(), // afer
                 It.IsAny<DateTime?>(), // from
                 It.IsAny<DateTime?>(), // to
-                string.Empty, // subject
-                null, // sourceFilter
-                null, // typeFilter
+                It.IsAny<string>(), // subject
+                It.IsAny<List<string>>(), // sourceFilter
+                It.IsAny<string>(), // resource
+                It.IsAny<List<string>>(), // typeFilter
                 It.IsAny<int>())) // size
                 .ReturnsAsync(new List<CloudEvent>());
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetAppEvents(null, null, null, 0, new List<string>(), new List<string>(), null, null);
+            List<CloudEvent> actual = await eventsService.GetAppEvents(null, null, null, 0, new List<string>(), null, new List<string>(), null, null);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -240,7 +242,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(registerMock: registerMock);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetAppEvents("1", null, null, 0, new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, new List<string>() { }, null, null);
+            List<CloudEvent> actual = await eventsService.GetAppEvents("1", null, null, 0, new List<string>() { "https://ttd.apps.at22.altinn.cloud/ttd/app-test/" }, null, new List<string>() { }, null, null);
 
             // Assert
             registerMock.Verify(r => r.PartyLookup(It.Is<string>(s => string.IsNullOrEmpty(s)), It.Is<string>(s => string.IsNullOrEmpty(s))), Times.Never);
@@ -310,8 +312,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             string expectedSubject = "/party/50";
             var repositoryMock = new Mock<ICloudEventRepository>();
             repositoryMock.Setup(r => r.GetEvents(
+                It.Is<string>(resource => resource != null),
                 It.IsAny<string>(), // after
-                It.Is<string>(sourceFilter => sourceFilter != null),
                 It.Is<string>(subject => subject.Equals(subject)),
                 It.IsAny<string>(), // alternativesubject
                 It.Is<List<string>>(typeFiler => typeFiler != null),
@@ -321,7 +323,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, "https://ttd.apps.tt02.altinn.no/ttd/apps-test/", expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:altinnapp.ttd.apps-test", null, expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -341,8 +343,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             var repositoryMock = new Mock<ICloudEventRepository>();
             repositoryMock.Setup(r => r.GetEvents(
+                It.IsAny<string>(), // resource
                 It.IsAny<string>(), // after
-                null, // sourceFilter
                 string.Empty, // subject
                 string.Empty, // alternativesubject
                 null, // typeFilter

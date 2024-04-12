@@ -90,19 +90,19 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, List<string> type, string unit, string person, int size = 50)
+        public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size = 50)
         {
             if ((!string.IsNullOrEmpty(person) || !string.IsNullOrEmpty(unit)) && partyId <= 0)
             {
                 partyId = await _registerService.PartyLookup(unit, person);
             }
 
-            string subject = partyId == 0 ? string.Empty : $"/party/{partyId}";
-            source = source.Count > 0 ? source : null;
+            string subject = partyId == 0 ? null : $"/party/{partyId}";
+            source = source?.Count > 0 ? source : null;
             type = type.Count > 0 ? type : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subject, source, type, size);
+            List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subject, source, resource, type, size);
 
             if (events.Count == 0)
             {
@@ -113,12 +113,12 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetEvents(string after, string source, string subject, string alternativeSubject, List<string> type, int size)
+        public async Task<List<CloudEvent>> GetEvents(string resource, string after, string subject, string alternativeSubject, List<string> type, int size)
         {
             type = type.Count > 0 ? type : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.GetEvents(after, source, subject, alternativeSubject, type, size);
+            List<CloudEvent> events = await _repository.GetEvents(resource, after, subject, alternativeSubject, type, size);
 
             if (events.Count == 0)
             {

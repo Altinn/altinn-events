@@ -32,37 +32,37 @@ namespace Altinn.Platform.Events.Extensions
         /// <returns>The reader value when present, otherwise the given default value.</returns>
         public static T GetValue<T>(this IDataReader reader, string colName, T defaultValue)
         {
-            object dbValue = reader[colName];
+            object databaseValue = reader[colName];
             try
             {
-                if (dbValue is T value)
+                if (databaseValue is T value)
                 {
                     return value;
                 }
 
-                if (dbValue == DBNull.Value)
+                if (databaseValue == DBNull.Value)
                 {
                     return defaultValue;
                 }
 
                 if (typeof(T).IsEnum)
                 {
-                    if (dbValue is int)
+                    if (databaseValue is int)
                     {
-                        return (T)dbValue;
+                        return (T)databaseValue;
                     }
                     else
                     {
-                        return (T)Enum.Parse(typeof(T), dbValue.ToString());
+                        return (T)Enum.Parse(typeof(T), databaseValue.ToString());
                     }
                 }
 
                 if (typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
-                    return (T)dbValue;
+                    return (T)databaseValue;
                 }
 
-                return (T)Convert.ChangeType(dbValue, typeof(T));
+                return (T)Convert.ChangeType(databaseValue, typeof(T));
             }
             catch (Exception ex)
             {
@@ -70,13 +70,13 @@ namespace Altinn.Platform.Events.Extensions
                     = "Error trying to interpret data in column '{0}'. The reader value is '{1}', of type '{2}'. "
                     + "Attempt to interpret the value as type '{3}' failed.";
 
-                string strVal = dbValue.ToString();
+                string strVal = databaseValue.ToString();
                 if (strVal.Length > 100)
                 {
                     strVal = string.Format($"{strVal.Substring(0, 100)} (truncated; length={strVal.Length}).");
                 }
 
-                throw new InvalidCastException(string.Format(Message, colName, strVal, dbValue.GetType(), typeof(T)), ex);
+                throw new InvalidCastException(string.Format(Message, colName, strVal, databaseValue.GetType(), typeof(T)), ex);
             }
         }
     }

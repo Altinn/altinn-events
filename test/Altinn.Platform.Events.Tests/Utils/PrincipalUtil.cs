@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.Tests.Utils
         public static readonly string AltinnCoreClaimTypesOrg = "urn:altinn:org";
         public static readonly string AltinnCoreClaimTypesOrgNumber = "urn:altinn:orgNumber";
 
-        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string scope = null)
+        public static ClaimsPrincipal GetClaimsPrincipal(string org, string orgNumber, string scope = null, string authenticationMethod = null)
         {
             string issuer = "www.altinn.no";
 
@@ -30,10 +30,10 @@ namespace Altinn.Platform.Events.Tests.Utils
             }
 
             claims.Add(new Claim(AltinnCoreClaimTypesOrgNumber, orgNumber.ToString(), ClaimValueTypes.Integer32, issuer));
-            claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer));
+            claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticateMethod, authenticationMethod ?? "Mock", ClaimValueTypes.String, issuer));
             claims.Add(new Claim(AltinnCoreClaimTypes.AuthenticationLevel, "3", ClaimValueTypes.Integer32, issuer));
 
-            ClaimsIdentity identity = new ClaimsIdentity("mock-org");
+            ClaimsIdentity identity = new ClaimsIdentity(authenticationMethod ?? "mock-org");
             identity.AddClaims(claims);
 
             return new ClaimsPrincipal(identity);

@@ -1,5 +1,8 @@
 import * as tokenGenerator from "./api/token-generator.js";
-import http from 'k6/http';
+import * as maskinporten from "./api/maskinporten.js";
+import * as authentication from "./api/authentication.js";
+import { b64decode } from "k6/encoding";
+
 const environment = __ENV.env.toLowerCase();
 
 /*
@@ -8,10 +11,14 @@ const environment = __ENV.env.toLowerCase();
  * @returns altinn token with the provided scopes for an org
  */
 export function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "991825827") {
-  //TODO: Handle login for prod
+  if ((environment == "prod" || environment == "tt02") && org == "ttd") {
+    var accessToken = maskinporten.generateAccessToken(scopes);
+    return authentication.exchangeToAltinnToken(accessToken, true);
+  }
+
   var queryParams = {
     env: environment,
-    scopes: scopes,
+    scopes: scopes.replace(/ /gi, ","),
     org: org,
     orgNo: orgNo,
   };
@@ -19,14 +26,17 @@ export function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "991825827") {
   return tokenGenerator.generateEnterpriseToken(queryParams);
 }
 
-export function getAltinnTokenForUser(userId, partyId, pid) {
-  //TODO: Handle login for prod
-  var queryParams = {
-    env: environment,
-    userId: userId,
-    partyId: partyId,
-    pid: pid,
-  };
+export function getAltinnTokenForUser() {
+  if (environment == "prod" || environment == "tt02") {
+    return authentication.authenticateUser();
+  }
 
-  return tokenGenerator.generatePersonalToken(queryParams);
+  return tokenGenerator.generatePersonalToken();
+}
+
+export function getPartyIdFromTokenClaim(jwtToken) {
+  const parts = jwtToken.split(".");
+  var claims = JSON.parse(b64decode(parts[1].toString(), "rawstd", "s"));
+
+  return claims["urn:altinn:partyid"];
 }

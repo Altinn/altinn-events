@@ -14,13 +14,12 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
         [Fact]
         public async Task Run_ConfirmDeserializationOCloudEventEnvelope_CloudEventPersisted()
         {
-
             // Arrange
             CloudEventEnvelope actualServiceInput = null;
 
             string serializedCloudEnvelope = "{" +
                 "\"Pushed\": \"2023-01-17T16:09:10.9090958+00:00\"," +
-                "  \"Endpoint\": \"https://hooks.slack.com/services/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\"," +
+                "  \"Endpoint\": \"https://hooks.slack.com/services/weebhook-endpoint\"," +
                 "  \"Consumer\": \"/org/ttd\"," +
                 "  \"SubscriptionId\": 427," +
                 "  \"CloudEvent\": {" +
@@ -32,7 +31,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                     " \"time\": \"2023-01-17T16:09:07.3146561Z\"," +
                     " \"alternativesubject\": \"/person/01014922047\"}}";
 
-
             Mock<IWebhookService> clientMock = new();
             clientMock.Setup(wh => wh.Send(It.Is<CloudEventEnvelope>(cee => cee.CloudEvent != null)))
                 .Callback<CloudEventEnvelope>(cee => actualServiceInput = cee)
@@ -41,7 +39,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             var sut = new EventsOutbound(clientMock.Object);
 
             // Act
-            await sut.Run(serializedCloudEnvelope, null);
+            await sut.Run(serializedCloudEnvelope);
 
             // Assert
             clientMock.VerifyAll();

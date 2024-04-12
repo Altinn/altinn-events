@@ -34,13 +34,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task PostOutbound_AppEvent_SourceFilterIsSimplified()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
                 .Setup(r => r.GetSubscriptions(
-                    It.IsAny<List<string>>(),
-                    It.Is<string>(s => s.Equals("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2")),
+                    It.Is<string>(s => s.Equals("urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2")),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
@@ -74,7 +73,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
-                .Setup(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Subscription>());
 
             Mock<IAuthorization> authorizationMock = new();
@@ -107,10 +106,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// The test may then be removed.
         /// </remarks>
         [Fact]
-        public async void PostOutboundEventWithoutSubject_TwoMatchingSubscriptions_AddedToQueue()
+        public async Task PostOutboundEventWithoutSubject_TwoMatchingSubscriptions_AddedToQueue()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed", "urn:altinn:resource:test-source");
 
             Mock<IEventsQueueClient> queueMock = new();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
@@ -141,10 +140,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// The test may then be removed.
         /// </remarks>
         [Fact]
-        public async void PostOutboundEventWithoutSubject_ConsumerNotAuthorized_NotAddedToQueue()
+        public async Task PostOutboundEventWithoutSubject_ConsumerNotAuthorized_NotAddedToQueue()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("urn:testing-events:test-source"), null, "app.instance.process.completed", "urn:altinn:resource:test-source");
 
             Mock<IEventsQueueClient> queueMock = new();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
@@ -170,20 +169,25 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Success criteria: QueueClient is never called to send the outbound event
         /// </summary>
         [Fact]
-        public async void PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
+        public async Task PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
-                .Setup(r => r.GetSubscriptions(It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Subscription>() { new Subscription { Consumer = "/org/nav" } });
             Mock<IEventsQueueClient> queueMock = new();
             queueMock
                 .Setup(q => q.EnqueueOutbound(It.IsAny<string>()));
 
-            var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object);
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeConsumerForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .ReturnsAsync(false);
+
+            var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent);
@@ -203,22 +207,27 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   The enqueue is called for the queue client excactly twice
         /// </summary>
         [Fact]
-        public async void Push_TwoMatchingAndValidSubscriptions_AddedToQueue()
+        public async Task Push_TwoMatchingAndValidSubscriptions_AddedToQueue()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2");
 
             Mock<IEventsQueueClient> queueMock = new();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
                 .ReturnsAsync(new QueuePostReceipt { Success = true });
 
-            var service = GetOutboundService(queueMock.Object);
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent);
 
             // Assert
-            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(2));
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(4));
         }
 
         /// <summary>
@@ -230,18 +239,23 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   Log message starts with expected string.
         /// </summary>
         [Fact]
-        public async void Push_QueueReportsFailure_ErrorIsLogged()
+        public async Task Push_QueueReportsFailure_ErrorIsLogged()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1", "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2");
 
             Mock<IEventsQueueClient> queueMock = new();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
                 .ReturnsAsync(new QueuePostReceipt { Success = false });
 
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
+
             var loggerMock = new Mock<ILogger<IOutboundService>>();
 
-            var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object);
+            var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent);
@@ -253,7 +267,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                    It.IsAny<EventId>(),
                    It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// OutboundService // EnqueueOutbound // Failed to send event envelope", StringComparison.InvariantCultureIgnoreCase)),
                    It.IsAny<Exception>(),
-                   It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                   It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                Times.Once);
             queueMock.VerifyAll();
         }
@@ -331,7 +345,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
         }
 
-        private static CloudEvent GetCloudEvent(Uri source, string subject, string type)
+        private static CloudEvent GetCloudEvent(Uri source, string subject, string type, string resoure = "urn:altinn:resource:testresource")
         {
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
@@ -343,7 +357,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Data = "something/extra",
             };
 
-            cloudEvent.SetResourceIfNotDefined("urn:altinn:resource:testresource");
+            cloudEvent.SetResourceIfNotDefined(resoure);
 
             return cloudEvent;
         }

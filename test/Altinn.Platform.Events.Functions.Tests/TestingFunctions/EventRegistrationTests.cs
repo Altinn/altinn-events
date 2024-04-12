@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
 
         public EventRegistrationTests()
         {
-            serializedCloudEvent  = "{" +
+            serializedCloudEvent = "{" +
                 "\"id\":\"f276d3da-9b72-492b-9fee-9cf71e2826a2\"," +
                 "\"source\":\"https://ttd.apps.at23.altinn.cloud/ttd/apps-test/instances/50012356/8f66119a-39eb-49ea-a34e-6b99ec6af319\"," +
                 "\"specversion\":\"1.0\"," +
@@ -22,14 +22,13 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                 "\"extenstionatt1\":\"Stephanie er kul\"," +
                 "\"extenstionatt2\":\"2.718281828\"" +
                 "}";
-            
         }
 
         [Fact]
         public async Task Run_SaveEventFails_PostInboundNotCalled()
         {
             // Arrange
-            Mock<IEventsClient> clientMock = new();            
+            Mock<IEventsClient> clientMock = new();
 
             clientMock.Setup(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()))
                .ThrowsAsync(new HttpRequestException("// SaveCloudEvent with id {cloudEvent.Id} failed with status code {statusCode}"));
@@ -43,7 +42,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             // Act
             try
             {
-                await sut.Run(serializedCloudEvent, null);
+                await sut.Run(serializedCloudEvent);
             }
             catch (HttpRequestException)
             {
@@ -52,7 +51,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             // Assert
             clientMock.Verify(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()), Times.Once);
             clientMock.Verify(c => c.PostInbound(It.IsAny<CloudEvent>()), Times.Never);
-
         }
 
         [Fact]
@@ -71,7 +69,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             EventsRegistration sut = new EventsRegistration(clientMock.Object);
 
             // Act
-            await sut.Run(serializedCloudEvent, null);
+            await sut.Run(serializedCloudEvent);
 
             // Assert
             clientMock.Verify(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()), Times.Once);

@@ -5,6 +5,9 @@
       -e env=*** `
       -e tokenGeneratorUserName=autotest `
       -e tokenGeneratorUserPwd=*** `
+      -e mpClientId=*** `
+      -e mpKid=altinn-usecase-events `
+      -e encodedJwk=*** `
       -e app=apps-test `
       -e webhookEndpoint=***** `
       -e runFullTestSet=true
@@ -27,8 +30,7 @@ const genericSubscription = JSON.parse(
   open("../data/subscriptions/02-generic-subscription.json")
 );
 
-const scopes = "altinn:events.publish,altinn:events.subscribe";
-const subsetScopes = "altinn:serviceowner/instances.read";
+const scopes = "altinn:serviceowner altinn:events.publish altinn:events.subscribe";
 
 const webhookEndpoint = __ENV.webhookEndpoint;
 
@@ -50,12 +52,12 @@ export const options = {
 
 export function setup() {
   var orgToken = setupToken.getAltinnTokenForOrg(scopes);
-  var orgTokenWithoutSubScope = setupToken.getAltinnTokenForOrg(subsetScopes);
+  var incorrectScopeToken = setupToken.getAltinnTokenForOrg('altinn:serviceowner');
 
   var data = {
     runFullTestSet: runFullTestSet,
     orgToken: orgToken,
-    orgTokenWithoutSubScope: orgTokenWithoutSubScope,
+    incorrectScopeToken: incorrectScopeToken,
     org: org,
     app: app,
     appSubscription: JSON.stringify(appSubscription),
@@ -75,6 +77,7 @@ function TC01_PostNewSubscriptionForAppEventSource(data) {
     data.orgToken
   );
 
+  console.log(response);
   var subscription = JSON.parse(response.body);
   success = check(response, {
     "01 - POST new subscription for app event source. Status is 201": (r) =>
@@ -207,7 +210,7 @@ function TC08_PostSubscriptionForExternalEventSourceWithoutScope(data) {
 
   response = subscriptionsApi.postSubscription(
     data.genericSubscription,
-    data.orgTokenWithoutSubScope
+    data.incorrectScopeToken
   );
 
   success = check(response, {

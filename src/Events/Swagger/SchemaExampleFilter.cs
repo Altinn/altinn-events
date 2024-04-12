@@ -32,6 +32,7 @@ namespace Altinn.Platform.Events.Swagger
                     return new OpenApiObject
                     {
                         ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
+                        ["resource"] = new OpenApiString("urn:altinn:resource:altinapp.ttd.apps-test"),
                         ["source"] = new OpenApiString("https://ttd.apps.altinn.no/ttd/apps-test/instances/50015641/a72223a3-926b-4095-a2a6-bacc10815f2d"),
                         ["specversion"] = new OpenApiString("1.0"),
                         ["type"] = new OpenApiString("app.instance.created"),
@@ -67,7 +68,8 @@ namespace Altinn.Platform.Events.Swagger
                                 ["consumer"] = new OpenApiString("/user/12345"),
                                 ["createdBy"] = new OpenApiString("/user/12345"),
                                 ["created"] = new OpenApiString("2022-07-27T13:14:14.395226Z")
-                            },            new OpenApiObject
+                            },
+                            new OpenApiObject
                             {
                                 ["endPoint"] = new OpenApiString("https://hooks.slack.com/services/ID/CODE"),
                                 ["id"] = new OpenApiInteger(2),

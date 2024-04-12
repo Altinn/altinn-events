@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task CreateSubscription_AlternaticSubjectFilterProvided_ReturnsError()
         {
             // Arrange 
-            string expectedErrorMessage = "AlternativeSubject is not supported for subscriptions on this resource.";
+            string expectedErrorMessage = "AlternativeSubject filter is not supported for subscriptions on this resource.";
 
             var input = new Subscription
             {
@@ -115,28 +115,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
-        [Fact]
-        public async Task CreateSubscription_Unauthorized_ReturnsError()
-        {
-            // Arrange 
-            string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service.";
-
-            var input = new Subscription
-            {
-                ResourceFilter = "urn:altinn:resource:some-service",
-                EndPoint = new Uri("https://automated.com"),
-            };
-
-            var sut = GetGenericSubscriptionService(isAuthorized: false);
-
-            // Act
-            (var _, ServiceError actual) = await sut.CreateSubscription(input);
-
-            // Assert
-            Assert.Equal(401, actual.ErrorCode);
-            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
-        }
-
         private static GenericSubscriptionService GetGenericSubscriptionService(Mock<ISubscriptionRepository> repoMock = null, bool isAuthorized = true)
         {
             var claimsProviderMock = new Mock<IClaimsPrincipalProvider>();
@@ -148,10 +126,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
                 .ReturnsAsync(isAuthorized);
 
-            if (repoMock == null)
-            {
-                repoMock = new();
-            }
+            repoMock ??= new();
 
             repoMock
                  .Setup(r => r.FindSubscription(It.IsAny<Subscription>(), It.IsAny<CancellationToken>()))
@@ -168,13 +143,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                         });
 
             return new GenericSubscriptionService(
-                repoMock.Object,
-                new Mock<IRegisterService>().Object,
-                authorizationMock.Object,
-                new EventsQueueClientMock(),
-                claimsProviderMock.Object)
-            {
-            };
+                repoMock.Object, authorizationMock.Object, new EventsQueueClientMock(), claimsProviderMock.Object);
         }
     }
 }

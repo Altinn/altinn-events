@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -61,7 +62,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status code.
             /// </summary>
             [Fact]
-            public async void Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
+            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/inbound";
@@ -96,7 +97,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_RepositoryThrowsException_ReturnsInternalServerError()
+            public async Task Post_RepositoryThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/inbound";
@@ -128,7 +129,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_MissingBearerToken_ReturnsForbidden()
+            public async Task Post_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/inbound";
@@ -154,7 +155,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_MissingAccessToken_ReturnsForbidden()
+            public async Task Post_MissingAccessToken_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/inbound";

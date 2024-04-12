@@ -7,7 +7,8 @@
     "Typefilter": "app.instance.process.completed",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA"
+    "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
   },
   {
     "Id": "2",
@@ -17,7 +18,8 @@
     "CreatedBy": "/org/ttd",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "24690D7ACB24017710F5195C7BB7418F"
+    "SourceFilterHash": "24690D7ACB24017710F5195C7BB7418F",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v1"
   },
   {
     "Id": "3",
@@ -27,7 +29,8 @@
     "CreatedBy": "/party/1337",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "A136FC1463711052A267E476C1D3C2EB"
+    "SourceFilterHash": "A136FC1463711052A267E476C1D3C2EB",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.test-app"
   },
   {
     "Id": "4",
@@ -37,7 +40,8 @@
     "CreatedBy": "/party/1337",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "BE8868823D8C8A943CD7D05649170E55"
+    "SourceFilterHash": "BE8868823D8C8A943CD7D05649170E55",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.new-app"
   },
   {
     "Id": "5",
@@ -47,7 +51,8 @@
     "CreatedBy": "/user/1337",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA"
+    "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
   },
   {
     "Id": "6",
@@ -57,7 +62,8 @@
     "Typefilter": "app.instance.process.completed",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA"
+    "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
   },
   {
     "Id": "7",
@@ -67,7 +73,8 @@
     "Typefilter": "app.instance.process.started",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA"
+    "SourceFilterHash": "BF75188D988DB0C5F076E6F510DFA2DA",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
   },
   {
     "Id": "8",
@@ -77,7 +84,8 @@
     "Typefilter": "app.instance.process.completed",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "77F5221E44324A57FA31C184C87D6D53"
+    "SourceFilterHash": "77F5221E44324A57FA31C184C87D6D53",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn"
   },
   {
     "Id": "9",
@@ -87,7 +95,8 @@
     "Typefilter": "app.instance.process.completed",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": ""
+    "SourceFilterHash": "",
+    "ResourceFilter": "urn:altinn:resource:altinnapp.ttd.endring-av-navn-v2"
   },
   {
     "Id": "10",
@@ -97,7 +106,8 @@
     "Typefilter": "app.instance.process.completed",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8"
+    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8",
+    "ResourceFilter": "urn:altinn:resource:test-source"
   },
   {
     "Id": "11",
@@ -107,6 +117,7 @@
     "CreatedBy": "/org/ttd",
     "EndPoint": "https://www.ttd.no/webhook",
     "Created": "2020-10-13T11:50:29.463221+00",
-    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8"
+    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8",
+    "ResourceFilter": "urn:altinn:resource:test-source"
   }
 ]

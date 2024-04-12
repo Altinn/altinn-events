@@ -38,13 +38,13 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptions(List<string> sourceFilterHashes, string source, string subject, string type, CancellationToken ct)
+        public async Task<List<Subscription>> GetSubscriptions(string resource, string subject, string type, CancellationToken ct)
         {
-            string cacheKey = GetSubscriptionCacheKey(source.ToString(), subject, type);
+            string cacheKey = GetSubscriptionCacheKey(resource, subject, type);
 
             if (!_memoryCache.TryGetValue(cacheKey, out List<Subscription> subscriptions))
             {
-                subscriptions = await _decoratedService.GetSubscriptions(sourceFilterHashes, source, subject, type, ct);
+                subscriptions = await _decoratedService.GetSubscriptions(resource, subject, type, ct);
 
                 _memoryCache.Set(cacheKey, subscriptions, _cacheOptions);
             }
@@ -75,7 +75,7 @@ namespace Altinn.Platform.Events.Repository
         {
             return await _decoratedService.GetSubscription(id);
         }
-      
+
         /// <inheritdoc/>
         public async Task<List<Subscription>> GetSubscriptionsByConsumer(string consumer, bool includeInvalid)
         {
@@ -88,14 +88,9 @@ namespace Altinn.Platform.Events.Repository
             await _decoratedService.SetValidSubscription(id);
         }
 
-        private static string GetSubscriptionCacheKey(string source, string subject, string type)
+        private static string GetSubscriptionCacheKey(string resource, string subject, string type)
         {
-            if (source == null)
-            {
-                return null;
-            }
-
-            return "subscription:so:" + source + "su:" + subject + "ty:" + type;
+            return "subscription:re:" + resource + "su:" + subject + "ty:" + type;
         }
     }
 }

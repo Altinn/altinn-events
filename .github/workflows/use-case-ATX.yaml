@@ -10,26 +10,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [AT21, AT22, AT23, AT24]
+        environment: [AT22, AT23, AT24]
     environment: ${{ matrix.environment }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Run app-events use case tests
-      run:  |
-              cd test/k6
-              docker-compose run k6 run /src/tests/app-events.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
-    - name: Run events use case tests
+      uses: grafana/k6-action@v0.3.1
+      with:
+        filename: test/k6/src/tests/app-events.js
+        flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }} -e personNumber=${{ secrets.PERSON_NUMBER }}
+    - name: Run events use case tests (POST)
       if: always()
-      run:  |
-              cd test/k6
-              docker-compose run k6 run /src/tests/events/post.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
-              docker-compose run k6 run /src/tests/events/get.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
+      uses: grafana/k6-action@v0.3.1
+      with:
+        filename: test/k6/src/tests/events/post.js
+        flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
+    - name: Run events use case tests (GET)
+      if: always()
+      uses: grafana/k6-action@v0.3.1
+      with:
+        filename: test/k6/src/tests/events/get.js
+        flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }}
     - name: Run subscription use case tests
       if: always()
-      run:  |
-              cd test/k6
-              docker-compose run k6 run /src/tests/subscriptions.js -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
+      uses: grafana/k6-action@v0.3.1
+      with:
+        filename: test/k6//src/tests/subscriptions.js
+        flags: -e env=${{ vars.ENV }} -e tokenGeneratorUserName=${{ secrets.TOKENGENERATOR_USERNAME }} -e tokenGeneratorUserPwd=${{ secrets.TOKENGENERATOR_USERPASSWORD }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
     - name: Build failure report
       if: failure()
       run: |
@@ -40,7 +48,7 @@ jobs:
     - name: Report failure to Slack
       if: failure()
       id: slack
-      uses: slackapi/slack-github-action@v1.24.0
+      uses: slackapi/slack-github-action@v1.25.0
       with:
         payload: |
             {

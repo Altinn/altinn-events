@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -24,6 +25,7 @@ using CloudNative.CloudEvents;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -68,7 +70,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status and correct responseId.
             /// </summary>
             [Fact]
-            public async void Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
+            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -91,7 +93,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-                string content = response.Content.ReadAsStringAsync().Result;
+                string content = await response.Content.ReadAsStringAsync();
             }
 
             /// <summary>
@@ -103,7 +105,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The request is not authorized
             /// </summary>
             [Fact]
-            public async void Post_GivenValidCloudEvent_NotAuthorized()
+            public async Task Post_GivenValidCloudEvent_NotAuthorized()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -138,7 +140,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_CloudEventMissingSubject_ReturnsStatusBadRequest()
+            public async Task Post_CloudEventMissingSubject_ReturnsStatusBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -172,7 +174,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_CloudEventMissingSource_ReturnsStatusBadRequest()
+            public async Task Post_CloudEventMissingSource_ReturnsStatusBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -206,7 +208,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_CloudEventOrgDoesNotMatch_ReturnsStatusBadRequest()
+            public async Task Post_CloudEventOrgDoesNotMatch_ReturnsStatusBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -239,7 +241,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_RepositoryThrowsException_ReturnsInternalServerError()
+            public async Task Post_RepositoryThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -271,7 +273,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_MissingBearerToken_ReturnsForbidden()
+            public async Task Post_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -297,7 +299,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void Post_MissingAccessToken_ReturnsForbidden()
+            public async Task Post_MissingAccessToken_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -325,7 +327,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForOrg_MissingRequiredFromOrAfterParam_ReturnsBadRequest()
+            public async Task GetForOrg_MissingRequiredFromOrAfterParam_ReturnsBadRequest()
             {
                 // Arrange
                 string expected = "The 'From' or 'After' parameter must be defined.";
@@ -355,7 +357,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForOrg_SizeIsLessThanZero_ReturnsBadRequest()
+            public async Task GetForOrg_SizeIsLessThanZero_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&size=-5";
@@ -385,7 +387,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForOrg_MissingBearerToken_ReturnsUnauthorized()
+            public async Task GetForOrg_MissingBearerToken_ReturnsUnauthorized()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&party=1337";
@@ -409,7 +411,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct count. Next header is corrcect.
             /// </summary>
             [Fact]
-            public async void GetForOrg_ValidRequest_ReturnsListOfEventsAndNextUrl()
+            public async Task GetForOrg_ValidRequest_ReturnsListOfEventsAndNextUrl()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&party=1337";
@@ -441,7 +443,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct count. Next header is corrcect.
             /// </summary>
             [Fact]
-            public async void GetForOrg_ValidRequest_ForTTD_ReturnsNextHeaderWithReplacesAfterParameter()
+            public async Task GetForOrg_ValidRequest_ForTTD_ReturnsNextHeaderWithReplacesAfterParameter()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&party=1337";
@@ -473,12 +475,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   Next header is corrcect.
             /// </summary>
             [Fact]
-            public async void GetForOrg_ServiceThrowsException_ReturnsInternalServerError()
+            public async Task GetForOrg_ServiceThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c7708&party=567890";
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
+                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
@@ -500,7 +502,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
             /// </summary>
             [Fact]
-            public async void GetForOrg_FromMissingTimeZone_ReturnsBadRequest()
+            public async Task GetForOrg_FromMissingTimeZone_ReturnsBadRequest()
             {
                 // Arrange
                 Mock<IEventsService> serviceMock = new();
@@ -514,7 +516,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -530,7 +532,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
             /// </summary>
             [Fact]
-            public async void GetForOrg_ToMissingTimeZone_ReturnsBadRequest()
+            public async Task GetForOrg_ToMissingTimeZone_ReturnsBadRequest()
             {
                 // Arrange
                 Mock<IEventsService> serviceMock = new();
@@ -544,7 +546,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -560,7 +562,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForParty_MissingRequiredQueryParam_ReturnsBadRequest()
+            public async Task GetForParty_MissingRequiredQueryParam_ReturnsBadRequest()
             {
                 // Arrange   
                 string expected = "The 'From' or 'After' parameter must be defined.";
@@ -590,7 +592,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForParty_SizeIsLessThanZero_ReturnsBadRequest()
+            public async Task GetForParty_SizeIsLessThanZero_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=-5";
@@ -620,7 +622,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForParty_MissingSubject_ReturnsBadRequest()
+            public async Task GetForParty_MissingSubject_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
@@ -650,7 +652,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async void GetForParty_MissingBearerToken_ReturnsForbidden()
+            public async Task GetForParty_MissingBearerToken_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01&party=1337&app=apps-test&size=5";
@@ -674,7 +676,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct count. Next header is corrcect.
             /// </summary>
             [Fact]
-            public async void GetForParty_ValidRequestParyId_ReturnsListOfEventsAndNextUrl()
+            public async Task GetForParty_ValidRequestParyId_ReturnsListOfEventsAndNextUrl()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&party=1337&size=5";
@@ -707,7 +709,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct count. Next header is corrcect.
             /// </summary>
             [Fact]
-            public async void GetForParty_ValidRequestPerson_ReturnsListOfEventsAndNextUrl()
+            public async Task GetForParty_ValidRequestPerson_ReturnsListOfEventsAndNextUrl()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
@@ -742,7 +744,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct count. Next header is corrcect.
             /// </summary>
             [Fact]
-            public async void GetForParty_ValidRequestPartyIdAndAfter_ReturnsNextHeaderWithReplacesAfterParameter()
+            public async Task GetForParty_ValidRequestPartyIdAndAfter_ReturnsNextHeaderWithReplacesAfterParameter()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&party=1337&size=5";
@@ -775,7 +777,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct count. Next header is corrcect.
             /// </summary>
             [Fact]
-            public async void GetForParty_ValidRequestParyId_ReturnsListOfEventsAndNextUrlTest()
+            public async Task GetForParty_ValidRequestParyId_ReturnsListOfEventsAndNextUrlTest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&party=1337&org=ttd&app=endring-av-navn-v2&size=5";
@@ -808,12 +810,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   Next header is corrcect.
             /// </summary>
             [Fact]
-            public async void GetForParty_ServiceThrowsException_ReturnsInternalServerError()
+            public async Task GetForParty_ServiceThrowsException_ReturnsInternalServerError()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&party=1337";
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
+                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
@@ -835,7 +837,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   Result status is 200 OK and number of events is 2
             /// </summary>
             [Fact]
-            public async void GetForParty_WildcardApp_ReturnsOk()
+            public async Task GetForParty_WildcardApp_ReturnsOk()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&party=1337&source=https://ttd.apps.altinn.no/ttd/%";
@@ -862,7 +864,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
             /// </summary>
             [Fact]
-            public async void GetForParty_FromMissingTimeZone_ReturnsBadRequest()
+            public async Task GetForParty_FromMissingTimeZone_ReturnsBadRequest()
             {
                 // Arrange
                 Mock<IEventsService> serviceMock = new();
@@ -876,10 +878,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
                 Assert.StartsWith("The 'From' parameter must specify timezone.", actual.Detail);
             }
 
@@ -892,7 +895,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
             /// </summary>
             [Fact]
-            public async void GetForParty_ToMissingTimeZone_ReturnsBadRequest()
+            public async Task GetForParty_ToMissingTimeZone_ReturnsBadRequest()
             {
                 // Arrange
                 Mock<IEventsService> serviceMock = new();
@@ -906,7 +909,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
                 string responseString = await response.Content.ReadAsStringAsync();
-                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

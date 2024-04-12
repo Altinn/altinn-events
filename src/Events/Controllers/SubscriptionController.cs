@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
@@ -11,6 +11,7 @@ using Altinn.Platorm.Events.Extensions;
 
 using AutoMapper;
 
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -30,10 +31,6 @@ namespace Altinn.Platform.Events.Controllers
         private readonly IGenericSubscriptionService _genericSubscriptionService;
         private readonly IMapper _mapper;
         private readonly PlatformSettings _settings;
-        private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
-
-        private const string UserPrefix = "/user/";
-        private const string OrgPrefix = "/org/";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionController"/> class.
@@ -43,14 +40,12 @@ namespace Altinn.Platform.Events.Controllers
             IAppSubscriptionService appSubscriptionService,
             IGenericSubscriptionService genericSubscriptionService,
             IMapper mapper,
-            IClaimsPrincipalProvider claimsPrincipalProvider,
             IOptions<PlatformSettings> settings)
         {
             _subscriptionService = eventsSubscriptionService;
             _appSubscriptionService = appSubscriptionService;
             _genericSubscriptionService = genericSubscriptionService;
             _mapper = mapper;
-            _claimsPrincipalProvider = claimsPrincipalProvider;
             _settings = settings.Value;
         }
 
@@ -77,15 +72,9 @@ namespace Altinn.Platform.Events.Controllers
 
             bool isAppSubscription = IsAppSubscription(subscriptionRequest);
 
-            if (!isAppSubscription)
+            if (!isAppSubscription && !User.HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
             {
-                // Only non Altinn App subscriptions require the additional scope
-                ClaimsPrincipal principal = _claimsPrincipalProvider.GetUser();
-
-                if (!principal.HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
-                {
-                    return Forbid();
-                }
+                return Forbid();
             }
 
             if (subscriptionRequest.EndPoint == null || !Uri.IsWellFormedUriString(subscriptionRequest.EndPoint.ToString(), UriKind.Absolute))
@@ -106,6 +95,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (error != null)
             {
+                AddQueryModelToTelemetry(subscriptionRequest);
                 return StatusCode(error.ErrorCode, error.ErrorMessage);
             }
 
@@ -143,8 +133,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<SubscriptionList>> Get()
         {
-            string consumer = GetConsumer();
-            (List<Subscription> subscriptions, ServiceError error) = await _subscriptionService.GetAllSubscriptions(consumer);
+            (List<Subscription> subscriptions, ServiceError error) = await _subscriptionService.GetAllSubscriptions();
 
             if (error != null)
             {
@@ -161,7 +150,7 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Method to validate an specific subscription. Only avaiable from validation function.
+        /// Method to validate a specific subscription. Only avaiable from validation function.
         /// </summary>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPut("validate/{id}")]
@@ -201,24 +190,6 @@ namespace Altinn.Platform.Events.Controllers
             return Ok();
         }
 
-        private string GetConsumer()
-        {
-            var user = HttpContext.User;
-
-            string authenticatedConsumer = string.Empty;
-
-            if (!string.IsNullOrEmpty(user.GetOrg()))
-            {
-                authenticatedConsumer = OrgPrefix + user.GetOrg();
-            }
-            else if (user.GetUserIdAsInt().HasValue)
-            {
-                authenticatedConsumer = UserPrefix + user.GetUserIdAsInt().Value;
-            }
-
-            return authenticatedConsumer;
-        }
-
         private bool IsAppSubscription(SubscriptionRequestModel subscription)
         {
             if (subscription.ResourceFilter != null &&
@@ -227,13 +198,24 @@ namespace Altinn.Platform.Events.Controllers
                 return true;
             }
             else if (!string.IsNullOrEmpty(subscription.SourceFilter?.ToString()) &&
-
                 subscription.SourceFilter.DnsSafeHost.EndsWith(_settings.AppsDomain))
             {
                 return true;
             }
 
             return false;
+        }
+
+        private void AddQueryModelToTelemetry(SubscriptionRequestModel subscriptionRequest)
+        {
+            RequestTelemetry requestTelemetry = HttpContext.Features.Get<RequestTelemetry>();
+
+            if (requestTelemetry == null)
+            {
+                return;
+            }
+
+            requestTelemetry.Properties.Add("subscription.request", JsonSerializer.Serialize(subscriptionRequest));
         }
     }
 }
