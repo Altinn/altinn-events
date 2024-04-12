@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Security.Claims;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Helpers;
