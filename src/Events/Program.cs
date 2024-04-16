@@ -264,7 +264,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
-    services.AddHttpClient<IProfile, ProfileService>();
     services.AddSingleton<IEventsService, EventsService>();
     services.AddSingleton<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();

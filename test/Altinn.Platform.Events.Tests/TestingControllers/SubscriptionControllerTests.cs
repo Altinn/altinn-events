@@ -539,7 +539,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                         services.AddSingleton(authorization.Object);
                         services.AddSingleton<IRegisterService, RegisterServiceMock>();
-                        services.AddSingleton<IProfile, ProfileMockSI>();
 
                         services.AddSingleton<ICloudEventRepository, CloudEventRepositoryMock>();
                         services.AddSingleton<ISubscriptionRepository, SubscriptionRepositoryMock>();
