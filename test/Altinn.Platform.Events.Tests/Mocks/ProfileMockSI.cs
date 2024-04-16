@@ -10,11 +10,8 @@ namespace Altinn.Platform.Events.Tests.Mocks
 {
     public class ProfileMockSI : IProfile
     {
-        private readonly IRegisterService _registerService;
-
-        public ProfileMockSI(IRegisterService registerService)
+        public ProfileMockSI()
         {
-            _registerService = registerService;
         }
 
         public async Task<UserProfile> GetUserProfile(int userId)
@@ -27,7 +24,6 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 user = (UserProfile)JsonConvert.DeserializeObject(content, typeof(UserProfile));
             }
 
-            user.Party = await _registerService.GetParty(user.PartyId);
             return user;
         }
 
