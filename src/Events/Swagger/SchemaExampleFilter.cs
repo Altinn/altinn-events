@@ -32,7 +32,7 @@ namespace Altinn.Platform.Events.Swagger
                     return new OpenApiObject
                     {
                         ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
-                        ["resource"] = new OpenApiString("urn:altinn:resource:altinapp.ttd.apps-test"),
+                        ["resource"] = new OpenApiString("urn:altinn:resource:app_ttd_apps-test"),
                         ["source"] = new OpenApiString("https://ttd.apps.altinn.no/ttd/apps-test/instances/50015641/a72223a3-926b-4095-a2a6-bacc10815f2d"),
                         ["specversion"] = new OpenApiString("1.0"),
                         ["type"] = new OpenApiString("app.instance.created"),
