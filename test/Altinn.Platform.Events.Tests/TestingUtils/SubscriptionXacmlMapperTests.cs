@@ -25,7 +25,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             {
                 EndPoint = new Uri("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
                 SourceFilter = new Uri("https://ttd.apps.altinn.no/ttd/apps-test"),
-                ResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test",
+                ResourceFilter = "urn:altinn:resource:app_ttd_apps-test",
                 AlternativeSubjectFilter = "/organisation/897069650",
                 SubjectFilter = "/party/500000",
                 TypeFilter = "app.instance.process.completed",
@@ -56,7 +56,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             Assert.Equal("500000", actualPartyId);
 
             string actualResource = xacmlJsonProfile.Request.Resource.First().Attribute.Where(a => a.AttributeId == "urn:altinn:resource").Select(a => a.Value).First();
-            Assert.Equal("altinnapp.ttd.apps-test", actualResource);
+            Assert.Equal("app_ttd_apps-test", actualResource);
 
             Assert.Single(xacmlJsonProfile.Request.Action);
             Assert.Equal("read", xacmlJsonProfile.Request.Action.First().Attribute.First().Value);
@@ -114,7 +114,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             Subscription subscription = new()
             {
                 EndPoint = new Uri("https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
-                ResourceFilter = "urn:altinn:resource:altinnapp.ttd.apps-test",
+                ResourceFilter = "urn:altinn:resource:app_ttd_apps-test",
                 SourceFilter = new Uri("https://ttd.apps.altinn.no/ttd/apps-test"),
                 AlternativeSubjectFilter = "/person/01039012345",
                 SubjectFilter = "/party/54321",

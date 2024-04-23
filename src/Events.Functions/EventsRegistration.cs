@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Extensions;
 
@@ -33,6 +34,7 @@ namespace Altinn.Platform.Events.Functions
         public async Task Run([QueueTrigger("events-registration", Connection = "QueueStorage")] string item)
         {
             CloudEvent cloudEvent = item.DeserializeToCloudEvent();
+            EnsureCorrectResourceFormat(cloudEvent);
 
             /*
             Attempt to save cloudEvent.
@@ -42,6 +44,28 @@ namespace Altinn.Platform.Events.Functions
 
             await _eventsClient.SaveCloudEvent(cloudEvent);
             await _eventsClient.PostInbound(cloudEvent);
+        }
+
+        /// <summary>
+        /// Changes . notation inresource for Altinn App events to use _.
+        /// </summary>
+        internal static void EnsureCorrectResourceFormat(CloudEvent cloudEvent)
+        {
+            if (cloudEvent["resource"].ToString().StartsWith("urn:altinn:resource:altinnapp."))
+            {
+                string org = null;
+                string app = null;
+
+                string[] pathParams = cloudEvent.Source.AbsolutePath.Split("/");
+
+                if (pathParams.Length > 5)
+                {
+                    org = pathParams[1];
+                    app = pathParams[2];
+                }
+
+                cloudEvent.SetAttributeFromString("resource", $"urn:altinn:resource:app_{org}_{app}");
+            }
         }
     }
 }

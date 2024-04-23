@@ -33,6 +33,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             int sequenceno,
             string id,
             Uri source,
+            string resource,
             string type,
             string subject,
             string alternativesubject,
@@ -42,6 +43,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             var e = new CloudEvent(CloudEventsSpecVersion.V1_0);
             e["id"] = id;
             e["source"] = source;
+            e["resource"] = resource;
             e["type"] = type;
             e["subject"] = subject;
             e["alternativesubject"] = alternativesubject;
@@ -53,6 +55,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 SequenceNo = sequenceno,
                 Id = id,
                 Source = source,
+                Resource = resource,
                 Subject = subject,
                 Time = DateTime.Parse(time),
                 Type = type,
@@ -70,6 +73,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     1,
                     "e31dbb11-2208-4dda-a549-92a0db8c7708",
                     new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+                    "urn:altinn:resource:app_ttd_endring-av-navn-v2",
                     "instance.deleted",
                     "/party/1337",
                     "/person/01038712345",
@@ -79,6 +83,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     2,
                     "e31dbb11-2208-4dda-a549-92a0db8c7708",
                     new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+                    "urn:altinn:resource:app_ttd_endring-av-navn-v2",
                     "instance.deleted",
                     "/party/1337",
                     "/person/01038712345",
@@ -91,6 +96,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     1,
                     "e31dbb11-2208-4dda-a549-92a0db8c7708",
                     new Uri("https://nav.apps.altinn.no/nav/app/instances/1337/e31dbb11-2208-4dda-a549-92a0db8c7708"),
+                    "urn:altinn:resource:app_nav_app",
                     "instance.created",
                     "/party/1337",
                     "/person/01038712345",
@@ -101,6 +107,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     2,
                     "e31dbb11-2208-4dda-a549-92a0db8c8808",
                     new Uri("https://nav.apps.altinn.no/nav/app/instances/1337/e31dbb11-2208-4dda-a549-92a0db8c8808"),
+                    "urn:altinn:resource:app_nav_app",
                     "instance.created",
                     "/party/1337",
                     "/person/01038712345",
@@ -111,6 +118,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     3,
                     "e31dbb11-2208-4dda-a549-92a0db8c9908",
                     new Uri("https://nav.apps.altinn.no/nav/app/instances/12345/e31dbb11-2208-4dda-a549-92a0db8c9908"),
+                    "urn:altinn:resource:app_nav_app",
                     "instance.restored",
                     "/party/12345",
                     "/person/01038712345",
@@ -121,9 +129,10 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     4,
                     "e31dbb11-2208-4dda-a549-92a0db8c0008",
                     new Uri("https://nav.apps.altinn.no/nav/app/instances/12345/e31dbb11-2208-4dda-a549-92a0db8c0008"),
+                    "urn:altinn:resource:app_nav_app",
                     "instance.saved",
-                    "/party/12345",
-                    "/person/01038712345",
+                    "/party/54321",
+                    "/person/01038754321",
                     "2020-06-17T08:50:29.463221Z",
                     "data field"));
 
@@ -131,6 +140,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     5,
                     "e31dbb11-2208-4dda-a549-92a0db8c2208",
                     new Uri("https://skd.apps.altinn.no/skd/sirius/instances/54321/e31dbb11-2208-4dda-a549-92a0db8c9908"),
+                    "urn:altinn:resource:app_skd_sirius",
                     "instance.saved",
                     "/party/54321",
                     "/person/01038754321",
@@ -195,7 +205,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<List<CloudEvent>> GetEvents(string after, string source, string subject, string alternativeSubject, List<string> type, int size)
+        public Task<List<CloudEvent>> GetEvents(string resource, string after, string subject, string alternativeSubject, List<string> type, int size)
         {
             var tableEntries = GetTestEvents(_eventsCollection);
 
@@ -213,10 +223,9 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 filter = filter.Where(te => te.Subject.Equals(subject));
             }
 
-            if (!string.IsNullOrEmpty(source))
+            if (!string.IsNullOrEmpty(resource))
             {
-                // requires more logic to match all fancy cases.
-                filter = filter.Where(te => te.Source.ToString() == source);
+                filter = filter.Where(te => te.Resource == resource);
             }
 
             if (type != null && type.Count > 0)

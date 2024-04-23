@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
-using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -14,7 +13,6 @@ using Altinn.Platform.Events.Tests.Mocks;
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 using Moq;
 
@@ -123,7 +121,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task GetAppEvents_QueryIncludesFromAndPartyId_RetrievesCorrectNumberOfEvents()
         {
             // Arrange
-            int expectedCount = 1;
+            int expectedCount = 2;
             string expectedSubject = "/party/54321";
 
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
@@ -268,18 +266,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c0008", null, expectedSubject, null, new List<string>() { }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c0008", expectedSubject, null, new List<string>() { }, 50);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
-            Assert.Equal(expectedSubject, actual.First().Subject);
+            Assert.Equal(expectedSubject, actual[0].Subject);
         }
 
         /// <summary>
         /// Scenario:
         ///   Get events based on after.
         /// Expected result:
-        ///   A single event is returned.
+        ///   Three events are returned.
         /// Success criteria:
         ///  Passes on the after parameter to the repository.
         /// </summary>
@@ -291,7 +289,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, null, new List<string>() { }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, new List<string>() { }, 50);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -323,7 +321,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:altinnapp.ttd.apps-test", null, expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:app_ttd_apps-test", null, expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
 
             // Assert
             repositoryMock.VerifyAll();
