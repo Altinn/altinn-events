@@ -9,6 +9,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'src/**'
+      - 'test/Altinn.Platform.Events.Tests/**'
   workflow_dispatch:
 jobs:
   build-test-analyze:

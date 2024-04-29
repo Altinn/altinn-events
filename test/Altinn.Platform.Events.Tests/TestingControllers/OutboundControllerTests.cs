@@ -22,6 +22,7 @@ using CloudNative.CloudEvents;
 
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -179,6 +180,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
+                    builder.ConfigureAppConfiguration((hostingContext, config) =>
+                    {
+                        config.AddConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.unittest.json").Build());
+                    });
+
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(outboundService);
