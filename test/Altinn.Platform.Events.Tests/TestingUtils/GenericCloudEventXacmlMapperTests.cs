@@ -36,10 +36,10 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             _cloudEvent["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
 
             _cloudEventWithOrgNoSubject = _cloudEvent.Clone();
-            _cloudEventWithOrgNoSubject.Subject = "urn:altinn:organization:identifier-no::912345678";
+            _cloudEventWithOrgNoSubject.Subject = "urn:altinn:organization:identifier-no:912345678";
 
             _cloudEventWithPersonSubject = _cloudEvent.Clone();
-            _cloudEventWithPersonSubject.Subject = "urn:altinn:person:identifier-no::12345678901";
+            _cloudEventWithPersonSubject.Subject = "urn:altinn:person:identifier-no:12345678901";
 
             _cloudEventWithNoSubject = _cloudEvent.Clone();
             _cloudEventWithNoSubject.Subject = null;

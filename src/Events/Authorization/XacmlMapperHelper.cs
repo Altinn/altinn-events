@@ -26,7 +26,7 @@ public static class XacmlMapperHelper
     // urn:altinn:organization:identifier-no is a value defined by Authorization so we need to use 'z' here.
     private const string ClaimOrganizationNumber = "urn:altinn:organization:identifier-no";
     private const string ClaimPersonNumber = "urn:altinn:person:identifier-no";
-    private const string ClaimIdentitySeparator = "::";
+    private const string ClaimIdentitySeparator = ":";
 
     /// <summary>
     /// Generates subject attribute list
@@ -86,8 +86,8 @@ public static class XacmlMapperHelper
     /// Maps a subject in the provided CloudEvent to a XACML resource attribute in the provided resource category instance.
     /// </summary>
     /// <remarks>
-    /// A recognized subject property value begins with one of the prefixes "urn:altinn:organization:identifier-no::",
-    /// or "urn:altinn:person:identifier-no::", which is copied to the resource attribute with the corresponding URN.
+    /// A recognized subject property value begins with one of the prefixes "urn:altinn:organization:identifier-no",
+    /// or "urn:altinn:person:identifier-no", which is copied to the resource attribute with the corresponding URN.
     /// This will enable the PDP to enrich the request with roles etc. that the user has in the context of the CloudEvent
     /// subject (aka reportee).
     ///
@@ -104,11 +104,18 @@ public static class XacmlMapperHelper
         }
 
         string[] typeAndValue = cloudEvent.Subject.Split(ClaimIdentitySeparator);
-        if (typeAndValue.Length != 2 || (typeAndValue[0] != ClaimOrganizationNumber && typeAndValue[0] != ClaimPersonNumber))
+        if (typeAndValue.Length < 2)
         {
             return;
         }
 
-        resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(typeAndValue[0], typeAndValue[1], CloudEventXacmlMapper.DefaultType, CloudEventXacmlMapper.DefaultIssuer));
+        var value = typeAndValue[^1];
+        var type = string.Join(ClaimIdentitySeparator, typeAndValue[..^1]);
+        if (type != ClaimOrganizationNumber && type != ClaimPersonNumber)
+        {
+            return;
+        }
+
+        resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(type, value, CloudEventXacmlMapper.DefaultType, CloudEventXacmlMapper.DefaultIssuer));
     }
 }
