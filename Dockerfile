@@ -1,20 +1,24 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0.204-alpine3.18 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.300-alpine3.18 AS build
 
-# Copy event backend
 COPY src/Events ./Events
-WORKDIR Events/
+COPY src/DbTools ./DbTools
+COPY src/Events/Migration ./Migration
+
+WORKDIR DbTools/
+RUN dotnet build ./DbTools.csproj -c Release -o /app_tools
+
+WORKDIR ../Events/
+
+RUN dotnet build ./Altinn.Platform.Events.csproj -c Release -o /app_output
+RUN dotnet publish ./Altinn.Platform.Events.csproj -c Release -o /app_output
 
 
-# Build and publish
-RUN dotnet build Altinn.Platform.Events.csproj -c Release -o /app_output
-RUN dotnet publish Altinn.Platform.Events.csproj -c Release -o /app_output
-
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.4-alpine3.18 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.5-alpine3.18 AS final
 EXPOSE 5080
 WORKDIR /app
 COPY --from=build /app_output .
 
-COPY src/Events/Migration ./Migration
+COPY --from=build /Events/Migration ./Migration
 
 # setup the user and group
 # the user will have no password, using shell /bin/false and using the group dotnet

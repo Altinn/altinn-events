@@ -85,7 +85,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Retrieves a set of events related based on query parameters.
         /// </summary>
-        /// <param name="resource" example="urn:altinn:resource:altinnapp.ttd.apps-test">
+        /// <param name="resource" example="urn:altinn:resource:app_ttd_apps-test">
         /// Required resource attribute</param>
         /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Retrieve events that were registered after this event Id</param>
         /// <param name="subject">Optional filter by subject. Only exact matches will be returned.</param>

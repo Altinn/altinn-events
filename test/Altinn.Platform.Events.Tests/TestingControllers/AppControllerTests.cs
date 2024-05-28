@@ -70,7 +70,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status and correct responseId.
             /// </summary>
             [Fact]
-            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
+            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreated()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -92,8 +92,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-
-                string content = await response.Content.ReadAsStringAsync();
             }
 
             /// <summary>
@@ -868,7 +866,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 Mock<IEventsService> serviceMock = new();
-              
+
                 string requestUri = $"{BasePath}/app/party?from=2022-07-07T11:00:53.3917";
                 HttpClient client = GetTestClient(serviceMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
@@ -920,6 +918,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
+                    builder.ConfigureAppConfiguration((hostingContext, config) =>
+                    {
+                        config.AddConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.unittest.json").Build());
+                    });
+
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(eventsService);

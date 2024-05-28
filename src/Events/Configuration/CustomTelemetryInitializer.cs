@@ -1,4 +1,5 @@
 using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Altinn.Platform.Telemetry
@@ -16,6 +17,23 @@ namespace Altinn.Platform.Telemetry
             if (string.IsNullOrEmpty(telemetry.Context.Cloud.RoleName))
             {
                 telemetry.Context.Cloud.RoleName = "platform-events";
+            }
+
+            // Disable sampling for exceptions, requests, dependencies
+            if (telemetry is RequestTelemetry requestTelemetry)
+            {
+                ((ISupportSampling)telemetry).SamplingPercentage = 100;
+                requestTelemetry.ProactiveSamplingDecision = SamplingDecision.SampledIn;
+            }
+            else if (telemetry is DependencyTelemetry dependencyTelemetry)
+            {
+                ((ISupportSampling)telemetry).SamplingPercentage = 100;
+                dependencyTelemetry.ProactiveSamplingDecision = SamplingDecision.SampledIn;
+            }
+            else if (telemetry is ExceptionTelemetry exceptionTelemetry)
+            {
+                ((ISupportSampling)telemetry).SamplingPercentage = 100;
+                exceptionTelemetry.ProactiveSamplingDecision = SamplingDecision.SampledIn;
             }
         }
     }
