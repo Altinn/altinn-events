@@ -113,6 +113,8 @@ namespace Altinn.Platform.Events.Authorization
                 resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.ResourceInstance, cloudEvent["resourceinstance"].ToString(), defaultType, defaultIssuer));
             }
 
+            XacmlMapperHelper.AddResourcePartyAttributeFromCloudEventSubject(cloudEvent, resourceCategory);
+
             return resourceCategory;
         }
     }

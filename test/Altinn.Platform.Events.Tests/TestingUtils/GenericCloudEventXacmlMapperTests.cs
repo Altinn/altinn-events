@@ -18,6 +18,10 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
     {
         private readonly CloudEvent _cloudEvent;
         private readonly CloudEvent _cloudEventWithResourceInstance;
+        private readonly CloudEvent _cloudEventWithOrgNoSubject;
+        private readonly CloudEvent _cloudEventWithPersonSubject;
+        private readonly CloudEvent _cloudEventWithNoSubject;
+        private readonly CloudEvent _cloudEventWithUnknownSubject;
 
         public GenericCloudEventXacmlMapperTests()
         {
@@ -30,6 +34,18 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             };
 
             _cloudEvent["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
+
+            _cloudEventWithOrgNoSubject = _cloudEvent.Clone();
+            _cloudEventWithOrgNoSubject.Subject = "urn:altinn:organization:identifier-no:912345678";
+
+            _cloudEventWithPersonSubject = _cloudEvent.Clone();
+            _cloudEventWithPersonSubject.Subject = "urn:altinn:person:identifier-no:12345678901";
+
+            _cloudEventWithNoSubject = _cloudEvent.Clone();
+            _cloudEventWithNoSubject.Subject = null;
+
+            _cloudEventWithUnknownSubject = _cloudEvent.Clone();
+            _cloudEventWithUnknownSubject.Subject = "foobar";
 
             _cloudEventWithResourceInstance = new CloudEvent(CloudEventsSpecVersion.V1_0)
             {
@@ -145,6 +161,60 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             // Assert
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
             Assert.Equal(expectedResourceId, actualResourceInstancedAttribute.Value);
+        }
+
+        [Fact]
+        public void CreateResourceCategory_CloudEventWithPersonSubject()
+        {
+            // Arrange
+            int expectedAttributeCount = 5;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithPersonSubject);
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:person:identifier-no"));
+        }
+
+        [Fact]
+        public void CreateResourceCategory_CloudEventWithOrgNoSubject()
+        {
+            // Arrange
+            int expectedAttributeCount = 5;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithOrgNoSubject);
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:organization:identifier-no"));
+        }
+
+        [Fact]
+        public void CreateResourceCategory_CloudEventWithNoSubject()
+        {
+            // Arrange
+            int expectedAttributeCount = 4;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithNoSubject);
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
+        }
+
+        [Fact]
+        public void CreateResourceCategory_CloudEventWithUnknownSubject()
+        {
+            // Arrange
+            int expectedAttributeCount = 4;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithUnknownSubject);
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
         }
 
         [Fact]

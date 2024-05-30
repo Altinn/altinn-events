@@ -1,9 +1,9 @@
-﻿#nullable enable
+#nullable enable
 
 using System.Security.Claims;
-
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Helpers;
+using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Authorization;
 
@@ -23,8 +23,9 @@ public static class XacmlMapperHelper
     private const string ClaimOrg = "urn:altinn:org";
     private const string ClaimPartyID = "urn:altinn:partyid";
 
-    // urn:altinn:organization:identifier-no is a value defined by Authorization so we need to use 'z' here.
     private const string ClaimOrganizationNumber = "urn:altinn:organization:identifier-no";
+    private const string ClaimPersonNumber = "urn:altinn:person:identifier-no";
+    private const string ClaimIdentitySeparator = ":";
 
     /// <summary>
     /// Generates subject attribute list
@@ -78,5 +79,42 @@ public static class XacmlMapperHelper
         string value = resource.Substring(index + 1);
 
         return (id, value);
+    }
+
+    /// <summary>
+    /// Maps a subject in the provided CloudEvent to a XACML resource attribute in the provided resource category instance.
+    /// </summary>
+    /// <remarks>
+    /// A recognized subject property value begins with one of the prefixes "urn:altinn:organization:identifier-no",
+    /// or "urn:altinn:person:identifier-no", which is copied to the resource attribute with the corresponding URN.
+    /// This will enable the PDP to enrich the request with roles etc. that the user has in the context of the CloudEvent
+    /// subject (aka reportee).
+    ///
+    /// Also note that this requires a XACML subject attribute that the PDP understands in order to look up the user's
+    /// roles/access groups for that particular party, eg. "urn:altinn:userid" or "urn:altinn:person:identifier-no".
+    /// </remarks>
+    /// <param name="cloudEvent">CloudEvent containing a subject representing a party</param>
+    /// <param name="resourceCategory">The XACML resource category to be populated</param>
+    public static void AddResourcePartyAttributeFromCloudEventSubject(CloudEvent cloudEvent, XacmlJsonCategory resourceCategory)
+    {
+        if (string.IsNullOrEmpty(cloudEvent.Subject))
+        {
+            return;
+        }
+
+        string[] typeAndValue = cloudEvent.Subject.Split(ClaimIdentitySeparator);
+        if (typeAndValue.Length < 2)
+        {
+            return;
+        }
+
+        var value = typeAndValue[^1];
+        var type = string.Join(ClaimIdentitySeparator, typeAndValue[..^1]);
+        if (type != ClaimOrganizationNumber && type != ClaimPersonNumber)
+        {
+            return;
+        }
+
+        resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(type, value, CloudEventXacmlMapper.DefaultType, CloudEventXacmlMapper.DefaultIssuer));
     }
 }
