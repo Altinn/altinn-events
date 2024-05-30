@@ -23,7 +23,6 @@ public static class XacmlMapperHelper
     private const string ClaimOrg = "urn:altinn:org";
     private const string ClaimPartyID = "urn:altinn:partyid";
 
-    // urn:altinn:organization:identifier-no is a value defined by Authorization so we need to use 'z' here.
     private const string ClaimOrganizationNumber = "urn:altinn:organization:identifier-no";
     private const string ClaimPersonNumber = "urn:altinn:person:identifier-no";
     private const string ClaimIdentitySeparator = ":";
@@ -92,11 +91,11 @@ public static class XacmlMapperHelper
     /// subject (aka reportee).
     ///
     /// Also note that this requires a XACML subject attribute that the PDP understands in order to look up the user's
-    /// roles/access groups for that particular reportee, eg. "urn:altinn:userid" or "urn:altinn:person:identifier-no".
+    /// roles/access groups for that particular party, eg. "urn:altinn:userid" or "urn:altinn:person:identifier-no".
     /// </remarks>
-    /// <param name="cloudEvent">CloudEvent containing a subject representing a party (ie. reportee)</param>
+    /// <param name="cloudEvent">CloudEvent containing a subject representing a party</param>
     /// <param name="resourceCategory">The XACML resource category to be populated</param>
-    public static void AddResourceReporteeAttributeFromCloudEventSubject(CloudEvent cloudEvent, XacmlJsonCategory resourceCategory)
+    public static void AddResourcePartyAttributeFromCloudEventSubject(CloudEvent cloudEvent, XacmlJsonCategory resourceCategory)
     {
         if (string.IsNullOrEmpty(cloudEvent.Subject))
         {
