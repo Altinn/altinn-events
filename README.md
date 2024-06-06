@@ -18,10 +18,23 @@ These instructions will get you a copy of the events component up and running on
 3. A code editor - we like [Visual Studio Code](https://code.visualstudio.com/download)
    - Also install [recommended extensions](https://code.visualstudio.com/docs/editor/extension-marketplace#_workspace-recommended-extensions) (e.g. [C#](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp))
 4. [Podman](https://podman.io/) or another container tool such as Docker Desktop
-5. PostgreSQL is installed locally (see [handbook](https://docs.altinn.studio/community/contributing/handbook/postgres/))
+5. [PostgreSQL 15](https://www.postgresql.org/download/)
 
 
-## Running the events component
+### Setting up PostgreSQL
+
+Ensure that both PostgreSQL and pgAdmin have been installed and start pgAdmin.
+
+In pgAdmin
+- Create database _eventsdb_
+- Create the following users with password: _Password_ (see privileges in parentheses)
+  - platform_events_admin (superuser, canlogin)
+  - platform_events (canlogin)
+- Create schema _events_ in eventsdb with owner _platform_events_admin_
+
+A more detailed description of the database setup is available in [our developer handbook](https://docs.altinn.studio/community/contributing/handbook/postgres/)
+
+### Cloning the application
 
 Clone [Altinn Events repo](https://github.com/Altinn/altinn-events) and navigate to the folder.
 
@@ -30,7 +43,7 @@ git clone https://github.com/Altinn/altinn-events
 cd altinn-events
 ```
 
-### In a docker container
+### Running the application in a docker container
 
 
 To start an Altinn Events docker container
@@ -45,7 +58,7 @@ To stop the container running Altinn Events
 podman stop altinn-register
 ```
 
-### With .NET
+### Running the application with .NET
 
 The Events components can be run locally when developing/debugging. Follow the install steps above if this has not already been done.
 
