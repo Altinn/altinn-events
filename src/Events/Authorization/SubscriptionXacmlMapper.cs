@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Authorization
                 Resource = new List<XacmlJsonCategory>()
             };
 
-            request.AccessSubject.Add(new XacmlJsonCategory().AddSubjectAttributes(subscription.Consumer));
+            request.AccessSubject.Add(new XacmlJsonCategory().AddSubjectAttribute(subscription.Consumer));
             request.Action.Add(CreateActionCategory(action));
             request.Resource.Add(CreateResourceCategory(subscription, isAppSubs));
 
@@ -61,8 +61,8 @@ namespace Altinn.Platform.Events.Authorization
                 Attribute = new List<XacmlJsonAttribute>()
             };
 
-            resourceCategory.AddXacmlJsonAttributeFromUrn(subscription.ResourceFilter);
-            resourceCategory.AddSubjectAttributes(subscription.SubjectFilter);
+            resourceCategory.AddAttributeFromUrn(subscription.ResourceFilter);
+            resourceCategory.AddSubjectAttribute(subscription.SubjectFilter);
 
             if (isAppEventSubs)
             {

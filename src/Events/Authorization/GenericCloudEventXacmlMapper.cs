@@ -47,7 +47,7 @@ namespace Altinn.Platform.Events.Authorization
         /// <param name="cloudEvent">The cloud events to publish</param>
         public static XacmlJsonRequestRoot CreateDecisionRequest(string consumer, string actionType, CloudEvent cloudEvent)
         {
-            return CreateDecisionRequest(new XacmlJsonCategory().AddSubjectAttributes(consumer), actionType, cloudEvent);
+            return CreateDecisionRequest(new XacmlJsonCategory().AddSubjectAttribute(consumer), actionType, cloudEvent);
         }
 
         private static XacmlJsonRequestRoot CreateDecisionRequest(XacmlJsonCategory subjectAttributes, string actionType, CloudEvent cloudEvent)
@@ -104,8 +104,8 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventId, cloudEvent.Id, defaultType, defaultIssuer, true));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventType, cloudEvent.Type, defaultType, defaultIssuer));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventSource, cloudEvent.Source.ToString(), defaultType, defaultIssuer));
-            resourceCategory.AddXacmlJsonAttributeFromUrn(cloudEvent.GetResource());
-            resourceCategory.AddXacmlJsonAttributeFromUrn(cloudEvent.Subject); // only urn formated subjects included in authorization request
+            resourceCategory.AddAttributeFromUrn(cloudEvent.GetResource());
+            resourceCategory.AddAttributeFromUrn(cloudEvent.Subject); // only urn formated subjects included in authorization request
 
             if (cloudEvent["resourceinstance"] is not null)
             {

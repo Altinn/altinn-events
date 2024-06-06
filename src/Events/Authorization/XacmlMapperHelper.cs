@@ -28,9 +28,9 @@ public static class XacmlMapperHelper
     private const string ClaimIdentitySeparator = ":";
     
     /// <summary>
-    /// Adds attributes to the XacmlJsonCateogry from the provided subject string
+    /// Adds attribute to the XacmlJsonCateogry from the provided subject string
     /// </summary>
-    public static XacmlJsonCategory AddSubjectAttributes(this XacmlJsonCategory jsonCategory, string subject)
+    public static XacmlJsonCategory AddSubjectAttribute(this XacmlJsonCategory jsonCategory, string subject)
     {
         if (string.IsNullOrEmpty(subject))
         {
@@ -61,10 +61,40 @@ public static class XacmlMapperHelper
         }
         else if (UriExtensions.IsValidUrn(subject))
         {
-            jsonCategory.AddXacmlJsonAttributeFromUrn(subject);
+            jsonCategory.AddAttributeFromUrn(subject);
         }
 
         return jsonCategory;
+    }
+
+    /// <summary>
+    /// Adds a new json attribute to a provided xacml category instance based of a urn.
+    /// </summary>
+    /// <remarks>
+    /// URN is split at the last colon (`:`) of the string an first part is used as the
+    /// attribute type and last part is used as the value.
+    /// Given an invalid URN or empty string the category is left unmodified.
+    /// </remarks>
+    /// <param name="jsonCategory">The XACML category to be populated</param>
+    /// <param name="urn">The urn to retrieve attribute type and value from</param>
+    public static void AddAttributeFromUrn(this XacmlJsonCategory jsonCategory, string urn)
+    {
+        if (string.IsNullOrEmpty(urn))
+        {
+            return;
+        }
+
+        string[] typeAndValue = urn.Split(ClaimIdentitySeparator);
+
+        if (typeAndValue.Length < 2)
+        {
+            return;
+        }
+
+        var value = typeAndValue[^1];
+        var type = string.Join(ClaimIdentitySeparator, typeAndValue[..^1]);
+
+        jsonCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(type, value, CloudEventXacmlMapper.DefaultType, CloudEventXacmlMapper.DefaultIssuer));
     }
 
     /// <summary>
@@ -84,35 +114,5 @@ public static class XacmlMapperHelper
         string value = resource.Substring(index + 1);
 
         return (id, value);
-    }
-
-    /// <summary>
-    /// Adds a new json attribute to a provided xacml category instance based of a urn.
-    /// </summary>
-    /// <remarks>
-    /// URN is split at the last colon (`:`) of the string an first part is used as the
-    /// attribute type and last part is used as the value.
-    /// Given an invalid URN or empty string the category is left unmodified.
-    /// </remarks>
-    /// <param name="jsonCategory">The XACML category to be populated</param>
-    /// <param name="urn">The urn to retrieve attribute type and value from</param>
-    public static void AddXacmlJsonAttributeFromUrn(this XacmlJsonCategory jsonCategory, string urn)
-    {
-        if (string.IsNullOrEmpty(urn))
-        {
-            return;
-        }
-
-        string[] typeAndValue = urn.Split(ClaimIdentitySeparator);
-
-        if (typeAndValue.Length < 2)
-        {
-            return;
-        }
-
-        var value = typeAndValue[^1];
-        var type = string.Join(ClaimIdentitySeparator, typeAndValue[..^1]);
-
-        jsonCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(type, value, CloudEventXacmlMapper.DefaultType, CloudEventXacmlMapper.DefaultIssuer));
-    }
+    }    
 }
