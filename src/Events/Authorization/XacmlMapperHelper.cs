@@ -67,6 +67,25 @@ public static class XacmlMapperHelper
     }
 
     /// <summary>
+    /// Splits the resource attribute at the final ':'
+    /// </summary>
+    /// <param name="resource">The resource string</param>
+    /// <returns>A tuple conaining the attribute id and attribute value</returns>
+    /// <remarks>
+    /// First entry should be used as the attribute id in the xacml request
+    /// Second entry should be used as the atttribute value in the xaml request
+    /// For an Altinn App resource second entry is on format altinnapp.{org}.{app}
+    /// </remarks>
+    public static (string AttributeId, string AttributeValue) SplitResourceInTwoParts(string resource)
+    {
+        int index = resource.LastIndexOf(ClaimIdentitySeparator);
+        string id = resource.Substring(0, index);
+        string value = resource.Substring(index + 1);
+
+        return (id, value);
+    }
+
+    /// <summary>
     /// Maps a urn string to a XACML resource attribute in the provided xacml category instance.
     /// </summary>
     /// <remarks>
@@ -94,24 +113,5 @@ public static class XacmlMapperHelper
         var type = string.Join(ClaimIdentitySeparator, typeAndValue[..^1]);
 
         jsonCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(type, value, CloudEventXacmlMapper.DefaultType, CloudEventXacmlMapper.DefaultIssuer));
-    }
-
-    /// <summary>
-    /// Splits the resource attribute at the final ':'
-    /// </summary>
-    /// <param name="resource">The resource string</param>
-    /// <returns>A tuple conaining the attribute id and attribute value</returns>
-    /// <remarks>
-    /// First entry should be used as the attribute id in the xacml request
-    /// Second entry should be used as the atttribute value in the xaml request
-    /// For an Altinn App resource second entry is on format altinnapp.{org}.{app}
-    /// </remarks>
-    public static (string AttributeId, string AttributeValue) SplitResourceInTwoParts(string resource)
-    {
-        int index = resource.LastIndexOf(ClaimIdentitySeparator);
-        string id = resource.Substring(0, index);
-        string value = resource.Substring(index + 1);
-
-        return (id, value);
     }
 }
