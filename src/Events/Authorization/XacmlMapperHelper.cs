@@ -26,44 +26,45 @@ public static class XacmlMapperHelper
 
     private const string ClaimOrganizationNumber = "urn:altinn:organization:identifier-no";
     private const string ClaimIdentitySeparator = ":";
-
+    
     /// <summary>
-    /// Generates subject attribute list
+    /// Adds attributes to the XacmlJsonCateogry from the provided subject string
     /// </summary>
-    /// <returns>The XacmlJsonCategory or the subject</returns>
-    public static XacmlJsonCategory CreateSubjectAttributes(string subject)
+    public static XacmlJsonCategory AddSubjectAttributes(this XacmlJsonCategory jsonCategory, string subject)
     {
-        XacmlJsonCategory category = new()
+        if (string.IsNullOrEmpty(subject))
         {
-            Attribute = []
-        };
+            return jsonCategory;
+        }
+
+        jsonCategory.Attribute ??= [];
 
         if (subject.StartsWith(UserPrefix))
         {
             string value = subject.Replace(UserPrefix, string.Empty);
-            category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimUserId, value, ClaimValueTypes.String, DefaultIssuer));
+            jsonCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimUserId, value, ClaimValueTypes.String, DefaultIssuer));
         }
         else if (subject.StartsWith(OrgPrefix))
         {
             string value = subject.Replace(OrgPrefix, string.Empty);
-            category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrg, value, ClaimValueTypes.String, DefaultIssuer));
+            jsonCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrg, value, ClaimValueTypes.String, DefaultIssuer));
         }
         else if (subject.StartsWith(PartyPrefix))
         {
             string value = subject.Replace(PartyPrefix, string.Empty);
-            category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer));
+            jsonCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer));
         }
         else if (subject.StartsWith(OrganisationPrefix))
         {
             string value = subject.Replace(OrganisationPrefix, string.Empty);
-            category.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrganizationNumber, value, ClaimValueTypes.String, DefaultIssuer));
+            jsonCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrganizationNumber, value, ClaimValueTypes.String, DefaultIssuer));
         }
         else if (UriExtensions.IsValidUrn(subject))
         {
-            category.SetXacmlJsonAttributeFromUrn(subject);
+            jsonCategory.AddXacmlJsonAttributeFromUrn(subject);
         }
 
-        return category;
+        return jsonCategory;
     }
 
     /// <summary>
@@ -86,7 +87,7 @@ public static class XacmlMapperHelper
     }
 
     /// <summary>
-    /// Maps a urn string to a XACML resource attribute in the provided xacml category instance.
+    /// Adds a new json attribute to a provided xacml category instance based of a urn.
     /// </summary>
     /// <remarks>
     /// URN is split at the last colon (`:`) of the string an first part is used as the
@@ -95,7 +96,7 @@ public static class XacmlMapperHelper
     /// </remarks>
     /// <param name="jsonCategory">The XACML category to be populated</param>
     /// <param name="urn">The urn to retrieve attribute type and value from</param>
-    public static void SetXacmlJsonAttributeFromUrn(this XacmlJsonCategory jsonCategory, string urn)
+    public static void AddXacmlJsonAttributeFromUrn(this XacmlJsonCategory jsonCategory, string urn)
     {
         if (string.IsNullOrEmpty(urn))
         {

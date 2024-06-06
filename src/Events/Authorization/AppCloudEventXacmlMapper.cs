@@ -44,7 +44,7 @@ namespace Altinn.Platform.Events.Authorization
 
             (string org, string app, string instanceOwnerPartyId, string instanceGuid) = AppCloudEventExtensions.GetPropertiesFromAppSource(cloudEvent.Source);
 
-            request.AccessSubject.Add(XacmlMapperHelper.CreateSubjectAttributes(subject));
+            request.AccessSubject.Add(new XacmlJsonCategory().AddSubjectAttributes(subject));
             request.Action.Add(CloudEventXacmlMapper.CreateActionCategory("read"));
             request.Resource.Add(CreateEventsResourceCategory(org, app, instanceOwnerPartyId, instanceGuid));
 
