@@ -61,9 +61,7 @@ namespace Altinn.Platform.Events.Authorization
                 Attribute = new List<XacmlJsonAttribute>()
             };
 
-            (string resourceFilterId, string resourceFilterValue) = XacmlMapperHelper.SplitResourceInTwoParts(subscription.ResourceFilter);
-
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(resourceFilterId, resourceFilterValue, DefaultType, DefaultIssuer));
+            resourceCategory.SetXacmlJsonAttributeFromUrn(subscription.ResourceFilter);
 
             if (!string.IsNullOrEmpty(subscription.SubjectFilter))
             {
@@ -73,6 +71,8 @@ namespace Altinn.Platform.Events.Authorization
 
             if (isAppEventSubs)
             {
+                (_, string resourceFilterValue) = XacmlMapperHelper.SplitResourceInTwoParts(subscription.ResourceFilter);
+
                 string[] resourceAttParts = resourceFilterValue.Split('_');
                 string org = resourceAttParts[1];
                 string app = resourceAttParts[2];
