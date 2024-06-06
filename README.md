@@ -19,7 +19,7 @@ These instructions will get you a copy of the events component up and running on
    - Also install [recommended extensions](https://code.visualstudio.com/docs/editor/extension-marketplace#_workspace-recommended-extensions) (e.g. [C#](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp))
 4. [Podman](https://podman.io/) or another container tool such as Docker Desktop
 5. [PostgreSQL 15](https://www.postgresql.org/download/)
-
+6. Install [Azureite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#install-azurite)
 
 ### Setting up PostgreSQL
 
@@ -45,28 +45,31 @@ cd altinn-events
 
 ### Running the application in a docker container
 
+- [Start Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#run-azurite)
 
-To start an Altinn Events docker container
+- Start Altinn Events docker container run the command
 
-```cmd
-podman compose up -d --build
-```
+  ```cmd
+  podman compose up -d --build
+  ```
 
-To stop the container running Altinn Events
+- To stop the container running Altinn Events run the command
 
-```cmd
-podman stop altinn-register
-```
+  ```cmd
+  podman stop altinn-register
+  ```
 
 ### Running the application with .NET
 
 The Events components can be run locally when developing/debugging. Follow the install steps above if this has not already been done.
 
-Navigate to _src/Events_, and build and run the code from there, or run the solution using you selected code editor
+- [Start Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#run-azurite)
 
-```cmd
-cd src/Events
-dotnet run
-```
+- Navigate to _src/Events_, and build and run the code from there, or run the solution using you selected code editor
+
+  ```cmd
+  cd src/Events
+  dotnet run
+  ```
 
 The events solution is now available locally at http://localhost:5080/
