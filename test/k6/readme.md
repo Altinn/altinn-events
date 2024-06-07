@@ -33,11 +33,11 @@ Run test suite by specifying filename.
 
 For example:
 
->$> docker-compose run k6 run /src/tests/events/post.js -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***
+>$> podman compose run k6 run /src/tests/events/post.js -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***
 
-The comand consists of three sections
+The command consists of three sections
 
-`docker-compose run` to run the test in a docker container
+`podman compose run` to run the test in a docker container
 
 `k6 run {path to test file}` pointing to the test file you want to run e.g. `/src/tests/events/post.js`
 
@@ -47,7 +47,7 @@ The comand consists of three sections
 
 ### Webhook for subscriptions
 
-When testing the subscriptions a webook must be provided.
+When testing the subscriptions a webhook must be provided.
 You are free to provide whichever endpoint, but make sure it ends with `/`.
 
 We would suggest to use webhook.site.

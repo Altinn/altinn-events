@@ -73,4 +73,4 @@ The Events components can be run locally when developing/debugging. Follow the i
   ```
 
 The events solution is now available locally at http://localhost:5080/.
-To access swagger use http://localhost:5080/events/api/v1/swagger.
+To access swagger use http://localhost:5080/swagger.
