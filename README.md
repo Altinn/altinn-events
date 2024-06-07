@@ -59,6 +59,9 @@ cd altinn-events
   podman stop altinn-register
   ```
 
+The events solution is now available locally at http://localhost:5080/.
+To access swagger use http://localhost:5080/swagger.
+
 ### Running the application with .NET
 
 The Events components can be run locally when developing/debugging. Follow the install steps above if this has not already been done.
