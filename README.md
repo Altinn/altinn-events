@@ -19,7 +19,8 @@ These instructions will get you a copy of the events component up and running on
    - Also install [recommended extensions](https://code.visualstudio.com/docs/editor/extension-marketplace#_workspace-recommended-extensions) (e.g. [C#](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp))
 4. [Podman](https://podman.io/) or another container tool such as Docker Desktop
 5. [PostgreSQL 15](https://www.postgresql.org/download/)
-6. Install [Azureite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#install-azurite)
+6. [pgAdmin](https://www.pgadmin.org/download/)
+7. Install [Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#install-azurite)
 
 ### Setting up PostgreSQL
 
@@ -56,7 +57,7 @@ cd altinn-events
 - To stop the container running Altinn Events run the command
 
   ```cmd
-  podman stop altinn-register
+  podman stop altinn-events
   ```
 
 The events solution is now available locally at http://localhost:5080/.
