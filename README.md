@@ -56,7 +56,7 @@ cd altinn-events
 - To stop the container running Altinn Events run the command
 
   ```cmd
-  podman stop altinn-register
+  podman stop altinn-events
   ```
 
 ### Running the application with .NET
