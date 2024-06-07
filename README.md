@@ -1,6 +1,6 @@
 # Altinn Events
 
-Create and subscribe to events from apps or other sources.  
+Create and subscribe to events from apps or other sources.
 Documentation: https://docs.altinn.studio/events
 
 ## Build status
@@ -13,39 +13,63 @@ These instructions will get you a copy of the events component up and running on
 
 ### Prerequisites
 
-1. [.NET 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
-2. Code editor of your choice
-3. Newest [Git](https://git-scm.com/downloads)
-4. [Docker CE](https://www.docker.com/get-docker)
-5. Solution is cloned
-6. PostgreSQL is installed locally (see [handbook](https://docs.altinn.studio/community/contributing/handbook/postgres/))
+1. [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+2. Newest [Git](https://git-scm.com/downloads)
+3. A code editor - we like [Visual Studio Code](https://code.visualstudio.com/download)
+   - Also install [recommended extensions](https://code.visualstudio.com/docs/editor/extension-marketplace#_workspace-recommended-extensions) (e.g. [C#](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp))
+4. [Podman](https://podman.io/) or another container tool such as Docker Desktop
+5. [PostgreSQL 15](https://www.postgresql.org/download/)
+6. Install [Azureite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#install-azurite)
 
+### Setting up PostgreSQL
 
-## Running the events component
+Ensure that both PostgreSQL and pgAdmin have been installed and start pgAdmin.
 
-### In a docker container
+In pgAdmin
+- Create database _eventsdb_
+- Create the following users with password: _Password_ (see privileges in parentheses)
+  - platform_events_admin (superuser, canlogin)
+  - platform_events (canlogin)
+- Create schema _events_ in eventsdb with owner _platform_events_admin_
 
-Clone [Altinn Events repo](https://github.com/Altinn/altinn-events) and navigate to the root folder.
+A more detailed description of the database setup is available in [our developer handbook](https://docs.altinn.studio/community/contributing/handbook/postgres/)
 
-```cmd
-docker-compose up -d --build
+### Cloning the application
+
+Clone [Altinn Events repo](https://github.com/Altinn/altinn-events) and navigate to the folder.
+
+```bash
+git clone https://github.com/Altinn/altinn-events
+cd altinn-events
 ```
 
-### With .NET
+### Running the application in a docker container
+
+- [Start Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#run-azurite)
+
+- Start Altinn Events docker container run the command
+
+  ```cmd
+  podman compose up -d --build
+  ```
+
+- To stop the container running Altinn Events run the command
+
+  ```cmd
+  podman stop altinn-register
+  ```
+
+### Running the application with .NET
 
 The Events components can be run locally when developing/debugging. Follow the install steps above if this has not already been done.
 
-Stop the container running Events
+- [Start Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#run-azurite)
 
-```cmd
-docker stop altinn-events
-```
+- Navigate to _src/Events_, and build and run the code from there, or run the solution using you selected code editor
 
-Navigate to src/Events, and build and run the code from there, or run the solution using you selected code editor
+  ```cmd
+  cd src/Events
+  dotnet run
+  ```
 
-```cmd
-cd src/Events
-dotnet run
-```
-
-The events solution is now available locally at http://localhost:5080/api/v1
+The events solution is now available locally at http://localhost:5080/
