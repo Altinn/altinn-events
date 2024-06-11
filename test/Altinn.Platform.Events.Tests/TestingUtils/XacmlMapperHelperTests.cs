@@ -17,7 +17,7 @@ public class XacmlMapperHelperTests
     public void CreateSubjectAttributes_Assert_correct_attribute_id_and_value(string subject, string attributId, string value)
     {
         // Act
-        XacmlJsonCategory actual = XacmlMapperHelper.CreateSubjectAttributes(subject);
+        XacmlJsonCategory actual = new XacmlJsonCategory().AddSubjectAttribute(subject);
 
         // Assert
         Assert.Single(actual.Attribute);
