@@ -6,8 +6,8 @@ networks:
 
 services:
   altinn_platform_events:
-    container_name: altinn-platform-events
-    image: altinn-platform-events:latest
+    container_name: altinn-events
+    image: altinn-events:latest
     restart: always
     networks:
       - altinnplatform_network

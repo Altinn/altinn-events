@@ -377,13 +377,11 @@ void Configure(IConfiguration config)
             });
     }
 
-    app.UseSwagger(o => o.RouteTemplate = "events/swagger/{documentName}/swagger.json");
-
-    app.UseSwaggerUI(c =>
+    if (app.Environment.IsDevelopment())
     {
-        c.SwaggerEndpoint("/events/swagger/v1/swagger.json", "Altinn Platform Events API");
-        c.RoutePrefix = "events/swagger";
-    });
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
 
     app.UseRouting();
     app.UseAuthentication();
