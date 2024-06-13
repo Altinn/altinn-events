@@ -3,7 +3,6 @@ using System.Security.Cryptography.X509Certificates;
 
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Clients;
-using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
@@ -21,7 +20,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
 {
     public class EventsClientTests
     {
-        private readonly Mock<ILogger<IEventsClient>> _loggerMock = new Mock<ILogger<IEventsClient>>();
+        private readonly Mock<ILogger<EventsClient>> _loggerMock = new Mock<ILogger<EventsClient>>();
         private readonly Mock<IKeyVaultService> _kvMock = new Mock<IKeyVaultService>();
         private readonly Mock<IAccessTokenGenerator> _atgMock = new Mock<IAccessTokenGenerator>();
         private readonly Mock<ICertificateResolverService> _srMock = new Mock<ICertificateResolverService>();

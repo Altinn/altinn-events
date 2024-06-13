@@ -1,5 +1,4 @@
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,13 +18,13 @@ namespace Altinn.Platform.Events.Functions.Services
     public class WebhookService : IWebhookService
     {
         private readonly HttpClient _client;
-        private readonly ILogger<IWebhookService> _logger;
+        private readonly ILogger _logger;
         private readonly string _slackUri = "hooks.slack.com";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WebhookService"/> class.
         /// </summary>
-        public WebhookService(HttpClient client, ILogger<IWebhookService> logger)
+        public WebhookService(HttpClient client, ILogger<WebhookService> logger)
         {
             _client = client;
             _logger = logger;

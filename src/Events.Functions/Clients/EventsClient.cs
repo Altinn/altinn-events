@@ -23,7 +23,7 @@ namespace Altinn.Platform.Events.Functions.Clients
     /// </summary>
     public class EventsClient : IEventsClient
     {
-        private readonly ILogger<IEventsClient> _logger;
+        private readonly ILogger _logger;
 
         private readonly HttpClient _client;
 
@@ -39,7 +39,7 @@ namespace Altinn.Platform.Events.Functions.Clients
             IAccessTokenGenerator accessTokenGenerator,
             ICertificateResolverService certificateResolverService,
             IOptions<PlatformSettings> eventsConfig,
-            ILogger<IEventsClient> logger)
+            ILogger<EventsClient> logger)
         {
             _client = httpClient;
             _accessTokenGenerator = accessTokenGenerator;
