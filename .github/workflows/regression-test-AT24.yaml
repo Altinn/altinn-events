@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   schedule:
   - cron: '0 12 * * 1-5'
-  pull_request:
-    types: [review_requested, review_request_removed]
 
 jobs:
   at24:

@@ -1,8 +1,6 @@
 name: Regression test - AT
 
 on:
-  pull_request:
-    types: [review_requested, review_request_removed]
   workflow_call:
     inputs:
       environment:
