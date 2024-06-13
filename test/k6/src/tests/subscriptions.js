@@ -158,6 +158,7 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     data.orgToken
   );
 
+  console.log('// Response status: ' + response.status)
   var subscription = JSON.parse(response.body);
 
   success = check(response, {
