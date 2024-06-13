@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   schedule:
   - cron: '*/15 * * * *'
+  pull_request:
+    types: [review_requested, review_request_removed]
 
 jobs:
   test:
