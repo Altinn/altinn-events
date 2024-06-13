@@ -75,7 +75,7 @@ function TC01_PostNewSubscriptionForAppEventSource(data) {
     data.appSubscription,
     data.orgToken
   );
-
+console.log(response.status)
   var subscription = JSON.parse(response.body);
   success = check(response, {
     "01 - POST new subscription for app event source. Status is 201": (r) =>
