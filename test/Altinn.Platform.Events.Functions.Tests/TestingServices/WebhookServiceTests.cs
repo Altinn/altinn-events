@@ -146,7 +146,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
         public async Task Send_ClientReturnsNonSuccessCode_ErrorLoggedAndExceptionThrown()
         {
             // Arrange
-            Mock<ILogger<IWebhookService>> loggerMock = new Mock<ILogger<IWebhookService>>();
+            Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
             var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
 
             var sut = new WebhookService(new HttpClient(handlerMock.Object), loggerMock.Object);
@@ -169,7 +169,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
         public async Task Send_ClientReturnsSuccessCode_NoLoggingOrException()
         {
             // Arrange
-            Mock<ILogger<IWebhookService>> loggerMock = new Mock<ILogger<IWebhookService>>();
+            Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
             var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
             var sut = new WebhookService(new HttpClient(handlerMock.Object), loggerMock.Object);
