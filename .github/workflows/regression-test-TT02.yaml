@@ -8,7 +8,7 @@ on:
     types: [review_requested, review_request_removed]
 
 jobs:
-  test:
+  regression-tests:
     environment: TT02
     runs-on: ubuntu-latest
     steps:

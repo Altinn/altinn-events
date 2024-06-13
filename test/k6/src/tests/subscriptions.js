@@ -71,13 +71,11 @@ export function setup() {
 // 01 - POST new subscription for app event source
 function TC01_PostNewSubscriptionForAppEventSource(data) {
   var response, success;
-
   response = subscriptionsApi.postSubscription(
     data.appSubscription,
     data.orgToken
   );
 
-  console.log(response);
   var subscription = JSON.parse(response.body);
   success = check(response, {
     "01 - POST new subscription for app event source. Status is 201": (r) =>

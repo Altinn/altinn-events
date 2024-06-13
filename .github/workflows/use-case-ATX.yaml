@@ -6,7 +6,7 @@ on:
   - cron: '*/15 * * * *'
 
 jobs:
-  test:
+  use-case-test:
     strategy:
       fail-fast: false
       matrix:

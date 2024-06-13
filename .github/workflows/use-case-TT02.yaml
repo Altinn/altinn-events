@@ -6,7 +6,7 @@ on:
   - cron: '*/15 * * * *'
 
 jobs:
-  test:
+  use-case-test:
     environment: TT02
     runs-on: ubuntu-latest
     steps:
