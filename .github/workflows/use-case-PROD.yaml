@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   schedule:
   - cron: '*/15 * * * *'
-  pull_request:
-    types: [review_requested, review_request_removed]
 
 jobs:
   use-case-test:
@@ -43,15 +41,14 @@ jobs:
           report=":warning: Events use case test failure in ${{ vars.ENV }}  :warning: \n"
           report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "stepreport="$report >> $GITHUB_ENV
- #   - name: Report failure to Slack
- #     if: failure()
- #     id: slack
- #     uses: slackapi/slack-github-action@v1.24.0
- #     with:
- #       payload: |
- #           {
- #             "text": "${{ env.stepreport }}"
- #           }
- #     env:
- #       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
-
+    - name: Report failure to Slack
+      if: failure()
+      id: slack
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+            {
+              "text": "${{ env.stepreport }}"
+            }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
