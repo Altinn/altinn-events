@@ -112,27 +112,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
-            public async Task Post_ExternalEventsDisabled_NotFoundResponse()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events";
-
-                HttpClient client = GetTestClient(null);
-
-                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
-                };
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-            }
-
-            [Fact]
             public async Task Post_EventMissingParameters_BadRequestResponse()
             {
                 // Arrange
@@ -331,24 +310,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-            }
-
-            [Fact]
-            public async Task Get_ExternalEventsDisabled_NotFoundResponse()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708&size=5&subject=/party/1337&resource=urn:altinn:resource:test";
-
-                HttpClient client = GetTestClient(null);
-
-                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
             }
 
             /// <summary>
@@ -653,7 +614,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     {
                         services.AddSingleton(eventsService);
                         services.AddSingleton(authorizationService);
-                        services.Configure<GeneralSettings>(opts => opts.EnableExternalEvents = enableExternalEvents);
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
