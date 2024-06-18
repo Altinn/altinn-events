@@ -105,7 +105,7 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventType, cloudEvent.Type, defaultType, defaultIssuer));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventSource, cloudEvent.Source.ToString(), defaultType, defaultIssuer));
             resourceCategory.AddAttributeFromUrn(cloudEvent.GetResource());
-            resourceCategory.AddAttributeFromUrn(cloudEvent.Subject); // only urn formated subjects included in authorization request
+            resourceCategory.AddSubjectAttribute(cloudEvent.Subject); 
 
             if (cloudEvent["resourceinstance"] is not null)
             {
