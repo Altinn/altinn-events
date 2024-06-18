@@ -26,7 +26,6 @@ namespace Altinn.Platform.Events.Controllers
     public class EventsController : ControllerBase
     {
         private readonly IEventsService _eventsService;
-        private readonly GeneralSettings _settings;
         private readonly string _eventsBaseUri;
         private readonly IAuthorization _authorizationService;
 
@@ -40,7 +39,6 @@ namespace Altinn.Platform.Events.Controllers
         {
             _eventsService = events;
             _authorizationService = authorizationService;
-            _settings = settings.Value;
             _eventsBaseUri = settings.Value.BaseUri;
         }
 
@@ -54,11 +52,6 @@ namespace Altinn.Platform.Events.Controllers
         [Consumes("application/cloudevents+json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
         {
-            if (!_settings.EnableExternalEvents)
-            {
-                return NotFound();
-            }
-
             (bool isValid, string errorMessage) = ValidateCloudEvent(cloudEvent);
             if (!isValid)
             {
@@ -107,11 +100,6 @@ namespace Altinn.Platform.Events.Controllers
             [FromQuery] List<string> type,
             [FromQuery] int size = 50)
         {
-            if (!_settings.EnableExternalEvents)
-            {
-                return NotFound();
-            }
-
             // Maximum allowed result set size is adjusted silently.
             size = size > 1000 ? 1000 : size;
 

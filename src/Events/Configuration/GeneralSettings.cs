@@ -19,10 +19,5 @@ namespace Altinn.Platform.Events.Configuration
         /// Name of the cookie for where JWT is stored
         /// </summary>
         public string JwtCookieName { get; set; }
-
-        /// <summary>
-        /// Boolean indicating whether support for external events is supported or not
-        /// </summary>
-        public bool EnableExternalEvents { get; set; }
     }
 }
