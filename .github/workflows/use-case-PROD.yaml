@@ -1,4 +1,4 @@
-name: Use Case - TT02
+name: Use Case - PROD
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   use-case-test:
-    environment: TT02
+    environment: prod
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -15,7 +15,7 @@ jobs:
       uses: grafana/k6-action@v0.3.1
       with:
         filename: test/k6/src/tests/app-events.js
-        flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=apps-test -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
+        flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=${{ secrets.APP_NAME}} -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
     - name: Run events use case tests (POST)
       if: always()
       uses: grafana/k6-action@v0.3.1
@@ -33,17 +33,18 @@ jobs:
       uses: grafana/k6-action@v0.3.1
       with:
         filename: test/k6/src/tests/subscriptions.js
-        flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
+        flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=${{ secrets.APP_NAME}} -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
     - name: Build failure report
       if: failure()
       run: |
-          report=":warning: Events use case test failure in ${{ vars.ENV }} :warning: \n"
+
+          report=":warning: Events use case test failure in ${{ vars.ENV }}  :warning: \n"
           report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "stepreport="$report >> $GITHUB_ENV
     - name: Report failure to Slack
       if: failure()
       id: slack
-      uses: slackapi/slack-github-action@v1.26.0
+      uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
             {
@@ -51,4 +52,3 @@ jobs:
             }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
-
