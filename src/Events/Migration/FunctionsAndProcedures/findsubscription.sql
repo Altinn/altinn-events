@@ -19,7 +19,7 @@ RETURN query
         s.resourcefilter = _resourcefilter
         AND (s.sourcefilter IS NULL OR s.sourcefilter = _sourcefilter)
         AND (_subjectfilter IS NULL OR s.subjectfilter = _subjectfilter)
-        AND (_typefilter IS NULL OR s.typefilter = _typefilter)
+        AND ((_typefilter IS NULL AND s.typefilter IS NULL) OR s.typefilter = _typefilter)
         AND s.consumer = _consumer
         AND s.endpointurl = _endpointurl;
 END
