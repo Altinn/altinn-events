@@ -33,8 +33,8 @@ RETURN query
         events.subscription s
     WHERE
         s.resourcefilter = _resourcefilter
-        AND (s.sourcefilter IS NULL OR s.sourcefilter = _sourcefilter)
-        AND (_subjectfilter IS NULL OR s.subjectfilter = _subjectfilter)
+        AND ((_sourcefilter IS NULL AND s.sourcefilter IS NULL) OR s.sourcefilter = _sourcefilter)
+        AND ((_subjectfilter IS NULL AND s.subjectfilter IS NULL) OR s.subjectfilter = _subjectfilter)
         AND ((_typefilter IS NULL AND s.typefilter IS NULL) OR s.typefilter = _typefilter)
         AND s.consumer = _consumer
         AND s.endpointurl = _endpointurl;
