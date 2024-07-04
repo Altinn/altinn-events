@@ -22,6 +22,7 @@ These instructions will get you a copy of the events component up and running on
 5. [PostgreSQL](https://www.postgresql.org/download/)
 6. [pgAdmin](https://www.pgadmin.org/download/)
 7. Install [Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#install-azurite)
+8. Install [Azure Functions Core Tool](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=windows%2Cisolated-process%2Cnode-v4%2Cpython-v2%2Chttp-trigger%2Ccontainer-apps&pivots=programming-language-powershell#install-the-azure-functions-core-tools)
 
 ### Setting up PostgreSQL
 
