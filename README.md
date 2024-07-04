@@ -16,6 +16,7 @@ These instructions will get you a copy of the events component up and running on
 1. [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 2. Newest [Git](https://git-scm.com/downloads)
 3. A code editor - we like [Visual Studio Code](https://code.visualstudio.com/download)
+   - Install [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions). You can also install the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), which is recommended for working with Azure resources.
    - Also install [recommended extensions](https://code.visualstudio.com/docs/editor/extension-marketplace#_workspace-recommended-extensions) (e.g. [C#](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp))
 4. [Podman](https://podman.io/) or another container tool such as Docker Desktop
 5. [PostgreSQL](https://www.postgresql.org/download/)
@@ -78,3 +79,13 @@ The Events components can be run locally when developing/debugging. Follow the i
 
 The events solution is now available locally at http://localhost:5080/.
 To access swagger use http://localhost:5080/swagger.
+
+### Running functions
+
+- [Start Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#run-azurite)
+  
+Start Altinn Events Functions
+```bash
+cd src/Altinn.Events.Functions
+func start
+```
