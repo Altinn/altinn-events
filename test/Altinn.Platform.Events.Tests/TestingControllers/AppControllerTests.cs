@@ -434,6 +434,38 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
+            ///   Get events with a valid set of query parameters. No subject specification
+            /// Expected result:
+            ///   Returns a list of events and a next header
+            /// Success criteria:
+            ///   The response has correct count. Next header is corrcect.
+            /// </summary>
+            [Fact]
+            public async Task GetForOrg_ValidRequest_NoSubject_ReturnsListOfEventsAndNextUrl()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z";
+                string expectedNext = $"http://localhost:5080/events/api/v1/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z";
+                int expectedCount = 2;
+
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(expectedCount, actual.Count);
+                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
+            }
+
+            /// <summary>
+            /// Scenario:
             ///   TTD org Get events with  a valid set of query parameters
             /// Expected result:
             ///   Returns a list of events and a next header

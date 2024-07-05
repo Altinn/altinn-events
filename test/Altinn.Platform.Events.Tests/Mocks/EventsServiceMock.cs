@@ -41,7 +41,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
         public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size = 50)
         {
-            if (partyId <= 0)
+            if (!string.IsNullOrEmpty(unit) || !string.IsNullOrEmpty(person))
             {
                 partyId = PartyLookup(unit, person);
             }
