@@ -193,6 +193,11 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
+            if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
+            {
+                return Problem("Subject must be specified using either query params party or unit or header value person.", null, 400);
+            }
+
             try
             {
                 List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, null, type, unit, person, size);
@@ -225,11 +230,6 @@ namespace Altinn.Platform.Events.Controllers
             if (size < 1)
             {
                 return (false, "The 'Size' parameter must be a number larger that 0.");
-            }
-
-            if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
-            {
-                return (false, "Subject must be specified using either query params party or unit or header value person.");
             }
 
             if (!string.IsNullOrEmpty(person) && party > 0)
