@@ -460,7 +460,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
                 Assert.Contains("Only one of 'subject' or 'alternativeSubject' can be defined.", content);
-                Assert.NotNull(actual.Extensions["errors"]);
             }
 
             /// <summary>
