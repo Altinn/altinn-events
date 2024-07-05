@@ -914,6 +914,65 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.StartsWith("The 'To' parameter must specify timezone.", actual.Detail);
             }
 
+            /// <summary>
+            /// Scenario:
+            ///   Get events with both partyId and unit defined as query parameters
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_ConflicingQueryParamsUnitAndParty_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&party=1337&size=5&unit=12345";
+
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("Only one of 'Party' or 'Unit' can be defined.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with both partyId and person number defined as filter parameters
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_ConflicingQueryParamsPersonAndParty_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&party=1337&size=5";
+
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "01038712345");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("Only one of 'Party' or 'Person' can be defined.", actual.Detail);
+            }
+
             private HttpClient GetTestClient(IEventsService eventsService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>

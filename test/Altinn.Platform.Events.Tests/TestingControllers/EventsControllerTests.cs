@@ -435,6 +435,35 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
+            ///   Get events with invalid query parameter combination.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest.
+            /// Success criteria:
+            ///   The response has correct status.
+            /// </summary>
+            [Fact]
+            public async Task GetEvents_InvalidCombinationOfQueryParams_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=0&subject=%2Fparty%2F1337";
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Altinn-AlternativeSubject", "person:16069412345");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Contains("Only one of 'subject' or 'alternativeSubject' can be defined.", content);
+            }
+
+            /// <summary>
+            /// Scenario:
             ///   Get events with a resource not matching required format
             /// Expected result:
             ///   Returns HttpStatus BadRequest.

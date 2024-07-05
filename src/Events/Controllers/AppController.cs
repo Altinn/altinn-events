@@ -132,7 +132,7 @@ namespace Altinn.Platform.Events.Controllers
                 return StatusCode(401, "Only orgs can call this api");
             }
 
-            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size);
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size, person, unit, party);
 
             if (!isValid)
             {
@@ -186,16 +186,11 @@ namespace Altinn.Platform.Events.Controllers
             [FromQuery] List<string> type,
             [FromQuery] int size = 50)
         {
-            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size);
+            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size, person, unit, party);
 
             if (!isValid)
             {
                 return Problem(errorMessage, null, 400);
-            }
-
-            if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
-            {
-                return Problem("Subject must be specified using either query params party or unit or header value person.", null, 400);
             }
 
             try
@@ -210,7 +205,7 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, DateTime? from, DateTime? to, int size)
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, DateTime? from, DateTime? to, int size, string person, string unit, int party)
         {
             if (string.IsNullOrEmpty(after) && from == null)
             {
@@ -230,6 +225,21 @@ namespace Altinn.Platform.Events.Controllers
             if (size < 1)
             {
                 return (false, "The 'Size' parameter must be a number larger that 0.");
+            }
+
+            if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
+            {
+                return (false, "Subject must be specified using either query params party or unit or header value person.");
+            }
+
+            if (!string.IsNullOrEmpty(person) && party > 0)
+            {
+                return (false, "Only one of 'Party' or 'Person' can be defined.");
+            }
+
+            if (!string.IsNullOrEmpty(unit) && party > 0)
+            {
+                return (false, "Only one of 'Party' or 'Unit' can be defined.");
             }
 
             return (true, null);

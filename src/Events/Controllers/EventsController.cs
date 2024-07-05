@@ -103,7 +103,7 @@ namespace Altinn.Platform.Events.Controllers
             // Maximum allowed result set size is adjusted silently.
             size = size > 1000 ? 1000 : size;
 
-            (bool isValid, string errorMessage) = ValidateQueryParams(resource, after, size);
+            (bool isValid, string errorMessage) = ValidateQueryParams(resource, after, size, subject, alternativeSubject);
 
             if (!isValid)
             {
@@ -118,7 +118,7 @@ namespace Altinn.Platform.Events.Controllers
             return events;
         }
 
-        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string resource, string after, int size)
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string resource, string after, int size, string subject, string alternativeSubject)
         {
             if (!resource.StartsWith("urn:altinn:resource:"))
             {
@@ -133,6 +133,11 @@ namespace Altinn.Platform.Events.Controllers
             if (size < 1)
             {
                 return (false, "The 'size' parameter must be a number larger that 0.");
+            }
+
+            if (!string.IsNullOrEmpty(subject) && !string.IsNullOrEmpty(alternativeSubject))
+            {
+                return (false, "Only one of 'subject' or 'alternativeSubject' can be defined.");
             }
 
             return (true, null);
