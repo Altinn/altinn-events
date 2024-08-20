@@ -30,7 +30,8 @@ const genericSubscription = JSON.parse(
   open("../data/subscriptions/02-generic-subscription.json")
 );
 
-const scopes = "altinn:serviceowner altinn:events.publish altinn:events.subscribe";
+const scopes =
+  "altinn:serviceowner altinn:events.publish altinn:events.subscribe";
 
 const webhookEndpoint = __ENV.webhookEndpoint;
 
@@ -52,7 +53,9 @@ export const options = {
 
 export function setup() {
   var orgToken = setupToken.getAltinnTokenForOrg(scopes);
-  var incorrectScopeToken = setupToken.getAltinnTokenForOrg('altinn:serviceowner');
+  var incorrectScopeToken = setupToken.getAltinnTokenForOrg(
+    "altinn:serviceowner"
+  );
 
   var data = {
     runFullTestSet: runFullTestSet,
@@ -159,14 +162,21 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     data.orgToken
   );
 
-  var subscription = JSON.parse(response.body);
-
   success = check(response, {
     "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200,
-    "05 - Get subscription by id. Returned subscription is validated":
-      subscription.validated,
   });
+
   addErrorCount(success);
+
+  if (success) {
+    var subscription = JSON.parse(response.body);
+
+    success = check(response, {
+      "05 - Get subscription by id. Returned subscription is validated":
+        subscription.validated,
+    });
+    addErrorCount(success);
+  }
 }
 
 // 06 - DELETE subscription
