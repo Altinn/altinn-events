@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
-
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -52,6 +52,7 @@ namespace Altinn.Platform.Events.Controllers
         {          
             try
             {
+                AddIdTelemetry(cloudEvent.Id);
                 await _eventsService.Save(cloudEvent);
                 return Ok();
             }
@@ -60,6 +61,18 @@ namespace Altinn.Platform.Events.Controllers
                 _logger.LogError(e, "Temporarily unable to save cloudEventId {cloudEventId} to storage, please try again.", cloudEvent?.Id);
                 return StatusCode(503, e.Message);
             }
+        }
+
+        private void AddIdTelemetry(string id)
+        {
+            RequestTelemetry requestTelemetry = HttpContext.Features.Get<RequestTelemetry>();
+
+            if (requestTelemetry == null)
+            {
+                return;
+            }
+
+            requestTelemetry.Properties.Add("appevent.id", id);
         }
     }
 }

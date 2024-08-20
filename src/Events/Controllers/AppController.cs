@@ -14,7 +14,7 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platorm.Events.Extensions;
 
 using CloudNative.CloudEvents;
-
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -81,6 +81,7 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 var cloudEvent = AppCloudEventExtensions.CreateEvent(cloudEventRequest);
+                AddIdTelemetry(cloudEvent.Id);
 
                 await _eventsService.RegisterNew(cloudEvent);
                 return Created(cloudEvent.Subject, cloudEvent.Id);
@@ -276,6 +277,18 @@ namespace Altinn.Platform.Events.Controllers
                 _logger.LogError(e, "// AppController // HandlePlatformHttpException // Unexpected response from Altinn Platform.");
                 return Problem(e.Message, statusCode: 500);
             }
+        }
+
+        private void AddIdTelemetry(string id)
+        {
+            RequestTelemetry requestTelemetry = HttpContext.Features.Get<RequestTelemetry>();
+
+            if (requestTelemetry == null)
+            {
+                return;
+            }
+
+            requestTelemetry.Properties.Add("appevent.id", id);
         }
     }
 }
