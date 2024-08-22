@@ -22,118 +22,131 @@ import { addErrorCount } from "../../errorhandler.js";
 const scopes = "altinn:events.publish altinn:serviceowner";
 
 export const options = {
-  thresholds: {
-    errors: ["count<1"],
-  },
+    thresholds: {
+        errors: ["count<1"],
+    },
 };
 
 export function setup() {
-  var token = setupToken.getAltinnTokenForOrg(scopes);
+    const token = setupToken.getAltinnTokenForOrg(scopes);
 
-  var cloudEvent = eventJson;
-  cloudEvent.id = uuidv4();
+    const runFullTestSet = __ENV.runFullTestSet
+        ? __ENV.runFullTestSet.toLowerCase().includes("true")
+        : false;
 
-  const runFullTestSet = __ENV.runFullTestSet
-    ? __ENV.runFullTestSet.toLowerCase().includes("true")
-    : false;
+    const data = {
+        runFullTestSet: runFullTestSet,
+        token: token,
+    };
 
-  var data = {
-    runFullTestSet: runFullTestSet,
-    token: token,
-    cloudEvent: cloudEvent,
-  };
+    return data;
+}
 
-  return data;
+function createCloudEvent() {
+    const cloudEvent = { ...eventJson };
+    cloudEvent.id = uuidv4();
+    return cloudEvent;
 }
 
 // 01 - POST valid cloud event with all parameters
 function TC01_POstValidCloudEventWithAllParameters(data) {
-  var response, success;
+    var response, success, cloudEvent;
 
-  response = eventsApi.postCloudEvent(
-    JSON.stringify(data.cloudEvent),
-    data.token
-  );
+    cloudEvent = createCloudEvent();
 
-  success = check(response, {
-    "POST valid cloud event with all parameters. Status is 200": (r) =>
-      r.status === 200,
-  });
+    response = eventsApi.postCloudEvent(
+        JSON.stringify(cloudEvent),
+        data.token
+    );
 
-  addErrorCount(success);
+    success = check(response, {
+        "POST valid cloud event with all parameters. Status is 200": (r) =>
+            r.status === 200,
+    });
+
+    addErrorCount(success);
 }
 
 // 02 - POST valid cloud event without subject
 function TC02_PostValidCloudEventWithoutSubject(data) {
-  var response, success;
-  var cloudEventWithoutSubject = removePropFromCloudEvent(
-    data.cloudEvent,
-    "subject"
-  );
+    var response, success, cloudEvent;
 
-  response = eventsApi.postCloudEvent(
-    JSON.stringify(cloudEventWithoutSubject),
-    data.token
-  );
+    cloudEvent = createCloudEvent();
 
-  success = check(response, {
-    "POST valid cloud event without subject. Status is 200": (r) =>
-      r.status === 200,
-  });
+    var cloudEventWithoutSubject = removePropFromCloudEvent(
+        cloudEvent,
+        "subject"
+    );
 
-  addErrorCount(success);
+    response = eventsApi.postCloudEvent(
+        JSON.stringify(cloudEventWithoutSubject),
+        data.token
+    );
+
+    success = check(response, {
+        "POST valid cloud event without subject. Status is 200": (r) =>
+            r.status === 200,
+    });
+
+    addErrorCount(success);
 }
 
 // 03 - POST valid cloud event without time
 function TC03_PostValidCloudEventWithoutTime(data) {
-  var response, success;
+    var response, success, cloudEvent;
 
-  var cloudEventWithoutTime = removePropFromCloudEvent(data.cloudEvent, "time");
+    cloudEvent = createCloudEvent();
 
-  response = eventsApi.postCloudEvent(
-    JSON.stringify(cloudEventWithoutTime),
-    data.token
-  );
+    var cloudEventWithoutTime = removePropFromCloudEvent(cloudEvent, "time");
 
-  success = check(response, {
-    "POST valid cloud event without time. Status is 200": (r) =>
-      r.status === 200,
-  });
+    response = eventsApi.postCloudEvent(
+        JSON.stringify(cloudEventWithoutTime),
+        data.token
+    );
 
-  addErrorCount(success);
+    success = check(response, {
+        "POST valid cloud event without time. Status is 200": (r) =>
+            r.status === 200,
+    });
+
+    addErrorCount(success);
 }
 
 // 04 - POST cloud event without bearer token
-function TC04_PostCloudEventWithoutBearerToken(data) {
-  var response, success;
+function TC04_PostCloudEventWithoutBearerToken() {
+    var response, success, cloudEvent;
 
-  response = eventsApi.postCloudEvent(JSON.stringify(data.cloudEvent), "");
+    cloudEvent = createCloudEvent();
 
-  success = check(response, {
-    "POST cloud event without bearer token. Status is 401": (r) =>
-      r.status === 401,
-  });
+    response = eventsApi.postCloudEvent(JSON.stringify(cloudEvent), "");
 
-  addErrorCount(success);
+    success = check(response, {
+        "POST cloud event without bearer token. Status is 401": (r) =>
+            r.status === 401,
+    });
+
+    addErrorCount(success);
 }
 
 // 05 - POST cloud event without required scope
-function TC05_PostCloudEventWithoutRequiredScopes(data) {
-  var response, success;
+function TC05_PostCloudEventWithoutRequiredScopes() {
+    var response, success, cloudEvent;
 
-  var incorrectScopeToken = setupToken.getAltinnTokenForOrg('altinn:serviceowner');
+    cloudEvent = createCloudEvent();
 
-  response = eventsApi.postCloudEvent(
-    JSON.stringify(data.cloudEvent),
-    incorrectScopeToken
-  );
+    var incorrectScopeToken = setupToken.getAltinnTokenForOrg('altinn:serviceowner');
 
-  success = check(response, {
-    "POST cloud event without required scope. Status is 403": (r) =>
-      r.status === 403,
-  });
+    response = eventsApi.postCloudEvent(
+        JSON.stringify(cloudEvent),
+        incorrectScopeToken
+    );
 
-  addErrorCount(success);
+    success = check(response, {
+        "POST cloud event without required scope. Status is 403": (r) =>
+            r.status === 403,
+    });
+
+    addErrorCount(success);
 }
 
 /*
@@ -144,34 +157,34 @@ function TC05_PostCloudEventWithoutRequiredScopes(data) {
  * 05 - POST cloud event without required scope
  */
 export default function (data) {
-  try {
-    if (data.runFullTestSet) {
-      TC01_POstValidCloudEventWithAllParameters(data);
+    try {
+        if (data.runFullTestSet) {
+            TC01_POstValidCloudEventWithAllParameters(data);
 
-      TC02_PostValidCloudEventWithoutSubject(data);
+            TC02_PostValidCloudEventWithoutSubject(data);
 
-      TC03_PostValidCloudEventWithoutTime(data);
+            TC03_PostValidCloudEventWithoutTime(data);
 
-      TC04_PostCloudEventWithoutBearerToken(data);
+            TC04_PostCloudEventWithoutBearerToken();
 
-      TC05_PostCloudEventWithoutRequiredScopes(data);
-    } else {
-      // Limited test set for use case tests
+            TC05_PostCloudEventWithoutRequiredScopes();
+        } else {
+            // Limited test set for use case tests
 
-      TC01_POstValidCloudEventWithAllParameters(data);
+            TC01_POstValidCloudEventWithAllParameters(data);
+        }
+    } catch (error) {
+        addErrorCount(false);
+        throw error;
     }
-  } catch (error) {
-    addErrorCount(false);
-    throw error;
-  }
 }
 
 function removePropFromCloudEvent(cloudEvent, propertyname) {
-  // parse and stringify to ensure a copy of the object by value not ref
-  var modifiedEvent = JSON.parse(JSON.stringify(cloudEvent));
-  delete modifiedEvent[propertyname];
+    // parse and stringify to ensure a copy of the object by value not ref
+    var modifiedEvent = JSON.parse(JSON.stringify(cloudEvent));
+    delete modifiedEvent[propertyname];
 
-  return modifiedEvent;
+    return modifiedEvent;
 }
 
 /*
