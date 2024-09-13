@@ -52,12 +52,16 @@ namespace Altinn.Platform.Events.Controllers
         {          
             try
             {
+                _logger.LogError("Timeoutdebug before delay {CloudEventId}", cloudEvent.Id);
+                await Task.Delay(4000);
+                _logger.LogError("Timeoutdebug after delay {CloudEventId}", cloudEvent.Id);
                 AddIdTelemetry(cloudEvent.Id);
                 await _eventsService.Save(cloudEvent);
                 return Ok();
             }
             catch (Exception e)
             {
+                _logger.LogError("Timeoutdebug caugth for {CloudEventId}", cloudEvent.Id);
                 _logger.LogError(e, "Temporarily unable to save cloudEventId {cloudEventId} to storage, please try again.", cloudEvent?.Id);
                 return StatusCode(503, e.Message);
             }
