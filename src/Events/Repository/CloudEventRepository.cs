@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Repository
     public class CloudEventRepository : ICloudEventRepository
     {
         private readonly string insertEventSql = @"insert into events.events(cloudevent) VALUES ($1)
-            ON CONFLICT ((cloudevent -> 'id'), (cloudevent -> 'source')) DO UPDATE SET cloudevent = ($1)";
+            ON CONFLICT ((cloudevent -> 'id'), (cloudevent -> 'source')) DO NOTHING";
 
         private readonly string getAppEventsSql = "select events.getappevents_v2(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
         private readonly string getEventsSql = "select events.getevents($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
