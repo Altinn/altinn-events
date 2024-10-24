@@ -324,7 +324,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"sourceFilter\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\",\r\n    \"endpoint\": \"https://hooks.slack.com/services/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\"\r\n}",
+					"raw": "{\r\n  \"sourceFilter\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\",\r\n    \"endpoint\": \"{{AltinnSlackWebHook}}\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
