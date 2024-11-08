@@ -18,12 +18,21 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --tag altinn-events:${{github.sha}}
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - uses: Azure/container-scan@v0.1
-      with:
-        image-name: altinn-events:${{ github.sha }}
-      env:
-        DOCKLE_HOST: "unix:///var/run/docker.sock"
+      - name: Build the Docker image        
+        run: docker build . --tag altinn-events:${{github.sha}}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'altinn-events:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db,aquasec/trivy-db,ghcr.io/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db,aquasec/trivy-java-db,ghcr.io/aquasecurity/trivy-java-db
