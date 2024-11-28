@@ -8,7 +8,7 @@
 	<ItemGroup>
 		<PackageReference Include="Altinn.Authorization.ABAC" Version="0.0.8"/>
 		<PackageReference Include="Altinn.Common.AccessTokenClient" Version="3.0.10"/>
-		<PackageReference Include="Altinn.Common.PEP" Version="4.1.0"/>
+		<PackageReference Include="Altinn.Common.PEP" Version="4.1.1"/>
 		<PackageReference Include="Altinn.Common.AccessToken" Version="4.5.4"/>
 		<PackageReference Include="Altinn.Platform.Models" Version="1.6.1"/>
 		<PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.2"/>
@@ -20,7 +20,7 @@
 		<PackageReference Include="CloudNative.CloudEvents.SystemTextJson" Version="2.8.0"/>
 		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0"/>
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1"/>
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10"/>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11"/>
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0"/>
 		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.22.0"/>
 		<PackageReference Include="JWTCookieAuthentication" Version="3.0.1"/>
