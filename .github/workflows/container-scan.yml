@@ -12,6 +12,7 @@ on:
     branches: [ main ]
     types: [opened, synchronize, reopened]
     paths:
+      - '.github/workflows/container-scan.yml'
       - 'src/Events/**'
       - 'Dockerfile'
 jobs:
