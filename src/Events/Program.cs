@@ -68,6 +68,8 @@ await SetConfigurationProviders(builder.Configuration);
 
 ConfigureLogging(builder.Logging);
 
+ConfigureApplicationInsights(builder.Services);
+
 ConfigureServices(builder.Services, builder.Configuration);
 
 var app = builder.Build();
@@ -178,6 +180,23 @@ void ConfigureLogging(ILoggingBuilder logging)
     }
 }
 
+void ConfigureApplicationInsights(IServiceCollection services)
+{
+    if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
+    {
+        services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });
+
+        services.AddApplicationInsightsTelemetry(new ApplicationInsightsServiceOptions
+        {
+            ConnectionString = applicationInsightsConnectionString
+        });
+
+        services.AddApplicationInsightsTelemetryProcessor<HealthTelemetryFilter>();
+        services.AddApplicationInsightsTelemetryProcessor<IdentityTelemetryFilter>();
+        services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
+    }
+}
+
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     services.AddAutoMapper(typeof(Program));
@@ -278,20 +297,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     services.AddTransient<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
-
-    if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
-    {
-        services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });
-
-        services.AddApplicationInsightsTelemetry(new ApplicationInsightsServiceOptions
-        {
-            ConnectionString = applicationInsightsConnectionString
-        });
-
-        services.AddApplicationInsightsTelemetryProcessor<HealthTelemetryFilter>();
-        services.AddApplicationInsightsTelemetryProcessor<IdentityTelemetryFilter>();
-        services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
-    }
 
     services.AddSwaggerGen(c =>
     {
