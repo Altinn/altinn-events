@@ -4,82 +4,67 @@ using System.Security.Claims;
 
 using AltinnCore.Authentication.Constants;
 
-namespace Altinn.Platorm.Events.Extensions
+namespace Altinn.Platorm.Events.Extensions;
+
+/// <summary>
+/// Extension methods for <see cref="ClaimsPrincipal"/> instances."/>
+/// </summary>
+public static class ClaimsPrincipalExtensions
 {
     /// <summary>
-    /// Extensions for claimsprincial
+    /// Retrieves the organization identifier from the user's claims.
     /// </summary>
-    public static class ClaimsPrincipalExtensions
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The organization identifier as a string if the claim exists; otherwise, null.</returns>
+    public static string GetOrg(this ClaimsPrincipal user)
     {
-        /// <summary>
-        /// Get the org identifier string or null if it is not an org.
-        /// </summary>        
-        public static string GetOrg(this ClaimsPrincipal user)
-        {
-            if (user.HasClaim(c => c.Type == AltinnCoreClaimTypes.Org))
-            {
-                Claim orgClaim = user.FindFirst(c => c.Type == AltinnCoreClaimTypes.Org);
-                if (orgClaim != null)
-                {
-                    return orgClaim.Value;
-                }
-            }
+        return user.FindFirstValue(AltinnCoreClaimTypes.Org);
+    }
 
-            return null;
-        }
+    /// <summary>
+    /// Retrieves the organization number from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The organization number as a string if the claim exists; otherwise, null.</returns>
+    public static string GetOrgNumber(this ClaimsPrincipal user)
+    {
+        return user.FindFirstValue(AltinnCoreClaimTypes.OrgNumber);
+    }
 
-        /// <summary>
-        /// Returns the organisation number of an org user or null if claim does not exist.
-        /// </summary>
-        public static string GetOrgNumber(this ClaimsPrincipal user)
-        {
-            if (user.HasClaim(c => c.Type == AltinnCoreClaimTypes.OrgNumber))
-            {
-                Claim orgClaim = user.FindFirst(c => c.Type == AltinnCoreClaimTypes.OrgNumber);
-                if (orgClaim != null)
-                {
-                    return orgClaim.Value;
-                }
-            }
+    /// <summary>
+    /// Retrieves the user identifier as an integer if the UserId claim is set; otherwise, null.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The user identifier as an integer if the claim exists and is a valid integer; otherwise, null.</returns>
+    public static int? GetUserIdAsInt(this ClaimsPrincipal user)
+    {
+        string userIdValue = user.FindFirstValue(AltinnCoreClaimTypes.UserId);
+        return int.TryParse(userIdValue, out int userId) ? userId : null;
+    }
 
-            return null;
-        }
 
-        /// <summary>
-        /// Returns a boolean indicating if the provided required scope is present in the scope claim.
-        /// </summary>
-        public static bool HasRequiredScope(this ClaimsPrincipal user, string requiredScope)
-        {
-            string[] contextScopes = user.Identities
-                ?.FirstOrDefault(i => i.AuthenticationType != null && i.AuthenticationType.Equals("AuthenticationTypes.Federation"))?.Claims
-                .Where(c => c.Type.Equals("urn:altinn:scope"))?
-                .Select(c => c.Value).FirstOrDefault()?.Split(' ');
+    /// <summary>
+    /// Determines whether the specified required scope is present in the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <param name="requiredScope">The required scope to check for.</param>
+    /// <returns><c>true</c> if the required scope is present; otherwise, <c>false</c>.</returns>
+    public static bool HasRequiredScope(this ClaimsPrincipal user, string requiredScope)
+    {
+        var contextScopes = user.Identities?
+            .FirstOrDefault(e => e.AuthenticationType != null && e.AuthenticationType.Equals("AuthenticationTypes.Federation"))?
+            .Claims
+            .Where(e => e.Type.Equals("urn:altinn:scope"))
+            .Select(e => e.Value)
+            .FirstOrDefault()?
+            .Split(' ');
 
-            contextScopes ??= user.Claims.Where(c => c.Type.Equals("scope")).Select(c => c.Value).FirstOrDefault()?.Split(' ');
+        contextScopes ??= user.Claims
+            .Where(e => e.Type.Equals("scope"))
+            .Select(e => e.Value)
+            .FirstOrDefault()?
+            .Split(' ');
 
-            if (contextScopes is not null && contextScopes.Any(x => x.Equals(requiredScope, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Return the userId as an int or null if UserId claim is not set
-        /// </summary>
-        public static int? GetUserIdAsInt(this ClaimsPrincipal user)
-        {
-            if (user.HasClaim(c => c.Type == AltinnCoreClaimTypes.UserId))
-            {
-                Claim userIdClaim = user.FindFirst(c => c.Type == AltinnCoreClaimTypes.UserId);
-                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-                {
-                    return userId;
-                }
-            }
-
-            return null;
-        }
+        return contextScopes != null && contextScopes.Any(x => x.Equals(requiredScope, StringComparison.InvariantCultureIgnoreCase));
     }
 }
