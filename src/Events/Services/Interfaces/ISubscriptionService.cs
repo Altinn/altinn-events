@@ -23,7 +23,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <summary>
         /// Get a given subscription
         /// </summary>
-        /// <param name="id">The subcription Id</param>
+        /// <param name="id">The subscription Id</param>
         public Task<(Subscription Subscription, ServiceError Error)> GetSubscription(int id);
 
         /// <summary>
