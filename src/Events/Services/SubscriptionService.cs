@@ -44,7 +44,7 @@ public class SubscriptionService : ISubscriptionService
     /// </summary>
     internal async Task<(Subscription Subscription, ServiceError Error)> CompleteSubscriptionCreation(Subscription eventsSubscription)
     {
-        if (!await _authorization.AuthorizeConsumerForEventsSubcription(eventsSubscription))
+        if (!await _authorization.AuthorizeConsumerForEventsSubscription(eventsSubscription))
         {
             var errorMessage = $"Not authorized to create a subscription for resource {eventsSubscription.ResourceFilter}.";
             return (null, new ServiceError(401, errorMessage));

@@ -199,7 +199,7 @@ public class SubscriptionServiceTest
     {
         var authoriationMock = new Mock<IAuthorization>();
         authoriationMock
-            .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+            .Setup(a => a.AuthorizeConsumerForEventsSubscription(It.IsAny<Subscription>()))
             .ReturnsAsync(authorizationDecision);
 
         return new SubscriptionService(

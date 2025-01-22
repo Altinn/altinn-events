@@ -90,7 +90,7 @@ namespace Altinn.Platform.Events.Services
         }
        
         /// <inheritdoc/>
-        public async Task<bool> AuthorizeConsumerForEventsSubcription(Subscription subscription)
+        public async Task<bool> AuthorizeConsumerForEventsSubscription(Subscription subscription)
         {
             XacmlJsonRequestRoot xacmlJsonRequest = SubscriptionXacmlMapper.CreateDecisionRequest(subscription);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);

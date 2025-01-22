@@ -521,7 +521,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 Mock<IAuthorization> authorization = new();
                 authorization
-                    .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                    .Setup(a => a.AuthorizeConsumerForEventsSubscription(It.IsAny<Subscription>()))
                     .ReturnsAsync(true);
 
                 HttpClient client = _factory.WithWebHostBuilder(builder =>

@@ -29,12 +29,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             _authTrueMock = new();
             _authTrueMock
-                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .Setup(a => a.AuthorizeConsumerForEventsSubscription(It.IsAny<Subscription>()))
                 .ReturnsAsync(true);
 
             _authFalseMock = new();
             _authFalseMock
-                .Setup(a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                .Setup(a => a.AuthorizeConsumerForEventsSubscription(It.IsAny<Subscription>()))
                 .ReturnsAsync(false);
         }
 

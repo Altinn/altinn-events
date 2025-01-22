@@ -123,7 +123,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var authorizationMock = new Mock<IAuthorization>();
             authorizationMock.Setup(
-                a => a.AuthorizeConsumerForEventsSubcription(It.IsAny<Subscription>()))
+                a => a.AuthorizeConsumerForEventsSubscription(It.IsAny<Subscription>()))
                 .ReturnsAsync(isAuthorized);
 
             repoMock ??= new();
