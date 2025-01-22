@@ -42,7 +42,6 @@ public static class ClaimsPrincipalExtensions
         return int.TryParse(userIdValue, out int userId) ? userId : null;
     }
 
-
     /// <summary>
     /// Determines whether the specified required scope is present in the user's claims.
     /// </summary>
