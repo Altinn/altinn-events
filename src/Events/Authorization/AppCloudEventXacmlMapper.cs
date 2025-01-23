@@ -12,7 +12,7 @@ using CloudNative.CloudEvents;
 namespace Altinn.Platform.Events.Authorization
 {
     /// <summary>
-    /// Utility class for converting Events to XACML request
+    /// Utility class for converting Events to XACML request.
     /// </summary>
     public static class AppCloudEventXacmlMapper
     {
@@ -30,8 +30,11 @@ namespace Altinn.Platform.Events.Authorization
         }
 
         /// <summary>
-        /// Create a decision Request based on a cloud event and subject
+        /// Creates a decision request based on a cloud event and subject.
         /// </summary>
+        /// <param name="cloudEvent">The cloud event.</param>
+        /// <param name="subject">The subject.</param>
+        /// <returns>A <see cref="XacmlJsonRequestRoot"/> object representing the decision request.</returns>
         public static XacmlJsonRequestRoot CreateDecisionRequest(CloudEvent cloudEvent, string subject)
         {
             XacmlJsonRequest request = new()
@@ -52,6 +55,15 @@ namespace Altinn.Platform.Events.Authorization
             return jsonRequest;
         }
 
+        /// <summary>
+        /// Creates an events resource category.
+        /// </summary>
+        /// <param name="orgId">The organization ID.</param>
+        /// <param name="appId">The application ID.</param>
+        /// <param name="instanceOwnerPartyId">The instance owner party ID.</param>
+        /// <param name="instanceGuid">The instance GUID.</param>
+        /// <param name="includeResult">Indicates whether to include the result.</param>
+        /// <returns>A <see cref="XacmlJsonCategory"/> object representing the events resource category.</returns>
         private static XacmlJsonCategory CreateEventsResourceCategory(string orgId, string appId, string instanceOwnerPartyId, string instanceGuid, bool includeResult = false)
         {
             string defaultType = CloudEventXacmlMapper.DefaultType;
