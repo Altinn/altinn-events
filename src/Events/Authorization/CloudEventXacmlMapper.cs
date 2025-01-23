@@ -26,17 +26,17 @@ namespace Altinn.Platform.Events.Authorization
         internal const string DefaultType = "string";
 
         /// <summary>
-        /// Subject id for multi requests. Inde should be appended.
+        /// Subject id for multi requests. Index should be appended.
         /// </summary>
         internal const string SubjectId = "s";
 
         /// <summary>
-        /// Action id for multi requests. Inde should be appended.
+        /// Action id for multi requests. Index should be appended.
         /// </summary>
         internal const string ActionId = "a";
 
         /// <summary>
-        /// Resource id for multi requests. Inde should be appended.
+        /// Resource id for multi requests. Index should be appended.
         /// </summary>
         internal const string ResourceId = "r";
 
@@ -45,16 +45,13 @@ namespace Altinn.Platform.Events.Authorization
         /// </summary>
         internal static XacmlJsonRequestRoot CreateMultiDecisionRequest(ClaimsPrincipal user, List<string> actionTypes, List<XacmlJsonCategory> resourceCategory)
         {
-            if (user == null)
-            {
-                throw new ArgumentNullException(nameof(user));
-            }
+            ArgumentNullException.ThrowIfNull(user);
 
             XacmlJsonRequest request = new()
             {
-                AccessSubject = new List<XacmlJsonCategory>(),
-                Action = CreateMultipleActionCategory(actionTypes),
-                Resource = resourceCategory
+                AccessSubject = [],
+                Resource = resourceCategory,
+                Action = CreateMultipleActionCategory(actionTypes)
             };
 
             request.AccessSubject.Add(CreateMultipleSubjectCategory(user.Claims));
@@ -66,96 +63,107 @@ namespace Altinn.Platform.Events.Authorization
         }
 
         /// <summary>
-        /// Creates an action category with the porovided action type as an attribute
+        /// Creates an action category with the provided action type as an attribute.
         /// </summary>
-        /// <param name="actionType">Action type represented as a string</param>
-        /// <param name="includeResult">A value indicating whether the value should be included in the result</param>
-        /// <returns>A XacmlJsonCategory</returns>
+        /// <param name="actionType">Action type represented as a string.</param>
+        /// <param name="includeResult">A value indicating whether the value should be included in the result.</param>
+        /// <returns>A XacmlJsonCategory object representing the action.</returns>
         internal static XacmlJsonCategory CreateActionCategory(string actionType, bool includeResult = false)
         {
-            XacmlJsonCategory actionAttributes = new()
+            ArgumentNullException.ThrowIfNull(actionType);
+
+            var actionAttributes = new XacmlJsonCategory
             {
-                Attribute = new List<XacmlJsonAttribute>
-                {
+                Attribute =
+                [
                     DecisionHelper.CreateXacmlJsonAttribute(MatchAttributeIdentifiers.ActionId, actionType, DefaultType, DefaultIssuer, includeResult)
-                }
+                ]
             };
             return actionAttributes;
         }
 
         /// <summary>
-        /// Creates multiple request by creating requests for all combinations of the provided subjects, actions and resources.
+        /// Creates multiple requests by creating requests for all combinations of the provided subjects, actions, and resources.
         /// </summary>
+        /// <param name="subjects">List of subject categories.</param>
+        /// <param name="actions">List of action categories.</param>
+        /// <param name="resources">List of resource categories.</param>
+        /// <returns>A XacmlJsonMultiRequests object containing the request references.</returns>
         internal static XacmlJsonMultiRequests CreateMultiRequestsCategory(List<XacmlJsonCategory> subjects, List<XacmlJsonCategory> actions, List<XacmlJsonCategory> resources)
         {
-            List<string> subjectIds = subjects.Select(s => s.Id).ToList();
-            List<string> actionIds = actions.Select(a => a.Id).ToList();
-            List<string> resourceIds = resources.Select(r => r.Id).ToList();
+            ArgumentNullException.ThrowIfNull(subjects);
+            ArgumentNullException.ThrowIfNull(actions);
+            ArgumentNullException.ThrowIfNull(resources);
 
-            XacmlJsonMultiRequests multiRequests = new()
+            var actionIds = actions.Select(e => e.Id);
+            var subjectIds = subjects.Select(e => e.Id);
+            var resourceIds = resources.Select(e => e.Id);
+
+            var multiRequests = new XacmlJsonMultiRequests
             {
-                RequestReference = CreateRequestReference(subjectIds, actionIds, resourceIds)
+                RequestReference = CreateRequestReference(subjectIds, actionIds, resourceIds).ToList()
             };
 
             return multiRequests;
         }
 
         /// <summary>
-        /// Creates multiple action category containing all provided action types.
+        /// Creates multiple action categories containing all provided action types.
         /// </summary>
+        /// <param name="actionTypes">List of action types.</param>
+        /// <returns>List of XacmlJsonCategory objects.</returns>
         internal static List<XacmlJsonCategory> CreateMultipleActionCategory(List<string> actionTypes)
         {
-            List<XacmlJsonCategory> actionCategories = new();
-            int counter = 1;
+            var actionCategories = new List<XacmlJsonCategory>(actionTypes.Count);
 
-            foreach (string actionType in actionTypes)
+            for (int i = 0; i < actionTypes.Count; i++)
             {
-                XacmlJsonCategory actionCategory;
-                actionCategory = DecisionHelper.CreateActionCategory(actionType, true);
-                actionCategory.Id = ActionId + counter.ToString();
+                var actionCategory = DecisionHelper.CreateActionCategory(actionTypes[i], true);
+                actionCategory.Id = $"{ActionId}{i + 1}";
                 actionCategories.Add(actionCategory);
-                counter++;
             }
 
             return actionCategories;
         }
 
         /// <summary>
-        /// Creates multiple subject category containing a single subject based on provided claims.
+        /// Creates multiple subject categories containing a single subject based on provided claims.
         /// </summary>
         /// <remarks>
         /// Only Altinn-supported claims will be included as attributes.
         /// </remarks>
+        /// <param name="claims">The claims to be included in the subject category.</param>
+        /// <returns>A XacmlJsonCategory object representing the subject.</returns>
         internal static XacmlJsonCategory CreateMultipleSubjectCategory(IEnumerable<Claim> claims)
         {
-            XacmlJsonCategory subjectAttributes = DecisionHelper.CreateSubjectCategory(claims);
-            subjectAttributes.Id = SubjectId + "1";
+            ArgumentNullException.ThrowIfNull(claims);
+
+            var subjectAttributes = DecisionHelper.CreateSubjectCategory(claims);
+            subjectAttributes.Id = $"{SubjectId}1";
 
             return subjectAttributes;
         }
 
-        private static List<XacmlJsonRequestReference> CreateRequestReference(List<string> subjectIds, List<string> actionIds, List<string> resourceIds)
+        /// <summary>
+        /// Creates request references for all combinations of the provided subject, action, and resource IDs.
+        /// </summary>
+        /// <param name="subjectIds">List of subject IDs.</param>
+        /// <param name="actionIds">List of action IDs.</param>
+        /// <param name="resourceIds">List of resource IDs.</param>
+        /// <returns>List of XacmlJsonRequestReference objects.</returns>
+        private static IEnumerable<XacmlJsonRequestReference> CreateRequestReference(IEnumerable<string> subjectIds, IEnumerable<string> actionIds, IEnumerable<string> resourceIds)
         {
-            List<XacmlJsonRequestReference> references = new();
+            ArgumentNullException.ThrowIfNull(subjectIds);
+            ArgumentNullException.ThrowIfNull(actionIds);
+            ArgumentNullException.ThrowIfNull(resourceIds);
 
-            foreach (string resourceId in resourceIds)
-            {
-                foreach (string actionId in actionIds)
-                {
-                    foreach (string subjectId in subjectIds)
-                    {
-                        XacmlJsonRequestReference reference = new();
-                        List<string> referenceId = new()
-                        {
-                            subjectId,
-                            actionId,
-                            resourceId
-                        };
-                        reference.ReferenceId = referenceId;
-                        references.Add(reference);
-                    }
-                }
-            }
+            var references = from resourceId in resourceIds
+                             from actionId in actionIds
+                             from subjectId in subjectIds
+                             select new XacmlJsonRequestReference
+                             {
+                                 ReferenceId = [subjectId, actionId, resourceId]
+                             };
 
             return references;
         }
