@@ -132,25 +132,23 @@ public class SubscriptionService : ISubscriptionService
         string org = user.GetOrg();
         if (!string.IsNullOrEmpty(org))
         {
-            return OrgPrefix + org;
+            return $"{OrgPrefix}{org}";
         }
 
-        int? userId = user.GetUserId();
-        if (userId.HasValue)
+        if (user.GetUserId() is int userId)
         {
-            return UserPrefix + userId.Value;
+            return $"{UserPrefix}{userId}";
         }
 
-        Guid? systemUserId = user.GetSystemUserId();
-        if (systemUserId.HasValue && systemUserId.Value != Guid.Empty)
+        if (user.GetSystemUserId() is Guid systemUserId && systemUserId != Guid.Empty)
         {
-            return SystemUserPrefix + systemUserId;
+            return $"{SystemUserPrefix}{systemUserId}";
         }
 
         string organisation = user.GetOrgNumber();
         if (!string.IsNullOrEmpty(organisation))
         {
-            return OrganisationPrefix + organisation;
+            return $"{OrganisationPrefix}{organisation}";
         }
 
         return null;
