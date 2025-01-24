@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
@@ -20,9 +21,10 @@ public class SubscriptionService : ISubscriptionService
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IAuthorization _authorization;
 
-    private const string OrgPrefix = "/org/";
-    private const string UserPrefix = "/user/";
     private const string OrganisationPrefix = "/organisation/";
+    private const string OrgPrefix = "/org/";
+    private const string SystemUserPrefix = "/systemser/";
+    private const string UserPrefix = "/user/";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
@@ -137,6 +139,12 @@ public class SubscriptionService : ISubscriptionService
         if (userId.HasValue)
         {
             return UserPrefix + userId.Value;
+        }
+
+        Guid? systemUserId = user.GetSystemUserId();
+        if (systemUserId.HasValue && systemUserId.Value != Guid.Empty)
+        {
+            return SystemUserPrefix + systemUserId;
         }
 
         string organisation = user.GetOrgNumber();
