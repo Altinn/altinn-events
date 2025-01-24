@@ -23,7 +23,7 @@ public class SubscriptionService : ISubscriptionService
 
     private const string OrganisationPrefix = "/organisation/";
     private const string OrgPrefix = "/org/";
-    private const string SystemUserPrefix = "/systemser/";
+    private const string SystemUserPrefix = "/systemuser/";
     private const string UserPrefix = "/user/";
 
     /// <summary>
