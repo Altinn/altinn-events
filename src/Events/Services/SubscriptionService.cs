@@ -21,10 +21,10 @@ public class SubscriptionService : ISubscriptionService
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IAuthorization _authorization;
 
-    private const string OrganisationPrefix = "/organisation/";
-    private const string OrgPrefix = "/org/";
-    private const string SystemUserPrefix = "/systemuser/";
-    private const string UserPrefix = "/user/";
+    private const string _organisationPrefix = "/organisation/";
+    private const string _orgPrefix = "/org/";
+    private const string _systemUserPrefix = "/systemuser/";
+    private const string _userPrefix = "/user/";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
@@ -132,23 +132,23 @@ public class SubscriptionService : ISubscriptionService
         string org = user.GetOrg();
         if (!string.IsNullOrEmpty(org))
         {
-            return $"{OrgPrefix}{org}";
+            return $"{_orgPrefix}{org}";
         }
 
         if (user.GetUserId() is int userId)
         {
-            return $"{UserPrefix}{userId}";
+            return $"{_userPrefix}{userId}";
         }
 
         if (user.GetSystemUserId() is Guid systemUserId && systemUserId != Guid.Empty)
         {
-            return $"{SystemUserPrefix}{systemUserId}";
+            return $"{_systemUserPrefix}{systemUserId}";
         }
 
         string organisation = user.GetOrgNumber();
         if (!string.IsNullOrEmpty(organisation))
         {
-            return $"{OrganisationPrefix}{organisation}";
+            return $"{_organisationPrefix}{organisation}";
         }
 
         return null;
