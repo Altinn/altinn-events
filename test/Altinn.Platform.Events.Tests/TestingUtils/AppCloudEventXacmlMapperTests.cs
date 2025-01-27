@@ -24,7 +24,7 @@ public class AppCloudEventXacmlMapperTests
     /// Verifies that a multi-decision XACML request can be created for a regular user.
     /// </summary>
     [Fact]
-    public void CreateMultiDecisionReadRequest_ShouldReturnValidXacmlRequest_ForRegularUser()
+    public void CreateMultiDecisionReadRequest_ShouldReturnValidXACMLRequest_ForRegularUser()
     {
         // Arrange
         ClaimsPrincipal principal = GetUserClaimPrincipal(1, 1);
@@ -52,7 +52,7 @@ public class AppCloudEventXacmlMapperTests
     /// Verifies that a multi-decision XACML request can be created for a system user.
     /// </summary>
     [Fact]
-    public void CreateMultiDecisionReadRequest_ShouldReturnValidXacmlRequest_ForSystemUser()
+    public void CreateMultiDecisionReadRequest_ShouldReturnValidXACMLRequest_ForSystemUser()
     {
         // Arrange
         ClaimsPrincipal principal = GetSystemUserPrincipal("system_id_mock", Convert.ToString(Guid.NewGuid()), "org_cliam_id_mock");
@@ -60,7 +60,7 @@ public class AppCloudEventXacmlMapperTests
         List<CloudEvent> cloudEvents = [];
         CloudEvent cloudEvent = new()
         {
-            Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/CDD1A6A8-37ED-4699-B930-B819C3E2E9AC"),
             Subject = "/party/1234324"
         };
 
@@ -80,7 +80,7 @@ public class AppCloudEventXacmlMapperTests
     /// Verifies that a single XACML decision request can be created for a consumer.
     /// </summary>
     [Fact]
-    public void CreateDecisionRequest_ShouldReturnValidXacmlRequest_ForConsumer()
+    public void CreateDecisionRequest_ShouldReturnValidXACMLRequest_ForConsumer()
     {
         CloudEvent cloudEvent = new()
         {
