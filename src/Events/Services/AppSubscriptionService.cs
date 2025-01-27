@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platorm.Events.Extensions;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -91,7 +91,7 @@ namespace Altinn.Platform.Events.Services
         private bool ValidateSubscription(Subscription eventsSubscription, out string message)
         {
             if (string.IsNullOrEmpty(eventsSubscription.SubjectFilter)
-                && string.IsNullOrEmpty(_claimsPrincipalProvider.GetUser().GetOrg()))
+                && string.IsNullOrEmpty(_claimsPrincipalProvider.GetUser().GetOrganizationId()))
             {
                 message = "A valid subject to the authenticated identity is required";
                 return false;

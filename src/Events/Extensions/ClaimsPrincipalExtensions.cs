@@ -9,121 +9,13 @@ using Altinn.AccessManagement.Core.Models;
 
 using AltinnCore.Authentication.Constants;
 
-namespace Altinn.Platorm.Events.Extensions;
+namespace Altinn.Platform.Events.Extensions;
 
 /// <summary>
-/// Extension methods for <see cref="ClaimsPrincipal"/> instances."/>
+/// Extension methods for <see cref="ClaimsPrincipal"/> instances.
 /// </summary>
 public static class ClaimsPrincipalExtensions
 {
-    /// <summary>
-    /// Retrieves the authentication level from the user's claims.
-    /// </summary>
-    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The authentication level if the claim exists; otherwise, 0.</returns>
-    public static int GetAuthenticationLevel(this ClaimsPrincipal user)
-    {
-        string? claimValue = user.FindFirstValue(AltinnCoreClaimTypes.AuthenticationLevel);
-        if (claimValue is not null && int.TryParse(claimValue, out int authenticationLevel))
-        {
-            return authenticationLevel;
-        }
-
-        return 0;
-    }
-
-    /// <summary>
-    /// Retrieves the organization identifier from the user's claims.
-    /// </summary>
-    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The organization identifier as a string if the claim exists; otherwise, null.</returns>
-    public static string? GetOrg(this ClaimsPrincipal user)
-    {
-        return user.FindFirstValue(AltinnCoreClaimTypes.Org);
-    }
-
-    /// <summary>
-    /// Retrieves the organization number from the user's claims.
-    /// </summary>
-    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The organization number as a string if the claim exists; otherwise, null.</returns>
-    public static string? GetOrgNumber(this ClaimsPrincipal user)
-    {
-        return user.FindFirstValue(AltinnCoreClaimTypes.OrgNumber);
-    }
-
-    /// <summary>
-    /// Retrieves the organization number of the system user's owner from the user's claims.
-    /// </summary>
-    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The organization number of the system user's owner if the claim exists; otherwise, null.</returns>
-    public static string? GetSystemUserOwner(this ClaimsPrincipal user)
-    {
-        SystemUserClaim? systemUser = GetSystemUser(user);
-        if (systemUser is not null)
-        {
-            string consumerAuthority = systemUser.Systemuser_org.Authority;
-            if (!"iso6523-actorid-upis".Equals(consumerAuthority))
-            {
-                return null;
-            }
-
-            string consumerId = systemUser.Systemuser_org.ID;
-
-            string organisationNumber = consumerId.Split(":")[1];
-            return organisationNumber;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Retrieves the identifier of the system user from the user's claims.
-    /// </summary>
-    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The identifier of the system user if the claim exists; otherwise, null.</returns>
-    public static Guid? GetSystemUserId(this ClaimsPrincipal user)
-    {
-        SystemUserClaim? systemUser = GetSystemUser(user);
-        if (systemUser is not null)
-        {
-            string systemUserId = systemUser.Systemuser_id[0];
-            if (Guid.TryParse(systemUserId, out Guid systemUserIdGuid))
-            {
-                return systemUserIdGuid;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Retrieves the system user from the user's claims.
-    /// </summary>
-    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The system user if the claim exists; otherwise, null.</returns>
-    public static SystemUserClaim? GetSystemUser(this ClaimsPrincipal user)
-    {
-        string? authorizationDetailsValue = user.FindFirstValue("authorization_details");
-        if (authorizationDetailsValue is null)
-        {
-            return null;
-        }
-
-        return JsonSerializer.Deserialize<SystemUserClaim>(authorizationDetailsValue);
-    }
-
-    /// <summary>
-    /// Retrieves the user identifier from the user's claims.
-    /// </summary>
-    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The user identifier as an integer if the claim exists and is a valid integer; otherwise, null.</returns>
-    public static int? GetUserId(this ClaimsPrincipal user)
-    {
-        string? userIdValue = user.FindFirstValue(AltinnCoreClaimTypes.UserId);
-        return int.TryParse(userIdValue, out int userId) ? userId : null;
-    }
-
     /// <summary>
     /// Determines whether the specified required scope is present in the user's claims.
     /// </summary>
@@ -147,5 +39,114 @@ public static class ClaimsPrincipalExtensions
             .Split(' ');
 
         return contextScopes != null && contextScopes.Any(x => x.Equals(requiredScope, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    /// <summary>
+    /// Retrieves the authentication level from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The authentication level if the claim exists; otherwise, <c>null</c>.</returns>
+    public static string? GetAuthenticationLevel(this ClaimsPrincipal user)
+    {
+        return user.FindFirstValue(AltinnCoreClaimTypes.AuthenticationLevel);
+    }
+
+    /// <summary>
+    /// Retrieves the organization identifier from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The organization identifier if the claim exists; otherwise, <c>null</c>.</returns>
+    public static string? GetOrganizationId(this ClaimsPrincipal user)
+    {
+        return user.FindFirstValue(AltinnCoreClaimTypes.Org);
+    }
+
+    /// <summary>
+    /// Retrieves the organization number from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The organization number if the claim exists; otherwise, <c>null</c>.</returns>
+    public static string? GetOrganizationNumber(this ClaimsPrincipal user)
+    {
+        return user.FindFirstValue(AltinnCoreClaimTypes.OrgNumber);
+    }
+
+    /// <summary>
+    /// Retrieves the party identifier from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The party identifier if the claim exists; otherwise, <c>null</c>.</returns>
+    public static string? GetPartyId(this ClaimsPrincipal user)
+    {
+        return user.FindFirstValue(AltinnCoreClaimTypes.PartyID);
+    }
+
+    /// <summary>
+    /// Retrieves the organization number of the system user's owner from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The organization number of the system user's owner if the claim exists; otherwise, <c>null</c>.</returns>
+    public static string? GetSystemUserOwner(this ClaimsPrincipal user)
+    {
+        SystemUserClaim? systemUser = user.GetSystemUser();
+        if (systemUser is not null)
+        {
+            string consumerAuthority = systemUser.Systemuser_org.Authority;
+            if (!"iso6523-actorid-upis".Equals(consumerAuthority))
+            {
+                return null;
+            }
+
+            string consumerId = systemUser.Systemuser_org.ID;
+
+            string organisationNumber = consumerId.Split(":")[1];
+
+            return organisationNumber;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Retrieves the identifier of the system user from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The identifier of the system user if the claim exists; otherwise, <c>null</c>.</returns>
+    public static Guid? GetSystemUserId(this ClaimsPrincipal user)
+    {
+        SystemUserClaim? systemUser = user.GetSystemUser();
+
+        if (systemUser is not null)
+        {
+            string systemUserId = systemUser.Systemuser_id[0];
+            if (Guid.TryParse(systemUserId, out Guid systemUserIdGuid))
+            {
+                return systemUserIdGuid;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Retrieves the system user from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The system user if the claim exists; otherwise, <c>null</c>.</returns>
+    public static SystemUserClaim? GetSystemUser(this ClaimsPrincipal user)
+    {
+        string? authorizationDetailsValue = user.FindFirstValue("authorization_details");
+
+        return authorizationDetailsValue is not null ? JsonSerializer.Deserialize<SystemUserClaim>(authorizationDetailsValue) : null;
+    }
+
+    /// <summary>
+    /// Retrieves the user identifier from the user's claims.
+    /// </summary>
+    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
+    /// <returns>The user identifier if the claim exists; otherwise, <c>null</c>.</returns>
+    public static string? GetUserId(this ClaimsPrincipal user)
+    {
+        return user.FindFirstValue(AltinnCoreClaimTypes.UserId);
     }
 }

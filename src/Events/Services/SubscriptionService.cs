@@ -9,7 +9,6 @@ using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platorm.Events.Extensions;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -129,13 +128,13 @@ public class SubscriptionService : ISubscriptionService
     {
         var user = _claimsPrincipalProvider.GetUser();
 
-        string org = user.GetOrg();
+        string org = user.GetOrganizationId();
         if (!string.IsNullOrEmpty(org))
         {
             return $"{_orgPrefix}{org}";
         }
 
-        if (user.GetUserId() is int userId)
+        if (user.GetUserId() is string userId)
         {
             return $"{_userPrefix}{userId}";
         }
@@ -145,7 +144,7 @@ public class SubscriptionService : ISubscriptionService
             return $"{_systemUserPrefix}{systemUserId}";
         }
 
-        string organisation = user.GetOrgNumber();
+        string organisation = user.GetOrganizationNumber();
         if (!string.IsNullOrEmpty(organisation))
         {
             return $"{_organisationPrefix}{organisation}";

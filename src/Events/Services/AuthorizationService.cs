@@ -10,9 +10,9 @@ using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platorm.Events.Extensions;
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services
