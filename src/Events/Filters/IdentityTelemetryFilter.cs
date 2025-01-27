@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+
 using Altinn.AccessManagement.Core.Models;
 using Altinn.Platform.Events.Extensions;
 
@@ -44,13 +45,57 @@ public class IdentityTelemetryFilter : ITelemetryProcessor
     }
 
     /// <summary>
-    /// Determines whether the given request telemetry is relevant based on its URL.
+    /// Adds a property to the request telemetry if the value is not null or empty.
     /// </summary>
-    /// <param name="requestTelemetry">The request telemetry to evaluate.</param>
-    /// <returns><c>true</c> if the telemetry is relevant; otherwise, <c>false</c>.</returns>
-    private static bool IsRelevantTelemetry(RequestTelemetry requestTelemetry)
+    /// <param name="telemetry">The request telemetry to which the property will be added.</param>
+    /// <param name="key">The key of the property to add.</param>
+    /// <param name="value">The value of the property to add.</param>
+    private static void AddProperty(RequestTelemetry telemetry, string key, string? value)
     {
-        return requestTelemetry?.Url?.ToString().Contains("events/api/") == true;
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(telemetry);
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return;
+        }
+
+        telemetry.Properties[key] = value;
+    }
+
+    /// <summary>
+    /// Adds relevant user properties to the request telemetry.
+    /// </summary>
+    /// <param name="requestTelemetry">The request telemetry to which properties will be added.</param>
+    /// <param name="context">The current HTTP context containing user information.</param>
+    private static void AddTelemetryProperties(RequestTelemetry requestTelemetry, HttpContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(requestTelemetry);
+
+        var user = context.User;
+
+        AddProperty(requestTelemetry, "partyId", user.GetPartyId());
+        AddProperty(requestTelemetry, "authLevel", user.GetAuthenticationLevel());
+
+        string? userId = user.GetUserId();
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            AddProperty(requestTelemetry, "userId", userId);
+        }
+
+        string? organizationNumber = user.GetOrganizationNumber();
+        if (!string.IsNullOrWhiteSpace(organizationNumber))
+        {
+            AddProperty(requestTelemetry, "orgNumber", organizationNumber);
+        }
+
+        var systemUser = user.GetSystemUser();
+        if (systemUser != null)
+        {
+            AddProperty(requestTelemetry, "systemUserId", GetSystemUserId(systemUser));
+            AddProperty(requestTelemetry, "systemUserOrgId", systemUser.Systemuser_org.ID);
+        }
     }
 
     /// <summary>
@@ -66,38 +111,6 @@ public class IdentityTelemetryFilter : ITelemetryProcessor
         }
 
         AddTelemetryProperties(requestTelemetry, context);
-    }
-
-    /// <summary>
-    /// Adds relevant user properties to the request telemetry.
-    /// </summary>
-    /// <param name="requestTelemetry">The request telemetry to which properties will be added.</param>
-    /// <param name="context">The current HTTP context containing user information.</param>
-    private static void AddTelemetryProperties(RequestTelemetry requestTelemetry, HttpContext context)
-    {
-        var user = context.User;
-
-        AddProperty(requestTelemetry, "partyId", user.GetPartyId());
-        AddProperty(requestTelemetry, "authLevel", user.GetAuthenticationLevel());
-
-        string? userId = user.GetUserId();
-        if (!string.IsNullOrWhiteSpace(userId))
-        {
-            AddProperty(requestTelemetry, "userId", userId);
-        }
-
-        string? organizationNUmber = user.GetOrganizationNumber();
-        if (!string.IsNullOrWhiteSpace(organizationNUmber))
-        {
-            AddProperty(requestTelemetry, "orgNumber", organizationNUmber);
-        }
-
-        var systemUser = user.GetSystemUser();
-        if (systemUser != null)
-        {
-            AddProperty(requestTelemetry, "systemUserId", GetSystemUserId(systemUser));
-            AddProperty(requestTelemetry, "systemUserOrgId", systemUser.Systemuser_org.ID);
-        }
     }
 
     /// <summary>
@@ -126,18 +139,12 @@ public class IdentityTelemetryFilter : ITelemetryProcessor
     }
 
     /// <summary>
-    /// Adds a property to the request telemetry if the value is not null or empty.
+    /// Determines whether the given request telemetry is relevant based on its URL.
     /// </summary>
-    /// <param name="telemetry">The request telemetry to which the property will be added.</param>
-    /// <param name="key">The key of the property to add.</param>
-    /// <param name="value">The value of the property to add.</param>
-    private static void AddProperty(RequestTelemetry telemetry, string key, string? value)
+    /// <param name="requestTelemetry">The request telemetry to evaluate.</param>
+    /// <returns><c>true</c> if the telemetry is relevant; otherwise, <c>false</c>.</returns>
+    private static bool IsRelevantTelemetry(RequestTelemetry requestTelemetry)
     {
-        if (string.IsNullOrEmpty(value))
-        {
-            return;
-        }
-
-        telemetry.Properties[key] = value;
+        return requestTelemetry?.Url?.ToString().Contains("events/api/") == true;
     }
 }
