@@ -126,7 +126,7 @@ namespace Altinn.Platform.Events.Controllers
                 [FromQuery] List<string> type,
                 [FromQuery] int size = 50)
         {
-            if (string.IsNullOrEmpty(HttpContext.User.GetOrganizationId()))
+            if (string.IsNullOrEmpty(HttpContext.User.GetOrg()))
             {
                 // Only orgs can do a search based on a specific app. Alternative can be a service owner read in scope. Need to be added later
                 return StatusCode(401, "Only orgs can call this api");

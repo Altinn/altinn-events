@@ -128,7 +128,7 @@ public class SubscriptionService : ISubscriptionService
     {
         var user = _claimsPrincipalProvider.GetUser();
 
-        string org = user.GetOrganizationId();
+        string org = user.GetOrg();
         if (!string.IsNullOrEmpty(org))
         {
             return $"{_orgPrefix}{org}";

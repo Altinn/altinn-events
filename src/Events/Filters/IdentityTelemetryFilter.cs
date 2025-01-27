@@ -2,7 +2,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-
+using Altinn.AccessManagement.Core.Models;
 using Altinn.Platform.Events.Extensions;
 
 using Microsoft.ApplicationInsights.Channel;
@@ -95,9 +95,34 @@ public class IdentityTelemetryFilter : ITelemetryProcessor
         var systemUser = user.GetSystemUser();
         if (systemUser != null)
         {
-            AddProperty(requestTelemetry, "systemUserId", Convert.ToString(systemUser));
+            AddProperty(requestTelemetry, "systemUserId", GetSystemUserId(systemUser));
             AddProperty(requestTelemetry, "systemUserOrgId", systemUser.Systemuser_org.ID);
         }
+    }
+
+    /// <summary>
+    /// Retrieves the identifier of the system user from the system user's claims.
+    /// </summary>
+    /// <param name="systemUser">The <see cref="SystemUserClaim"/> instance representing the system user.</param>
+    /// <returns>The identifier of the system user if the claim exists; otherwise, <c>null</c>.</returns>
+    private static string? GetSystemUserId(SystemUserClaim systemUser)
+    {
+        if (systemUser is null)
+        {
+            return null;
+        }
+
+        if (systemUser.Systemuser_id == null)
+        {
+            return null;
+        }
+
+        if (systemUser.Systemuser_id.Count == 0)
+        {
+            return null;
+        }
+
+        return Convert.ToString(systemUser.Systemuser_id[0]);
     }
 
     /// <summary>

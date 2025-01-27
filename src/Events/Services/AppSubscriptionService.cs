@@ -91,7 +91,7 @@ namespace Altinn.Platform.Events.Services
         private bool ValidateSubscription(Subscription eventsSubscription, out string message)
         {
             if (string.IsNullOrEmpty(eventsSubscription.SubjectFilter)
-                && string.IsNullOrEmpty(_claimsPrincipalProvider.GetUser().GetOrganizationId()))
+                && string.IsNullOrEmpty(_claimsPrincipalProvider.GetUser().GetOrg()))
             {
                 message = "A valid subject to the authenticated identity is required";
                 return false;

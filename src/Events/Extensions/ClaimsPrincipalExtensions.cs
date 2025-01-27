@@ -52,11 +52,11 @@ public static class ClaimsPrincipalExtensions
     }
 
     /// <summary>
-    /// Retrieves the organization identifier from the user's claims.
+    /// Retrieves the organization from the user's claims.
     /// </summary>
     /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The organization identifier if the claim exists; otherwise, <c>null</c>.</returns>
-    public static string? GetOrganizationId(this ClaimsPrincipal user)
+    /// <returns>The organization if the claim exists; otherwise, <c>null</c>.</returns>
+    public static string? GetOrg(this ClaimsPrincipal user)
     {
         return user.FindFirstValue(AltinnCoreClaimTypes.Org);
     }
@@ -82,32 +82,6 @@ public static class ClaimsPrincipalExtensions
     }
 
     /// <summary>
-    /// Retrieves the organization number of the system user's owner from the user's claims.
-    /// </summary>
-    /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
-    /// <returns>The organization number of the system user's owner if the claim exists; otherwise, <c>null</c>.</returns>
-    public static string? GetSystemUserOwner(this ClaimsPrincipal user)
-    {
-        SystemUserClaim? systemUser = user.GetSystemUser();
-        if (systemUser is not null)
-        {
-            string consumerAuthority = systemUser.Systemuser_org.Authority;
-            if (!"iso6523-actorid-upis".Equals(consumerAuthority))
-            {
-                return null;
-            }
-
-            string consumerId = systemUser.Systemuser_org.ID;
-
-            string organisationNumber = consumerId.Split(":")[1];
-
-            return organisationNumber;
-        }
-
-        return null;
-    }
-
-    /// <summary>
     /// Retrieves the identifier of the system user from the user's claims.
     /// </summary>
     /// <param name="user">The <see cref="ClaimsPrincipal"/> instance representing the user.</param>
@@ -116,16 +90,22 @@ public static class ClaimsPrincipalExtensions
     {
         SystemUserClaim? systemUser = user.GetSystemUser();
 
-        if (systemUser is not null)
+        if (systemUser is null)
         {
-            string systemUserId = systemUser.Systemuser_id[0];
-            if (Guid.TryParse(systemUserId, out Guid systemUserIdGuid))
-            {
-                return systemUserIdGuid;
-            }
+            return null;
         }
 
-        return null;
+        if (systemUser.Systemuser_id == null)
+        {
+            return null;
+        }
+
+        if (systemUser.Systemuser_id.Count == 0)
+        {
+            return null;
+        }
+
+        return Guid.TryParse(systemUser.Systemuser_id[0], out Guid systemUserIdGuid) ? systemUserIdGuid : null;
     }
 
     /// <summary>
