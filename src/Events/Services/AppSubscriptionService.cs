@@ -135,7 +135,7 @@ namespace Altinn.Platform.Events.Services
 
             /* Both OrgPrefix and OrganisationPrefix is assumed to give us the organisation number of an
              * actor (instance owner). OrganisationPrefix is new while OrgPrefix was kept for backwards 
-             * compability. There is a good chance that end user systems are using OrgPrefix to filter 
+             * compatibility. There is a good chance that end user systems are using OrgPrefix to filter 
              * events for customers. We want to change over to OrganisationPrefix because OrgPrefix
              * is generally associated with the application owner acronym.
              */
