@@ -41,7 +41,7 @@ public class SubscriptionService : ISubscriptionService
     }
 
     /// <summary>
-    /// Completes the common tasks related to creating a subcription once the producer specific services are completed
+    /// Completes the common tasks related to creating a subscription once the producer specific services are completed
     /// </summary>
     internal async Task<(Subscription Subscription, ServiceError Error)> CompleteSubscriptionCreation(Subscription eventsSubscription)
     {
@@ -56,6 +56,7 @@ public class SubscriptionService : ISubscriptionService
         subscription ??= await _repository.CreateSubscription(eventsSubscription, eventsSubscription.SourceFilter?.GetMD5Hash());
 
         await _queue.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
+
         return (subscription, null);
     }
 
@@ -102,7 +103,9 @@ public class SubscriptionService : ISubscriptionService
     public async Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions()
     {
         string consumer = GetEntityFromPrincipal();
+
         var subscriptions = await _repository.GetSubscriptionsByConsumer(consumer, true);
+
         return (subscriptions, null);
     }
 
