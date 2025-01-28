@@ -176,7 +176,7 @@ public static class PrincipalUtil
     /// <param name="orgClaimId">The org claim identifier.</param>
     /// <param name="authenticationLevel">The authentication level.</param>
     /// <returns>A JWT token for the system-user.</returns>
-    public static string GetTokenForSystemUser(string systemId, string systemUserId, string orgClaimId, int authenticationLevel = 4)
+    public static string GetTokenForSystemUser(string systemId, string systemUserId, string orgClaimId, int authenticationLevel = 3)
     {
         ClaimsPrincipal principal = GetSystemUserPrincipal(systemId, systemUserId, orgClaimId, authenticationLevel);
 
@@ -207,8 +207,6 @@ public static class PrincipalUtil
 
         List<Claim> claims =
         [
-            new Claim(AltinnCoreClaimTypes.UserId, systemUserId, ClaimValueTypes.String, issuer),
-            new Claim(AltinnCoreClaimTypes.UserName, "systemUser", ClaimValueTypes.String, issuer),
             new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer),
             new Claim("authorization_details", JsonSerializer.Serialize(systemUserClaim), ClaimValueTypes.String, issuer),
             new Claim(AltinnCoreClaimTypes.AuthenticationLevel, Convert.ToString(authenticationLevel), ClaimValueTypes.Integer32, issuer),

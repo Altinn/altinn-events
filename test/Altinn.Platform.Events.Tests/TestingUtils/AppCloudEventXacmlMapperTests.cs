@@ -147,10 +147,8 @@ public class AppCloudEventXacmlMapperTests
 
         List<Claim> claims =
         [
-            new Claim(AltinnCoreClaimTypes.UserId, systemUserId, ClaimValueTypes.String, issuer),
-            new Claim(AltinnCoreClaimTypes.UserName, "systemUser", ClaimValueTypes.String, issuer),
             new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer),
-            new Claim(AltinnCoreClaimTypes.AuthenticationLevel, "4", ClaimValueTypes.Integer32, issuer),
+            new Claim(AltinnCoreClaimTypes.AuthenticationLevel, "3", ClaimValueTypes.Integer32, issuer),
             new Claim("authorization_details", JsonSerializer.Serialize(systemUserClaim), ClaimValueTypes.String, issuer),
         ];
 
