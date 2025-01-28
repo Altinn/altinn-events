@@ -96,6 +96,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             }
 
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid CloudEventRequest instance as a system user.
+            /// Expected result:
+            ///   Returns HttpStatus Created and the Id for the instance.
+            /// Success criteria:
+            ///   The response has correct status and correct responseId.
+            /// </summary>
             [Fact]
             public async Task Post_SystemUser_GivenValidCloudEvent_ReturnsStatusCreated()
             {
