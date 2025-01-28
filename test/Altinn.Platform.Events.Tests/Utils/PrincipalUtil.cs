@@ -191,7 +191,7 @@ public static class PrincipalUtil
     /// <param name="orgClaimId">The organization claim identifier.</param>
     /// <param name="authenticationLevel">The authentication level.</param>
     /// <returns>A <see cref="ClaimsPrincipal"/> object representing the system user.</returns>
-    private static ClaimsPrincipal GetSystemUserPrincipal(string systemId, string systemUserId, string orgClaimId, int authenticationLevel)
+    public static ClaimsPrincipal GetSystemUserPrincipal(string systemId, string systemUserId, string orgClaimId, int authenticationLevel)
     {
         string issuer = "www.altinn.no";
 

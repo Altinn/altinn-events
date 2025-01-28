@@ -146,6 +146,7 @@ public class SubscriptionServiceTest
     [InlineData(EntityType.Org, "ttd", "/org/ttd")]
     [InlineData(EntityType.Organisation, "987654321", "/organisation/987654321")]
     [InlineData(EntityType.User, "1406840", "/user/1406840")]
+    [InlineData(EntityType.SystemUser, "f02a9454-36ad-4ec9-8aa3-531449c5ae7f", "/systemuser/f02a9454-36ad-4ec9-8aa3-531449c5ae7f")]
     public void GetEntityFromPrincipal(EntityType entityType, string entityKeyValue, string expectedEntity)
     {
         // Arrange
@@ -161,6 +162,10 @@ public class SubscriptionServiceTest
                 break;
             case EntityType.Organisation:
                 principal = PrincipalUtil.GetClaimsPrincipal(entityKeyValue);
+                break;
+
+            case EntityType.SystemUser:
+                principal = PrincipalUtil.GetSystemUserPrincipal("random_system_identifier", entityKeyValue, "random_org_cliam_identifier", 3);
                 break;
         }
 
@@ -182,7 +187,8 @@ public class SubscriptionServiceTest
     {
         User,
         Org,
-        Organisation
+        Organisation,
+        SystemUser
     }
 
     private static bool CheckSubscriptionId(string serializedSubscription, int expectedId)
