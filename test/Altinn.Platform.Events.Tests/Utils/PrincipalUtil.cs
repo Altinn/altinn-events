@@ -169,13 +169,29 @@ public static class PrincipalUtil
     }
 
     /// <summary>
+    /// Generates a token for a system-user.
+    /// </summary>
+    /// <param name="systemId">The system identifier.</param>
+    /// <param name="systemUserId">The system user identifier.</param>
+    /// <param name="orgClaimId">The org claim identifier.</param>
+    /// <param name="authenticationLevel">The authentication level.</param>
+    /// <returns>A JWT token for the system-user.</returns>
+    public static string GetTokenForSystemUser(string systemId, string systemUserId, string orgClaimId, int authenticationLevel = 4)
+    {
+        ClaimsPrincipal principal = GetSystemUserPrincipal(systemId, systemUserId, orgClaimId, authenticationLevel);
+
+        return JwtTokenMock.GenerateToken(principal, new TimeSpan(0, 1, 5));
+    }
+
+    /// <summary>
     /// Creates a ClaimsPrincipal object representing a system user.
     /// </summary>
     /// <param name="systemId">The system identifier.</param>
     /// <param name="systemUserId">The system user identifier.</param>
     /// <param name="orgClaimId">The organization claim identifier.</param>
+    /// <param name="authenticationLevel">The authentication level.</param>
     /// <returns>A <see cref="ClaimsPrincipal"/> object representing the system user.</returns>
-    private static ClaimsPrincipal GetSystemUserPrincipal(string systemId, string systemUserId, string orgClaimId)
+    private static ClaimsPrincipal GetSystemUserPrincipal(string systemId, string systemUserId, string orgClaimId, int authenticationLevel)
     {
         string issuer = "www.altinn.no";
 
@@ -194,8 +210,8 @@ public static class PrincipalUtil
             new Claim(AltinnCoreClaimTypes.UserId, systemUserId, ClaimValueTypes.String, issuer),
             new Claim(AltinnCoreClaimTypes.UserName, "systemUser", ClaimValueTypes.String, issuer),
             new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer),
-            new Claim(AltinnCoreClaimTypes.AuthenticationLevel, "4", ClaimValueTypes.Integer32, issuer),
             new Claim("authorization_details", JsonSerializer.Serialize(systemUserClaim), ClaimValueTypes.String, issuer),
+            new Claim(AltinnCoreClaimTypes.AuthenticationLevel, Convert.ToString(authenticationLevel), ClaimValueTypes.Integer32, issuer),
         ];
 
         var identity = new ClaimsIdentity(claims, "mock");
