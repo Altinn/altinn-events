@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.Json;
 
+using Altinn.AccessManagement.Core.Models;
 using Altinn.Common.AccessToken.Constants;
 using Altinn.Platform.Events.Tests.Mocks;
 
@@ -164,5 +166,42 @@ public static class PrincipalUtil
         ClaimsPrincipal principal = GetClaimsPrincipal(userId, authenticationLevel, scope);
 
         return JwtTokenMock.GenerateToken(principal, new TimeSpan(0, 1, 5));
+    }
+
+    /// <summary>
+    /// Creates a ClaimsPrincipal object representing a system user.
+    /// </summary>
+    /// <param name="systemId">The system identifier.</param>
+    /// <param name="systemUserId">The system user identifier.</param>
+    /// <param name="orgClaimId">The organization claim identifier.</param>
+    /// <returns>A <see cref="ClaimsPrincipal"/> object representing the system user.</returns>
+    private static ClaimsPrincipal GetSystemUserPrincipal(string systemId, string systemUserId, string orgClaimId)
+    {
+        string issuer = "www.altinn.no";
+
+        var systemUserClaim = new SystemUserClaim
+        {
+            System_id = systemId,
+            Systemuser_id = [systemUserId],
+            Systemuser_org = new OrgClaim
+            {
+                ID = orgClaimId
+            }
+        };
+
+        List<Claim> claims =
+        [
+            new Claim(AltinnCoreClaimTypes.UserId, systemUserId, ClaimValueTypes.String, issuer),
+            new Claim(AltinnCoreClaimTypes.UserName, "systemUser", ClaimValueTypes.String, issuer),
+            new Claim(AltinnCoreClaimTypes.AuthenticateMethod, "Mock", ClaimValueTypes.String, issuer),
+            new Claim(AltinnCoreClaimTypes.AuthenticationLevel, "4", ClaimValueTypes.Integer32, issuer),
+            new Claim("authorization_details", JsonSerializer.Serialize(systemUserClaim), ClaimValueTypes.String, issuer),
+        ];
+
+        var identity = new ClaimsIdentity(claims, "mock");
+
+        identity.AddClaims(claims);
+
+        return new ClaimsPrincipal(identity);
     }
 }
