@@ -13,6 +13,7 @@ using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services
@@ -112,7 +113,7 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         internal static List<CloudEvent> FilterAuthorizedRequests(List<CloudEvent> cloudEvents, ClaimsPrincipal consumer, XacmlJsonResponse response)
         {
-            List<CloudEvent> authorizedEventsList = new();
+            List<CloudEvent> authorizedEventsList = [];
 
             foreach (XacmlJsonResult result in response.Response.Where(result => DecisionHelper.ValidateDecisionResult(result, consumer)))
             {
