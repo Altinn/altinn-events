@@ -19,14 +19,16 @@ public static class XacmlMapperHelper
     private const string OrgPrefix = "/org/";
     private const string PartyPrefix = "/party/";
     private const string OrganisationPrefix = "/organisation/";
+    private const string SystemUserPrefix = "/systemuser/";
 
     private const string ClaimUserId = "urn:altinn:userid";
     private const string ClaimOrg = "urn:altinn:org";
     private const string ClaimPartyID = "urn:altinn:partyid";
+    private const string ClaimSystemUserId = "urn:altinn:systemuser";
 
     private const string ClaimOrganizationNumber = "urn:altinn:organization:identifier-no";
     private const string ClaimIdentitySeparator = ":";
-    
+
     /// <summary>
     /// Adds attribute to the XacmlJsonCateogry from the provided subject string
     /// </summary>
@@ -58,6 +60,11 @@ public static class XacmlMapperHelper
         {
             string value = subject.Replace(OrganisationPrefix, string.Empty);
             xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrganizationNumber, value, ClaimValueTypes.String, DefaultIssuer));
+        }
+        else if (subject.StartsWith(SystemUserPrefix))
+        {
+            string value = subject.Replace(SystemUserPrefix, string.Empty);
+            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimSystemUserId, value, ClaimValueTypes.String, DefaultIssuer));
         }
         else if (UriExtensions.IsValidUrn(subject))
         {
@@ -114,5 +121,5 @@ public static class XacmlMapperHelper
         string value = resource.Substring(index + 1);
 
         return (id, value);
-    }    
+    }
 }
