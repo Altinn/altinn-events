@@ -13,289 +13,288 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
-
 using Moq;
-
 using Xunit;
 
-namespace Altinn.Platform.Events.Tests.TestingServices;
-
-/// <summary>
-/// A collection of tests related to <see cref="SubscriptionService"/>.
-/// </summary>
-public class SubscriptionServiceTest
+namespace Altinn.Platform.Events.Tests.TestingServices
 {
-    private readonly Mock<ISubscriptionRepository> _repositoryMock = new();
-
-    [Fact]
-    public async Task GetAllSubscriptions_SendsIncludeInvalidTrueToRepository()
+    /// <summary>
+    /// A collection of tests related to <see cref="SubscriptionService"/>.
+    /// </summary>
+    public class SubscriptionServiceTest
     {
-        // Arrange
-        Mock<IClaimsPrincipalProvider> userProvider = new Mock<IClaimsPrincipalProvider>();
+        private readonly Mock<ISubscriptionRepository> _repositoryMock = new();
 
-        // The organisation number is not used by the logic when an org claim exists.
-        userProvider.Setup(u => u.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "na"));
-        _repositoryMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true))
-            .ReturnsAsync(new List<Subscription>());
-
-        SubscriptionService subscriptionService = GetSubscriptionService(
-            repository: _repositoryMock.Object,
-            claimsPrincipalProvider: userProvider.Object);
-
-        // Act
-        await subscriptionService.GetAllSubscriptions();
-
-        // Assert
-        _repositoryMock.VerifyAll();
-    }
-
-    [Fact]
-    public async Task CreateSubscription_Unauthorized_ReturnsError()
-    {
-        // Arrange 
-        string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service.";
-
-        var input = new Subscription
+        [Fact]
+        public async Task CompleteSubscriptionCreation_SubscriptionAlreadyExists_ReturnExisting()
         {
-            ResourceFilter = "urn:altinn:resource:some-service",
-            EndPoint = new Uri("https://automated.com"),
-        };
+            // Arrange
+            int subscriptionId = 645187;
+            Subscription subscription = new()
+            {
+                Id = subscriptionId,
+                SourceFilter = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test")
+            };
 
-        var sut = GetSubscriptionService(authorizationDecision: false);
+            Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
+            claimsPrincipalProviderMock.Setup(
+                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
 
-        // Act
-        (var _, ServiceError actual) = await sut.CompleteSubscriptionCreation(input);
+            _repositoryMock.Setup(
+                s => s.FindSubscription(
+                    It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
+                .ReturnsAsync(subscription);
 
-        // Assert
-        Assert.Equal(401, actual.ErrorCode);
-        Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
-    }
+            SubscriptionService subscriptionService =
+                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
-    [Fact]
-    public async Task CompleteSubscriptionCreation_SubscriptionAlreadyExists_ReturnExisting()
-    {
-        // Arrange
-        int subscriptionId = 645187;
-        Subscription subscription = new()
-        {
-            Id = subscriptionId,
-            SourceFilter = new System.Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test")
-        };
+            // Act
+            await subscriptionService.CompleteSubscriptionCreation(subscription);
 
-        Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
-        claimsPrincipalProviderMock.Setup(
-            s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
-
-        _repositoryMock.Setup(
-            s => s.FindSubscription(
-                It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
-            .ReturnsAsync(subscription);
-
-        SubscriptionService subscriptionService =
-            GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
-
-        // Act
-        var result = await subscriptionService.CompleteSubscriptionCreation(subscription);
-
-        // Assert
-        _repositoryMock.VerifyAll();
-    }
-
-    [Fact]
-    public async Task CompleteSubscriptionCreation_SubscriptionNotFound_ReturnNew()
-    {
-        // Arrange
-        int subscriptionId = 645187;
-        Subscription subscription = new()
-        {
-            Id = subscriptionId,
-            SourceFilter = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test")
-        };
-
-        Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
-        claimsPrincipalProviderMock.Setup(
-            s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
-
-        _repositoryMock.Setup(
-            s => s.FindSubscription(
-                It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
-            .ReturnsAsync((Subscription)null);
-
-        _repositoryMock.Setup(
-            s => s.CreateSubscription(
-                It.Is<Subscription>(p => p.Id == subscriptionId),
-                It.Is<string>(s => s.Equals("03E4D9CA0902493533E9C62AB437EF50"))))
-            .ReturnsAsync(subscription);
-
-        Mock<IEventsQueueClient> queueMock = new();
-
-        queueMock
-            .Setup(q => q.EnqueueSubscriptionValidation(It.Is<string>(s => CheckSubscriptionId(s, 645187))));
-
-        // Act
-        SubscriptionService subscriptionService =
-              GetSubscriptionService(_repositoryMock.Object, queueMock: queueMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
-
-        var result = await subscriptionService.CompleteSubscriptionCreation(subscription);
-
-        // Assert
-        _repositoryMock.VerifyAll();
-        queueMock.VerifyAll();
-    }
-
-    [Theory]
-    [InlineData(EntityType.Org, "ttd", "/org/ttd")]
-    [InlineData(EntityType.Organisation, "987654321", "/organisation/987654321")]
-    [InlineData(EntityType.User, "1406840", "/user/1406840")]
-    [InlineData(EntityType.SystemUser, "f02a9454-36ad-4ec9-8aa3-531449c5ae7f", "/systemuser/f02a9454-36ad-4ec9-8aa3-531449c5ae7f")]
-    public void GetEntityFromPrincipal(EntityType entityType, string entityKeyValue, string expectedEntity)
-    {
-        // Arrange
-        ClaimsPrincipal principal = null;
-
-        switch (entityType)
-        {
-            case EntityType.User:
-                principal = PrincipalUtil.GetClaimsPrincipal(int.Parse(entityKeyValue), 2);
-                break;
-            case EntityType.Org:
-                principal = PrincipalUtil.GetClaimsPrincipal(entityKeyValue, "87364765");
-                break;
-            case EntityType.Organisation:
-                principal = PrincipalUtil.GetClaimsPrincipal(entityKeyValue);
-                break;
-
-            case EntityType.SystemUser:
-                principal = PrincipalUtil.GetSystemUserPrincipal("random_system_identifier", entityKeyValue, "random_org_cliam_identifier", 3);
-                break;
+            // Assert
+            _repositoryMock.VerifyAll();
         }
 
-        Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
-        claimsPrincipalProviderMock.Setup(
-            s => s.GetUser()).Returns(principal);
+        [Fact]
+        public async Task CompleteSubscriptionCreation_SubscriptionNotFound_ReturnNew()
+        {
+            // Arrange
+            int subscriptionId = 645187;
+            Subscription subscription = new()
+            {
+                Id = subscriptionId,
+                SourceFilter = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test")
+            };
 
-        SubscriptionService subscriptionService =
-            GetSubscriptionService(claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
+            Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
+            claimsPrincipalProviderMock.Setup(
+                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
 
-        // Act
-        string actualEntity = subscriptionService.GetEntityFromPrincipal();
+            _repositoryMock.Setup(
+                s => s.FindSubscription(
+                    It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
+                .ReturnsAsync((Subscription)null);
 
-        // Assert
-        Assert.Equal(expectedEntity, actualEntity);
-    }
+            _repositoryMock.Setup(
+                s => s.CreateSubscription(
+                    It.Is<Subscription>(p => p.Id == subscriptionId),
+                    It.Is<string>(s => s.Equals("03E4D9CA0902493533E9C62AB437EF50"))))
+                .ReturnsAsync(subscription);
 
-    [Fact]
-    public void GetSystemUserId_SystemUserIsNull_ReturnsNull()
-    {
-        // Arrange
-        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+            Mock<IEventsQueueClient> queueMock = new();
 
-        // Act
-        var result = claimsPrincipal.GetSystemUserId();
+            queueMock
+                .Setup(q => q.EnqueueSubscriptionValidation(It.Is<string>(s => CheckSubscriptionId(s, 645187))));
 
-        // Assert
-        Assert.Null(result);
-    }
+            // Act
+            SubscriptionService subscriptionService =
+                  GetSubscriptionService(_repositoryMock.Object, queueMock: queueMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
-    [Fact]
-    public void GetSystemUserId_SystemUserIdIsNull_ReturnsNull()
-    {
-        // Arrange
-        var systemUserClaim = new SystemUserClaim { Systemuser_id = null };
-        var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+            await subscriptionService.CompleteSubscriptionCreation(subscription);
 
-        // Act
-        var result = claimsPrincipal.GetSystemUserId();
+            // Assert
+            _repositoryMock.VerifyAll();
+            queueMock.VerifyAll();
+        }
 
-        // Assert
-        Assert.Null(result);
-    }
+        [Fact]
+        public async Task CreateSubscription_Unauthorized_ReturnsError()
+        {
+            // Arrange 
+            string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service.";
 
-    [Fact]
-    public void GetSystemUserId_SystemUserIdIsEmpty_ReturnsNull()
-    {
-        // Arrange
-        var systemUserClaim = new SystemUserClaim { Systemuser_id = [] };
-        var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+            var input = new Subscription
+            {
+                ResourceFilter = "urn:altinn:resource:some-service",
+                EndPoint = new Uri("https://automated.com"),
+            };
 
-        // Act
-        var result = claimsPrincipal.GetSystemUserId();
+            var sut = GetSubscriptionService(authorizationDecision: false);
 
-        // Assert
-        Assert.Null(result);
-    }
+            // Act
+            (var _, ServiceError actual) = await sut.CompleteSubscriptionCreation(input);
 
-    [Fact]
-    public void GetSystemUserId_SystemUserIdIsValidGuid_ReturnsGuid()
-    {
-        // Arrange
-        var validGuid = Guid.NewGuid().ToString();
-        var systemUserClaim = new SystemUserClaim { Systemuser_id = [validGuid] };
-        var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+            // Assert
+            Assert.Equal(401, actual.ErrorCode);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+        }
 
-        // Act
-        var result = claimsPrincipal.GetSystemUserId();
+        [Fact]
+        public async Task GetAllSubscriptions_SendsIncludeInvalidTrueToRepository()
+        {
+            // Arrange
+            Mock<IClaimsPrincipalProvider> userProvider = new Mock<IClaimsPrincipalProvider>();
 
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(Guid.Parse(validGuid), result);
-    }
+            // The organisation number is not used by the logic when an org claim exists.
+            userProvider.Setup(u => u.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "na"));
+            _repositoryMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true))
+                .ReturnsAsync(new List<Subscription>());
 
-    [Fact]
-    public void GetSystemUserId_SystemUserIdIsInvalidGuid_ReturnsNull()
-    {
-        // Arrange
-        var invalidGuid = "invalid-guid";
-        var systemUserClaim = new SystemUserClaim { Systemuser_id = [invalidGuid] };
-        var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+            SubscriptionService subscriptionService = GetSubscriptionService(
+                repository: _repositoryMock.Object,
+                claimsPrincipalProvider: userProvider.Object);
 
-        // Act
-        var result = claimsPrincipal.GetSystemUserId();
+            // Act
+            await subscriptionService.GetAllSubscriptions();
 
-        // Assert
-        Assert.Null(result);
-    }
+            // Assert
+            _repositoryMock.VerifyAll();
+        }
 
-    private static ClaimsPrincipal CreateClaimsPrincipal(SystemUserClaim systemUserClaim)
-    {
-        var claims = new List<Claim>
+        [Theory]
+        [InlineData(EntityType.Org, "ttd", "/org/ttd")]
+        [InlineData(EntityType.Organisation, "987654321", "/organisation/987654321")]
+        [InlineData(EntityType.User, "1406840", "/user/1406840")]
+        [InlineData(EntityType.SystemUser, "f02a9454-36ad-4ec9-8aa3-531449c5ae7f", "/systemuser/f02a9454-36ad-4ec9-8aa3-531449c5ae7f")]
+        public void GetEntityFromPrincipal(EntityType entityType, string entityKeyValue, string expectedEntity)
+        {
+            // Arrange
+            ClaimsPrincipal principal = null;
+
+            switch (entityType)
+            {
+                case EntityType.User:
+                    principal = PrincipalUtil.GetClaimsPrincipal(int.Parse(entityKeyValue), 2);
+                    break;
+                case EntityType.Org:
+                    principal = PrincipalUtil.GetClaimsPrincipal(entityKeyValue, "87364765");
+                    break;
+                case EntityType.Organisation:
+                    principal = PrincipalUtil.GetClaimsPrincipal(entityKeyValue);
+                    break;
+
+                case EntityType.SystemUser:
+                    principal = PrincipalUtil.GetSystemUserPrincipal("random_system_identifier", entityKeyValue, "random_org_cliam_identifier", 3);
+                    break;
+            }
+
+            Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
+            claimsPrincipalProviderMock.Setup(
+                s => s.GetUser()).Returns(principal);
+
+            SubscriptionService subscriptionService =
+                GetSubscriptionService(claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
+
+            // Act
+            string actualEntity = subscriptionService.GetEntityFromPrincipal();
+
+            // Assert
+            Assert.Equal(expectedEntity, actualEntity);
+        }
+
+        [Fact]
+        public void GetSystemUserId_SystemUserIsNull_ReturnsNull()
+        {
+            // Arrange
+            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+
+            // Act
+            var result = claimsPrincipal.GetSystemUserId();
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void GetSystemUserId_SystemUserIdIsEmpty_ReturnsNull()
+        {
+            // Arrange
+            var systemUserClaim = new SystemUserClaim { Systemuser_id = new List<string>() };
+            var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+
+            // Act
+            var result = claimsPrincipal.GetSystemUserId();
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void GetSystemUserId_SystemUserIdIsInvalidGuid_ReturnsNull()
+        {
+            // Arrange
+            var invalidGuid = "invalid-guid";
+            var systemUserClaim = new SystemUserClaim { Systemuser_id = new List<string> { invalidGuid } };
+            var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+
+            // Act
+            var result = claimsPrincipal.GetSystemUserId();
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void GetSystemUserId_SystemUserIdIsNull_ReturnsNull()
+        {
+            // Arrange
+            var systemUserClaim = new SystemUserClaim { Systemuser_id = null };
+            var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+
+            // Act
+            var result = claimsPrincipal.GetSystemUserId();
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void GetSystemUserId_SystemUserIdIsValidGuid_ReturnsGuid()
+        {
+            // Arrange
+            var validGuid = Guid.NewGuid().ToString();
+            var systemUserClaim = new SystemUserClaim { Systemuser_id = new List<string> { validGuid } };
+            var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+
+            // Act
+            var result = claimsPrincipal.GetSystemUserId();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(Guid.Parse(validGuid), result);
+        }
+
+        private static bool CheckSubscriptionId(string serializedSubscription, int expectedId)
+        {
+            var subscription = JsonSerializer.Deserialize<Subscription>(serializedSubscription);
+            return expectedId == subscription.Id;
+        }
+
+        private static ClaimsPrincipal CreateClaimsPrincipal(SystemUserClaim systemUserClaim)
+        {
+            var claims = new List<Claim>
             {
                 new("authorization_details", JsonSerializer.Serialize(systemUserClaim))
             };
 
-        var identity = new ClaimsIdentity(claims);
-        return new ClaimsPrincipal(identity);
-    }
+            var identity = new ClaimsIdentity(claims);
+            return new ClaimsPrincipal(identity);
+        }
 
-    public enum EntityType
-    {
-        User,
-        Org,
-        Organisation,
-        SystemUser
-    }
+        private static SubscriptionService GetSubscriptionService(
+            ISubscriptionRepository repository = null,
+            bool authorizationDecision = true,
+            IEventsQueueClient queueMock = null,
+            IClaimsPrincipalProvider claimsPrincipalProvider = null)
+        {
+            var authoriationMock = new Mock<IAuthorization>();
+            authoriationMock
+                .Setup(a => a.AuthorizeConsumerForEventsSubscription(It.IsAny<Subscription>()))
+                .ReturnsAsync(authorizationDecision);
 
-    private static bool CheckSubscriptionId(string serializedSubscription, int expectedId)
-    {
-        var subscription = JsonSerializer.Deserialize<Subscription>(serializedSubscription);
-        return expectedId == subscription.Id;
-    }
+            return new SubscriptionService(
+                repository ?? new SubscriptionRepositoryMock(),
+                authoriationMock.Object,
+                queueMock ?? new Mock<IEventsQueueClient>().Object,
+                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
+        }
 
-    private static SubscriptionService GetSubscriptionService(
-        ISubscriptionRepository repository = null,
-        bool authorizationDecision = true,
-        IEventsQueueClient queueMock = null,
-        IClaimsPrincipalProvider claimsPrincipalProvider = null)
-    {
-        var authoriationMock = new Mock<IAuthorization>();
-        authoriationMock
-            .Setup(a => a.AuthorizeConsumerForEventsSubscription(It.IsAny<Subscription>()))
-            .ReturnsAsync(authorizationDecision);
-
-        return new SubscriptionService(
-            repository ?? new SubscriptionRepositoryMock(),
-            authoriationMock.Object,
-            queueMock ?? new Mock<IEventsQueueClient>().Object,
-            claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
+        public enum EntityType
+        {
+            User,
+            Org,
+            Organisation,
+            SystemUser
+        }
     }
 }
