@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Altinn.AccessManagement.Core.Models;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Extensions;
@@ -13,7 +14,9 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
+
 using Moq;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -37,16 +40,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
 
             Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
-            claimsPrincipalProviderMock.Setup(
-                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
+            claimsPrincipalProviderMock.Setup(s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
 
-            _repositoryMock.Setup(
-                s => s.FindSubscription(
-                    It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
-                .ReturnsAsync(subscription);
+            _repositoryMock.Setup(s => s.FindSubscription(It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None)).ReturnsAsync(subscription);
 
-            SubscriptionService subscriptionService =
-                GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(_repositoryMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
             // Act
             await subscriptionService.CompleteSubscriptionCreation(subscription);
@@ -67,28 +65,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
 
             Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
-            claimsPrincipalProviderMock.Setup(
-                s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
+            claimsPrincipalProviderMock.Setup(s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
 
-            _repositoryMock.Setup(
-                s => s.FindSubscription(
-                    It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
-                .ReturnsAsync((Subscription)null);
+            _repositoryMock.Setup(s => s.FindSubscription(It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None)).ReturnsAsync((Subscription)null);
 
-            _repositoryMock.Setup(
-                s => s.CreateSubscription(
-                    It.Is<Subscription>(p => p.Id == subscriptionId),
-                    It.Is<string>(s => s.Equals("03E4D9CA0902493533E9C62AB437EF50"))))
-                .ReturnsAsync(subscription);
+            _repositoryMock.Setup(s => s.CreateSubscription(It.Is<Subscription>(p => p.Id == subscriptionId), It.Is<string>(s => s.Equals("03E4D9CA0902493533E9C62AB437EF50")))).ReturnsAsync(subscription);
 
             Mock<IEventsQueueClient> queueMock = new();
 
-            queueMock
-                .Setup(q => q.EnqueueSubscriptionValidation(It.Is<string>(s => CheckSubscriptionId(s, 645187))));
+            queueMock.Setup(q => q.EnqueueSubscriptionValidation(It.Is<string>(s => CheckSubscriptionId(s, 645187))));
 
             // Act
-            SubscriptionService subscriptionService =
-                  GetSubscriptionService(_repositoryMock.Object, queueMock: queueMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(_repositoryMock.Object, queueMock: queueMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
             await subscriptionService.CompleteSubscriptionCreation(subscription);
 
@@ -127,12 +115,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // The organisation number is not used by the logic when an org claim exists.
             userProvider.Setup(u => u.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "na"));
-            _repositoryMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true))
-                .ReturnsAsync(new List<Subscription>());
+            _repositoryMock.Setup(rm => rm.GetSubscriptionsByConsumer(It.IsAny<string>(), true)).ReturnsAsync([]);
 
-            SubscriptionService subscriptionService = GetSubscriptionService(
-                repository: _repositoryMock.Object,
-                claimsPrincipalProvider: userProvider.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(repository: _repositoryMock.Object, claimsPrincipalProvider: userProvider.Object);
 
             // Act
             await subscriptionService.GetAllSubscriptions();
@@ -169,11 +154,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             }
 
             Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
-            claimsPrincipalProviderMock.Setup(
-                s => s.GetUser()).Returns(principal);
+            claimsPrincipalProviderMock.Setup(s => s.GetUser()).Returns(principal);
 
-            SubscriptionService subscriptionService =
-                GetSubscriptionService(claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
             // Act
             string actualEntity = subscriptionService.GetEntityFromPrincipal();
@@ -199,7 +182,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public void GetSystemUserId_SystemUserIdIsEmpty_ReturnsNull()
         {
             // Arrange
-            var systemUserClaim = new SystemUserClaim { Systemuser_id = new List<string>() };
+            var systemUserClaim = new SystemUserClaim { Systemuser_id = [] };
             var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
 
             // Act
@@ -214,7 +197,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             var invalidGuid = "invalid-guid";
-            var systemUserClaim = new SystemUserClaim { Systemuser_id = new List<string> { invalidGuid } };
+            var systemUserClaim = new SystemUserClaim { Systemuser_id = [invalidGuid] };
             var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
 
             // Act
@@ -243,7 +226,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             var validGuid = Guid.NewGuid().ToString();
-            var systemUserClaim = new SystemUserClaim { Systemuser_id = new List<string> { validGuid } };
+            var systemUserClaim = new SystemUserClaim { Systemuser_id = [validGuid] };
             var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
 
             // Act
