@@ -253,7 +253,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// The response has correct status.
             /// </summary>
             [Fact]
-            public async Task Post_GivenenericSubscriptionWithoutScope_ReturnsForbidden()
+            public async Task Post_GivenGenericSubscriptionWithoutScope_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
