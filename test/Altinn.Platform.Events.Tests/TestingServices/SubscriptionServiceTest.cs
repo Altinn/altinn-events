@@ -4,8 +4,9 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.AccessManagement.Core.Models;
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -181,6 +182,89 @@ public class SubscriptionServiceTest
 
         // Assert
         Assert.Equal(expectedEntity, actualEntity);
+    }
+
+    [Fact]
+    public void GetSystemUserId_SystemUserIsNull_ReturnsNull()
+    {
+        // Arrange
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
+
+        // Act
+        var result = claimsPrincipal.GetSystemUserId();
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetSystemUserId_SystemUserIdIsNull_ReturnsNull()
+    {
+        // Arrange
+        var systemUserClaim = new SystemUserClaim { Systemuser_id = null };
+        var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+
+        // Act
+        var result = claimsPrincipal.GetSystemUserId();
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetSystemUserId_SystemUserIdIsEmpty_ReturnsNull()
+    {
+        // Arrange
+        var systemUserClaim = new SystemUserClaim { Systemuser_id = [] };
+        var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+
+        // Act
+        var result = claimsPrincipal.GetSystemUserId();
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetSystemUserId_SystemUserIdIsValidGuid_ReturnsGuid()
+    {
+        // Arrange
+        var validGuid = Guid.NewGuid().ToString();
+        var systemUserClaim = new SystemUserClaim { Systemuser_id = [validGuid] };
+        var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+
+        // Act
+        var result = claimsPrincipal.GetSystemUserId();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(Guid.Parse(validGuid), result);
+    }
+
+    [Fact]
+    public void GetSystemUserId_SystemUserIdIsInvalidGuid_ReturnsNull()
+    {
+        // Arrange
+        var invalidGuid = "invalid-guid";
+        var systemUserClaim = new SystemUserClaim { Systemuser_id = [invalidGuid] };
+        var claimsPrincipal = CreateClaimsPrincipal(systemUserClaim);
+
+        // Act
+        var result = claimsPrincipal.GetSystemUserId();
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    private static ClaimsPrincipal CreateClaimsPrincipal(SystemUserClaim systemUserClaim)
+    {
+        var claims = new List<Claim>
+            {
+                new("authorization_details", JsonSerializer.Serialize(systemUserClaim))
+            };
+
+        var identity = new ClaimsIdentity(claims);
+        return new ClaimsPrincipal(identity);
     }
 
     public enum EntityType
