@@ -188,10 +188,10 @@ public static class PrincipalUtil
     /// </summary>
     /// <param name="systemId">The system identifier.</param>
     /// <param name="systemUserId">The system user identifier.</param>
-    /// <param name="orgClaimId">The organization claim identifier.</param>
+    /// <param name="ownerIdentifier">The organization number of the system owner.</param>
     /// <param name="authenticationLevel">The authentication level.</param>
     /// <returns>A <see cref="ClaimsPrincipal"/> object representing the system user.</returns>
-    public static ClaimsPrincipal GetSystemUserPrincipal(string systemId, string systemUserId, string orgClaimId, int authenticationLevel)
+    public static ClaimsPrincipal GetSystemUserPrincipal(string systemId, string systemUserId, string ownerIdentifier, int authenticationLevel)
     {
         string issuer = "www.altinn.no";
 
@@ -201,7 +201,7 @@ public static class PrincipalUtil
             Systemuser_id = [systemUserId],
             Systemuser_org = new OrgClaim
             {
-                ID = orgClaimId
+                ID = ownerIdentifier
             }
         };
 
