@@ -24,7 +24,7 @@ public static class XacmlMapperHelper
     private const string ClaimUserId = "urn:altinn:userid";
     private const string ClaimOrg = "urn:altinn:org";
     private const string ClaimPartyID = "urn:altinn:partyid";
-    private const string ClaimSystemUserId = "urn:altinn:systemuser";
+    private const string ClaimSystemUserId = "urn:altinn:systemuser:uuid";
 
     private const string ClaimOrganizationNumber = "urn:altinn:organization:identifier-no";
     private const string ClaimIdentitySeparator = ":";
