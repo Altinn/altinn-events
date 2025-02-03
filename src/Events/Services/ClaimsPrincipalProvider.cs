@@ -19,7 +19,7 @@ namespace Altinn.Platform.Events.Services
         /// <summary>
         /// Initializes a new instance of the <see cref="ClaimsPrincipalProvider"/> class.
         /// </summary>
-        /// <param name="httpContextAccessor">The http context accessor</param>
+        /// <param name="httpContextAccessor">The HTTP context accessor</param>
         public ClaimsPrincipalProvider(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;

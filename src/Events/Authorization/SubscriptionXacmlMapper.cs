@@ -28,9 +28,9 @@ namespace Altinn.Platform.Events.Authorization
 
             XacmlJsonRequest request = new()
             {
-                AccessSubject = new List<XacmlJsonCategory>(),
-                Action = new List<XacmlJsonCategory>(),
-                Resource = new List<XacmlJsonCategory>()
+                Action = [],
+                Resource = [],
+                AccessSubject = []
             };
 
             request.AccessSubject.Add(new XacmlJsonCategory().AddSubjectAttribute(subscription.Consumer));

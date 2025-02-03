@@ -1,122 +1,150 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Security.Claims;
+#nullable enable
 
-using AltinnCore.Authentication.Constants;
+using System;
+using System.Diagnostics.CodeAnalysis;
+
+using Altinn.AccessManagement.Core.Models;
+using Altinn.Platform.Events.Extensions;
 
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http;
 
-namespace Altinn.Platform.Events.Filters
+namespace Altinn.Platform.Events.Filters;
+
+/// <summary>
+/// Filter to enrich request telemetry with identity information.
+/// </summary>
+[ExcludeFromCodeCoverage]
+public class IdentityTelemetryFilter : ITelemetryProcessor
 {
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ITelemetryProcessor _nextTelemetryProcessor;
+
     /// <summary>
-    /// Filter to enrich request telemetry with identity information
+    /// Initializes a new instance of the <see cref="IdentityTelemetryFilter"/> class.
     /// </summary>
-    [ExcludeFromCodeCoverage]
-    public class IdentityTelemetryFilter : ITelemetryProcessor
+    /// <param name="httpContextAccessor">Accessor for the current HTTP context.</param>
+    /// <param name="nextTelemetryProcessor">The next telemetry processor in the chain.</param>
+    public IdentityTelemetryFilter(IHttpContextAccessor httpContextAccessor, ITelemetryProcessor nextTelemetryProcessor)
     {
-        private ITelemetryProcessor Next { get; set; }
+        _httpContextAccessor = httpContextAccessor;
+        _nextTelemetryProcessor = nextTelemetryProcessor;
+    }
 
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IdentityTelemetryFilter"/> class.
-        /// </summary>
-        public IdentityTelemetryFilter(ITelemetryProcessor next, IHttpContextAccessor httpContextAccessor)
+    /// <inheritdoc />
+    public void Process(ITelemetry item)
+    {
+        if (item is RequestTelemetry requestTelemetry && IsRelevantTelemetry(requestTelemetry))
         {
-            Next = next;
-            _httpContextAccessor = httpContextAccessor;
+            EnrichRequestTelemetry(requestTelemetry);
         }
 
-        /// <inheritdoc/>
-        public void Process(ITelemetry item)
+        _nextTelemetryProcessor.Process(item);
+    }
+
+    /// <summary>
+    /// Adds a property to the request telemetry if the value is not null or empty.
+    /// </summary>
+    /// <param name="telemetry">The request telemetry to which the property will be added.</param>
+    /// <param name="key">The key of the property to add.</param>
+    /// <param name="value">The value of the property to add.</param>
+    private static void AddProperty(RequestTelemetry telemetry, string key, string? value)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(telemetry);
+
+        if (string.IsNullOrEmpty(value))
         {
-            RequestTelemetry request = item as RequestTelemetry;
-
-            if (request != null && request.Url.ToString().Contains("events/api/"))
-            {
-                HttpContext ctx = _httpContextAccessor.HttpContext;
-
-                if (ctx?.User != null)
-                {
-                    int? orgNumber = GetOrgNumber(ctx.User);
-                    int? userId = GetUserIdAsInt(ctx.User);
-                    int? partyId = GetPartyIdAsInt(ctx.User);
-                    int authLevel = GetAuthenticationLevel(ctx.User);
-
-                    request.Properties.Add("partyId", partyId.ToString());
-                    request.Properties.Add("authLevel", authLevel.ToString());
-
-                    if (userId != null)
-                    {
-                        request.Properties.Add("userId", userId.ToString());
-                    }
-
-                    if (orgNumber != null)
-                    {
-                        request.Properties.Add("orgNumber", orgNumber.ToString());
-                    }
-                }
-            }
-
-            Next.Process(item);
+            return;
         }
 
-        private static int GetAuthenticationLevel(ClaimsPrincipal user)
-        {
-            if (user.HasClaim(c => c.Type == AltinnCoreClaimTypes.AuthenticationLevel))
-            {
-                Claim userIdClaim = user.FindFirst(c => c.Type == AltinnCoreClaimTypes.AuthenticationLevel);
-                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int authenticationLevel))
-                {
-                    return authenticationLevel;
-                }
-            }
+        telemetry.Properties[key] = value;
+    }
 
-            return 0;
+    /// <summary>
+    /// Adds relevant user properties to the request telemetry.
+    /// </summary>
+    /// <param name="requestTelemetry">The request telemetry to which properties will be added.</param>
+    /// <param name="context">The current HTTP context containing user information.</param>
+    private static void AddTelemetryProperties(RequestTelemetry requestTelemetry, HttpContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(requestTelemetry);
+
+        var user = context.User;
+
+        AddProperty(requestTelemetry, "partyId", user.GetPartyId());
+        AddProperty(requestTelemetry, "authLevel", user.GetAuthenticationLevel());
+
+        string? userId = user.GetUserId();
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            AddProperty(requestTelemetry, "userId", userId);
         }
 
-        private static int? GetPartyIdAsInt(ClaimsPrincipal user)
+        string? organizationNumber = user.GetOrganizationNumber();
+        if (!string.IsNullOrWhiteSpace(organizationNumber))
         {
-            if (user.HasClaim(c => c.Type == AltinnCoreClaimTypes.UserId))
-            {
-                Claim partyIdClaim = user.FindFirst(c => c.Type == AltinnCoreClaimTypes.PartyID);
-                if (partyIdClaim != null && int.TryParse(partyIdClaim.Value, out int partyId))
-                {
-                    return partyId;
-                }
-            }
+            AddProperty(requestTelemetry, "orgNumber", organizationNumber);
+        }
 
+        var systemUser = user.GetSystemUser();
+        if (systemUser != null)
+        {
+            AddProperty(requestTelemetry, "systemUserId", GetSystemUserId(systemUser));
+            AddProperty(requestTelemetry, "systemUserOrgId", systemUser.Systemuser_org.ID);
+        }
+    }
+
+    /// <summary>
+    /// Enriches the request telemetry with user information from the current HTTP context.
+    /// </summary>
+    /// <param name="requestTelemetry">The request telemetry to enrich.</param>
+    private void EnrichRequestTelemetry(RequestTelemetry requestTelemetry)
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context?.User == null)
+        {
+            return;
+        }
+
+        AddTelemetryProperties(requestTelemetry, context);
+    }
+
+    /// <summary>
+    /// Retrieves the identifier of the system user from the system user's claims.
+    /// </summary>
+    /// <param name="systemUser">The <see cref="SystemUserClaim"/> instance representing the system user.</param>
+    /// <returns>The identifier of the system user if the claim exists; otherwise, <c>null</c>.</returns>
+    private static string? GetSystemUserId(SystemUserClaim systemUser)
+    {
+        if (systemUser is null)
+        {
             return null;
         }
 
-        private static int? GetOrgNumber(ClaimsPrincipal user)
+        if (systemUser.Systemuser_id == null)
         {
-            if (user.HasClaim(c => c.Type == AltinnCoreClaimTypes.OrgNumber))
-            {
-                Claim orgClaim = user.FindFirst(c => c.Type == AltinnCoreClaimTypes.OrgNumber);
-                if (orgClaim != null && int.TryParse(orgClaim.Value, out int orgNumber))
-                {
-                    return orgNumber;
-                }
-            }
-
             return null;
         }
 
-        private static int? GetUserIdAsInt(ClaimsPrincipal user)
+        if (systemUser.Systemuser_id.Count == 0)
         {
-            if (user.HasClaim(c => c.Type == AltinnCoreClaimTypes.UserId))
-            {
-                Claim userIdClaim = user.FindFirst(c => c.Type == AltinnCoreClaimTypes.UserId);
-                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-                {
-                    return userId;
-                }
-            }
-
             return null;
         }
+
+        return Convert.ToString(systemUser.Systemuser_id[0]);
+    }
+
+    /// <summary>
+    /// Determines whether the given request telemetry is relevant based on its URL.
+    /// </summary>
+    /// <param name="requestTelemetry">The request telemetry to evaluate.</param>
+    /// <returns><c>true</c> if the telemetry is relevant; otherwise, <c>false</c>.</returns>
+    private static bool IsRelevantTelemetry(RequestTelemetry requestTelemetry)
+    {
+        return requestTelemetry?.Url?.ToString().Contains("events/api/") == true;
     }
 }

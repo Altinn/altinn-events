@@ -53,6 +53,6 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// </summary>
         /// <param name="subscription">The subscription to be authorized containing source and consumer details</param>
         /// <returns>A boolean indicating if the consumer is authorized or not</returns>
-        public Task<bool> AuthorizeConsumerForEventsSubcription(Subscription subscription);
+        public Task<bool> AuthorizeConsumerForEventsSubscription(Subscription subscription);
     }
 }

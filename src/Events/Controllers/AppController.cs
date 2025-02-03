@@ -11,7 +11,6 @@ using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platorm.Events.Extensions;
 
 using CloudNative.CloudEvents;
 using Microsoft.ApplicationInsights.DataContracts;

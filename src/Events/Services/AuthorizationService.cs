@@ -10,9 +10,10 @@ using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platorm.Events.Extensions;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services
@@ -90,7 +91,7 @@ namespace Altinn.Platform.Events.Services
         }
        
         /// <inheritdoc/>
-        public async Task<bool> AuthorizeConsumerForEventsSubcription(Subscription subscription)
+        public async Task<bool> AuthorizeConsumerForEventsSubscription(Subscription subscription)
         {
             XacmlJsonRequestRoot xacmlJsonRequest = SubscriptionXacmlMapper.CreateDecisionRequest(subscription);
             XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
@@ -112,7 +113,7 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         internal static List<CloudEvent> FilterAuthorizedRequests(List<CloudEvent> cloudEvents, ClaimsPrincipal consumer, XacmlJsonResponse response)
         {
-            List<CloudEvent> authorizedEventsList = new();
+            List<CloudEvent> authorizedEventsList = [];
 
             foreach (XacmlJsonResult result in response.Response.Where(result => DecisionHelper.ValidateDecisionResult(result, consumer)))
             {

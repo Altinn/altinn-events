@@ -147,6 +147,23 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
+        public void FilterAuthorizedRequests_PermitAll_SystemUser()
+        {
+            // Arrange
+            string testCase = "permit_all";
+            XacmlJsonResponse response = TestdataUtil.GetXacmlJsonResponse(testCase);
+            List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
+            ClaimsPrincipal consumer = PrincipalUtil.GetSystemUserPrincipal("system_identifier", "9485C31D-6ECE-477F-B81C-1E2593FC1309", "random_org", 3);
+
+            // Act            
+            List<CloudEvent> actual = AuthorizationService.FilterAuthorizedRequests(cloudEvents, consumer, response);
+
+            // Assert
+            Assert.NotEmpty(actual);
+            Assert.Equal(2, actual.Count);
+        }
+
+        [Fact]
         public async Task AuthorizePublishEvent_PermitResponse_ReturnsTrue()
         {
             // Arrange
@@ -213,7 +230,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task AuthorizePublishEventWithFakedAdminScope_IndeterminateResponse_ReturnsFalse()
+        public async Task AuthorizePublishEventWithFakeAdminScope_IndeterminateResponse_ReturnsFalse()
         {
             // Arrange
             Mock<IPDP> pdpMock = GetPDPMockWithRespose("Indeterminate");
@@ -238,13 +255,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
                 .ReturnsAsync(new XacmlJsonResponse
                 {
-                    Response = new List<XacmlJsonResult>()
-                    {
+                    Response =
+                    [
                         new XacmlJsonResult
                         {
                             Decision = decision
                         }
-                    }
+                    ]
                 });
 
             return pdpMock;
