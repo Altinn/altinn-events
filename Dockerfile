@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0.406-alpine3.21 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0.200-alpine3.21 AS build
 
 COPY src/Events ./Events
 COPY src/DbTools ./DbTools
@@ -12,8 +12,8 @@ WORKDIR ../Events/
 RUN dotnet build ./Altinn.Platform.Events.csproj -c Release -o /app_output
 RUN dotnet publish ./Altinn.Platform.Events.csproj -c Release -o /app_output
 
+FROM mcr.microsoft.com/dotnet/aspnet:9.0.2-alpine3.21 AS final
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.13-alpine3.21 AS final
 EXPOSE 5080
 WORKDIR /app
 COPY --from=build /app_output .
