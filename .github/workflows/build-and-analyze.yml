@@ -10,6 +10,7 @@ on:
     paths:
       - 'src/**'
       - 'test/Altinn.Platform.Events.Tests/**'
+      - .github/workflows/build-and-analyze.yml
   workflow_dispatch:
 jobs:
   build-test-analyze:
