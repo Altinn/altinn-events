@@ -25,6 +25,7 @@ using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Swagger;
+using Altinn.Platform.Events.Telemetry;
 using Altinn.Platform.Telemetry;
 
 using AltinnCore.Authentication.JwtCookie;
@@ -391,6 +392,8 @@ void Configure(IConfiguration config)
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseTelemetryEnricher();
 
     app.UseMiddleware<EnableRequestBodyBufferingMiddleware>();
 
