@@ -251,25 +251,14 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
               }
           });
 
-    services.AddAuthorization(options =>
-    {
-        options.AddPolicy(AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS, policy =>
+    services.AddAuthorizationBuilder()
+        .AddPolicy(AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS, policy =>
         {
             policy.Requirements.Add(new PublishScopeOrAccessTokenRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH));
-        });
-
-        options.AddPolicy(
-            AuthorizationConstants.POLICY_PLATFORM_ACCESS,
-            policy => policy.Requirements.Add(new AccessTokenRequirement()));
-
-        options.AddPolicy(
-            AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH,
-            policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH)));
-
-        options.AddPolicy(
-            AuthorizationConstants.POLICY_SCOPE_EVENTS_SUBSCRIBE,
-            policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)));
-    });
+        })
+        .AddPolicy(AuthorizationConstants.POLICY_PLATFORM_ACCESS, policy => policy.Requirements.Add(new AccessTokenRequirement()))
+        .AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH)))
+        .AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_SUBSCRIBE, policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)));
 
     services.AddControllers(opts =>
     {
