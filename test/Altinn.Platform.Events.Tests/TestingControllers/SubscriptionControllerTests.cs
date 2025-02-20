@@ -209,7 +209,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// <summary>
             /// Deletes a subscription that user is authorized for
             /// Expected result:
-            /// Return httpStatus Unauthorized
+            /// Return httpStatus Forbidden
             /// </summary>
             [Fact]
             public async Task Delete_GivenSubscriptionOrganisationWithInvalidCreatedBy_ReturnsForbidden()

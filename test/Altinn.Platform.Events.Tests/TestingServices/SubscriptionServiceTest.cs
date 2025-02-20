@@ -86,7 +86,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_Forbidden_ReturnsError()
+        public async Task CreateSubscription_WithoutAccess_ReturnsForbiddenError()
         {
             // Arrange 
             string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service.";
