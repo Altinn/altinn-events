@@ -16,13 +16,18 @@
         WebhookPostResponse,
 
         /// <summary>
-        /// Trace log updated
+        /// Trace log when is sent to outbound queue
         /// </summary>
         OutboundQueue,
 
         /// <summary>
         /// Subscriber was unauthorized for the event
         /// </summary>
-        Unauthorized
+        Unauthorized,
+
+        /// <summary>
+        /// Number of retries for the event has been reached
+        /// </summary>
+        DequeueLimitReached
     }
 }

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Models
 {
@@ -19,7 +20,7 @@ namespace Altinn.Platform.Events.Models
         public string Resource { get; set; } = default!;
 
         /// <summary>
-        /// Gets or sets the type of event being logged.
+        /// Gets or sets the type of event being logged. <see cref="CloudEvent"/>
         /// </summary>
         public string EventType { get; set; } = default!;
 
@@ -29,22 +30,22 @@ namespace Altinn.Platform.Events.Models
         public string? Consumer { get; set; }
 
         /// <summary>
-        /// Gets or sets the endpoint of the subscriber.
+        /// Gets or sets the endpoint of the subscriber. Used with webhook calls.
         /// </summary>
         public string? SubscriberEndpoint { get; set; }
 
         /// <summary>
-        /// Reference to the subscription that this trace log entry is associated with.
+        /// Reference to the subscription that this trace log entry is associated with. Can be null
         /// </summary>
         public int? SubscriptionId { get; set; } = default!;
 
         /// <summary>
-        /// Gets or sets the response code returned by the subscriber.
+        /// Gets or sets the response code returned by the subscriber. Should be a valid HTTP status code.
         /// </summary>
         public int? ResponseCode { get; set; }
 
         /// <summary>
-        /// Gets or sets the activity associated with the trace log entry.
+        /// Gets or sets the activity associated with the trace log entry. <see cref="TraceLogActivity"/>
         /// </summary>
         public TraceLogActivity Activity { get; set; }
     }

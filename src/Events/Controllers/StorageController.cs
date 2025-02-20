@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -22,7 +23,6 @@ namespace Altinn.Platform.Events.Controllers
     public class StorageController : ControllerBase
     {
         private readonly IEventsService _eventsService;
-        private readonly ITraceLogService _traceLogService;
         private readonly ILogger _logger;
 
         /// <summary>
@@ -30,15 +30,13 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         public StorageController(
             IEventsService eventsService,
-            ITraceLogService traceLogService,
             ILogger<StorageController> logger)
         {
             _logger = logger;
             _eventsService = eventsService;
-            _traceLogService = traceLogService;
         }
 
-        /// <summary>   
+        /// <summary>
         /// Saves a cloud event to persistent storage.
         /// </summary>
         /// <returns>The cloudEvent subject and id</returns>
@@ -60,28 +58,9 @@ namespace Altinn.Platform.Events.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Temporarily unable to save cloudEventId {cloudEventId} to storage, please try again.", cloudEvent?.Id);
+                _logger.LogError(e, "Temporarily unable to save cloudEventId {CloudEventId} to storage, please try again.", cloudEvent?.Id);
                 return StatusCode(503, e.Message);
             }
-        }
-
-        /// <summary>
-        /// Logs a cloud event to the trace log.
-        /// </summary>
-        /// <param name="cloudEvent">The cloud event to log.</param>
-        /// <returns>An IActionResult indicating the result of the operation.</returns>
-        [Authorize(Policy = "PlatformAccess")]
-        [HttpPost("logs")]
-        [Consumes("application/cloudevents+json")]
-        [SwaggerResponse(201, Type = typeof(Guid))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-        [Produces("application/json")]
-        public async Task<IActionResult> Logs([FromBody] CloudEvent cloudEvent)
-        {
-            await _traceLogService.CreateTraceLogRegisteredEntry(cloudEvent);
-            return Ok();
         }
 
         private void AddIdTelemetry(string id)
