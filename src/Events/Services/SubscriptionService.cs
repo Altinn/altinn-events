@@ -48,7 +48,7 @@ public class SubscriptionService : ISubscriptionService
         if (!await _authorization.AuthorizeConsumerForEventsSubscription(eventsSubscription))
         {
             var errorMessage = $"Not authorized to create a subscription for resource {eventsSubscription.ResourceFilter}.";
-            return (null, new ServiceError(401, errorMessage));
+            return (null, new ServiceError(403, errorMessage));
         }
 
         Subscription subscription = await _repository.FindSubscription(eventsSubscription, CancellationToken.None);
@@ -72,7 +72,7 @@ public class SubscriptionService : ISubscriptionService
 
         if (!AuthorizeAccessToSubscription(subscription))
         {
-            error = new ServiceError(401);
+            error = new ServiceError(403);
 
             return error;
         }
@@ -93,7 +93,7 @@ public class SubscriptionService : ISubscriptionService
 
         if (!AuthorizeAccessToSubscription(subscription))
         {
-            return (null, new ServiceError(401));
+            return (null, new ServiceError(403));
         }
 
         return (subscription, null);
