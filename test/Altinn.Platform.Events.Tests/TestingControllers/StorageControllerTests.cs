@@ -92,6 +92,38 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
+            ///   Post a valid CloudEventRequest instance for logging.
+            /// Expected result:
+            ///   Returns HttpStatus Ok.
+            /// Success criteria:
+            ///   The response has correct status code.
+            /// </summary>
+            [Fact]
+            public async Task Post_ValidCloudEventForLogging_ReturnsStatusOk()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/storage/events/logs";
+                string responseId = Guid.NewGuid().ToString();
+                var cloudEvent = GetCloudEventRequest();
+
+                Mock<ITraceLogService> traceLogService = new Mock<ITraceLogService>();
+                traceLogService.Setup(s => s.CreateTraceLogRegisteredEntry(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                HttpClient client = GetTestClient(traceLogService.Object);
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.True(response.IsSuccessStatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
             ///   Post a valid cloud event, unexpected error when storing document
             /// Expected result:
             ///   Returns HttpStatus Internal Server Error.
@@ -175,7 +207,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient(IEventsService eventsService)
+            private HttpClient GetTestClient<TService>(TService service)
+                where TService : class
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
@@ -186,7 +219,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                     builder.ConfigureTestServices(services =>
                     {
-                        services.AddSingleton(eventsService);
+                        services.AddSingleton(service);
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();

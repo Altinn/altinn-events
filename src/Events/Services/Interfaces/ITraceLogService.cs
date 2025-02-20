@@ -13,7 +13,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Creates a trace log entry based on registration of a new event
         /// </summary>
         /// <param name="cloudEvent">Cloud native CloudEvent <see cref="CloudEvent"/>></param>
-        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task CreateTraceLogRegisteredEntry(CloudEvent cloudEvent);
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation: Cloud event id.</returns>
+        Task<string> CreateTraceLogRegisteredEntry(CloudEvent cloudEvent);
     }
 }

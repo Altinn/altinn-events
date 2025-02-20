@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         /// <param name="cloudEvent">Contains the event data <see cref="CloudEvent"/>></param>
         /// <returns></returns>
-        public async Task CreateTraceLogRegisteredEntry(CloudEvent cloudEvent)
+        public async Task<string> CreateTraceLogRegisteredEntry(CloudEvent cloudEvent)
         {
             var traceLogEntry = new TraceLog
             {
@@ -35,6 +35,7 @@ namespace Altinn.Platform.Events.Services
             };
 
             await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
+            return cloudEvent.Id;
         }
     }
 }
