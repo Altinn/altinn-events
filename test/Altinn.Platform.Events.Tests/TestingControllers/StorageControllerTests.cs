@@ -175,7 +175,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient(IEventsService eventsService)
+            private HttpClient GetTestClient<TService>(TService eventsService) 
+                where TService : class
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
