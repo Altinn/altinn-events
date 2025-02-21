@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Services
     public class OutboundService : IOutboundService
     {
         private readonly IEventsQueueClient _queueClient;
-
+        private readonly ITraceLogService _traceLogService;
         private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IAuthorization _authorizationService;
         private readonly PlatformSettings _platformSettings;
@@ -39,6 +39,7 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         public OutboundService(
             IEventsQueueClient queueClient,
+            ITraceLogService traceLogService,
             ISubscriptionRepository repository,
             IAuthorization authorizationService,
             IOptions<PlatformSettings> platformSettings,
@@ -46,6 +47,7 @@ namespace Altinn.Platform.Events.Services
             ILogger<IOutboundService> logger)
         {
             _queueClient = queueClient;
+            _traceLogService = traceLogService;
             _subscriptionRepository = repository;
             _authorizationService = authorizationService;
             _platformSettings = platformSettings.Value;
@@ -95,6 +97,12 @@ namespace Altinn.Platform.Events.Services
                 {
                     _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEvent.Id, subscription.Id);
                 }
+                    
+                await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.OutboundQueue); // log that entry was added to outbound queue
+            }
+            else // add unauthorized trace log entry
+            {
+                await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.Unauthorized);
             }
         }
 

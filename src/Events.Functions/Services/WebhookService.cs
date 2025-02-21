@@ -39,6 +39,9 @@ namespace Altinn.Platform.Events.Functions.Services
             try
             {
                 HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent);
+
+                // todo: post to storage controller with status code
+
                 if (!response.IsSuccessStatusCode)
                 {
                     string reason = await response.Content.ReadAsStringAsync();

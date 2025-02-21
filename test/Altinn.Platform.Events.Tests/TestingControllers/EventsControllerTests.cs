@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
-using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;

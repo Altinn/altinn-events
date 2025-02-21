@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -23,6 +23,7 @@ namespace Altinn.Platform.Events.Controllers
     public class StorageController : ControllerBase
     {
         private readonly IEventsService _eventsService;
+        private readonly ITraceLogService _traceLogService;
         private readonly ILogger _logger;
 
         /// <summary>
@@ -49,7 +50,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
-        {          
+        {
             try
             {
                 AddIdTelemetry(cloudEvent.Id);
@@ -63,6 +64,31 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
+        /// <summary>
+        /// Create a new trace log for cloud event with a status code.
+        /// </summary>
+        /// <param name="logEntryData">The event wrapper associated with the event for logging <see cref="CloudEventEnvelope"/></param>
+        /// <returns></returns>
+        [Authorize(Policy = "PlatformAccess")]
+        [HttpPost("register")]
+        [Consumes("application/cloudevents+json")]
+        public async Task<IActionResult> Logs([FromBody] LogEntryData logEntryData)
+        {
+            var result = await _traceLogService.CreateWebhookResponseEntry(
+                logEntryData.CloudEvent,
+                logEntryData.SubscriptionId,
+                logEntryData.Consumer,
+                logEntryData.Endpoint,
+                logEntryData.StatusCode);
+
+            if (!string.IsNullOrEmpty(result))
+            {
+                return Created();
+            }
+
+            return NoContent();
+        }
+
         private void AddIdTelemetry(string id)
         {
             RequestTelemetry requestTelemetry = HttpContext.Features.Get<RequestTelemetry>();
@@ -74,5 +100,36 @@ namespace Altinn.Platform.Events.Controllers
 
             requestTelemetry.Properties.Add("appevent.id", id);
         }
+    }
+
+    /// <summary>
+    /// Data transfer object for posting a log event after receiving a webhook response.
+    /// </summary>
+    public record LogEntryData
+    {
+        /// <summary>
+        /// The cloud event associated with the post action <see cref="CloudEvent"/>"/>
+        /// </summary>
+        public CloudEvent CloudEvent { get; set; }
+
+        /// <summary>
+        /// The subscription id associated with the post action. <see cref="Subscription"/>"/>
+        /// </summary>
+        public int SubscriptionId { get; set; }
+
+        /// <summary>
+        /// The consumer of the event <see cref="Subscription"/>
+        /// </summary>
+        public string Consumer { get; set; }
+
+        /// <summary>
+        /// The consumers webhook endpoint <see cref="Subscription"/>
+        /// </summary>
+        public Uri Endpoint { get; set; }
+
+        /// <summary>
+        /// The staus code returned from the subscriber endpoint
+        /// </summary>
+        public int StatusCode { get; set; }
     }
 }
