@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             // Arrange
             Mock<IWebhookService> webhookServiceMock = new();
             webhookServiceMock.Setup(wh => wh.Send(It.IsAny<CloudEventEnvelope>()))
-                .Returns(Task.CompletedTask);
+                .Returns(Task.FromResult(new HttpResponseMessage()));
 
             Mock<IEventsClient> clientMock = new();
 

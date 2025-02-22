@@ -9,6 +9,7 @@ using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
+using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -142,6 +143,12 @@ namespace Altinn.Platform.Events.Functions.Clients
             }
 
             return (true, response.StatusCode);
+        }
+
+        /// <inheritdoc/>
+        public Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode)
+        {
+            return Task.CompletedTask;
         }
     }
 }

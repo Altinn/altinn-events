@@ -27,6 +27,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     {
         private readonly ICloudEventRepository _repositoryMock;
         private readonly IEventsQueueClient _queueMock;
+        private readonly Mock<ITraceLogService> _traceLogServiceMock;
         private readonly Mock<IRegisterService> _registerMock;
         private readonly Mock<IAuthorization> _authorizationMock;
         private readonly Mock<ILogger<IEventsService>> _loggerMock;
@@ -35,6 +36,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             _repositoryMock = new CloudEventRepositoryMock();
             _queueMock = new EventsQueueClientMock();
+            _traceLogServiceMock = new();
             _registerMock = new();
             _authorizationMock = new();
             _loggerMock = new();
@@ -436,11 +438,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private EventsService GetEventsService(
             ICloudEventRepository repositoryMock = null,
             IEventsQueueClient queueMock = null,
+            Mock<ITraceLogService> traceLogServiceMock = null,
             Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
             Mock<ILogger<IEventsService>> loggerMock = null)
         {
             repositoryMock ??= _repositoryMock;
+            traceLogServiceMock ??= _traceLogServiceMock;
             registerMock ??= _registerMock;
             queueMock ??= _queueMock;
             loggerMock ??= _loggerMock;
@@ -461,6 +465,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             return new EventsService(
                 repositoryMock,
+                traceLogServiceMock.Object,
                 queueMock,
                 registerMock.Object,
                 authorizationMock.Object,

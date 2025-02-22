@@ -32,7 +32,7 @@ namespace Altinn.Platform.Events.Functions.Services
         }
 
         /// <inheritdoc/>
-        public async Task Send(CloudEventEnvelope envelope)
+        public async Task<HttpResponseMessage> Send(CloudEventEnvelope envelope)
         {
             string payload = GetPayload(envelope);
             StringContent httpContent = new(payload, Encoding.UTF8, "application/json");
@@ -41,9 +41,6 @@ namespace Altinn.Platform.Events.Functions.Services
             {
                 HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent);
 
-                // todo: post to storage controller with status code
-                await PostWebhookResponseForLogging(envelope.CloudEvent, response.StatusCode);
-
                 if (!response.IsSuccessStatusCode)
                 {
                     string reason = await response.Content.ReadAsStringAsync();
@@ -51,23 +48,14 @@ namespace Altinn.Platform.Events.Functions.Services
 
                     throw new HttpRequestException(reason);
                 }
+
+                return response;
             }
             catch (Exception e)
             {
                 _logger.LogError(e, $"// Send to webhook with subscriptionId: {envelope.SubscriptionId} failed with error message {e.Message}");
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Posts the provided cloud event to the logging endpoint
-        /// </summary>
-        /// <param name="cloudEvent">The cloud event associated with the logging entry <see cref="CloudEvent"/></param>
-        /// <param name="statusCode">The status code returned from the webhook endpoint</param>
-        /// <returns></returns>
-        internal async Task PostWebhookResponseForLogging(CloudEvent cloudEvent, HttpStatusCode statusCode)
-        {
-            await _client.PostAsync("/api/storage/events/logs", new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json"));
         }
 
         /// <summary>

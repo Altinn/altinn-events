@@ -1,5 +1,6 @@
+using System.Net.Http;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
@@ -13,13 +14,15 @@ namespace Altinn.Platform.Events.Functions
     public class EventsOutbound
     {
         private readonly IWebhookService _webhookService;
+        private readonly IEventsClient _eventsClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsOutbound"/> class.
         /// </summary>
-        public EventsOutbound(IWebhookService webhookService)
+        public EventsOutbound(IWebhookService webhookService, IEventsClient eventsClient)
         {
             _webhookService = webhookService;
+            _eventsClient = eventsClient;
         }
 
         /// <summary>
@@ -30,7 +33,8 @@ namespace Altinn.Platform.Events.Functions
         {
             var cloudEventEnvelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
 
-            await _webhookService.Send(cloudEventEnvelope);
+            var response = await _webhookService.Send(cloudEventEnvelope);
+            await _eventsClient.LogWebhookHttpStatusCode(cloudEventEnvelope, response.StatusCode);
         }
     }
 }

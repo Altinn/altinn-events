@@ -3,14 +3,12 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
-using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
@@ -70,7 +68,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
                 string responseId = Guid.NewGuid().ToString();
-                var cloudEvent = GetCloudEventRequest();                
+                var cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(s => s.Save(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
@@ -175,7 +173,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient<TService>(TService eventsService) 
+            private HttpClient GetTestClient<TService>(TService eventsService)
                 where TService : class
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
