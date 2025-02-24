@@ -69,19 +69,16 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Create a new trace log for cloud event with a status code.
         /// </summary>
-        /// <param name="logEntryData">The event wrapper associated with the event for logging <see cref="CloudEventEnvelope"/></param>
+        /// <param name="logEntry">The event wrapper associated with the event for logging <see cref="CloudEventEnvelope"/></param>
         /// <returns></returns>
         [Authorize(Policy = "PlatformAccess")]
-        [HttpPost("register")]
+        [HttpPost("logs")]
         [Consumes("application/cloudevents+json")]
-        public async Task<IActionResult> Logs([FromBody] LogEntryData logEntryData)
+        [SwaggerResponse(201, Type = typeof(Guid))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Logs([FromBody] LogEntryDto logEntry)
         {
-            var result = await _traceLogService.CreateWebhookResponseEntry(
-                logEntryData.CloudEvent,
-                logEntryData.SubscriptionId,
-                logEntryData.Consumer,
-                logEntryData.Endpoint,
-                logEntryData.StatusCode);
+            var result = await _traceLogService.CreateWebhookResponseEntry(logEntry);
 
             if (!string.IsNullOrEmpty(result))
             {

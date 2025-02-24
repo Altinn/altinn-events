@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessTokenClient.Services;
@@ -11,7 +12,6 @@ using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
-
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
@@ -130,6 +130,28 @@ namespace Altinn.Platform.Events.Functions.Clients
             }
         }
 
+        /// <inheritdoc/>
+        public async Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode)
+        {
+            var endpoint = "storage/events/logs";
+
+            LogEntryDto logEntryData = new()
+            {
+                CloudEventId = cloudEventEnvelope.CloudEvent.Id,
+                CloudEventType = cloudEventEnvelope.CloudEvent.Type,
+                CloudEventResource = cloudEventEnvelope.CloudEvent["resource"]?.ToString(),
+                Consumer = cloudEventEnvelope.Consumer,
+                Endpoint = cloudEventEnvelope.Endpoint,
+                SubscriptionId = cloudEventEnvelope.SubscriptionId,
+                StatusCode = statusCode,
+            };
+
+            StringContent httpContent = new(JsonSerializer.Serialize(logEntryData), Encoding.UTF8, "application/cloudevents+json");
+            var accessToken = await GenerateAccessToken();
+
+            var response = await _client.PostAsync(endpoint, httpContent, accessToken);
+        }
+
         private async Task<(bool Success, HttpStatusCode StatusCode)> PostCloudEventToEndpoint(CloudEvent cloudEvent, string endpoint)
         {
             StringContent httpContent = new(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json");
@@ -143,12 +165,6 @@ namespace Altinn.Platform.Events.Functions.Clients
             }
 
             return (true, response.StatusCode);
-        }
-
-        /// <inheritdoc/>
-        public Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode)
-        {
-            return Task.CompletedTask;
         }
     }
 }

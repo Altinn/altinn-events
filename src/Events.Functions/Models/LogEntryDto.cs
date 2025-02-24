@@ -1,18 +1,29 @@
 ﻿using System;
-
+using System.Net;
+using Altinn.Platform.Events.Models;
 using CloudNative.CloudEvents;
 
-namespace Altinn.Platform.Events.Models
+namespace Altinn.Platform.Events.Functions.Models
 {
     /// <summary>
     /// Data transfer object for posting a log event after receiving a webhook response.
     /// </summary>
-    public record LogEntryData
+    public record LogEntryDto
     {
         /// <summary>
-        /// The cloud event associated with the post action <see cref="CloudEvent"/>"/>
+        /// The cloud event id associated with the logged event <see cref="CloudEvent"/>"/>
         /// </summary>
-        public CloudEvent CloudEvent { get; set; }
+        public string CloudEventId { get; set; }
+
+        /// <summary>
+        /// The resource associated with the cloud event <see cref="CloudEvent"/>
+        /// </summary>
+        public string CloudEventResource { get; set; }
+
+        /// <summary>
+        /// The type associated with the logged event <see cref="CloudEvent"/>
+        /// </summary>
+        public string CloudEventType { get; set; }
 
         /// <summary>
         /// The subscription id associated with the post action. <see cref="Subscription"/>"/>
@@ -32,6 +43,6 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// The staus code returned from the subscriber endpoint
         /// </summary>
-        public int StatusCode { get; set; }
+        public HttpStatusCode StatusCode { get; set; }
     }
 }
