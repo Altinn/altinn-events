@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Models;
 
 namespace Altinn.Platform.Events.Repository

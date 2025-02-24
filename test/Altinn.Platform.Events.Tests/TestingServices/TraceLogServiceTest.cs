@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
+
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

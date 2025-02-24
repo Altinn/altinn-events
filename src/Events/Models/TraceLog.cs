@@ -1,11 +1,12 @@
 ﻿#nullable enable
 using System;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Models
 {
     /// <summary>
-    /// Class that describes a trace log entry
+    /// Class that describes a trace log entry to be persisted
     /// </summary>
     public class TraceLog
     {
@@ -30,12 +31,12 @@ namespace Altinn.Platform.Events.Models
         public string? Consumer { get; set; }
 
         /// <summary>
-        /// Gets or sets the endpoint of the subscriber. Used with webhook calls.
+        /// Gets or sets the endpoint of the subscriber. Used with webhook calls. <see cref="Subscription"/>
         /// </summary>
         public string? SubscriberEndpoint { get; set; }
 
         /// <summary>
-        /// Reference to the subscription that this trace log entry is associated with. Can be null
+        /// Reference to the subscription that this trace log entry is associated with. Can be null <see cref="Subscription"/>
         /// </summary>
         public int? SubscriptionId { get; set; } = default!;
 

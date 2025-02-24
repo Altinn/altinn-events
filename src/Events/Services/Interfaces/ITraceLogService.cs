@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Models;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services.Interfaces
@@ -14,7 +16,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Creates a trace log entry based on registration of a new event
         /// </summary>
         /// <param name="cloudEvent">CloudNative CloudEvent <see cref="CloudEvent"/></param>
-        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation: Cloud event id.</returns>
+        /// <returns>A string representing the result of the asynchronous operation: Cloud event id.</returns>
         Task<string> CreateRegisteredEntry(CloudEvent cloudEvent);
 
         /// <summary>
