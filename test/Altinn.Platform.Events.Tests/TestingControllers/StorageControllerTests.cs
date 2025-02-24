@@ -45,6 +45,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             private readonly WebApplicationFactory<StorageController> _factory;
 
+            private readonly Mock<ITraceLogService> _traceLogServiceMock = new();
+
             /// <summary>
             /// Initializes a new instance of the <see cref="StorageControllerTests"/> class with the given <see cref="WebApplicationFactory{TStorageController}"/>.
             /// </summary>
@@ -173,8 +175,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient<TService>(TService eventsService)
-                where TService : class
+            private HttpClient GetTestClient(IEventsService eventsService, ITraceLogService traceLogService = null)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
@@ -186,6 +187,15 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(eventsService);
+
+                        if (traceLogService != null)
+                        {
+                            services.AddSingleton(traceLogService);
+                        }
+                        else
+                        {
+                            services.AddSingleton(_traceLogServiceMock.Object);
+                        }
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();

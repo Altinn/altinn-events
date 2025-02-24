@@ -49,6 +49,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             private readonly JsonSerializerOptions _options;
             private readonly CloudEvent _validEvent;
 
+            private readonly Mock<ITraceLogService> _traceLogService = new();
+
             /// <summary>
             /// Initializes a new instance of the <see cref="EventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsControllerTests}"/>.
             /// </summary>
@@ -641,6 +643,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(eventsService);
+                        services.AddSingleton(_traceLogService.Object);
                         services.AddSingleton(authorizationService);
 
                         // Set up mock authentication so that not well known endpoint is used

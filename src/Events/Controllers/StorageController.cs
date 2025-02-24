@@ -31,10 +31,12 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         public StorageController(
             IEventsService eventsService,
+            ITraceLogService traceLogService,
             ILogger<StorageController> logger)
         {
             _logger = logger;
             _eventsService = eventsService;
+            _traceLogService = traceLogService;
         }
 
         /// <summary>
