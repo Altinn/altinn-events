@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -88,9 +89,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
             var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
             var statusCode = 200;
+            LogEntryDto logEntry = new()
+            {
+                CloudEventId = _cloudEvent.Id,
+                CloudEventResource = _cloudEvent["resource"]?.ToString(),
+                Consumer = "consumer",
+                SubscriptionId = 1,
+                Endpoint = new Uri("https://localhost:3000"),
+                StatusCode = HttpStatusCode.OK
+            };
 
             // Act
-            var result = await traceLogService.CreateWebhookResponseEntry(_cloudEvent, 1, "consumer", new Uri("http://localhost"), statusCode);
+            var result = await traceLogService.CreateWebhookResponseEntry(logEntry);
 
             // Assert
             Assert.Equal(_cloudEvent.Id, result);

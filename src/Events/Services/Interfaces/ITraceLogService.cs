@@ -1,8 +1,7 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
-
 using Altinn.Platform.Events.Models;
-
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services.Interfaces
@@ -16,19 +15,15 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Creates a trace log entry based on registration of a new event
         /// </summary>
         /// <param name="cloudEvent">CloudNative CloudEvent <see cref="CloudEvent"/></param>
-        /// <returns>A string representing the result of the asynchronous operation: Cloud event id.</returns>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation: Cloud event id.</returns>
         Task<string> CreateRegisteredEntry(CloudEvent cloudEvent);
 
         /// <summary>
         /// Log response from webhook post to subscriber.
         /// </summary>
-        /// <param name="cloudEvent">Contains relevant information about the event <see cref="CloudEvent"/></param>
-        /// <param name="subscriptionId">The id associated with the subscription <see cref="Subscription"/></param>
-        /// <param name="consumer">The consumer of the event</param>
-        /// <param name="endpoint">The consumers webhook endpoint</param>
-        /// <param name="responseCode">The status code returned from the subscriber endpoint</param>
+        /// <param name="logEntryDto">Data transfer object associated with cloud event, status code, and subscription</param>
         /// <returns></returns>
-        Task<string> CreateWebhookResponseEntry(CloudEvent cloudEvent, int subscriptionId, string consumer, Uri endpoint, int responseCode);
+        Task<string> CreateWebhookResponseEntry(LogEntryDto logEntryDto);
 
         /// <summary>
         /// Creates a trace log entry with information about cloud event and subscription

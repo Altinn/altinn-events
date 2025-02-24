@@ -13,17 +13,17 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// Gets or sets the unique identifier for the cloud event.
         /// </summary>
-        public Guid CloudEventId { get; set; }
+        public Guid? CloudEventId { get; set; }
 
         /// <summary>
         /// Gets or sets the resource associated with the trace log entry.
         /// </summary>
-        public string Resource { get; set; } = default!;
+        public string? Resource { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets the type of event being logged. <see cref="CloudEvent"/>
         /// </summary>
-        public string EventType { get; set; } = default!;
+        public string? EventType { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets the consumer associated with the trace log entry.

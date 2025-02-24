@@ -76,23 +76,23 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> CreateWebhookResponseEntry(CloudEvent cloudEvent, int subscriptionId, string consumer, Uri endpoint, int responseCode)
+        public async Task<string> CreateWebhookResponseEntry(LogEntryDto logEntryDto)
         {
             try
             {
                 var traceLogEntry = new TraceLog
                 {
-                    CloudEventId = Guid.Parse(cloudEvent.Id),
-                    Resource = cloudEvent.GetResource(),
-                    EventType = cloudEvent.Type,
-                    Consumer = consumer,
-                    SubscriberEndpoint = endpoint.ToString(),
-                    SubscriptionId = subscriptionId,
-                    ResponseCode = responseCode,
+                    CloudEventId = Guid.Parse(logEntryDto.CloudEventId),
+                    Resource = logEntryDto.CloudEventResource,
+                    EventType = logEntryDto.CloudEventType,
+                    Consumer = logEntryDto.Consumer,
+                    SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
+                    SubscriptionId = logEntryDto.SubscriptionId,
+                    ResponseCode = (int?)logEntryDto.StatusCode,
                     Activity = TraceLogActivity.WebhookPostResponse
                 };
                 await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
-                return cloudEvent.Id;
+                return logEntryDto.CloudEventId;
             }
             catch (Exception exception)
             {
