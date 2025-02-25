@@ -3,12 +3,14 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
+using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
@@ -88,6 +90,38 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.True(response.IsSuccessStatusCode);
+            }
+
+            [Fact]
+            public async Task Post_ValidLogEntryDto_ReturnsStatusCreated()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/storage/events/logs";
+                string responseId = Guid.NewGuid().ToString();
+                var cloudEvent = GetCloudEventRequest();
+
+                Mock<IEventsService> eventsService = new Mock<IEventsService>();
+                Mock<ITraceLogService> traceLogService = new Mock<ITraceLogService>();
+
+                traceLogService.Setup(x => x.CreateWebhookResponseEntry(It.IsAny<LogEntryDto>())).ReturnsAsync(responseId);
+
+                var client = GetTestClient(eventsService.Object, traceLogService.Object);
+
+                string logEntryDto = JsonSerializer.Serialize(new LogEntryDto());
+
+                var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(logEntryDto, Encoding.UTF8, "application/cloudevents+json")
+                };
+
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+                // Act
+                var response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.True(response.IsSuccessStatusCode);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             }
 
             /// <summary>

@@ -73,19 +73,29 @@ namespace Altinn.Platform.Events.Controllers
         /// <returns></returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost("logs")]
-        [Consumes("application/cloudevents+json")]
+        [Consumes("application/json")]
         [SwaggerResponse(201, Type = typeof(Guid))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         public async Task<IActionResult> Logs([FromBody] LogEntryDto logEntry)
         {
-            var result = await _traceLogService.CreateWebhookResponseEntry(logEntry);
-
-            if (!string.IsNullOrEmpty(result))
+            try
             {
+                var result = await _traceLogService.CreateWebhookResponseEntry(logEntry);
+                
+                if (string.IsNullOrEmpty(result))
+                {
+                    return BadRequest();
+                }
+
                 return Created();
             }
-
-            return NoContent();
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Temporarily unable to save log entry to storage, please try again.");
+                return StatusCode(503, e.Message);
+            }
         }
 
         private void AddIdTelemetry(string id)
