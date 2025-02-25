@@ -75,7 +75,13 @@ namespace Altinn.Platform.Events.Services
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Log response from webhook post to subscriber.
+        /// Should be called by the storage controller when a webhook POST response is received. The controller action should handle exceptions
+        /// for better handling of correct status codes
+        /// </summary>
+        /// <param name="logEntryDto">A data transfer object passed to the controller endpoint <see cref="LogEntryDto"/></param>
+        /// <returns>A string representation of the cloud event id</returns>
         public async Task<string> CreateWebhookResponseEntry(LogEntryDto logEntryDto)
         {
             var parseResult = Guid.TryParse(logEntryDto.CloudEventId, out Guid parsedGuid);
