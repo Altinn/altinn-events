@@ -1,7 +1,7 @@
-﻿using System;
-using System.Net;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Models;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services.Interfaces
