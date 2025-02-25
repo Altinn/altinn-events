@@ -88,7 +88,12 @@ namespace Altinn.Platform.Events.Services
 
             if (string.IsNullOrEmpty(logEntryDto.CloudEventId) || logEntryDto.Endpoint == null || logEntryDto.StatusCode == null)
             {
-                _logger.LogError("Error creating trace log entry for webhook POST response: Missing required input parameters");
+                _logger.LogError(
+                    "Error creating trace log entry for webhook POST response: Missing required input parameters {Id} {Endpoint} {StatusCode}",
+                    logEntryDto.CloudEventId,
+                    logEntryDto.Endpoint,
+                    logEntryDto.StatusCode);
+             
                 return string.Empty;
             }
 
