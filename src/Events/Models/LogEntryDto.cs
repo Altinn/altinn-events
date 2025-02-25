@@ -44,6 +44,6 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// The staus code returned from the subscriber endpoint
         /// </summary>
-        public HttpStatusCode StatusCode { get; set; }
+        public HttpStatusCode? StatusCode { get; set; }
     }
 }

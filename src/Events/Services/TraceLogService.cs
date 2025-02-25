@@ -78,29 +78,33 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> CreateWebhookResponseEntry(LogEntryDto logEntryDto)
         {
-            try
-            {
-                var traceLogEntry = new TraceLog
-                {
-                    CloudEventId = Guid.Parse(logEntryDto.CloudEventId),
-                    Resource = logEntryDto.CloudEventResource,
-                    EventType = logEntryDto.CloudEventType,
-                    Consumer = logEntryDto.Consumer,
-                    SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
-                    SubscriptionId = logEntryDto.SubscriptionId,
-                    ResponseCode = (int?)logEntryDto.StatusCode,
-                    Activity = TraceLogActivity.WebhookPostResponse
-                };
-                await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
-                return logEntryDto.CloudEventId;
-            }
-            catch (Exception exception)
-            {
-                _logger.LogError(exception, "Error creating trace log entry for webhook POST response: {Message}", exception.Message);
+            var parseResult = Guid.TryParse(logEntryDto.CloudEventId, out Guid parsedGuid);
 
-                // don't throw exception, we don't want to stop the event processing
+            if (!parseResult)
+            {
+                _logger.LogError("Error creating trace log entry for webhook POST response: Invalid GUID");
                 return string.Empty;
             }
+
+            if (string.IsNullOrEmpty(logEntryDto.CloudEventId) || logEntryDto.Endpoint == null || logEntryDto.StatusCode == null)
+            {
+                _logger.LogError("Error creating trace log entry for webhook POST response: Missing required input parameters");
+                return string.Empty;
+            }
+
+            var traceLogEntry = new TraceLog
+            {
+                CloudEventId = parsedGuid,
+                Resource = logEntryDto.CloudEventResource,
+                EventType = logEntryDto.CloudEventType,
+                Consumer = logEntryDto.Consumer,
+                SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
+                SubscriptionId = logEntryDto.SubscriptionId,
+                ResponseCode = (int?)logEntryDto.StatusCode,
+                Activity = TraceLogActivity.WebhookPostResponse
+            };
+            await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
+            return logEntryDto.CloudEventId;
         }
     }
 }

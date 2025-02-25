@@ -110,7 +110,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario: 
-        ///   Save a log entry with an invalid cloud id should result in an empty string and an error logged
+        ///   Save a log entry with an invalid cloud id / GUID should result in an empty string and an error logged
         /// Expected result:
         ///   empty string
         /// Success criteria:
@@ -132,6 +132,59 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Act
             var response = await traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, new Subscription(), TraceLogActivity.OutboundQueue);
+
+            // Assert
+            Assert.Equal(response, string.Empty);
+            loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario: 
+        ///   Save a log entry with an invalid dto object, missing essential properties, should result in an empty string and an error logged
+        /// Expected result:
+        ///   Empty string
+        /// Success criteria:
+        ///   Error is logged and empty string is returned
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task Create_TraceLogFromWebhookWithInvalidDto_ReturnsEmptyString()
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+            LogEntryDto logEntry = new();
+
+            // Act
+            var response = await traceLogService.CreateWebhookResponseEntry(logEntry);
+            
+            // Assert
+            Assert.Equal(response, string.Empty);
+        }
+
+        /// <summary>
+        /// Scenario: 
+        ///   Save a log entry with an invalid cloudEventId, should result in an empty string and an error logged
+        /// Expected result:
+        ///   Empty string
+        /// Success criteria:
+        ///   Error is logged and empty string is returned
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task Create_TraceLogFromWebhookWithInvalidGuid_ReturnsEmptyString()
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            Mock<ILogger<ITraceLogService>> loggerMock = new Mock<ILogger<ITraceLogService>>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, loggerMock.Object);
+            LogEntryDto logEntry = new()
+            {
+                CloudEventId = "123"
+            };
+
+            // Act
+            var response = await traceLogService.CreateWebhookResponseEntry(logEntry);
 
             // Assert
             Assert.Equal(response, string.Empty);
