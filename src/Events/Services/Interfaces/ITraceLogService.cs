@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Models;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services.Interfaces
@@ -22,7 +24,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Log response from webhook post to subscriber.
         /// </summary>
         /// <param name="logEntryDto">Data transfer object associated with cloud event, status code, and subscription</param>
-        /// <returns></returns>
+        /// <returns>A string representation of the GUID or an empty string</returns>
         Task<string> CreateWebhookResponseEntry(LogEntryDto logEntryDto);
 
         /// <summary>
@@ -31,7 +33,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <param name="cloudEvent">Cloud Event associated with log entry <see cref="CloudEvent"/></param>
         /// <param name="subscription">Subscription associated with log entry <see cref="Subscription"/></param>
         /// <param name="activity">Type of activity associated with log entry <see cref="TraceLogActivity"/></param>
-        /// <returns></returns>
+        /// <returns>Returns empty string if a log entry can't be created</returns>
         Task<string> CreateLogEntryWithSubscriptionDetails(CloudEvent cloudEvent, Subscription subscription, TraceLogActivity activity);
     }
 }

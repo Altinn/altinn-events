@@ -75,30 +75,47 @@ namespace Altinn.Platform.Events.Services
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Log response from webhook post to subscriber.
+        /// Should be called by the storage controller when a webhook POST response is received. The controller action should handle exceptions
+        /// for better handling of correct status codes
+        /// </summary>
+        /// <param name="logEntryDto">A data transfer object passed to the controller endpoint <see cref="LogEntryDto"/></param>
+        /// <returns>A string representation of the cloud event id</returns>
         public async Task<string> CreateWebhookResponseEntry(LogEntryDto logEntryDto)
         {
-            try
+            var parseResult = Guid.TryParse(logEntryDto.CloudEventId, out Guid parsedGuid);
+
+            if (!parseResult)
             {
-                var traceLogEntry = new TraceLog
-                {
-                    CloudEventId = Guid.Parse(logEntryDto.CloudEventId),
-                    Resource = logEntryDto.CloudEventResource,
-                    EventType = logEntryDto.CloudEventType,
-                    Consumer = logEntryDto.Consumer,
-                    SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
-                    SubscriptionId = logEntryDto.SubscriptionId,
-                    ResponseCode = (int?)logEntryDto.StatusCode,
-                    Activity = TraceLogActivity.WebhookPostResponse
-                };
-                await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
-                return logEntryDto.CloudEventId;
+                _logger.LogError("Error creating trace log entry for webhook POST response: Invalid GUID");
+                return string.Empty;
             }
-            catch (Exception exception)
+
+            if (string.IsNullOrEmpty(logEntryDto.CloudEventId) || logEntryDto.Endpoint == null || logEntryDto.StatusCode == null)
             {
-                _logger.LogError(exception, "Error creating trace log entry for webhook POST response: {Message}", exception.Message);
-                throw;
+                _logger.LogError(
+                    "Error creating trace log entry for webhook POST response: Missing required input parameters {Id} {Endpoint} {StatusCode}",
+                    logEntryDto.CloudEventId,
+                    logEntryDto.Endpoint,
+                    logEntryDto.StatusCode);
+             
+                return string.Empty;
             }
+
+            var traceLogEntry = new TraceLog
+            {
+                CloudEventId = parsedGuid,
+                Resource = logEntryDto.CloudEventResource,
+                EventType = logEntryDto.CloudEventType,
+                Consumer = logEntryDto.Consumer,
+                SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
+                SubscriptionId = logEntryDto.SubscriptionId,
+                ResponseCode = (int?)logEntryDto.StatusCode,
+                Activity = TraceLogActivity.WebhookPostResponse
+            };
+            await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
+            return logEntryDto.CloudEventId;
         }
     }
 }

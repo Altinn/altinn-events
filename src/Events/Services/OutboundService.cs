@@ -100,8 +100,9 @@ namespace Altinn.Platform.Events.Services
                     
                 await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.OutboundQueue); // log that entry was added to outbound queue
             }
-            else // add unauthorized trace log entry
+            else 
             {
+                // add unauthorized trace log entry
                 await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.Unauthorized);
             }
         }
