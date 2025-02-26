@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -198,8 +199,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   Error is logged and empty string is returned
         /// </summary>
         /// <returns></returns>
-        [Fact]
-        public async Task Create_TraceLogFromWebhookWithInvalidDto_ReturnsEmptyString()
+        [Theory]
+        [InlineData(null, HttpStatusCode.OK, "ce2b205a-4980-4ac2-bbc2-159d77478b87")]
+        [InlineData("http://localhost", null, "ce2b205a-4980-4ac2-bbc2-159d77478b87")]
+        [InlineData("http://localhost", HttpStatusCode.OK, null)]
+        public async Task Create_TraceLogFromWebhookWithInvalidDto_ReturnsEmptyString(string endpoint, HttpStatusCode? httpStatusCode, string cloudEventId)
         {
             // Arrange
             var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
@@ -208,7 +212,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, loggerMock.Object);
             LogEntryDto logEntry = new()
             {
-                CloudEventId = Guid.NewGuid().ToString()
+                CloudEventId = cloudEventId,
+                Endpoint = endpoint != null ? new Uri(endpoint) : null,
+                StatusCode = httpStatusCode
             };
 
             // Act
