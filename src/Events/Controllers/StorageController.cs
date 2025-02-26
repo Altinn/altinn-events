@@ -93,8 +93,8 @@ namespace Altinn.Platform.Events.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Temporarily unable to save log entry to storage, please try again.");
-                return StatusCode(503, e.Message);
+                _logger.LogError(e, "Unable to save log entry to storage, please try again.");
+                return StatusCode(500, e.Message);
             }
         }
 

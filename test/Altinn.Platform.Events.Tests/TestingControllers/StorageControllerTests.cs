@@ -60,14 +60,40 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid CloudEventRequest instance.
+            ///   Post a request that results in an exception being thrown by the trace log service instance.
             /// Expected result:
-            ///   Returns HttpStatus Ok.
+            ///   Returns internal server error 500.
             /// Success criteria:
             ///   The response has correct status code.
             /// </summary>
             [Fact]
-            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
+            public async Task Logs_WhenExceptionIsThrownByTheService_IsCaughtAnd500IsReturned()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/storage/events/logs";
+                string responseId = Guid.NewGuid().ToString();
+
+                Mock<IEventsService> eventsService = new();
+                Mock<ITraceLogService> traceLogService = new();
+
+                traceLogService.Setup(x => x.CreateWebhookResponseEntry(It.IsAny<LogEntryDto>())).Throws(new Exception());
+
+                HttpClient client = GetTestClient(eventsService.Object, traceLogService.Object);
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new LogEntryDto()), Encoding.UTF8, "application/cloudevents+json")
+                };
+
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+            }
+
+            public async Task Logs_WhenExceptionIsThrownByTheService_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
@@ -92,13 +118,20 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.True(response.IsSuccessStatusCode);
             }
 
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid logs request with a logEntryDto.
+            /// Expected result:
+            ///   Returns HttpStatus Ok.
+            /// Success criteria:
+            ///   The response has correct status code.
+            /// </summary>
             [Fact]
-            public async Task Post_ValidLogEntryDto_ReturnsStatusCreated()
+            public async Task Logs_ValidLogEntryDto_ReturnsStatusCreated()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events/logs";
                 string responseId = Guid.NewGuid().ToString();
-                var cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 Mock<ITraceLogService> traceLogService = new Mock<ITraceLogService>();
