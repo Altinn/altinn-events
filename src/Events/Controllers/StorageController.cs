@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -98,6 +99,7 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
+        [ExcludeFromCodeCoverage]
         private void AddIdTelemetry(string id)
         {
             RequestTelemetry requestTelemetry = HttpContext.Features.Get<RequestTelemetry>();

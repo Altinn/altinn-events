@@ -47,7 +47,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             private readonly WebApplicationFactory<StorageController> _factory;
 
-            private readonly Mock<ITraceLogService> _traceLogServiceMock = new();
+            private readonly Mock<ITraceLogService> _traceLogServiceMock = new Mock<ITraceLogService>();
 
             /// <summary>
             /// Initializes a new instance of the <see cref="StorageControllerTests"/> class with the given <see cref="WebApplicationFactory{TStorageController}"/>.
@@ -60,40 +60,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a request that results in an exception being thrown by the trace log service instance.
+            ///   Post a valid CloudEventRequest instance.
             /// Expected result:
-            ///   Returns internal server error 500.
+            ///   Returns HttpStatus Ok.
             /// Success criteria:
             ///   The response has correct status code.
             /// </summary>
             [Fact]
-            public async Task Logs_WhenExceptionIsThrownByTheService_IsCaughtAnd500IsReturned()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/storage/events/logs";
-                string responseId = Guid.NewGuid().ToString();
-
-                Mock<IEventsService> eventsService = new();
-                Mock<ITraceLogService> traceLogService = new();
-
-                traceLogService.Setup(x => x.CreateWebhookResponseEntry(It.IsAny<LogEntryDto>())).Throws(new Exception());
-
-                HttpClient client = GetTestClient(eventsService.Object, traceLogService.Object);
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(JsonSerializer.Serialize(new LogEntryDto()), Encoding.UTF8, "application/cloudevents+json")
-                };
-
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-            }
-
-            public async Task Logs_WhenExceptionIsThrownByTheService_ReturnsStatusCreatedAndCorrectData()
+            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
@@ -116,45 +90,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.True(response.IsSuccessStatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post a valid logs request with a logEntryDto.
-            /// Expected result:
-            ///   Returns HttpStatus Ok.
-            /// Success criteria:
-            ///   The response has correct status code.
-            /// </summary>
-            [Fact]
-            public async Task Logs_ValidLogEntryDto_ReturnsStatusCreated()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/storage/events/logs";
-                string responseId = Guid.NewGuid().ToString();
-
-                Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                Mock<ITraceLogService> traceLogService = new Mock<ITraceLogService>();
-
-                traceLogService.Setup(x => x.CreateWebhookResponseEntry(It.IsAny<LogEntryDto>())).ReturnsAsync(responseId);
-
-                var client = GetTestClient(eventsService.Object, traceLogService.Object);
-
-                string logEntryDto = JsonSerializer.Serialize(new LogEntryDto());
-
-                var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(logEntryDto, Encoding.UTF8, "application/cloudevents+json")
-                };
-
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
-
-                // Act
-                var response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.True(response.IsSuccessStatusCode);
-                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             }
 
             /// <summary>
@@ -240,6 +175,112 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a request that results in an exception being thrown by the trace log service instance.
+            /// Expected result:
+            ///   Returns internal server error 500.
+            /// Success criteria:
+            ///   The response has correct status code.
+            /// </summary>
+            [Fact]
+            public async Task Logs_WhenExceptionIsThrownByTheService_IsCaughtAnd500IsReturned()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/storage/events/logs";
+                string responseId = Guid.NewGuid().ToString();
+
+                Mock<IEventsService> eventsService = new();
+                Mock<ITraceLogService> traceLogService = new();
+
+                traceLogService.Setup(x => x.CreateWebhookResponseEntry(It.IsAny<LogEntryDto>())).Throws(new Exception());
+
+                HttpClient client = GetTestClient(eventsService.Object, traceLogService.Object);
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new LogEntryDto()), Encoding.UTF8, "application/cloudevents+json")
+                };
+
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario: 
+            ///   A possibly invalid log entry is posted to the logs endpoint.
+            /// Expected result:
+            ///   400 Bad request is returned
+            /// Success criteria:
+            ///   Empty string returned from the service results in a bad request response
+            /// </summary>
+            /// <returns></returns>
+            [Fact]
+            public async Task Logs_WhenEmptyStringIsReturnedFromTheService_ReturnBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/storage/events/logs";
+                string responseId = string.Empty;
+                Mock<IEventsService> eventsService = new();
+                Mock<ITraceLogService> traceLogService = new();
+                traceLogService.Setup(x => x.CreateWebhookResponseEntry(It.IsAny<LogEntryDto>())).ReturnsAsync(string.Empty);
+                HttpClient client = GetTestClient(eventsService.Object, traceLogService.Object);
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new LogEntryDto()), Encoding.UTF8, "application/cloudevents+json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid logs request with a logEntryDto.
+            /// Expected result:
+            ///   Returns HttpStatus Ok.
+            /// Success criteria:
+            ///   The response has correct status code.
+            /// </summary>
+            [Fact]
+            public async Task Logs_ValidLogEntryDto_ReturnsStatusCreated()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/storage/events/logs";
+                string responseId = Guid.NewGuid().ToString();
+
+                Mock<IEventsService> eventsService = new Mock<IEventsService>();
+                Mock<ITraceLogService> traceLogService = new Mock<ITraceLogService>();
+
+                traceLogService.Setup(x => x.CreateWebhookResponseEntry(It.IsAny<LogEntryDto>())).ReturnsAsync(responseId);
+
+                var client = GetTestClient(eventsService.Object, traceLogService.Object);
+
+                string logEntryDto = JsonSerializer.Serialize(new LogEntryDto());
+
+                var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(logEntryDto, Encoding.UTF8, "application/cloudevents+json")
+                };
+
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+                // Act
+                var response = await client.SendAsync(httpRequestMessage);
+
+                // Assert
+                Assert.True(response.IsSuccessStatusCode);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             }
 
             private HttpClient GetTestClient(IEventsService eventsService, ITraceLogService traceLogService = null)
