@@ -135,7 +135,7 @@ namespace Altinn.Platform.Events.Functions.Clients
         {
             var endpoint = "storage/events/logs";
 
-            LogEntryDto logEntryData = new()
+            var logEntryData = new LogEntryDto
             {
                 CloudEventId = cloudEventEnvelope.CloudEvent.Id,
                 CloudEventType = cloudEventEnvelope.CloudEvent.Type,
@@ -149,7 +149,7 @@ namespace Altinn.Platform.Events.Functions.Clients
             StringContent httpContent = new(JsonSerializer.Serialize(logEntryData), Encoding.UTF8, "application/cloudevents+json");
             var accessToken = await GenerateAccessToken();
 
-            var response = await _client.PostAsync(endpoint, httpContent, accessToken);
+            await _client.PostAsync(endpoint, httpContent, accessToken);
         }
 
         private async Task<(bool Success, HttpStatusCode StatusCode)> PostCloudEventToEndpoint(CloudEvent cloudEvent, string endpoint)

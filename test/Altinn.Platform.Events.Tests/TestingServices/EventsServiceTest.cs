@@ -90,6 +90,34 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
+        ///   Store an event that succeeds, results in a call to register log entry.
+        /// Expected result:
+        ///   Event is stored and eventId returned. Log entry is created.
+        /// Success criteria:
+        ///   No Error logged. traceLogService called once
+        /// </summary>
+        [Fact]
+        public async Task RegisterNewEvent_PushEventSucceeds_LogIsCreated()
+        {
+            // Arrange
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            Mock<ILogger<IEventsService>> logger = new();
+            Mock<ITraceLogService> traceLogServiceMock = new();
+            traceLogServiceMock.Setup(t => t.CreateRegisteredEntry(It.IsAny<CloudEvent>()));
+            EventsService eventsService = GetEventsService(traceLogServiceMock: traceLogServiceMock, loggerMock: logger, queueMock: queueMock.Object);
+
+            // Act
+            await eventsService.RegisterNew(GetCloudEventFromApp());
+
+            // Assert
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
+            traceLogServiceMock.Verify(t => t.CreateRegisteredEntry(It.IsAny<CloudEvent>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
         ///   Push to Inbound queue fails.
         /// Expected result:
         ///   Error returned to caller.
