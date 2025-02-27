@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Functions.Models;
 
 namespace Altinn.Platform.Events.Functions.Services.Interfaces

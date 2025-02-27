@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Net;
+
 using Altinn.Platform.Events.Models;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Functions.Models

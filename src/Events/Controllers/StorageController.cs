@@ -1,10 +1,12 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
+
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -84,7 +86,7 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 var result = await _traceLogService.CreateWebhookResponseEntry(logEntry);
-                
+
                 if (string.IsNullOrEmpty(result))
                 {
                     return BadRequest();
