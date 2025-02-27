@@ -1,5 +1,7 @@
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Functions.Models;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Functions.Clients.Interfaces

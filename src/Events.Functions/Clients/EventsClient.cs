@@ -12,6 +12,7 @@ using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;

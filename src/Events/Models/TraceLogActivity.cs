@@ -28,6 +28,11 @@
         /// <summary>
         /// Number of retries for the event has been reached
         /// </summary>
-        DequeueLimitReached
+        DequeueLimitReached,
+
+        /// <summary>
+        /// Subscription is invalid
+        /// </summary>
+        InvalidSubscription
     }
 }
