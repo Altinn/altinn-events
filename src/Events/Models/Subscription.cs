@@ -65,7 +65,7 @@ namespace Altinn.Platform.Events.Models
         public bool Validated { get; set; }
 
         /// <summary>
-        /// Serializes the subscriont to a JSON string.
+        /// Serializes the subscription to a JSON string.
         /// </summary>
         /// <returns>Serialized cloud event</returns>
         public string Serialize()
@@ -74,7 +74,7 @@ namespace Altinn.Platform.Events.Models
         }
 
         /// <summary>
-        /// Deserializes the subscriont to from JSON string.
+        /// Deserializes the subscription from a JSON string.
         /// </summary>
         /// <returns>Cloud event</returns>
         public static Subscription Deserialize(string jsonString)

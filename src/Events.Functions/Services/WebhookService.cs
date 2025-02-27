@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Models.Payloads;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
-
+using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions.Services
@@ -31,7 +32,7 @@ namespace Altinn.Platform.Events.Functions.Services
         }
 
         /// <inheritdoc/>
-        public async Task Send(CloudEventEnvelope envelope)
+        public async Task<HttpResponseMessage> Send(CloudEventEnvelope envelope)
         {
             string payload = GetPayload(envelope);
             StringContent httpContent = new(payload, Encoding.UTF8, "application/json");
@@ -39,6 +40,7 @@ namespace Altinn.Platform.Events.Functions.Services
             try
             {
                 HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent);
+
                 if (!response.IsSuccessStatusCode)
                 {
                     string reason = await response.Content.ReadAsStringAsync();
@@ -46,6 +48,8 @@ namespace Altinn.Platform.Events.Functions.Services
 
                     throw new HttpRequestException(reason);
                 }
+
+                return response;
             }
             catch (Exception e)
             {

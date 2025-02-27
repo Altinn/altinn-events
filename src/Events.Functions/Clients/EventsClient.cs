@@ -3,12 +3,14 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
+using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -127,6 +129,28 @@ namespace Altinn.Platform.Events.Functions.Clients
                 throw new HttpRequestException(
                     $"// Validate subscription with id {subscriptionId} failed with status code {response.StatusCode}");
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode)
+        {
+            var endpoint = "storage/events/logs";
+
+            var logEntryData = new LogEntryDto
+            {
+                CloudEventId = cloudEventEnvelope.CloudEvent.Id,
+                CloudEventType = cloudEventEnvelope.CloudEvent.Type,
+                CloudEventResource = cloudEventEnvelope.CloudEvent["resource"]?.ToString(),
+                Consumer = cloudEventEnvelope.Consumer,
+                Endpoint = cloudEventEnvelope.Endpoint,
+                SubscriptionId = cloudEventEnvelope.SubscriptionId,
+                StatusCode = statusCode,
+            };
+
+            StringContent httpContent = new(JsonSerializer.Serialize(logEntryData), Encoding.UTF8, "application/cloudevents+json");
+            var accessToken = await GenerateAccessToken();
+
+            await _client.PostAsync(endpoint, httpContent, accessToken);
         }
 
         private async Task<(bool Success, HttpStatusCode StatusCode)> PostCloudEventToEndpoint(CloudEvent cloudEvent, string endpoint)

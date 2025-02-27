@@ -1,4 +1,6 @@
+using System.Net.Http;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Functions.Models;
 
 namespace Altinn.Platform.Events.Functions.Services.Interfaces
@@ -12,6 +14,6 @@ namespace Altinn.Platform.Events.Functions.Services.Interfaces
         /// Send cloudevent to webhook
         /// </summary>
         /// <param name="envelope">CloudEventEnvelope, includes content and uri</param>
-        Task Send(CloudEventEnvelope envelope);
+        Task<HttpResponseMessage> Send(CloudEventEnvelope envelope);
     }
 }

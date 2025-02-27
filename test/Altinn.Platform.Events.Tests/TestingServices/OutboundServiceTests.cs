@@ -274,6 +274,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static IOutboundService GetOutboundService(
             IEventsQueueClient queueMock = null,
+            Mock<ITraceLogService> traceLogServiceMock = null,
             ISubscriptionRepository repositoryMock = null,
             IAuthorization authorizationMock = null,
             MemoryCache memoryCache = null,
@@ -287,6 +288,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             if (queueMock == null)
             {
                 queueMock = new EventsQueueClientMock();
+            }
+
+            if (traceLogServiceMock == null)
+            {
+                traceLogServiceMock = new Mock<ITraceLogService>();
             }
 
             if (repositoryMock == null)
@@ -308,6 +314,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var service = new OutboundService(
                 queueMock,
+                traceLogServiceMock.Object,
                 repositoryMock,
                 authorizationMock,
                 Options.Create(new PlatformSettings

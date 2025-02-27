@@ -1,9 +1,12 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
+
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -23,6 +26,7 @@ namespace Altinn.Platform.Events.Controllers
     public class StorageController : ControllerBase
     {
         private readonly IEventsService _eventsService;
+        private readonly ITraceLogService _traceLogService;
         private readonly ILogger _logger;
 
         /// <summary>
@@ -30,10 +34,12 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         public StorageController(
             IEventsService eventsService,
+            ITraceLogService traceLogService,
             ILogger<StorageController> logger)
         {
             _logger = logger;
             _eventsService = eventsService;
+            _traceLogService = traceLogService;
         }
 
         /// <summary>
@@ -49,7 +55,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
-        {          
+        {
             try
             {
                 AddIdTelemetry(cloudEvent.Id);
@@ -58,11 +64,44 @@ namespace Altinn.Platform.Events.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Temporarily unable to save cloudEventId {cloudEventId} to storage, please try again.", cloudEvent?.Id);
+                _logger.LogError(e, "Temporarily unable to save cloudEventId {CloudEventId} to storage, please try again.", cloudEvent?.Id);
                 return StatusCode(503, e.Message);
             }
         }
 
+        /// <summary>
+        /// Create a new trace log for cloud event with a status code.
+        /// </summary>
+        /// <param name="logEntry">The event wrapper associated with the event for logging <see cref="CloudEventEnvelope"/></param>
+        /// <returns></returns>
+        [Authorize(Policy = "PlatformAccess")]
+        [HttpPost("logs")]
+        [Consumes("application/json")]
+        [SwaggerResponse(201, Type = typeof(Guid))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<IActionResult> Logs([FromBody] LogEntryDto logEntry)
+        {
+            try
+            {
+                var result = await _traceLogService.CreateWebhookResponseEntry(logEntry);
+
+                if (string.IsNullOrEmpty(result))
+                {
+                    return BadRequest();
+                }
+
+                return Created();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Unable to save log entry to storage, please try again.");
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [ExcludeFromCodeCoverage]
         private void AddIdTelemetry(string id)
         {
             RequestTelemetry requestTelemetry = HttpContext.Features.Get<RequestTelemetry>();
