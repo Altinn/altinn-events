@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Extensions;
@@ -86,38 +87,44 @@ namespace Altinn.Platform.Events.Services
         {
             var parseResult = Guid.TryParse(logEntryDto.CloudEventId, out Guid parsedGuid);
 
-            if (!parseResult)
+            string errorMessage = Validate(parseResult, logEntryDto);
+
+            if (string.IsNullOrEmpty(errorMessage))
             {
-                _logger.LogError("Error creating trace log entry for webhook POST response: Invalid GUID");
-                return string.Empty;
+                var traceLogEntry = new TraceLog
+                {
+                    CloudEventId = parsedGuid,
+                    Resource = logEntryDto.CloudEventResource,
+                    EventType = logEntryDto.CloudEventType,
+                    Consumer = logEntryDto.Consumer,
+                    SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
+                    SubscriptionId = logEntryDto.SubscriptionId,
+                    ResponseCode = (int?)logEntryDto.StatusCode,
+                    Activity = TraceLogActivity.WebhookPostResponse
+                };
+                await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
+                return logEntryDto.CloudEventId;
             }
 
-            if (logEntryDto.Endpoint == null)
-            {
-                _logger.LogError("Error creating trace log entry for webhook POST response: Missing required Endpoint parameter");
-                return string.Empty;
-            }
+            _logger.LogError("Error creating trace log entry for webhook POST response: {ErrorMessage}", errorMessage);
+            return string.Empty;
+        }
 
-            if (logEntryDto.StatusCode == null)
-            {
-                _logger.LogError("Error creating trace log entry for webhook POST response: Missing required StatusCode parameter");
-                return string.Empty;
-            }
+        /// <summary>
+        /// Validates parameters
+        /// </summary>
+        /// <returns>A joined string of one or more errors, or string.Empty if params are valid </returns>
+        private static string Validate(bool parseResult, LogEntryDto logEntryDto)
+        {
+            string[] errors =
+            [
+                !parseResult ? "Invalid GUID" : string.Empty,
+        logEntryDto.Endpoint == null ? "Missing required Endpoint parameter" : string.Empty,
+        logEntryDto.StatusCode == null ? "Missing required StatusCode parameter" : string.Empty
+            ];
+            var aggregatedErrorMessage = string.Join(", ", errors.Where(s => !string.IsNullOrEmpty(s)));
 
-            var traceLogEntry = new TraceLog
-            {
-                CloudEventId = parsedGuid,
-                Resource = logEntryDto.CloudEventResource,
-                EventType = logEntryDto.CloudEventType,
-                Consumer = logEntryDto.Consumer,
-                SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
-                SubscriptionId = logEntryDto.SubscriptionId,
-                ResponseCode = (int?)logEntryDto.StatusCode,
-                Activity = TraceLogActivity.WebhookPostResponse
-            };
-
-            await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
-            return logEntryDto.CloudEventId;
+            return aggregatedErrorMessage;
         }
     }
 }
