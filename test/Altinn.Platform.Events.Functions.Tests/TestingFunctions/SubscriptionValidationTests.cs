@@ -37,7 +37,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             // Arrange
             string expectedConsumer = "/org/ttd";
             Uri expectedEndpoint = new Uri("https://hooks.slack.com/services/org/channel/");
-            string expectedCloudEventType = "platform.events.validatesubscription";
+            string expectedCloudEventType = Constants.Constants.ValidationType;
             CloudEventsSpecVersion expectedSpecVersion = CloudEventsSpecVersion.V1_0;
 
             var sut = new SubscriptionValidation(
