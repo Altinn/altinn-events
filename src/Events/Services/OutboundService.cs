@@ -32,7 +32,7 @@ namespace Altinn.Platform.Events.Services
         private readonly IMemoryCache _memoryCache;
         private readonly MemoryCacheEntryOptions _consumerAuthorizationEntryOptions;
 
-        private readonly ILogger<IOutboundService> _logger;
+        private readonly ILogger<OutboundService> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OutboundService"/> class.
@@ -44,7 +44,7 @@ namespace Altinn.Platform.Events.Services
             IAuthorization authorizationService,
             IOptions<PlatformSettings> platformSettings,
             IMemoryCache memoryCache,
-            ILogger<IOutboundService> logger)
+            ILogger<OutboundService> logger)
         {
             _queueClient = queueClient;
             _traceLogService = traceLogService;
@@ -95,7 +95,7 @@ namespace Altinn.Platform.Events.Services
 
                 if (!receipt.Success)
                 {
-                    _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEvent.Id, subscription.Id);
+                    _logger.LogError(receipt.Exception, "OutboundService EnqueueOutbound Failed to send event envelope {EventId} to consumer with {SubscriptionId}.", cloudEvent.Id, subscription.Id);
                 }
                     
                 await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.OutboundQueue); // log that entry was added to outbound queue
