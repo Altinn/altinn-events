@@ -27,6 +27,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     {
         private readonly ICloudEventRepository _repositoryMock;
         private readonly IEventsQueueClient _queueMock;
+        private readonly Mock<ITraceLogService> _traceLogServiceMock;
         private readonly Mock<IRegisterService> _registerMock;
         private readonly Mock<IAuthorization> _authorizationMock;
         private readonly Mock<ILogger<IEventsService>> _loggerMock;
@@ -35,6 +36,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             _repositoryMock = new CloudEventRepositoryMock();
             _queueMock = new EventsQueueClientMock();
+            _traceLogServiceMock = new();
             _registerMock = new();
             _authorizationMock = new();
             _loggerMock = new();
@@ -84,6 +86,34 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Store an event that succeeds, results in a call to register log entry.
+        /// Expected result:
+        ///   Event is stored and eventId returned. Log entry is created.
+        /// Success criteria:
+        ///   No Error logged. traceLogService called once
+        /// </summary>
+        [Fact]
+        public async Task RegisterNewEvent_PushEventSucceeds_LogIsCreated()
+        {
+            // Arrange
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            Mock<ILogger<IEventsService>> logger = new();
+            Mock<ITraceLogService> traceLogServiceMock = new();
+            traceLogServiceMock.Setup(t => t.CreateRegisteredEntry(It.IsAny<CloudEvent>()));
+            EventsService eventsService = GetEventsService(traceLogServiceMock: traceLogServiceMock, loggerMock: logger, queueMock: queueMock.Object);
+
+            // Act
+            await eventsService.RegisterNew(GetCloudEventFromApp());
+
+            // Assert
+            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
+            traceLogServiceMock.Verify(t => t.CreateRegisteredEntry(It.IsAny<CloudEvent>()), Times.Once);
         }
 
         /// <summary>
@@ -436,11 +466,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private EventsService GetEventsService(
             ICloudEventRepository repositoryMock = null,
             IEventsQueueClient queueMock = null,
+            Mock<ITraceLogService> traceLogServiceMock = null,
             Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
             Mock<ILogger<IEventsService>> loggerMock = null)
         {
             repositoryMock ??= _repositoryMock;
+            traceLogServiceMock ??= _traceLogServiceMock;
             registerMock ??= _registerMock;
             queueMock ??= _queueMock;
             loggerMock ??= _loggerMock;
@@ -461,6 +493,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             return new EventsService(
                 repositoryMock,
+                traceLogServiceMock.Object,
                 queueMock,
                 registerMock.Object,
                 authorizationMock.Object,
