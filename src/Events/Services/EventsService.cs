@@ -36,7 +36,7 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
-            ILogger<IEventsService> logger)
+            ILogger<EventsService> logger)
         {
             _repository = repository;
             _traceLogService = traceLogService;
