@@ -14,15 +14,13 @@ namespace Altinn.Platform.Events.Functions
     public class EventsOutbound
     {
         private readonly IWebhookService _webhookService;
-        private readonly IEventsClient _eventsClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsOutbound"/> class.
         /// </summary>
-        public EventsOutbound(IWebhookService webhookService, IEventsClient eventsClient)
+        public EventsOutbound(IWebhookService webhookService)
         {
             _webhookService = webhookService;
-            _eventsClient = eventsClient;
         }
 
         /// <summary>

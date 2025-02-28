@@ -118,14 +118,14 @@ namespace Altinn.Platform.Events.Functions.Clients
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                _logger.LogError("Attempting to validate non existing subscription {subscriptionId}", subscriptionId);
+                _logger.LogError("Attempting to validate non existing subscription {SubscriptionId}", subscriptionId);
                 return;
             }
             
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError(
-                    $"// Validate subscription with id {subscriptionId} failed with status code {response.StatusCode}");
+                    "Validate subscription with id {SubscriptionId} failed with status code {StatusCode}", subscriptionId, response.StatusCode);
                 throw new HttpRequestException(
                     $"// Validate subscription with id {subscriptionId} failed with status code {response.StatusCode}");
             }
