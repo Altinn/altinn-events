@@ -290,6 +290,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
+    services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
     services.AddSingleton<IGenericSubscriptionService, GenericSubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
