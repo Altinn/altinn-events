@@ -3,7 +3,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-
+using System.Web;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -28,9 +28,11 @@ namespace Altinn.Platform.Events.Services
         {
             try
             {
+                var parseResult = Guid.TryParse(cloudEvent.Id, out Guid parsedGuid);
+
                 var traceLogEntry = new TraceLog
                 {
-                    CloudEventId = Guid.Parse(cloudEvent.Id),
+                    CloudEventId = parseResult ? parsedGuid : null,
                     Resource = cloudEvent.GetResource(),
                     EventType = cloudEvent.Type,
                     Consumer = null, // we don't know about the consumer in this context
@@ -40,7 +42,7 @@ namespace Altinn.Platform.Events.Services
                 };
 
                 await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
-                return cloudEvent.Id;
+                return cloudEvent.Id ?? string.Empty;
             }
             catch (Exception exception)
             {
@@ -56,9 +58,11 @@ namespace Altinn.Platform.Events.Services
         {
             try
             {
+                var parseResult = Guid.TryParse(cloudEvent.Id, out Guid parsedGuid);
+
                 var traceLogEntry = new TraceLog
                 {
-                    CloudEventId = Guid.Parse(cloudEvent.Id),
+                    CloudEventId = parseResult ? parsedGuid : null,
                     Resource = cloudEvent.GetResource(),
                     EventType = cloudEvent.Type,
                     Consumer = subscription.Consumer,
@@ -68,7 +72,8 @@ namespace Altinn.Platform.Events.Services
                 };
 
                 await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
-                return cloudEvent.Id;
+
+                return parseResult && cloudEvent.Id != null ? cloudEvent.Id.ToString() : string.Empty;
             }
             catch (Exception exception)
             {
@@ -100,13 +105,13 @@ namespace Altinn.Platform.Events.Services
                     Resource = logEntryDto.CloudEventResource,
                     EventType = logEntryDto.CloudEventType,
                     Consumer = logEntryDto.Consumer,
-                    SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
+                    SubscriberEndpoint = logEntryDto.Endpoint?.ToString(),
                     SubscriptionId = logEntryDto.SubscriptionId,
                     ResponseCode = (int?)logEntryDto.StatusCode,
                     Activity = IsValidationType(logEntryDto.CloudEventType) ? TraceLogActivity.InvalidSubscription : TraceLogActivity.WebhookPostResponse
                 };
                 await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
-                return logEntryDto.CloudEventId;
+                return logEntryDto.CloudEventId ?? string.Empty;
             }
 
             _logger.LogError("Error creating trace log entry for webhook POST response: {ErrorMessage}", errorMessage);

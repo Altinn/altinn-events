@@ -38,7 +38,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                 .Returns(Task.FromResult(new HttpResponseMessage()));
 
             Mock<IEventsClient> eventsClientMock = new();
-            var sut = new EventsOutbound(webhookServiceMock.Object, eventsClientMock.Object);
+            var sut = new EventsOutbound(webhookServiceMock.Object);
 
             // Act
             await sut.Run(serializedCloudEnvelope);

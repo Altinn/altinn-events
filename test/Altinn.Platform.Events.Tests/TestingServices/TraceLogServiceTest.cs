@@ -136,11 +136,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario: 
-        ///   Save a log entry with an invalid cloud id / GUID should result in an empty string and an error logged
+        ///   Save a log entry with an invalid cloud id / GUID should result in an empty string returned
         /// Expected result:
         ///   empty string
         /// Success criteria:
-        ///   Error is logged and empty string is returned
+        ///   empty string is returned
         /// </summary>
         /// <returns></returns>
         [Fact]
@@ -159,6 +159,32 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Act
             var response = await traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, new Subscription(), TraceLogActivity.OutboundQueue);
 
+            // Assert
+            Assert.Equal(response, string.Empty);
+            loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario: 
+        ///   Save a log entry which results in an exception thrown, should result in an empty string returned, and an error logged
+        /// Expected result:
+        ///   empty string
+        /// Success criteria:
+        ///   empty string is returned and error is logged
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task Create_TraceLogWithSubscriptionDetailsExceptionThrown_IsLoggedReturnsEmptyStringResult()
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            traceLogRepositoryMock.Setup(x => x.CreateTraceLogEntry(It.IsAny<TraceLog>())).Throws(new Exception());
+            Mock<ILogger<ITraceLogService>> loggerMock = new Mock<ILogger<ITraceLogService>>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, loggerMock.Object);
+            
+            // Act
+            var response = await traceLogService.CreateLogEntryWithSubscriptionDetails(_cloudEvent, new Subscription(), TraceLogActivity.OutboundQueue);
+            
             // Assert
             Assert.Equal(response, string.Empty);
             loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
