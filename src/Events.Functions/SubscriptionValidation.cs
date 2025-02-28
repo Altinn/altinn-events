@@ -63,7 +63,7 @@ namespace Altinn.Platform.Events.Functions
                 {
                     Id = Guid.NewGuid().ToString(),
                     Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
-                    Type = Constants.Constants.ValidationType,
+                    Type = Constants.EventConstants.ValidationType,
                 }
             };
 

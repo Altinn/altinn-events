@@ -80,7 +80,7 @@ namespace Altinn.Platform.Events.Controllers
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Logs([FromBody] LogEntryDto logEntry)
         {
             try

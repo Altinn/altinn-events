@@ -19,6 +19,7 @@ namespace Altinn.Platform.Events.Services
     {
         private readonly ITraceLogRepository _traceLogRepository = traceLogRepository;
         private readonly ILogger<ITraceLogService> _logger = logger;
+        private const string _validationType = "platform.events.validatesubscription";
 
         /// <inheritdoc/>
         public async Task<string> CreateRegisteredEntry(CloudEvent cloudEvent)
@@ -100,7 +101,7 @@ namespace Altinn.Platform.Events.Services
                     SubscriberEndpoint = logEntryDto.Endpoint.ToString(),
                     SubscriptionId = logEntryDto.SubscriptionId,
                     ResponseCode = (int?)logEntryDto.StatusCode,
-                    Activity = TraceLogActivity.WebhookPostResponse
+                    Activity = IsValidationType(logEntryDto.CloudEventType) ? TraceLogActivity.InvalidSubscription : TraceLogActivity.WebhookPostResponse
                 };
                 await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
                 return logEntryDto.CloudEventId;
@@ -108,6 +109,11 @@ namespace Altinn.Platform.Events.Services
 
             _logger.LogError("Error creating trace log entry for webhook POST response: {ErrorMessage}", errorMessage);
             return string.Empty;
+        }
+
+        private static bool IsValidationType(string? cloudEventType)
+        {
+            return cloudEventType != null && cloudEventType.Equals(_validationType);
         }
 
         /// <summary>

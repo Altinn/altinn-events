@@ -3,7 +3,7 @@
     /// <summary>
     /// Shared constants for Events.Functions project
     /// </summary>
-    public static class Constants
+    public static class EventConstants
     {
         /// <summary>
         /// The cloud event type for subscription validation
