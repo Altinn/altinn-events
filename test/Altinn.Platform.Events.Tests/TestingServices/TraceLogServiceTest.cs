@@ -52,6 +52,37 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         /// <summary>
+        /// Scenario:
+        ///   A cloud event is saved as log even if guid is invalid.
+        /// Expected result:
+        ///   empty string is returned
+        /// Success criteria:
+        ///   Log entry for cloud id is set to null if Guid can't be parsed
+        /// </summary>
+        /// <param name="guid">string representation of a guid</param>
+        /// <param name="expectedResult">the expected response based on whether the guid can be parsed or not</param>
+        /// <returns></returns>
+        [Theory]
+        [InlineData(null, "")]
+        [InlineData("d1525c79-cda8-4fef-b95c-feb3e7be89ec", "d1525c79-cda8-4fef-b95c-feb3e7be89ec")]
+        public async Task Create_TraceLogRegisteredEntryWithGuid_ShouldSaveWithIdFieldAsNullOnlyWhenInvalid(string guid, string expectedResult)
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+            var cloudEvent = new CloudEvent
+            {
+                Id = guid
+            };
+            
+            // Act
+            var result = await traceLogService.CreateRegisteredEntry(cloudEvent);
+            
+            // Assert
+            Assert.Equal(expectedResult, result);
+        }
+
+        /// <summary>
         /// Scenario: Save a log entry upon saving a cloud event to persistence
         /// Expected result:
         ///   Cloud id is returned
@@ -249,6 +280,45 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             Assert.Equal(response, string.Empty);
             loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Log entry should be saved with activity based on cloud event type
+        /// Returns:
+        ///   Either valid Guid or empty string if guid can't be parsed
+        /// Success criteria:
+        ///   Cloud event type platform.events.validatesubscription should result in activity InvalidSubscription. Else: WebhookPostResponse
+        /// </summary>
+        /// <param name="type">string representation of a cloud event type</param>
+        /// <returns></returns>
+        [Theory]
+        [InlineData("platform.events.validatesubscription")]
+        [InlineData("")]
+        [InlineData(null)]
+        public async Task Create_TraceLogFromWebhookWithCloudEventType_ShouldSetActivityBasedOnType(string type)
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+
+            // Act
+            await traceLogService.CreateWebhookResponseEntry(new LogEntryDto
+            {
+                CloudEventId = _cloudEvent.Id,
+                CloudEventResource = _cloudEvent["resource"]?.ToString(),
+                Consumer = "consumer",
+                SubscriptionId = 1,
+                Endpoint = new Uri("https://localhost:3000"),
+                StatusCode = HttpStatusCode.OK,
+                CloudEventType = type
+            });
+
+            traceLogRepositoryMock.Verify(
+                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.InvalidSubscription)), type == "platform.events.validatesubscription" ? Times.Once : Times.Never);
+
+            traceLogRepositoryMock.Verify(
+                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.WebhookPostResponse)), type != "platform.events.validatesubscription" ? Times.Once : Times.Never);
         }
 
         /// <summary>
