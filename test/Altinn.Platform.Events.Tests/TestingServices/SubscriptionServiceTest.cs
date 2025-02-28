@@ -86,7 +86,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task CreateSubscription_Unauthorized_ReturnsError()
+        public async Task CreateSubscription_WithoutAccess_ReturnsForbiddenError()
         {
             // Arrange 
             string expectedErrorMessage = "Not authorized to create a subscription for resource urn:altinn:resource:some-service.";
@@ -103,7 +103,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             (var _, ServiceError actual) = await sut.CompleteSubscriptionCreation(input);
 
             // Assert
-            Assert.Equal(401, actual.ErrorCode);
+            Assert.Equal(403, actual.ErrorCode);
             Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
