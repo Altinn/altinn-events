@@ -1,14 +1,13 @@
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Models.Payloads;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
-using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions.Services
@@ -19,20 +18,22 @@ namespace Altinn.Platform.Events.Functions.Services
     public class WebhookService : IWebhookService
     {
         private readonly HttpClient _client;
+        private readonly IEventsClient _eventsClient;
         private readonly ILogger _logger;
         private readonly string _slackUri = "hooks.slack.com";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WebhookService"/> class.
         /// </summary>
-        public WebhookService(HttpClient client, ILogger<WebhookService> logger)
+        public WebhookService(HttpClient client, IEventsClient eventsClient, ILogger<WebhookService> logger)
         {
             _client = client;
+            _eventsClient = eventsClient;
             _logger = logger;
         }
 
         /// <inheritdoc/>
-        public async Task<HttpResponseMessage> Send(CloudEventEnvelope envelope)
+        public async Task Send(CloudEventEnvelope envelope)
         {
             string payload = GetPayload(envelope);
             StringContent httpContent = new(payload, Encoding.UTF8, "application/json");
@@ -41,6 +42,9 @@ namespace Altinn.Platform.Events.Functions.Services
             {
                 HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent);
 
+                // log response from webhook to storage
+                await _eventsClient.LogWebhookHttpStatusCode(envelope, response.StatusCode);
+
                 if (!response.IsSuccessStatusCode)
                 {
                     string reason = await response.Content.ReadAsStringAsync();
@@ -48,8 +52,6 @@ namespace Altinn.Platform.Events.Functions.Services
 
                     throw new HttpRequestException(reason);
                 }
-
-                return response;
             }
             catch (Exception e)
             {

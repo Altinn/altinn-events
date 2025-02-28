@@ -33,8 +33,7 @@ namespace Altinn.Platform.Events.Functions
         {
             var cloudEventEnvelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
 
-            var response = await _webhookService.Send(cloudEventEnvelope);
-            await _eventsClient.LogWebhookHttpStatusCode(cloudEventEnvelope, response.StatusCode);
+            await _webhookService.Send(cloudEventEnvelope);
         }
     }
 }
