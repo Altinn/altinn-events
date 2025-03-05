@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Net;
 
-using Altinn.Platform.Events.Models;
-
-using CloudNative.CloudEvents;
-
 namespace Altinn.Platform.Events.Functions.Models
 {
     /// <summary>
@@ -13,32 +9,32 @@ namespace Altinn.Platform.Events.Functions.Models
     public record LogEntryDto
     {
         /// <summary>
-        /// The cloud event id associated with the logged event <see cref="CloudEvent"/>"/>
+        /// The cloud event id associated with the logged event
         /// </summary>
         public string CloudEventId { get; set; }
 
         /// <summary>
-        /// The resource associated with the cloud event <see cref="CloudEvent"/>
+        /// The resource associated with the cloud event 
         /// </summary>
         public string CloudEventResource { get; set; }
 
         /// <summary>
-        /// The type associated with the logged event <see cref="CloudEvent"/>
+        /// The type associated with the logged event 
         /// </summary>
         public string CloudEventType { get; set; }
 
         /// <summary>
-        /// The subscription id associated with the post action. <see cref="Subscription"/>"/>
+        /// The subscription id associated with the post action.
         /// </summary>
         public int SubscriptionId { get; set; }
 
         /// <summary>
-        /// The consumer of the event <see cref="Subscription"/>
+        /// The consumer of the event 
         /// </summary>
         public string Consumer { get; set; }
 
         /// <summary>
-        /// The consumers webhook endpoint <see cref="Subscription"/>
+        /// The consumers webhook endpoint
         /// </summary>
         public Uri Endpoint { get; set; }
 

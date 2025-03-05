@@ -147,7 +147,7 @@ namespace Altinn.Platform.Events.Functions.Clients
                 StatusCode = statusCode,
             };
 
-            StringContent httpContent = new(JsonSerializer.Serialize(logEntryData), Encoding.UTF8, "application/cloudevents+json");
+            StringContent httpContent = new(JsonSerializer.Serialize(logEntryData), Encoding.UTF8, "application/json");
             var accessToken = await GenerateAccessToken();
 
             await _client.PostAsync(endpoint, httpContent, accessToken);
