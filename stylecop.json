@@ -4,6 +4,9 @@
     "documentationRules": {
       "companyName": "PlaceholderCompany"
     },
+    "namingRules": {
+      "allowedHungarianPrefixes": [ "ip" ]
+    },
     "orderingRules": {
       "usingDirectivesPlacement": "outsideNamespace",
       "systemUsingDirectivesFirst": true,
