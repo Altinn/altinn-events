@@ -84,11 +84,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// <summary>
             /// Gets a specific subscription
             /// Expected result:
-            /// Returns HttpStatus ok
+            /// Returns HttpStatus Forbidden
             /// Scenario: 
             /// </summary>
             [Fact]
-            public async Task Get_GivenSubscriptionOrganisationWithInvalidCreatedBy_ReturnsUnauthorizd()
+            public async Task Get_GivenSubscriptionOrganisationWithInvalidCreatedBy_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/12";
@@ -101,7 +101,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
             [Fact]
@@ -209,10 +209,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// <summary>
             /// Deletes a subscription that user is authorized for
             /// Expected result:
-            /// Return httpStatus ok
+            /// Return httpStatus Forbidden
             /// </summary>
             [Fact]
-            public async Task Delete_GivenSubscriptionOrganisationWithInvalidCreatedBy_ReturnsUnAuthorized()
+            public async Task Delete_GivenSubscriptionOrganisationWithInvalidCreatedBy_ReturnsForbidden()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/16";
@@ -224,7 +224,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
             [Fact]

@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
-        {          
+        {
             try
             {
                 AddIdTelemetry(cloudEvent.Id);
@@ -58,7 +58,7 @@ namespace Altinn.Platform.Events.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Temporarily unable to save cloudEventId {cloudEventId} to storage, please try again.", cloudEvent?.Id);
+                _logger.LogError(e, "Temporarily unable to save cloudEventId {CloudEventId} to storage, please try again.", cloudEvent?.Id);
                 return StatusCode(503, e.Message);
             }
         }

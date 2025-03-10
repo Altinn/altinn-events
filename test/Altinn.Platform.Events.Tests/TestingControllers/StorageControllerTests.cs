@@ -70,7 +70,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/storage/events";
                 string responseId = Guid.NewGuid().ToString();
-                var cloudEvent = GetCloudEventRequest();                
+                var cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(s => s.Save(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);

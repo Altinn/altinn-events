@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
@@ -103,6 +104,8 @@ async Task SetConfigurationProviders(ConfigurationManager config)
     config.AddJsonFile(configJsonFile1, optional: true, reloadOnChange: true);
 
     config.AddJsonFile(configJsonFile2, optional: false, reloadOnChange: true);
+
+    config.AddUserSecrets<Program>();
 
     config.AddEnvironmentVariables();
 
@@ -265,10 +268,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsService, EventsService>();
     services.AddSingleton<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
+    services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
     services.AddSingleton<IGenericSubscriptionService, GenericSubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
+    services.AddSingleton<ITraceLogRepository, TraceLogRepository>();
     services.Decorate<ISubscriptionRepository, SubscriptionRepositoryCachingDecorator>();
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
@@ -392,4 +397,15 @@ void Configure(IConfiguration config)
     app.MapControllers();
 
     app.MapHealthChecks("/health");
+}
+
+/// <summary>
+/// Startup class.
+/// </summary>
+[ExcludeFromCodeCoverage]
+public sealed partial class Program
+{
+    private Program()
+    {
+    }
 }
