@@ -127,7 +127,7 @@ namespace Altinn.Platform.Events.Telemetry
             }
         }
 
-        private bool ExcludeRequest(string localpath)
+        private static bool ExcludeRequest(string localpath)
         {
             return localpath switch
             {
