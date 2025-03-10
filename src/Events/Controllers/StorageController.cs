@@ -1,10 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -63,16 +63,9 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private void AddIdTelemetry(string id)
+        private static void AddIdTelemetry(string id)
         {
-            RequestTelemetry requestTelemetry = HttpContext.Features.Get<RequestTelemetry>();
-
-            if (requestTelemetry == null)
-            {
-                return;
-            }
-
-            requestTelemetry.Properties.Add("appevent.id", id);
+            Activity.Current?.AddTag("appevent.id", id);
         }
     }
 }

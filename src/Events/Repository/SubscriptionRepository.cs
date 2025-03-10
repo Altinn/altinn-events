@@ -22,14 +22,14 @@ namespace Altinn.Platform.Events.Repository
     [ExcludeFromCodeCoverage]
     public class SubscriptionRepository : ISubscriptionRepository
     {
-        private readonly string findSubscriptionSql = "select * from events.find_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl)";
-        private readonly string insertSubscriptionSql = "select * from events.insert_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated, @sourcefilterhash)";
-        private readonly string getSubscriptionSql = "select * from events.getsubscription_v2(@_id)";
-        private readonly string deleteSubscription = "call events.deletesubscription(@_id)";
-        private readonly string setValidSubscription = "call events.setvalidsubscription(@_id)";
-        private readonly string getSubscriptionsSql = "select * from events.getsubscriptions($1, $2, $3)";
-        private readonly string getSubscriptionByConsumerSql = "select * from events.getsubscriptionsbyconsumer_v2(@_consumer, @_includeInvalid)";
-        private readonly string connectionString;
+        private readonly string _findSubscriptionSql = "select * from events.find_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl)";
+        private readonly string _insertSubscriptionSql = "select * from events.insert_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated, @sourcefilterhash)";
+        private readonly string _getSubscriptionSql = "select * from events.getsubscription_v2(@_id)";
+        private readonly string _deleteSubscription = "call events.deletesubscription(@_id)";
+        private readonly string _setValidSubscription = "call events.setvalidsubscription(@_id)";
+        private readonly string _getSubscriptionsSql = "select * from events.getsubscriptions($1, $2, $3)";
+        private readonly string _getSubscriptionByConsumerSql = "select * from events.getsubscriptionsbyconsumer_v2(@_consumer, @_includeInvalid)";
+        private readonly string _connectionString;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionRepository"/> class with a 
@@ -37,17 +37,17 @@ namespace Altinn.Platform.Events.Repository
         /// </summary>
         public SubscriptionRepository(IOptions<PostgreSqlSettings> postgresSettings)
         {
-            connectionString =
+            _connectionString =
                 string.Format(postgresSettings.Value.ConnectionString, postgresSettings.Value.EventsDbPwd);
         }
 
         /// <inheritdoc/>
         public async Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash)
         {
-            await using NpgsqlConnection conn = new(connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new(insertSubscriptionSql, conn);
+            await using NpgsqlCommand pgcom = new(_insertSubscriptionSql, conn);
             pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter.ToLower());
 
             pgcom.Parameters.AddWithNullableString("sourcefilter", eventsSubscription.SourceFilter?.AbsoluteUri);
@@ -69,10 +69,10 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task<Subscription> FindSubscription(Subscription eventsSubscription, CancellationToken ct)
         {
-            await using NpgsqlConnection conn = new(connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync(ct);
 
-            await using NpgsqlCommand pgcom = new(findSubscriptionSql, conn);
+            await using NpgsqlCommand pgcom = new(_findSubscriptionSql, conn);
 
             pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter.ToLower());
 
@@ -98,9 +98,9 @@ namespace Altinn.Platform.Events.Repository
         {
             List<Subscription> searchResult = new();
 
-            await using NpgsqlConnection conn = new(connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync(ct);
-            await using NpgsqlCommand pgcom = new(getSubscriptionsSql, conn)
+            await using NpgsqlCommand pgcom = new(_getSubscriptionsSql, conn)
             {
                 Parameters =
                 {
@@ -125,10 +125,10 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task DeleteSubscription(int id)
         {
-            await using NpgsqlConnection conn = new(connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new(deleteSubscription, conn);
+            await using NpgsqlCommand pgcom = new(_deleteSubscription, conn);
             pgcom.Parameters.AddWithValue("_id", id);
 
             await pgcom.ExecuteNonQueryAsync();
@@ -137,10 +137,10 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task SetValidSubscription(int id)
         {
-            await using NpgsqlConnection conn = new(connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new(setValidSubscription, conn);
+            await using NpgsqlCommand pgcom = new(_setValidSubscription, conn);
             pgcom.Parameters.AddWithValue("_id", id);
 
             await pgcom.ExecuteNonQueryAsync();
@@ -151,10 +151,10 @@ namespace Altinn.Platform.Events.Repository
         {
             Subscription subscription = null;
 
-            await using NpgsqlConnection conn = new(connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new(getSubscriptionSql, conn);
+            await using NpgsqlCommand pgcom = new(_getSubscriptionSql, conn);
             pgcom.Parameters.AddWithValue("_id", NpgsqlDbType.Integer, id);
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
@@ -173,10 +173,10 @@ namespace Altinn.Platform.Events.Repository
         {
             List<Subscription> searchResult = new();
 
-            await using NpgsqlConnection conn = new(connectionString);
+            await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new(getSubscriptionByConsumerSql, conn);
+            await using NpgsqlCommand pgcom = new(_getSubscriptionByConsumerSql, conn);
             pgcom.Parameters.AddWithValue("_consumer", NpgsqlDbType.Varchar, consumer);
             pgcom.Parameters.AddWithValue("_includeInvalid", NpgsqlDbType.Boolean, includeInvalid);
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
