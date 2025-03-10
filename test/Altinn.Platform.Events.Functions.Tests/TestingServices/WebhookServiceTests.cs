@@ -31,6 +31,21 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             Options.Create(new EventsOutboundSettings());
 
         [Fact]
+        public void Ctor_HttpClientHasRequestTimeout()
+        {
+            // Arrange
+            Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
+
+            HttpClient actualClient = new();
+
+            // Act
+            _ = new WebhookService(actualClient, _eventsOutboundSettings, loggerMock.Object);
+
+            // Assert
+            Assert.Equal(300, actualClient.Timeout.TotalSeconds);
+        }
+
+        [Fact]
         public void GetPayload_CloudEventExtentionAttributesPersisted()
         {
             // Arrange
