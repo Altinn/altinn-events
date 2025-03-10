@@ -58,7 +58,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new WebhookService(null, null);
+            var sut = new WebhookService(null, null, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -96,7 +96,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new WebhookService(null, null);
+            var sut = new WebhookService(null, null, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -133,7 +133,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new WebhookService(null, null);
+            var sut = new WebhookService(null, null, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -149,7 +149,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
             var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
 
-            var sut = new WebhookService(new HttpClient(handlerMock.Object), loggerMock.Object);
+            var sut = new WebhookService(new HttpClient(handlerMock.Object), null, loggerMock.Object);
 
             var cloudEventEnvelope = new CloudEventEnvelope()
             {
@@ -172,7 +172,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
             var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
-            var sut = new WebhookService(new HttpClient(handlerMock.Object), loggerMock.Object);
+            var sut = new WebhookService(new HttpClient(handlerMock.Object), null, loggerMock.Object);
 
             var cloudEventEnvelope = new CloudEventEnvelope()
             {
