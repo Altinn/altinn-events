@@ -121,7 +121,7 @@ namespace Altinn.Platform.Events.Functions.Clients
                 _logger.LogError("Attempting to validate non existing subscription {SubscriptionId}", subscriptionId);
                 return;
             }
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError(
@@ -134,23 +134,30 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// <inheritdoc/>
         public async Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode)
         {
-            var endpoint = "storage/events/logs";
-
-            var logEntryData = new LogEntryDto
+            try
             {
-                CloudEventId = cloudEventEnvelope.CloudEvent.Id,
-                CloudEventType = cloudEventEnvelope.CloudEvent.Type,
-                CloudEventResource = cloudEventEnvelope.CloudEvent["resource"]?.ToString(),
-                Consumer = cloudEventEnvelope.Consumer,
-                Endpoint = cloudEventEnvelope.Endpoint,
-                SubscriptionId = cloudEventEnvelope.SubscriptionId,
-                StatusCode = statusCode,
-            };
+                var endpoint = "storage/events/logs";
 
-            StringContent httpContent = new(JsonSerializer.Serialize(logEntryData), Encoding.UTF8, "application/json");
-            var accessToken = await GenerateAccessToken();
+                var logEntryData = new LogEntryDto
+                {
+                    CloudEventId = cloudEventEnvelope.CloudEvent.Id,
+                    CloudEventType = cloudEventEnvelope.CloudEvent.Type,
+                    CloudEventResource = cloudEventEnvelope.CloudEvent["resource"]?.ToString(),
+                    Consumer = cloudEventEnvelope.Consumer,
+                    Endpoint = cloudEventEnvelope.Endpoint,
+                    SubscriptionId = cloudEventEnvelope.SubscriptionId,
+                    StatusCode = statusCode,
+                };
 
-            await _client.PostAsync(endpoint, httpContent, accessToken);
+                StringContent httpContent = new(JsonSerializer.Serialize(logEntryData), Encoding.UTF8, "application/json");
+                var accessToken = await GenerateAccessToken();
+
+                await _client.PostAsync(endpoint, httpContent, accessToken);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to log trace log webhook status code for cloud event id {CloudEventId}", cloudEventEnvelope.CloudEvent.Id);
+            }
         }
 
         private async Task<(bool Success, HttpStatusCode StatusCode)> PostCloudEventToEndpoint(CloudEvent cloudEvent, string endpoint)
