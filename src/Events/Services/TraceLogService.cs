@@ -3,7 +3,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
+
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -46,7 +46,7 @@ namespace Altinn.Platform.Events.Services
             }
             catch (Exception exception)
             {
-                _logger.LogError(exception, "Error creating trace log entry for registered event: {Message}", exception.Message);
+                _logger.LogError(exception, "Error creating trace log entry for registered event: {Message} {CloudEventId}", exception.Message, cloudEvent.Id);
 
                 // don't throw exception, we don't want to stop the event processing
                 return string.Empty;
@@ -77,7 +77,7 @@ namespace Altinn.Platform.Events.Services
             }
             catch (Exception exception)
             {
-                _logger.LogError(exception, "Error creating trace log entry with subscription details: {Message}", exception.Message);
+                _logger.LogError(exception, "Error creating trace log entry with subscription details: {Message} {CloudEventId} {SubscriptionId} {Consumer}", exception.Message, cloudEvent.Id, subscription.Id, subscription.Consumer);
 
                 // don't throw exception, we don't want to stop the event processing
                 return string.Empty;
