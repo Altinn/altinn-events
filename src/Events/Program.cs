@@ -45,6 +45,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -183,6 +184,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             tracing.AddAspNetCoreInstrumentation();
 
             tracing.AddHttpClientInstrumentation();
+            tracing.AddNpgsql();
 
             tracing.AddProcessor(new RequestFilterProcessor(new HttpContextAccessor()));
         });
