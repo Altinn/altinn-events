@@ -4,12 +4,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
+using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Models.Payloads;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
-
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Functions.Services
 {
@@ -26,11 +27,13 @@ namespace Altinn.Platform.Events.Functions.Services
         /// <summary>
         /// Initializes a new instance of the <see cref="WebhookService"/> class.
         /// </summary>
-        public WebhookService(HttpClient client, IEventsClient eventsClient, ILogger<WebhookService> logger)
+        public WebhookService(
+            HttpClient client, IEventsClient eventsClient, IOptions<EventsOutboundSettings> eventOutboundSettings, ILogger<WebhookService> logger)
         {
             _client = client;
             _eventsClient = eventsClient;
             _logger = logger;
+            _client.Timeout = TimeSpan.FromSeconds(eventOutboundSettings.Value.RequestTimeout);
         }
 
         /// <inheritdoc/>
