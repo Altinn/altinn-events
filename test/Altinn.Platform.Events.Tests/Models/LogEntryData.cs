@@ -7,7 +7,7 @@ namespace Altinn.Platform.Events.Tests.Models
     /// <summary>
     /// Data transfer object for posting a log event after receiving a webhook response.
     /// </summary>
-    public record LogEntryData
+    public class LogEntryData
     {
         /// <summary>
         /// The cloud event associated with the post action <see cref="CloudEvent"/>"/>

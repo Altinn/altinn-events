@@ -87,11 +87,11 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 HttpStatusCode.OK);
 
             var sut = new EventsClient(
-            new HttpClient(handlerMock.Object),
-            _atgMock.Object,
-            _srMock.Object,
-            _platformSettings,
-            _loggerMock.Object);
+                new HttpClient(handlerMock.Object),
+                _atgMock.Object,
+                _srMock.Object,
+                _platformSettings,
+                _loggerMock.Object);
 
             _cloudEvent["resource"] = resource;
 
@@ -175,7 +175,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("PostInbound event with id 1337 failed with status code ServiceUnavailable")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), 
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
                 Times.Once);
         }
 
@@ -220,7 +220,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("PostOutbound event with id 1337 failed with status code ServiceUnavailable")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), 
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
                 Times.Once);
         }
 

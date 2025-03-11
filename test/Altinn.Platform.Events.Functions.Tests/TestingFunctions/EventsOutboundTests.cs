@@ -1,4 +1,3 @@
-using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
@@ -35,9 +34,8 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             Mock<IWebhookService> webhookServiceMock = new();
             webhookServiceMock.Setup(wh => wh.Send(It.Is<CloudEventEnvelope>(cee => cee.CloudEvent != null)))
                 .Callback<CloudEventEnvelope>(cee => actualServiceInput = cee)
-                .Returns(Task.FromResult(new HttpResponseMessage()));
+                .Returns(Task.CompletedTask);
 
-            Mock<IEventsClient> eventsClientMock = new();
             var sut = new EventsOutbound(webhookServiceMock.Object);
 
             // Act

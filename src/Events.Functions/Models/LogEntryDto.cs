@@ -6,7 +6,7 @@ namespace Altinn.Platform.Events.Functions.Models
     /// <summary>
     /// Data transfer object for posting a log event after receiving a webhook response.
     /// </summary>
-    public record LogEntryDto
+    public class LogEntryDto
     {
         /// <summary>
         /// The cloud event id associated with the logged event
