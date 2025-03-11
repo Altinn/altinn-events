@@ -78,27 +78,18 @@ namespace Altinn.Platform.Events.Controllers
         [HttpPost("logs")]
         [Consumes("application/json")]
         [SwaggerResponse(201, Type = typeof(Guid))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Logs([FromBody] LogEntryDto logEntry)
         {
-            try
-            {
-                var result = await _traceLogService.CreateWebhookResponseEntry(logEntry);
+            var result = await _traceLogService.CreateWebhookResponseEntry(logEntry);
 
-                if (string.IsNullOrEmpty(result))
-                {
-                    return BadRequest();
-                }
-
-                return Created();
-            }
-            catch (Exception e)
+            if (string.IsNullOrEmpty(result))
             {
-                _logger.LogError(e, "Unable to save log entry to storage, please try again.");
-                return StatusCode(500, e.Message);
+                return BadRequest();
             }
+
+            return Created();
         }
 
         [ExcludeFromCodeCoverage]
