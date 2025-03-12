@@ -394,8 +394,6 @@ void Configure(IConfiguration config)
     app.UseAuthentication();
     app.UseAuthorization();
 
-    app.UseTelemetryEnricher();
-
     app.UseMiddleware<EnableRequestBodyBufferingMiddleware>();
 
     app.MapControllers();
