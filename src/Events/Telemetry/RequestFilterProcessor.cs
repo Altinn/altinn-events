@@ -112,7 +112,7 @@ namespace Altinn.Platform.Events.Telemetry
         {
             if (activity.OperationName == _requestKind && _httpContextAccessor.HttpContext is not null)
             {
-                if (_httpContextAccessor.HttpContext.Request.Headers.TryGetValue("X-Forwarded-For", out StringValues ipAddress))
+                if (_httpContextAccessor.HttpContext.Request.Headers.TryGetValue("X-Forwarded-For", out StringValues clientIp))
                 {
                     activity.SetTag("ipAddress", ipAddress.FirstOrDefault());
                 }
