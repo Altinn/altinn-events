@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
@@ -18,7 +19,6 @@ using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Filters;
 using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
 using Altinn.Platform.Events.Middleware;
@@ -26,19 +26,15 @@ using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Swagger;
-using Altinn.Platform.Telemetry;
+using Altinn.Platform.Events.Telemetry;
 
 using AltinnCore.Authentication.JwtCookie;
 
 using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Security.KeyVault.Secrets;
 
 using CloudNative.CloudEvents.SystemTextJson;
-
-using Microsoft.ApplicationInsights.AspNetCore.Extensions;
-using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -49,7 +45,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
+using Npgsql;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 using Yuniql.AspNetCore;
@@ -63,13 +63,11 @@ string applicationInsightsConnectionString = string.Empty;
 
 var builder = WebApplication.CreateBuilder(args);
 
-ConfigureSetupLogging();
+ConfigureWebHostCreationLogging();
 
 await SetConfigurationProviders(builder.Configuration);
 
-ConfigureLogging(builder.Logging);
-
-ConfigureApplicationInsights(builder.Services);
+ConfigureApplicationLogging(builder.Logging);
 
 ConfigureServices(builder.Services, builder.Configuration);
 
@@ -79,7 +77,7 @@ Configure(builder.Configuration);
 
 app.Run();
 
-void ConfigureSetupLogging()
+void ConfigureWebHostCreationLogging()
 {
     var logFactory = LoggerFactory.Create(builder =>
     {
@@ -148,60 +146,54 @@ async Task ConnectToKeyVaultAndSetApplicationInsights(ConfigurationManager confi
     }
 }
 
-void ConfigureLogging(ILoggingBuilder logging)
+void ConfigureApplicationLogging(ILoggingBuilder logging)
 {
-    // The default ASP.NET Core project templates call CreateDefaultBuilder, which adds the following logging providers:
-    // Console, Debug, EventSource
-    // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-3.1
-
-    // Clear log providers
-    logging.ClearProviders();
-
-    // Setup up application insight if applicationInsightsKey   is available
-    if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
+    logging.AddOpenTelemetry(builder =>
     {
-        // Add application insights https://docs.microsoft.com/en-us/azure/azure-monitor/app/ilogger
-        logging.AddApplicationInsights(
-            configureTelemetryConfiguration: (config) => config.ConnectionString = applicationInsightsConnectionString,
-            configureApplicationInsightsLoggerOptions: (options) => { });
-
-        // Optional: Apply filters to control what logs are sent to Application Insights.
-        // The following configures LogLevel Information or above to be sent to
-        // Application Insights for all categories.
-        logging.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>(string.Empty, LogLevel.Warning);
-
-        // Adding the filter below to ensure logs of all severity from Program.cs
-        // is sent to ApplicationInsights.
-        logging.AddFilter<Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider>(typeof(Program).FullName, LogLevel.Trace);
-    }
-    else
-    {
-        // If not application insight is available log to console
-        logging.AddFilter("Microsoft", LogLevel.Warning);
-        logging.AddFilter("System", LogLevel.Warning);
-        logging.AddConsole();
-    }
-}
-
-void ConfigureApplicationInsights(IServiceCollection services)
-{
-    if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
-    {
-        services.AddSingleton(typeof(ITelemetryChannel), new ServerTelemetryChannel() { StorageFolder = "/tmp/logtelemetry" });
-
-        services.AddApplicationInsightsTelemetry(new ApplicationInsightsServiceOptions
-        {
-            ConnectionString = applicationInsightsConnectionString
-        });
-
-        services.AddApplicationInsightsTelemetryProcessor<HealthTelemetryFilter>();
-        services.AddApplicationInsightsTelemetryProcessor<IdentityTelemetryFilter>();
-        services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
-    }
+       builder.IncludeFormattedMessage = true;
+       builder.IncludeScopes = true; 
+    });
 }
 
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
+    logger.LogInformation("Program // ConfigureServices");
+
+    var attributes = new List<KeyValuePair<string, object>>(2)
+    {
+        KeyValuePair.Create("service.name", (object)"platform-events"),
+    };
+
+    services.AddOpenTelemetry()
+        .ConfigureResource(resourceBuilder => resourceBuilder.AddAttributes(attributes))
+        .WithMetrics(metrics => 
+        {
+            metrics.AddAspNetCoreInstrumentation();
+            metrics.AddMeter(
+                "Microsoft.AspNetCore.Hosting",
+                "Microsoft.AspNetCore.Server.Kestrel",
+                "System.Net.Http");
+        })
+        .WithTracing(tracing => 
+        {
+            if (builder.Environment.IsDevelopment())
+            {
+                tracing.SetSampler(new AlwaysOnSampler());
+            }
+
+            tracing.AddAspNetCoreInstrumentation();
+
+            tracing.AddHttpClientInstrumentation();
+            tracing.AddNpgsql();
+
+            tracing.AddProcessor(new RequestFilterProcessor(new HttpContextAccessor()));
+        });
+
+    if (!string.IsNullOrEmpty(applicationInsightsConnectionString))
+    {
+        AddAzureMonitorTelemetryExporters(services, applicationInsightsConnectionString);
+    }
+
     services.AddAutoMapper(typeof(Program));
 
     services.AddMemoryCache();
@@ -253,25 +245,14 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
               }
           });
 
-    services.AddAuthorization(options =>
-    {
-        options.AddPolicy(AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS, policy =>
+    services.AddAuthorizationBuilder()
+        .AddPolicy(AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS, policy =>
         {
             policy.Requirements.Add(new PublishScopeOrAccessTokenRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH));
-        });
-
-        options.AddPolicy(
-            AuthorizationConstants.POLICY_PLATFORM_ACCESS,
-            policy => policy.Requirements.Add(new AccessTokenRequirement()));
-
-        options.AddPolicy(
-            AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH,
-            policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH)));
-
-        options.AddPolicy(
-            AuthorizationConstants.POLICY_SCOPE_EVENTS_SUBSCRIBE,
-            policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)));
-    });
+        })
+        .AddPolicy(AuthorizationConstants.POLICY_PLATFORM_ACCESS, policy => policy.Requirements.Add(new AccessTokenRequirement()))
+        .AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_PUBLISH, policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_PUBLISH)))
+        .AddPolicy(AuthorizationConstants.POLICY_SCOPE_EVENTS_SUBSCRIBE, policy => policy.Requirements.Add(new ScopeAccessRequirement(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE)));
 
     services.AddControllers(opts =>
     {
@@ -340,6 +321,22 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             }
         });
     });
+}
+
+void AddAzureMonitorTelemetryExporters(IServiceCollection services, string applicationInsightsConnectionString)
+{
+    services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddAzureMonitorLogExporter(o =>
+    {
+        o.ConnectionString = applicationInsightsConnectionString;
+    }));
+    services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddAzureMonitorMetricExporter(o =>
+    {
+        o.ConnectionString = applicationInsightsConnectionString;
+    }));
+    services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddAzureMonitorTraceExporter(o =>
+    {
+        o.ConnectionString = applicationInsightsConnectionString;
+    }));
 }
 
 void IncludeXmlComments(SwaggerGenOptions swaggerGenOptions)
