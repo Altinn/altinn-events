@@ -114,7 +114,7 @@ namespace Altinn.Platform.Events.Telemetry
             {
                 if (_httpContextAccessor.HttpContext.Request.Headers.TryGetValue("X-Forwarded-For", out StringValues clientIp))
                 {
-                    activity.SetTag("ipAddress", ipAddress.FirstOrDefault());
+                    activity.SetTag("ipAddress", clientIp.FirstOrDefault());
                 }
 
                 foreach (var claim in _httpContextAccessor.HttpContext.User.Claims)
