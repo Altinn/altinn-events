@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION events.getappevents_v2(
 	_source text[],
 	_resource text,
 	_size integer)
-    RETURNS TABLE(cloudevents text)
+    RETURNS TABLE(cloudevents text) 
     LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
@@ -31,16 +31,16 @@ END IF;
 SELECT MAX(sequenceno) INTO _sequenceno_last FROM events.events WHERE registeredtime <= now() - interval '30 second';
 return query
 	SELECT cast(cloudevent as text) as cloudevents
-		FROM events.events
-		WHERE (_subject IS NULL OR cloudevent->>'subject' = _subject)
-			AND (_from IS NULL OR cloudevent->>'time' >= _from::text)
-			AND (_to IS NULL OR cloudevent->>'time' <= _to::text)
-			AND (_type IS NULL OR cloudevent->>'type' ILIKE ANY(_type))
-			AND (_source IS NULL OR cloudevent->>'source' ILIKE ANY(_source))
-			AND (_resource IS NULL OR cloudevent->>'resource' = _resource)
-			AND (_after IS NULL OR _after = '' OR sequenceno > _sequenceno_first)
-			AND (_sequenceno_last IS NULL OR sequenceno <= _sequenceno_last)
-		ORDER BY sequenceno
-		limit _size;
+	FROM events.events
+	WHERE (_subject IS NULL OR cloudevent->>'subject' = _subject)
+		AND (_from IS NULL OR (cloudevent->>'time')::timestamptz >= _from)
+		AND (_to IS NULL OR (cloudevent->>'time')::timestamptz <= _to)
+		AND (_type IS NULL OR cloudevent->>'type' ILIKE ANY(_type))
+		AND (_source IS NULL OR cloudevent->>'source' ILIKE ANY(_source))
+		AND (_resource IS NULL OR cloudevent->>'resource' = _resource)
+		AND (_after IS NULL OR _after = '' OR sequenceno > _sequenceno_first)
+		AND (_sequenceno_last IS NULL OR sequenceno <= _sequenceno_last)
+	ORDER BY sequenceno
+	limit _size;
 END;
 $BODY$;
