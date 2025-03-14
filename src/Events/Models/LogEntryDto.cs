@@ -1,7 +1,7 @@
 ﻿#nullable enable
-
 using System;
 using System.Net;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Models

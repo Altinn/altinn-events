@@ -1,4 +1,7 @@
 using System.Threading.Tasks;
+
+using Altinn.Platform.Events.Functions.Models;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Functions.Clients.Interfaces
@@ -14,6 +17,12 @@ namespace Altinn.Platform.Events.Functions.Clients.Interfaces
         /// <param name="cloudEvent">The CloudEvent to be stored</param>
         /// <returns>CloudEvent as stored in the database</returns>
         Task SaveCloudEvent(CloudEvent cloudEvent);
+
+        /// <summary>
+        /// Posts an event with the given statusCode
+        /// </summary>
+        /// <returns></returns>
+        Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, System.Net.HttpStatusCode statusCode);
 
         /// <summary>
         /// Send cloudEvent for outbound processing.
