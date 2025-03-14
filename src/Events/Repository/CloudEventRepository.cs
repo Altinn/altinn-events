@@ -23,11 +23,11 @@ namespace Altinn.Platform.Events.Repository
     [ExcludeFromCodeCoverage]
     public class CloudEventRepository : ICloudEventRepository
     {
-        private readonly string insertEventSql = @"insert into events.events(cloudevent) VALUES ($1)
+        private readonly string _insertEventSql = @"insert into events.events(cloudevent) VALUES ($1)
             ON CONFLICT ((cloudevent -> 'id'), (cloudevent -> 'source')) DO NOTHING";
 
-        private readonly string getAppEventsSql = "select events.getappevents_v2(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
-        private readonly string getEventsSql = "select events.getevents($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
+        private readonly string _getAppEventsSql = "select events.getappevents_v2(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
+        private readonly string _getEventsSql = "select events.getevents($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
         private readonly string _connectionString;
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Altinn.Platform.Events.Repository
             await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new(insertEventSql, conn)
+            await using NpgsqlCommand pgcom = new(_insertEventSql, conn)
             {
                 Parameters =
                 {
@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Repository
             await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new(getAppEventsSql, conn);
+            await using NpgsqlCommand pgcom = new(_getAppEventsSql, conn);
 
             // ignore missing [Flags] attribute on NpgsqlDbType enum.
             // For more info: https://github.com/npgsql/npgsql/issues/2801
@@ -99,7 +99,7 @@ namespace Altinn.Platform.Events.Repository
             await using NpgsqlConnection conn = new(_connectionString);
             await conn.OpenAsync();
 
-            await using NpgsqlCommand pgcom = new(getEventsSql, conn);
+            await using NpgsqlCommand pgcom = new(_getEventsSql, conn);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, resource);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, subject ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, alternativeSubject ?? (object)DBNull.Value);
