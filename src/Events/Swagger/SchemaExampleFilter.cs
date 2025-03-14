@@ -40,6 +40,17 @@ namespace Altinn.Platform.Events.Swagger
                         ["alternativesubject"] = new OpenApiString("/person/27124902369"),
                         ["time"] = new OpenApiString("2020-10-29T07:22:19.438039Z")
                     };
+                case nameof(LogEntryDto):
+                    return new OpenApiObject
+                    {
+                        ["cloudEventId"] = new OpenApiString(Guid.NewGuid().ToString()),
+                        ["cloudEventType"] = new OpenApiString("app.instance.created"),
+                        ["cloudEventResource"] = new OpenApiString("urn:altinn:resource:app_ttd_apps-test"),
+                        ["subscriptionId"] = new OpenApiInteger(1),
+                        ["consumer"] = new OpenApiString("/user/12345"),
+                        ["endpoint"] = new OpenApiString("https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
+                        ["statusCode"] = new OpenApiInteger(200)
+                    };
                 case nameof(Subscription):
                     return new OpenApiObject
                     {
