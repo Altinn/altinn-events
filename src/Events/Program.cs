@@ -283,9 +283,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
     services.AddSingleton<IGenericSubscriptionService, GenericSubscriptionService>();
-    services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
-    services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
-    services.AddSingleton<ITraceLogRepository, TraceLogRepository>();
+    services.AddScoped<ICloudEventRepository, CloudEventRepository>();
+    services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+    services.AddScoped<ITraceLogRepository, TraceLogRepository>();
     services.Decorate<ISubscriptionRepository, SubscriptionRepositoryCachingDecorator>();
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
