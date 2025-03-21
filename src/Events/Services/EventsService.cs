@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -121,6 +122,20 @@ namespace Altinn.Platform.Events.Services
             if (events.Count == 0)
             {
                 return events;
+            }
+
+            /********
+             * Authorization doesn't support event subject on the format urn:altinn:person:identifier-no:08895699684.
+             * We need to obtain the party UUID from Register and use that instead when building the authorization request.
+             *******/
+
+            List<string> subjects = (from e in events
+                                     where e.Subject.StartsWith("urn:altinn:person:identifier-no:")
+                                     select e.Subject).Distinct().ToList();
+
+            if (subjects.Count > 0)
+            {
+                // A register lookup is required to obtain the party UUID for the persons.
             }
 
             return await _authorizationService.AuthorizeEvents(events);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -46,13 +47,14 @@ namespace Altinn.Platform.Events.Services
             IOptions<PlatformSettings> platformSettings,
             ILogger<IRegisterService> logger)
         {
-            httpClient.BaseAddress = new Uri(platformSettings.Value.ApiRegisterEndpoint);
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _client = httpClient;
             _httpContextAccessor = httpContextAccessor;
             _generalSettings = generalSettings.Value;
             _accessTokenGenerator = accessTokenGenerator;
             _logger = logger;
+
+            _client.BaseAddress = new Uri(platformSettings.Value.ApiRegisterEndpoint);
+            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             _serializerOptions = new()
             {
@@ -87,6 +89,11 @@ namespace Altinn.Platform.Events.Services
 
                 throw await PlatformHttpException.CreateAsync(response);
             }
+        }
+
+        public async Task PartyLookup(List<string> partyUrnList)
+        {
+
         }
     }
 }
