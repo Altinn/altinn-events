@@ -93,9 +93,9 @@ namespace Altinn.Platform.Events.Repository
             List<Subscription> searchResult = new();
 
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_getSubscriptionsSql);
-            pgcom.Parameters.AddWithValue("1", resource); // TODO
-            pgcom.Parameters.AddWithValue("2", NpgsqlDbType.Varchar, subject ?? string.Empty);
-            pgcom.Parameters.AddWithValue("3", type);
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, resource);
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, subject ?? string.Empty);
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, type);
 
             await pgcom.PrepareAsync(ct);
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync(ct))

@@ -43,7 +43,7 @@ namespace Altinn.Platform.Events.Repository
         public async Task CreateEvent(string cloudEvent)
         {
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_insertEventSql);
-            pgcom.Parameters.AddWithValue("1", NpgsqlDbType.Jsonb, cloudEvent); // TODO
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Jsonb, cloudEvent);
 
             await pgcom.ExecuteNonQueryAsync();
         }
