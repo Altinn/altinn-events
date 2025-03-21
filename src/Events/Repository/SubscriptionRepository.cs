@@ -97,7 +97,6 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, subject ?? string.Empty);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, type);
 
-            await pgcom.PrepareAsync(ct);
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync(ct))
             {
                 while (await reader.ReadAsync(ct))
