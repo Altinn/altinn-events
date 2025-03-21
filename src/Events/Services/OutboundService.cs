@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Services
     public class OutboundService : IOutboundService
     {
         private readonly IEventsQueueClient _queueClient;
-
+        private readonly ITraceLogService _traceLogService;
         private readonly ISubscriptionRepository _subscriptionRepository;
         private readonly IAuthorization _authorizationService;
         private readonly PlatformSettings _platformSettings;
@@ -32,20 +32,22 @@ namespace Altinn.Platform.Events.Services
         private readonly IMemoryCache _memoryCache;
         private readonly MemoryCacheEntryOptions _consumerAuthorizationEntryOptions;
 
-        private readonly ILogger<IOutboundService> _logger;
+        private readonly ILogger<OutboundService> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OutboundService"/> class.
         /// </summary>
         public OutboundService(
             IEventsQueueClient queueClient,
+            ITraceLogService traceLogService,
             ISubscriptionRepository repository,
             IAuthorization authorizationService,
             IOptions<PlatformSettings> platformSettings,
             IMemoryCache memoryCache,
-            ILogger<IOutboundService> logger)
+            ILogger<OutboundService> logger)
         {
             _queueClient = queueClient;
+            _traceLogService = traceLogService;
             _subscriptionRepository = repository;
             _authorizationService = authorizationService;
             _platformSettings = platformSettings.Value;
@@ -93,8 +95,15 @@ namespace Altinn.Platform.Events.Services
 
                 if (!receipt.Success)
                 {
-                    _logger.LogError(receipt.Exception, "// OutboundService // EnqueueOutbound // Failed to send event envelope {EventId} to consumer with subscriptionId {subscriptionId}.", cloudEvent.Id, subscription.Id);
+                    _logger.LogError(receipt.Exception, "OutboundService EnqueueOutbound Failed to send event envelope {EventId} to consumer with {SubscriptionId}.", cloudEvent.Id, subscription.Id);
                 }
+                    
+                await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.OutboundQueue); // log that entry was added to outbound queue
+            }
+            else 
+            {
+                // add unauthorized trace log entry
+                await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.Unauthorized);
             }
         }
 

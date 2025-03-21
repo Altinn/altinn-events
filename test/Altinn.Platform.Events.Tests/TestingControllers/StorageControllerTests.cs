@@ -47,6 +47,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             private readonly WebApplicationFactory<StorageController> _factory;
 
+            private readonly Mock<ITraceLogService> _traceLogServiceMock = new Mock<ITraceLogService>();
+
             /// <summary>
             /// Initializes a new instance of the <see cref="StorageControllerTests"/> class with the given <see cref="WebApplicationFactory{TStorageController}"/>.
             /// </summary>
@@ -174,7 +176,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
-
+         
             private HttpClient GetTestClient(IEventsService eventsService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>

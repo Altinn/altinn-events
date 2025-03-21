@@ -1,5 +1,6 @@
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
+using Altinn.Platform.Events.Functions.Constants;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Altinn.Platform.Events.Models;
@@ -37,7 +38,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             // Arrange
             string expectedConsumer = "/org/ttd";
             Uri expectedEndpoint = new Uri("https://hooks.slack.com/services/org/channel/");
-            string expectedCloudEventType = "platform.events.validatesubscription";
+            string expectedCloudEventType = EventConstants.ValidationType;
             CloudEventsSpecVersion expectedSpecVersion = CloudEventsSpecVersion.V1_0;
 
             var sut = new SubscriptionValidation(
