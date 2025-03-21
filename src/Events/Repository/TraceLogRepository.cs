@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
@@ -12,15 +13,13 @@ namespace Altinn.Platform.Events.Repository
 {
     /// <inheritdoc/>
     [ExcludeFromCodeCoverage]
-    public class TraceLogRepository(IOptions<PostgreSqlSettings> postgresSettings) : ITraceLogRepository
+    public class TraceLogRepository(NpgsqlDataSource dataSource) : ITraceLogRepository
     {
-        private readonly string _connectionString = string.Format(
-                postgresSettings.Value.ConnectionString,
-                postgresSettings.Value.EventsDbPwd);
-
         private readonly string _insertTraceLogSql = @"INSERT INTO events.trace_log(
 	cloudeventid, resource, eventtype, consumer, subscriptionid, responsecode, subscriberendpoint, activity)
 	VALUES (@cloudeventid, @resource, @eventtype, @consumer, @subscriptionid, @responsecode, @subscriberendpoint, @activity);";
+
+        private readonly NpgsqlDataSource _dataSource = dataSource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TraceLog"/> class with a
@@ -29,10 +28,7 @@ namespace Altinn.Platform.Events.Repository
         /// <returns></returns>
         public async Task CreateTraceLogEntry(TraceLog traceLog)
         {
-            await using NpgsqlConnection conn = new(_connectionString);
-            await conn.OpenAsync();
-
-            await using NpgsqlCommand pgcom = new(_insertTraceLogSql, conn);
+            await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_insertTraceLogSql);
 
             pgcom.Parameters.AddWithValue("cloudeventid", traceLog.CloudEventId);
             pgcom.Parameters.AddWithValue("resource", traceLog.Resource);
