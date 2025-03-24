@@ -209,7 +209,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             .AddNpgSql(connectionString);
 
         services.AddNpgsqlDataSource(connectionString, builder => builder
-                .EnableParameterLogging(true)
+                .EnableParameterLogging(false)
                 .EnableDynamicJson()
                 .ConfigureTracing(o => o
                     .ConfigureCommandSpanNameProvider(cmd => cmd.CommandText)
