@@ -28,31 +28,23 @@ namespace Altinn.Platform.Events.Repository
 
         private readonly string _getAppEventsSql = "select events.getappevents_v2(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
         private readonly string _getEventsSql = "select events.getevents($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
-        private readonly string _connectionString;
+
+        private readonly NpgsqlDataSource _dataSource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CloudEventRepository"/> class.
         /// </summary>
-        public CloudEventRepository(IOptions<PostgreSqlSettings> postgresSettings)
+        public CloudEventRepository(NpgsqlDataSource dataSource)
         {
-            _connectionString = string.Format(
-                postgresSettings.Value.ConnectionString,
-                postgresSettings.Value.EventsDbPwd);
+            _dataSource = dataSource;
         }
 
         /// <inheritdoc/>
         public async Task CreateEvent(string cloudEvent)
         {
-            await using NpgsqlConnection conn = new(_connectionString);
-            await conn.OpenAsync();
+            await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_insertEventSql);
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Jsonb, cloudEvent);
 
-            await using NpgsqlCommand pgcom = new(_insertEventSql, conn)
-            {
-                Parameters =
-                {
-                    new() { Value = cloudEvent, NpgsqlDbType = NpgsqlDbType.Jsonb }
-                }
-            };
             await pgcom.ExecuteNonQueryAsync();
         }
 
@@ -61,10 +53,7 @@ namespace Altinn.Platform.Events.Repository
         {
             List<CloudEvent> searchResult = new();
 
-            await using NpgsqlConnection conn = new(_connectionString);
-            await conn.OpenAsync();
-
-            await using NpgsqlCommand pgcom = new(_getAppEventsSql, conn);
+            await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_getAppEventsSql);
 
             // ignore missing [Flags] attribute on NpgsqlDbType enum.
             // For more info: https://github.com/npgsql/npgsql/issues/2801
@@ -96,10 +85,7 @@ namespace Altinn.Platform.Events.Repository
         {
             List<CloudEvent> searchResult = GetSearchResult();
 
-            await using NpgsqlConnection conn = new(_connectionString);
-            await conn.OpenAsync();
-
-            await using NpgsqlCommand pgcom = new(_getEventsSql, conn);
+            await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_getEventsSql);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, resource);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, subject ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, alternativeSubject ?? (object)DBNull.Value);
