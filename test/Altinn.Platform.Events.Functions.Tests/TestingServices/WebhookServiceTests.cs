@@ -1,5 +1,6 @@
 ﻿using System.Net;
 
+using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services;
@@ -19,6 +20,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
     public class WebhookServiceTests
     {
         private const string _cloudEventId = "1337";
+        private Mock<IEventsClient> _eventsClientMock = new Mock<IEventsClient>();
 
         private readonly CloudEvent _minimalCloudEvent = new(CloudEventsSpecVersion.V1_0)
         {
@@ -39,7 +41,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             HttpClient actualClient = new();
 
             // Act
-            _ = new WebhookService(actualClient, _eventsOutboundSettings, loggerMock.Object);
+            _ = new WebhookService(actualClient, null, _eventsOutboundSettings, loggerMock.Object);
 
             // Assert
             Assert.Equal(300, actualClient.Timeout.TotalSeconds);
@@ -78,7 +80,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new WebhookService(new HttpClient(), _eventsOutboundSettings, null);
+            var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -116,7 +118,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new WebhookService(new HttpClient(), _eventsOutboundSettings, null);
+            var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -153,7 +155,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new WebhookService(new HttpClient(), _eventsOutboundSettings, null);
+            var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -169,7 +171,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
             var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
 
-            var sut = new WebhookService(new HttpClient(handlerMock.Object), _eventsOutboundSettings, loggerMock.Object);
+            var sut = new WebhookService(new HttpClient(handlerMock.Object), _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
             var cloudEventEnvelope = new CloudEventEnvelope()
             {
@@ -192,7 +194,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
             var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
-            var sut = new WebhookService(new HttpClient(handlerMock.Object), _eventsOutboundSettings, loggerMock.Object);
+            var sut = new WebhookService(new HttpClient(handlerMock.Object), _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
             var cloudEventEnvelope = new CloudEventEnvelope()
             {

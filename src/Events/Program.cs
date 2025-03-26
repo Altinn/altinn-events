@@ -278,6 +278,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     services.AddHttpClient<IRegisterService, RegisterService>();
     services.AddSingleton<IEventsService, EventsService>();
+    services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
