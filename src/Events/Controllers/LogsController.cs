@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
@@ -27,12 +27,12 @@ namespace Altinn.Platform.Events.Controllers
         /// </summary>
         /// <param name="logEntry">The event wrapper associated with the event for logging <see cref="CloudEventEnvelope"/></param>
         /// <returns></returns>
-        [Authorize(Policy = "PlatformAccess")]
+        [Authorize(Policy = AuthorizationConstants.POLICY_PLATFORM_ACCESS)]
         [HttpPost]
         [Consumes("application/json")]
         [SwaggerResponse(201, Type = typeof(Guid))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Logs([FromBody] LogEntryDto logEntry)
         {
             var result = await _traceLogService.CreateWebhookResponseEntry(logEntry);
