@@ -9,7 +9,7 @@ using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
-
+using Altinn.Profile.Tests.Testdata;
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
@@ -433,6 +433,66 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
 
+        [Fact]
+        public async Task GetEvents_Test()
+        {
+            // Arrange
+            List<CloudEvent> cloudEvents = [
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:02056241046"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:organization:identifier-no:31073102351"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:31073102351")];
+
+            Mock<ICloudEventRepository> repoMock = new();
+            repoMock.Setup(q => q.GetEvents(
+                It.IsAny<string>(), 
+                It.IsAny<string>(), 
+                It.IsAny<string>(), 
+                It.IsAny<string>(), 
+                It.IsAny<List<string>>(), 
+                It.IsAny<int>())).ReturnsAsync(cloudEvents);
+
+            List<PartyIdentifiers> partyIdentifiers = 
+                (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
+
+            List<string> requestedUrnList = null;
+            Mock<IRegisterService> registerMock = new();
+            registerMock.Setup(r => r.PartyLookup(It.IsAny<List<string>>(), It.IsAny<int>()))
+                .Callback((List<string> urnList, int chunkSize) => requestedUrnList = urnList)
+                .ReturnsAsync(partyIdentifiers);
+
+            List<CloudEvent> cloudEventsForAuth = null;
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock.Setup(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>()))
+                .Callback((List<CloudEvent> forAuth) => cloudEventsForAuth = forAuth)
+                .ReturnsAsync((List<CloudEvent> events) => events);
+
+            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            EventsService target = GetEventsService(
+                repositoryMock: repoMock.Object, 
+                registerMock: registerMock,
+                authorizationMock: authorizationMock,
+                loggerMock: logger);
+
+            // Act
+            List<CloudEvent> finalCloudEvents = await target.GetEvents(string.Empty, string.Empty, string.Empty, string.Empty, [], 50);
+
+            // Assert
+            Assert.Equal(2, requestedUrnList.Count);
+            Assert.Equal("urn:altinn:person:identifier-no:31073102351", requestedUrnList[1]);
+
+            Assert.Equal(3, cloudEventsForAuth.Count);
+            Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[0].Subject);
+            Assert.StartsWith("urn:altinn:person:identifier-no:", cloudEventsForAuth[0]["originalsubjectreplacedforauthorization"].ToString());
+
+            Assert.StartsWith("urn:altinn:organization:identifier-no:", cloudEventsForAuth[1].Subject);
+            Assert.Null(cloudEventsForAuth[1]["originalsubjectreplacedforauthorization"]);
+
+            Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[2].Subject);
+            Assert.StartsWith("urn:altinn:person:identifier-no:", cloudEventsForAuth[2]["originalsubjectreplacedforauthorization"].ToString());
+
+            Assert.NotNull(finalCloudEvents);
+        }
+
         private EventsService GetEventsService(
             ICloudEventRepository repositoryMock = null,
             IEventsQueueClient queueMock = null,
@@ -492,6 +552,21 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Time = DateTime.Now,
                 Subject = "/person/16069412345"
             };
+
+            return cloudEvent;
+        }
+
+        private static CloudEvent GetCloudEvent(string resource, string subject)
+        {
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "something.important.happened",
+                Time = DateTime.Now,
+                Subject = subject
+            };
+
+            cloudEvent["resource"] = resource;
 
             return cloudEvent;
         }

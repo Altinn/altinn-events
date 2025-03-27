@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -53,7 +54,7 @@ namespace Altinn.Platform.Events.Services
             _accessTokenGenerator = accessTokenGenerator;
             _logger = logger;
 
-            _client.BaseAddress = new Uri(platformSettings.Value.ApiRegisterEndpoint);
+            _client.BaseAddress = new Uri(platformSettings.Value.RegisterApiBaseAddress);
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             _serializerOptions = new()
@@ -66,7 +67,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<int> PartyLookup(string orgNo, string person)
         {
-            string endpointUrl = "parties/lookup";
+            string endpointUrl = "v1/parties/lookup";
 
             PartyLookup partyLookup = new PartyLookup() { Ssn = person, OrgNo = orgNo };
 
@@ -91,9 +92,39 @@ namespace Altinn.Platform.Events.Services
             }
         }
 
-        public async Task PartyLookup(List<string> partyUrnList)
+        /// <inheritdoc/>
+        public async Task<List<PartyIdentifiers>> PartyLookup(List<string> partyUrnList, int chunkSize = 100)
         {
+            string bearerToken = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.JwtCookieName);
+            string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
+            
+            List<PartyIdentifiers> partyIdentifiers = [];
 
+            // The Register API only supports 100 entries per request
+            foreach (string[] chunk in partyUrnList.Chunk(chunkSize))
+            {
+                PartiesRegisterQueryRequest partyLookup = new() { Data = chunk };
+
+                StringContent content = new(JsonSerializer.Serialize(partyLookup));
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+
+                const string RequestUri = "v2/internal/parties/query?fields=identifiers";
+                HttpResponseMessage response = await _client.PostAsync(bearerToken, RequestUri, content, accessToken);
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    PartiesRegisterQueryResponse queryResults = 
+                        await response.Content.ReadFromJsonAsync<PartiesRegisterQueryResponse>(_serializerOptions);
+
+                    partyIdentifiers.AddRange(queryResults.Data);
+                }
+                else
+                {
+                    throw await PlatformHttpException.CreateAsync(response);
+                }
+            }
+
+            return partyIdentifiers;
         }
     }
 }

@@ -20,6 +20,8 @@ namespace Altinn.Platform.Events.Services
     /// </summary>
     public class EventsService : IEventsService
     {
+        private const string _originalSubjectKey = "originalsubjectreplacedforauthorization";
+
         private readonly ICloudEventRepository _repository;
         private readonly IEventsQueueClient _queueClient;
 
@@ -133,12 +135,40 @@ namespace Altinn.Platform.Events.Services
                                      where e.Subject.StartsWith("urn:altinn:person:identifier-no:")
                                      select e.Subject).Distinct().ToList();
 
-            if (subjects.Count > 0)
+            if (subjects.Count == 0)
             {
-                // A register lookup is required to obtain the party UUID for the persons.
+                return await _authorizationService.AuthorizeEvents(events);
             }
 
-            return await _authorizationService.AuthorizeEvents(events);
+            List<PartyIdentifiers> partyIdentifiersList = await _registerService.PartyLookup(subjects, 100);
+
+            foreach (CloudEvent cloudEvent in events.Where(e => e.Subject.StartsWith("urn:altinn:person:identifier-no:")))
+            {
+                cloudEvent[_originalSubjectKey] = cloudEvent.Subject;
+                    
+                string nationalIdentityNumber = cloudEvent.Subject.Split(":")[4];
+
+                PartyIdentifiers partyIdentifiers = 
+                    partyIdentifiersList.FirstOrDefault(p => p.PersonIdentifier == nationalIdentityNumber);
+
+                if (partyIdentifiers != null)
+                {
+                    cloudEvent.Subject = $"urn:altinn:party:uuid:{partyIdentifiers.PartyUuid}";
+                }
+            }
+
+            List<CloudEvent> authorizedEvents = await _authorizationService.AuthorizeEvents(events);
+
+            foreach (CloudEvent cloudEvent in authorizedEvents)
+            {
+                if (cloudEvent[_originalSubjectKey] != null)
+                {
+                    cloudEvent.Subject = cloudEvent[_originalSubjectKey].ToString();
+                    cloudEvent[_originalSubjectKey] = null;
+                }
+            }
+
+            return authorizedEvents;
         }
     }
 }
