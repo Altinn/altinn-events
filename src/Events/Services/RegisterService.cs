@@ -93,7 +93,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<PartyIdentifiers>> PartyLookup(List<string> partyUrnList, int chunkSize = 100)
+        public async Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList, int chunkSize = 100)
         {
             string bearerToken = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.JwtCookieName);
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");

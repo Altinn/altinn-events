@@ -23,5 +23,5 @@ public interface IRegisterService
     /// <param name="chunkSize">Chunk the list into smaller parts for consumtion by the Register
     /// API as it as limits to how many it can handle in each request. default=100.</param>
     /// <returns>A list of the perties found in register</returns>
-    Task<List<PartyIdentifiers>> PartyLookup(List<string> partyUrnList, int chunkSize);
+    Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList, int chunkSize);
 }

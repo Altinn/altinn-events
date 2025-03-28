@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -140,7 +141,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 "urn:altinn:person:identifier-no:31073102351"];
 
             // Act
-            List<PartyIdentifiers> partyIdentifiers = await target.PartyLookup(partyUrnList, 5);
+            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList, 5)];
 
             // Assert
             Assert.NotNull(requestMessage);
@@ -199,7 +200,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 "urn:altinn:person:identifier-no:18874198354"];
 
             // Act
-            List<PartyIdentifiers> partyIdentifiers = await target.PartyLookup(partyUrnList, 2);
+            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList, 2)];
 
             // Assert
             const string ExpectedRequestUri =

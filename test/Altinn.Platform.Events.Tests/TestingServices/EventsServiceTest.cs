@@ -434,41 +434,71 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task GetEvents_Test()
+        public async Task GetEvents_InputEventsFiveSubjects_LogicManipluateSubjectCorrectly()
         {
-            // Arrange
             List<CloudEvent> cloudEvents = [
                 GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:02056241046"),
-                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:organization:identifier-no:31073102351"),
-                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:31073102351")];
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:organization:identifier-no:312508729"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:31073102351"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:31073102351"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:notfound")];
 
             Mock<ICloudEventRepository> repoMock = new();
             repoMock.Setup(q => q.GetEvents(
-                It.IsAny<string>(), 
-                It.IsAny<string>(), 
-                It.IsAny<string>(), 
-                It.IsAny<string>(), 
-                It.IsAny<List<string>>(), 
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<List<string>>(),
                 It.IsAny<int>())).ReturnsAsync(cloudEvents);
 
-            List<PartyIdentifiers> partyIdentifiers = 
+            List<PartyIdentifiers> partyIdentifiers =
                 (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
 
-            List<string> requestedUrnList = null;
             Mock<IRegisterService> registerMock = new();
-            registerMock.Setup(r => r.PartyLookup(It.IsAny<List<string>>(), It.IsAny<int>()))
-                .Callback((List<string> urnList, int chunkSize) => requestedUrnList = urnList)
+            registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<int>()))
+                .Callback((IEnumerable<string> requestedUrnList, int chunkSize) =>
+                {
+                    Assert.Equal(3, requestedUrnList.Count());
+                    Assert.Equal("urn:altinn:person:identifier-no:02056241046", requestedUrnList.ElementAt(0));
+                    Assert.Equal("urn:altinn:person:identifier-no:31073102351", requestedUrnList.ElementAt(1));
+                    Assert.Equal("urn:altinn:person:identifier-no:notfound", requestedUrnList.ElementAt(2));
+                })
                 .ReturnsAsync(partyIdentifiers);
 
-            List<CloudEvent> cloudEventsForAuth = null;
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock.Setup(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>()))
-                .Callback((List<CloudEvent> forAuth) => cloudEventsForAuth = forAuth)
+                .Callback((List<CloudEvent> cloudEventsForAuth) =>
+                {
+                    Assert.Equal(5, cloudEventsForAuth.Count);
+                    Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[0].Subject);
+                    Assert.Equal(
+                        "urn:altinn:person:identifier-no:02056241046", 
+                        cloudEventsForAuth[0]["originalsubjectreplacedforauthorization"].ToString());
+
+                    Assert.Equal("urn:altinn:organization:identifier-no:312508729", cloudEventsForAuth[1].Subject);
+                    Assert.Null(cloudEventsForAuth[1]["originalsubjectreplacedforauthorization"]);
+
+                    Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[2].Subject);
+                    Assert.Equal(
+                        "urn:altinn:person:identifier-no:31073102351", 
+                        cloudEventsForAuth[2]["originalsubjectreplacedforauthorization"].ToString());
+
+                    Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[3].Subject);
+                    Assert.Equal(
+                        "urn:altinn:person:identifier-no:31073102351",
+                        cloudEventsForAuth[3]["originalsubjectreplacedforauthorization"].ToString());
+
+                    Assert.Null(cloudEventsForAuth[4].Subject);
+                    Assert.Equal(
+                        "urn:altinn:person:identifier-no:notfound",
+                        cloudEventsForAuth[4]["originalsubjectreplacedforauthorization"].ToString());
+                })
                 .ReturnsAsync((List<CloudEvent> events) => events);
 
             Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
             EventsService target = GetEventsService(
-                repositoryMock: repoMock.Object, 
+                repositoryMock: repoMock.Object,
                 registerMock: registerMock,
                 authorizationMock: authorizationMock,
                 loggerMock: logger);
@@ -476,21 +506,23 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Act
             List<CloudEvent> finalCloudEvents = await target.GetEvents(string.Empty, string.Empty, string.Empty, string.Empty, [], 50);
 
-            // Assert
-            Assert.Equal(2, requestedUrnList.Count);
-            Assert.Equal("urn:altinn:person:identifier-no:31073102351", requestedUrnList[1]);
-
-            Assert.Equal(3, cloudEventsForAuth.Count);
-            Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[0].Subject);
-            Assert.StartsWith("urn:altinn:person:identifier-no:", cloudEventsForAuth[0]["originalsubjectreplacedforauthorization"].ToString());
-
-            Assert.StartsWith("urn:altinn:organization:identifier-no:", cloudEventsForAuth[1].Subject);
-            Assert.Null(cloudEventsForAuth[1]["originalsubjectreplacedforauthorization"]);
-
-            Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[2].Subject);
-            Assert.StartsWith("urn:altinn:person:identifier-no:", cloudEventsForAuth[2]["originalsubjectreplacedforauthorization"].ToString());
-
             Assert.NotNull(finalCloudEvents);
+
+            Assert.Equal(5, finalCloudEvents.Count);
+            Assert.StartsWith("urn:altinn:person:identifier-no:02056241046", finalCloudEvents[0].Subject);
+            Assert.Null(finalCloudEvents[0]["originalsubjectreplacedforauthorization"]);
+
+            Assert.StartsWith("urn:altinn:organization:identifier-no:", finalCloudEvents[1].Subject);
+            Assert.Null(finalCloudEvents[1]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:31073102351", finalCloudEvents[2].Subject);
+            Assert.Null(finalCloudEvents[2]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:31073102351", finalCloudEvents[3].Subject);
+            Assert.Null(finalCloudEvents[3]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:notfound", finalCloudEvents[4].Subject);
+            Assert.Null(finalCloudEvents[4]["originalsubjectreplacedforauthorization"]);
         }
 
         private EventsService GetEventsService(
