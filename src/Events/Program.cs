@@ -206,10 +206,20 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     if (config.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
     {
-        services.AddHealthChecks()
-            .AddNpgSql(string.Format(
+        var connectionString = string.Format(
                 config.GetValue<string>("PostgreSQLSettings:ConnectionString"),
-                config.GetValue<string>("PostgreSQLSettings:EventsDbPwd")));
+                config.GetValue<string>("PostgreSQLSettings:EventsDbPwd"));
+
+        services.AddHealthChecks()
+            .AddNpgSql(connectionString);
+
+        services.AddNpgsqlDataSource(connectionString, builder => builder
+                .EnableParameterLogging(false)
+                .EnableDynamicJson()
+                .ConfigureTracing(o => o
+                    .ConfigureCommandSpanNameProvider(cmd => cmd.CommandText)
+                    .ConfigureCommandFilter(cmd => true)
+                    .EnableFirstResponseEvent(false)));
     }
 
     services.AddSingleton(config);
