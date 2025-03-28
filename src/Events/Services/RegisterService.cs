@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly GeneralSettings _generalSettings;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
-        private readonly ILogger<IRegisterService> _logger;
+        private readonly ILogger _logger;
 
         private readonly JsonSerializerOptions _serializerOptions;
 
@@ -46,7 +46,7 @@ namespace Altinn.Platform.Events.Services
             IAccessTokenGenerator accessTokenGenerator,
             IOptions<GeneralSettings> generalSettings,
             IOptions<PlatformSettings> platformSettings,
-            ILogger<IRegisterService> logger)
+            ILogger<RegisterService> logger)
         {
             _client = httpClient;
             _httpContextAccessor = httpContextAccessor;
