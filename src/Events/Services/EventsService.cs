@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -19,12 +20,14 @@ namespace Altinn.Platform.Events.Services
     /// </summary>
     public class EventsService : IEventsService
     {
+        private const string _originalSubjectKey = "originalsubjectreplacedforauthorization";
+
         private readonly ICloudEventRepository _repository;
         private readonly IEventsQueueClient _queueClient;
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
-        private readonly ILogger<IEventsService> _logger;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsService"/> class.
@@ -34,7 +37,7 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
-            ILogger<IEventsService> logger)
+            ILogger<EventsService> logger)
         {
             _repository = repository;
             _queueClient = queueClient;
@@ -123,7 +126,57 @@ namespace Altinn.Platform.Events.Services
                 return events;
             }
 
-            return await _authorizationService.AuthorizeEvents(events);
+            /********
+             * Authorization doesn't support event subject on the format urn:altinn:person:identifier-no:08895699684.
+             * We need to obtain the party UUID from Register and use that instead when building the authorization request.
+             *******/
+
+            List<string> subjects = events
+                .Where(e => e.Subject.StartsWith("urn:altinn:person:identifier-no:"))
+                .Select(e => e.Subject)
+                .Distinct()
+                .ToList();
+
+            if (subjects.Count == 0)
+            {
+                return await _authorizationService.AuthorizeEvents(events);
+            }
+
+            IEnumerable<PartyIdentifiers> partyIdentifiersList = await _registerService.PartyLookup(subjects);
+
+            foreach (CloudEvent cloudEvent in events.Where(e => e.Subject.StartsWith("urn:altinn:person:identifier-no:")))
+            {
+                cloudEvent[_originalSubjectKey] = cloudEvent.Subject;
+                    
+                string nationalIdentityNumber = cloudEvent.Subject.Split(":")[4];
+
+                PartyIdentifiers partyIdentifiers = 
+                    partyIdentifiersList.FirstOrDefault(p => p.PersonIdentifier == nationalIdentityNumber);
+
+                if (partyIdentifiers != null)
+                {
+                    cloudEvent.Subject = $"urn:altinn:party:uuid:{partyIdentifiers.PartyUuid}";
+                }
+                else
+                {
+                    // If the party is not found in register, it's a data quality issue across systems.
+                    // For example a difference in the data between Dialogporten and Register.
+                    cloudEvent.Subject = null;
+                }
+            }
+
+            List<CloudEvent> authorizedEvents = await _authorizationService.AuthorizeEvents(events);
+
+            foreach (CloudEvent cloudEvent in authorizedEvents)
+            {
+                if (cloudEvent[_originalSubjectKey] != null)
+                {
+                    cloudEvent.Subject = cloudEvent[_originalSubjectKey].ToString();
+                    cloudEvent[_originalSubjectKey] = null;
+                }
+            }
+
+            return authorizedEvents;
         }
     }
 }
