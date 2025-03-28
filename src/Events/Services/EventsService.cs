@@ -142,7 +142,7 @@ namespace Altinn.Platform.Events.Services
                 return await _authorizationService.AuthorizeEvents(events);
             }
 
-            IEnumerable<PartyIdentifiers> partyIdentifiersList = await _registerService.PartyLookup(subjects, 100);
+            IEnumerable<PartyIdentifiers> partyIdentifiersList = await _registerService.PartyLookup(subjects);
 
             foreach (CloudEvent cloudEvent in events.Where(e => e.Subject.StartsWith("urn:altinn:person:identifier-no:")))
             {

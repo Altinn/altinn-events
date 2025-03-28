@@ -62,7 +62,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 { Content = new StringContent(string.Empty), StatusCode = System.Net.HttpStatusCode.NotFound });
         }
 
-        public Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList, int chunkSize)
+        public Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList)
         {
             throw new NotImplementedException();
         }

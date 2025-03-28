@@ -12,6 +12,12 @@ public class PlatformSettings
     public string RegisterApiBaseAddress { get; set; }
 
     /// <summary>
+    /// Gets or sets the size of the urn list we send to the Register API for party lookup.
+    /// Default value is 100.
+    /// </summary>
+    public int RegisterApiChunkSize { get; set; } = 100;
+
+    /// <summary>
     /// Gets or sets the url for the Profile API endpoint
     /// </summary>
     public string ApiProfileEndpoint { get; set; }

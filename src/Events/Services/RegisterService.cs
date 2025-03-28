@@ -37,6 +37,8 @@ namespace Altinn.Platform.Events.Services
 
         private readonly JsonSerializerOptions _serializerOptions;
 
+        private readonly int _chunkSize;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="RegisterService"/> class.
         /// </summary>
@@ -56,6 +58,7 @@ namespace Altinn.Platform.Events.Services
 
             _client.BaseAddress = new Uri(platformSettings.Value.RegisterApiBaseAddress);
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _chunkSize = platformSettings.Value.RegisterApiChunkSize;
 
             _serializerOptions = new()
             {
@@ -93,7 +96,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList, int chunkSize = 100)
+        public async Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList)
         {
             string bearerToken = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.JwtCookieName);
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
@@ -101,7 +104,7 @@ namespace Altinn.Platform.Events.Services
             List<PartyIdentifiers> partyIdentifiers = [];
 
             // The Register API only supports 100 entries per request
-            foreach (string[] chunk in partyUrnList.Chunk(chunkSize))
+            foreach (string[] chunk in partyUrnList.Chunk(_chunkSize))
             {
                 PartiesRegisterQueryRequest partyLookup = new() { Data = chunk };
 

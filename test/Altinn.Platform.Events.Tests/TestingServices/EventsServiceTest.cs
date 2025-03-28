@@ -456,8 +456,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
 
             Mock<IRegisterService> registerMock = new();
-            registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<int>()))
-                .Callback((IEnumerable<string> requestedUrnList, int chunkSize) =>
+            registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>()))
+                .Callback((IEnumerable<string> requestedUrnList) =>
                 {
                     Assert.Equal(3, requestedUrnList.Count());
                     Assert.Equal("urn:altinn:person:identifier-no:02056241046", requestedUrnList.ElementAt(0));

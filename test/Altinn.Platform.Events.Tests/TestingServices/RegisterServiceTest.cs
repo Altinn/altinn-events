@@ -126,7 +126,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 };
             });
 
-            InitializeMocks();
+            InitializeMocks(5);
 
             RegisterService target = new(
                 new HttpClient(messageHandler),
@@ -141,7 +141,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 "urn:altinn:person:identifier-no:31073102351"];
 
             // Act
-            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList, 5)];
+            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList)];
 
             // Assert
             Assert.NotNull(requestMessage);
@@ -184,7 +184,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 }
             });
             
-            InitializeMocks();
+            InitializeMocks(2);
 
             RegisterService target = new(
                 new HttpClient(messageHandler),
@@ -200,7 +200,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 "urn:altinn:person:identifier-no:18874198354"];
 
             // Act
-            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList, 2)];
+            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList)];
 
             // Assert
             const string ExpectedRequestUri =
@@ -235,7 +235,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 return new HttpResponseMessage(HttpStatusCode.BadRequest);
             });
 
-            InitializeMocks();
+            InitializeMocks(10);
 
             RegisterService target = new(
                 new HttpClient(messageHandler),
@@ -253,7 +253,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Act
             try
             {
-                _ = await target.PartyLookup(partyUrnList, 2);
+                _ = await target.PartyLookup(partyUrnList);
             }
             catch (PlatformHttpException phe)
             {
@@ -274,7 +274,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private void InitializeMocks(HttpResponseMessage httpResponseMessage, Action<HttpRequestMessage> callback)
         {
-            InitializeMocks();
+            InitializeMocks(10);
 
             _handlerMock.Protected()
                 .Setup<Task<HttpResponseMessage>>(
@@ -286,11 +286,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Verifiable();
         }
 
-        private void InitializeMocks()
+        private void InitializeMocks(int chunkSize)
         {
             PlatformSettings platformSettings = new PlatformSettings
             {
-                RegisterApiBaseAddress = "http://localhost:5101/register/api/"
+                RegisterApiBaseAddress = "http://localhost:5101/register/api/",
+                RegisterApiChunkSize = chunkSize
             };
 
             _platformSettings.Setup(s => s.Value).Returns(platformSettings);

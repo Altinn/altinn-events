@@ -20,8 +20,6 @@ public interface IRegisterService
     /// Perform a register lookup based on urn based party identifiers
     /// </summary>
     /// <param name="partyUrnList">List of urn strings with a party identifying value</param>
-    /// <param name="chunkSize">Chunk the list into smaller parts for consumtion by the Register
-    /// API as it as limits to how many it can handle in each request. default=100.</param>
     /// <returns>A list of the perties found in register</returns>
-    Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList, int chunkSize);
+    Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList);
 }
