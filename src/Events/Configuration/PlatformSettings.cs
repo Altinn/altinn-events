@@ -7,11 +7,6 @@ namespace Altinn.Platform.Events.Configuration;
 public class PlatformSettings
 {
     /// <summary>
-    /// Gets or sets the url for the Register API endpoint.
-    /// </summary>
-    public string ApiRegisterEndpoint { get; set; }
-
-    /// <summary>
     /// Gets or sets the base address for the Register API.
     /// </summary>
     public string RegisterApiBaseAddress { get; set; }

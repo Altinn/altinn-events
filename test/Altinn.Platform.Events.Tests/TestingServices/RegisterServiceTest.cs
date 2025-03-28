@@ -290,7 +290,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             PlatformSettings platformSettings = new PlatformSettings
             {
-                ApiRegisterEndpoint = "http://localhost:5101/register/api/v1/",
                 RegisterApiBaseAddress = "http://localhost:5101/register/api/"
             };
 
