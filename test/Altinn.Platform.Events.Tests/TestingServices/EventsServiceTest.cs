@@ -29,7 +29,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly IEventsQueueClient _queueMock;
         private readonly Mock<IRegisterService> _registerMock;
         private readonly Mock<IAuthorization> _authorizationMock;
-        private readonly Mock<ILogger<IEventsService>> _loggerMock;
+        private readonly Mock<ILogger<EventsService>> _loggerMock;
 
         public EventsServiceTest()
         {
@@ -76,7 +76,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
             queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
-            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            Mock<ILogger<EventsService>> logger = new Mock<ILogger<EventsService>>();
             EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act
@@ -101,7 +101,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
             queueMock.Setup(q => q.EnqueueInbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
 
-            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            Mock<ILogger<EventsService>> logger = new Mock<ILogger<EventsService>>();
             EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
 
             // Act & Assert
@@ -424,7 +424,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             repoMock.Setup(q => q.CreateEvent(It.IsAny<string>()))
                 .ThrowsAsync(new Exception("// EventsService // Save // Failed to save eventId"));
 
-            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            Mock<ILogger<EventsService>> logger = new Mock<ILogger<EventsService>>();
             EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
 
             // Act & Assert
@@ -496,7 +496,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 })
                 .ReturnsAsync((List<CloudEvent> events) => events);
 
-            Mock<ILogger<IEventsService>> logger = new Mock<ILogger<IEventsService>>();
+            Mock<ILogger<EventsService>> logger = new Mock<ILogger<EventsService>>();
             EventsService target = GetEventsService(
                 repositoryMock: repoMock.Object,
                 registerMock: registerMock,
@@ -530,7 +530,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             IEventsQueueClient queueMock = null,
             Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
-            Mock<ILogger<IEventsService>> loggerMock = null)
+            Mock<ILogger<EventsService>> loggerMock = null)
         {
             repositoryMock ??= _repositoryMock;
             registerMock ??= _registerMock;

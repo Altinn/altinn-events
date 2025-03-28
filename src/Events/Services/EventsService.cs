@@ -27,7 +27,7 @@ namespace Altinn.Platform.Events.Services
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
-        private readonly ILogger<IEventsService> _logger;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsService"/> class.
@@ -37,7 +37,7 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
-            ILogger<IEventsService> logger)
+            ILogger<EventsService> logger)
         {
             _repository = repository;
             _queueClient = queueClient;
