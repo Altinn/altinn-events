@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessTokenClient.Services;
@@ -98,9 +99,8 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList)
         {
-            string bearerToken = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext, _generalSettings.JwtCookieName);
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
-            
+
             List<PartyIdentifiers> partyIdentifiers = [];
 
             // The Register API only supports 100 entries per request
@@ -112,7 +112,7 @@ namespace Altinn.Platform.Events.Services
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
 
                 const string RequestUri = "v2/internal/parties/query?fields=identifiers";
-                HttpResponseMessage response = await _client.PostAsync(bearerToken, RequestUri, content, accessToken);
+                HttpResponseMessage response = await _client.PostAsync(RequestUri, content, accessToken, CancellationToken.None);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
