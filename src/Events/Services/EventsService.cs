@@ -120,14 +120,14 @@ namespace Altinn.Platform.Events.Services
             string after, 
             string subject, 
             string alternativeSubject, 
-            List<string> type, 
+            List<string> types, 
             int size,
             CancellationToken cancellationToken)
         {
-            type = type.Count > 0 ? type : null;
+            types = types.Count > 0 ? types : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.GetEvents(resource, after, subject, alternativeSubject, type, size);
+            List<CloudEvent> events = await _repository.GetEvents(resource, after, subject, alternativeSubject, types, size);
 
             if (events.Count == 0)
             {

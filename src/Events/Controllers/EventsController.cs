@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -105,10 +106,10 @@ namespace Altinn.Platform.Events.Controllers
             [FromQuery] int size,
             CancellationToken cancellationToken)
         {
-            // Default is 50 events, max is 1000
-            size = size < 1 ? 50 : size > 1000 ? 1000 : size;
+            // Set size to 50 if it is less than 1 and clamp it to a maximum of 1000
+            size = size < 1 ? 50 : Math.Min(size, 1000);
 
-            (bool isValid, string errorMessage) = 
+            (bool isValid, string errorMessage) =
                 ValidateQueryParams(resource, after, subject, alternativeSubject);
 
             if (!isValid)
