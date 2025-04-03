@@ -6,11 +6,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
-using Altinn.Platform.Events.Configuration;
+
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -327,7 +328,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=0&subject=%2Fparty%2F1337&size=1500";
                 Mock<IEventsService> eventsMock = new();
                 eventsMock
-                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 1000)))
+                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 1000), It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new List<CloudEvent>());
 
                 HttpClient client = GetTestClient(eventsMock.Object, null);
@@ -352,25 +353,26 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async Task GetEvents_SizeIsLessThanZero_ReturnsBadRequest()
+            public async Task GetEvents_SizeIsLessThanZero_UsesSize50()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:test&size=-5&after=e31dbb11-2208-4dda-a549-92a0db8c8808";
-                string expected = "The 'size' parameter must be a number larger that 0.";
+                Mock<IEventsService> eventsMock = new();
+                eventsMock
+                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 50), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new List<CloudEvent>());
 
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null);
+                HttpClient client = GetTestClient(eventsMock.Object, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string content = await response.Content.ReadAsStringAsync();
-                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual.Detail);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                eventsMock.VerifyAll();
             }
 
             /// <summary>

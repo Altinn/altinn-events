@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -114,7 +115,14 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetEvents(string resource, string after, string subject, string alternativeSubject, List<string> type, int size)
+        public async Task<List<CloudEvent>> GetEvents(
+            string resource, 
+            string after, 
+            string subject, 
+            string alternativeSubject, 
+            List<string> type, 
+            int size,
+            CancellationToken cancellationToken)
         {
             type = type.Count > 0 ? type : null;
             after ??= string.Empty;
@@ -142,7 +150,7 @@ namespace Altinn.Platform.Events.Services
                 return await _authorizationService.AuthorizeEvents(events);
             }
 
-            IEnumerable<PartyIdentifiers> partyIdentifiersList = await _registerService.PartyLookup(subjects);
+            IEnumerable<PartyIdentifiers> partyIdentifiersList = await _registerService.PartyLookup(subjects, cancellationToken);
 
             foreach (CloudEvent cloudEvent in events.Where(e => e.Subject.StartsWith("urn:altinn:person:identifier-no:")))
             {

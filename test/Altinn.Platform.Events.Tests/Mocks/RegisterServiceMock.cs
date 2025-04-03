@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Exceptions;
@@ -62,7 +63,8 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 { Content = new StringContent(string.Empty), StatusCode = System.Net.HttpStatusCode.NotFound });
         }
 
-        public Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList)
+        public Task<IEnumerable<PartyIdentifiers>> PartyLookup(
+            IEnumerable<string> partyUrnList, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

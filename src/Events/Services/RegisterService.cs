@@ -97,10 +97,11 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<PartyIdentifiers>> PartyLookup(IEnumerable<string> partyUrnList)
+        public async Task<IEnumerable<PartyIdentifiers>> PartyLookup(
+            IEnumerable<string> partyUrnList, 
+            CancellationToken cancellationToken)
         {
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
-
             List<PartyIdentifiers> partyIdentifiers = [];
 
             // The Register API only supports 100 entries per request
@@ -112,12 +113,14 @@ namespace Altinn.Platform.Events.Services
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
 
                 const string RequestUri = "v2/internal/parties/query?fields=identifiers";
-                HttpResponseMessage response = await _client.PostAsync(RequestUri, content, accessToken, CancellationToken.None);
+                HttpResponseMessage response = await _client.PostAsync(
+                    RequestUri, content, accessToken, cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     PartiesRegisterQueryResponse queryResults = 
-                        await response.Content.ReadFromJsonAsync<PartiesRegisterQueryResponse>(_serializerOptions);
+                        await response.Content.ReadFromJsonAsync<PartiesRegisterQueryResponse>(
+                            _serializerOptions, cancellationToken);
 
                     partyIdentifiers.AddRange(queryResults.Data);
                 }

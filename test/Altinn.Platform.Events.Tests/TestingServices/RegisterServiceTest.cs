@@ -141,7 +141,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 "urn:altinn:person:identifier-no:31073102351"];
 
             // Act
-            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList)];
+            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList, CancellationToken.None)];
 
             // Assert
             Assert.NotNull(requestMessage);
@@ -200,7 +200,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 "urn:altinn:person:identifier-no:18874198354"];
 
             // Act
-            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList)];
+            List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList, CancellationToken.None)];
 
             // Assert
             const string ExpectedRequestUri =
@@ -253,7 +253,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Act
             try
             {
-                _ = await target.PartyLookup(partyUrnList);
+                _ = await target.PartyLookup(partyUrnList, CancellationToken.None);
             }
             catch (PlatformHttpException phe)
             {

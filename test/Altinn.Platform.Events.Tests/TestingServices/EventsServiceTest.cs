@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -266,7 +267,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c0008", expectedSubject, null, new List<string>() { }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c0008", expectedSubject, null, new List<string>() { }, 50, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -289,7 +290,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, new List<string>() { }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, new List<string>() { }, 50, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -321,7 +322,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:app_ttd_apps-test", null, expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:app_ttd_apps-test", null, expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -352,7 +353,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, null, string.Empty, string.Empty, new List<string>(), 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, null, string.Empty, string.Empty, new List<string>(), 50, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -375,7 +376,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(registerMock: registerMock);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("1", "https://ttd.apps.at22.altinn.cloud/ttd/app-test/", null, null, new List<string>(), 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("1", "https://ttd.apps.at22.altinn.cloud/ttd/app-test/", null, null, new List<string>(), 50, CancellationToken.None);
 
             // Assert
             registerMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -456,8 +457,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
 
             Mock<IRegisterService> registerMock = new();
-            registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>()))
-                .Callback((IEnumerable<string> requestedUrnList) =>
+            registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+                .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
                 {
                     Assert.Equal(3, requestedUrnList.Count());
                     Assert.Equal("urn:altinn:person:identifier-no:02056241046", requestedUrnList.ElementAt(0));
@@ -504,7 +505,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 loggerMock: logger);
 
             // Act
-            List<CloudEvent> finalCloudEvents = await target.GetEvents(string.Empty, string.Empty, string.Empty, string.Empty, [], 50);
+            List<CloudEvent> finalCloudEvents = await target.GetEvents(string.Empty, string.Empty, string.Empty, string.Empty, [], 50, CancellationToken.None);
 
             Assert.NotNull(finalCloudEvents);
 
