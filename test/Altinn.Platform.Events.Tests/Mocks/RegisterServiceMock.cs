@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Exceptions;
+using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Register.Models;
 
@@ -59,6 +61,12 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 ? partyId
                 : throw await PlatformHttpException.CreateAsync(new HttpResponseMessage
                 { Content = new StringContent(string.Empty), StatusCode = System.Net.HttpStatusCode.NotFound });
+        }
+
+        public Task<IEnumerable<PartyIdentifiers>> PartyLookup(
+            IEnumerable<string> partyUrnList, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         private static string GetPartiesPath()
