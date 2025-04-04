@@ -178,7 +178,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
 
-            private HttpClient GetTestClient(IOutboundService outboundService, ITraceLogService traceLogService = null)
+            private HttpClient GetTestClient(IOutboundService outboundService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
@@ -190,15 +190,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(outboundService);
-
-                        if (traceLogService != null)
-                        {
-                            services.AddSingleton(traceLogService);
-                        }
-                        else
-                        {
-                            services.AddSingleton(_traceLogService.Object);
-                        }
+                        services.AddSingleton(_traceLogService.Object);
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();

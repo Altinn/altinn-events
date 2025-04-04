@@ -44,10 +44,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
         public class StorageControllerTests : IClassFixture<WebApplicationFactory<StorageController>>
         {
             private const string BasePath = "/events/api/v1";
-
             private readonly WebApplicationFactory<StorageController> _factory;
-
-            private readonly Mock<ITraceLogService> _traceLogServiceMock = new Mock<ITraceLogService>();
 
             /// <summary>
             /// Initializes a new instance of the <see cref="StorageControllerTests"/> class with the given <see cref="WebApplicationFactory{TStorageController}"/>.

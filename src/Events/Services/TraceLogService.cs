@@ -46,7 +46,7 @@ namespace Altinn.Platform.Events.Services
             }
             catch (Exception exception)
             {
-                _logger.LogError(exception, "Error creating trace log entry for registered event: {Message} {CloudEventId}", exception.Message, cloudEvent.Id);
+                _logger.LogError(exception, "Error creating trace log entry for registered event: {CloudEventId} with message: {Message}", cloudEvent.Id, exception.Message);
 
                 // don't throw exception, we don't want to stop the event processing
                 return string.Empty;
