@@ -44,7 +44,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
         public class StorageControllerTests : IClassFixture<WebApplicationFactory<StorageController>>
         {
             private const string BasePath = "/events/api/v1";
-
             private readonly WebApplicationFactory<StorageController> _factory;
 
             /// <summary>
@@ -174,7 +173,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             }
-
+         
             private HttpClient GetTestClient(IEventsService eventsService)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>

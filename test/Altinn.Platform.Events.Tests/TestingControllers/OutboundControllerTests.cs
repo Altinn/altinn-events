@@ -9,7 +9,6 @@ using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
-using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Mocks.Authentication;
@@ -21,6 +20,7 @@ using AltinnCore.Authentication.JwtCookie;
 using CloudNative.CloudEvents;
 
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +45,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             private const string BasePath = "/events/api/v1";
 
             private readonly WebApplicationFactory<OutboundController> _factory;
+
+            private readonly Mock<ITraceLogService> _traceLogService = new();
 
             /// <summary>
             /// Initializes a new instance of the <see cref="OutboundControllerTests"/> class with the given <see cref="WebApplicationFactory{TOutboundController}"/>.
@@ -188,6 +190,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(outboundService);
+                        services.AddSingleton(_traceLogService.Object);
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();

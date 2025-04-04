@@ -253,7 +253,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
 
-            var loggerMock = new Mock<ILogger<IOutboundService>>();
+            var loggerMock = new Mock<ILogger<OutboundService>>();
 
             var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object, authorizationMock: authorizationMock.Object);
 
@@ -265,7 +265,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                x => x.Log(
                    LogLevel.Error,
                    It.IsAny<EventId>(),
-                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("// OutboundService // EnqueueOutbound // Failed to send event envelope", StringComparison.InvariantCultureIgnoreCase)),
+                   It.Is<It.IsAnyType>((o, t) => o.ToString().StartsWith("OutboundService EnqueueOutbound Failed to send event envelope", StringComparison.InvariantCultureIgnoreCase)),
                    It.IsAny<Exception>(),
                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                Times.Once);
@@ -274,19 +274,25 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static IOutboundService GetOutboundService(
             IEventsQueueClient queueMock = null,
+            Mock<ITraceLogService> traceLogServiceMock = null,
             ISubscriptionRepository repositoryMock = null,
             IAuthorization authorizationMock = null,
             MemoryCache memoryCache = null,
-            ILogger<IOutboundService> loggerMock = null)
+            ILogger<OutboundService> loggerMock = null)
         {
             if (loggerMock == null)
             {
-                loggerMock = new Mock<ILogger<IOutboundService>>().Object;
+                loggerMock = new Mock<ILogger<OutboundService>>().Object;
             }
 
             if (queueMock == null)
             {
                 queueMock = new EventsQueueClientMock();
+            }
+
+            if (traceLogServiceMock == null)
+            {
+                traceLogServiceMock = new Mock<ITraceLogService>();
             }
 
             if (repositoryMock == null)
@@ -308,6 +314,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var service = new OutboundService(
                 queueMock,
+                traceLogServiceMock.Object,
                 repositoryMock,
                 authorizationMock,
                 Options.Create(new PlatformSettings
