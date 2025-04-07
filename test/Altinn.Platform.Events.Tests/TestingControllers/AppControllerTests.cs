@@ -51,6 +51,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             private readonly JsonSerializerOptions _options;
 
+            private readonly Mock<ITraceLogService> _traceLogServiceMock = new();
+
             /// <summary>
             /// Initializes a new instance of the <see cref="AppControllerTests"/> class with the given <see cref="WebApplicationFactory{TAppEventsController}"/>.
             /// </summary>
@@ -1042,7 +1044,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.StartsWith("Only one of 'Party' or 'Person' can be defined.", actual.Detail);
             }
 
-            private HttpClient GetTestClient(IEventsService eventsService)
+            private HttpClient GetTestClient(IEventsService eventsService, ITraceLogService traceLogService = null)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
                 {
@@ -1054,6 +1056,15 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(eventsService);
+
+                        if (traceLogService != null)
+                        {
+                            services.AddSingleton(traceLogService);
+                        }
+                        else
+                        {
+                            services = services.AddSingleton(_traceLogServiceMock.Object);
+                        }
 
                         // Set up mock authentication so that not well known endpoint is used
                         services.AddSingleton<IPDP, PepWithPDPAuthorizationMockSI>();

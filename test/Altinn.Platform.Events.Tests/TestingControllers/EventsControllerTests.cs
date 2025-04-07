@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
-using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -49,6 +48,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             private readonly WebApplicationFactory<EventsController> _factory;
             private readonly JsonSerializerOptions _options;
             private readonly CloudEvent _validEvent;
+
+            private readonly Mock<ITraceLogService> _traceLogService = new();
 
             /// <summary>
             /// Initializes a new instance of the <see cref="EventsControllerTests"/> class with the given <see cref="WebApplicationFactory{TEventsControllerTests}"/>.
@@ -642,6 +643,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     builder.ConfigureTestServices(services =>
                     {
                         services.AddSingleton(eventsService);
+                        services.AddSingleton(_traceLogService.Object);
                         services.AddSingleton(authorizationService);
 
                         // Set up mock authentication so that not well known endpoint is used

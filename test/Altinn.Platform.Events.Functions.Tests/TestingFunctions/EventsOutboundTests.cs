@@ -31,18 +31,18 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                     " \"time\": \"2023-01-17T16:09:07.3146561Z\"," +
                     " \"alternativesubject\": \"/person/01014922047\"}}";
 
-            Mock<IWebhookService> clientMock = new();
-            clientMock.Setup(wh => wh.Send(It.Is<CloudEventEnvelope>(cee => cee.CloudEvent != null)))
+            Mock<IWebhookService> webhookServiceMock = new();
+            webhookServiceMock.Setup(wh => wh.Send(It.Is<CloudEventEnvelope>(cee => cee.CloudEvent != null)))
                 .Callback<CloudEventEnvelope>(cee => actualServiceInput = cee)
                 .Returns(Task.CompletedTask);
 
-            var sut = new EventsOutbound(clientMock.Object);
+            var sut = new EventsOutbound(webhookServiceMock.Object);
 
             // Act
             await sut.Run(serializedCloudEnvelope);
 
             // Assert
-            clientMock.VerifyAll();
+            webhookServiceMock.VerifyAll();
             Assert.Equal(CloudEventsSpecVersion.V1_0, actualServiceInput.CloudEvent.SpecVersion);
             Assert.Equal("https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50002108/7806177e-5594-431b-8240-f173d92ed84d", actualServiceInput.CloudEvent.Source.ToString());
             Assert.Equal(427, actualServiceInput.SubscriptionId);
