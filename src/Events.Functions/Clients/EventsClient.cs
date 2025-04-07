@@ -131,7 +131,12 @@ namespace Altinn.Platform.Events.Functions.Clients
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Log response from webhook post to subscriber.
+        /// </summary>
+        /// <param name="cloudEventEnvelope">Wrapper object for cloud event and subscriber data</param>
+        /// <param name="statusCode">Http status code returned</param>
+        /// <returns></returns>
         public async Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode)
         {
             try
