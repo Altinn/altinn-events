@@ -66,9 +66,9 @@ namespace Altinn.Platform.Events.Services
                     Resource = cloudEvent.GetResource(),
                     EventType = cloudEvent.Type,
                     Consumer = subscription.Consumer,
-                    SubscriberEndpoint = null, // not relevant when unauthorized
+                    SubscriberEndpoint = subscription.EndPoint?.ToString(),
                     SubscriptionId = subscription.Id,
-                    Activity = TraceLogActivity.Unauthorized
+                    Activity = activity
                 };
 
                 await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
