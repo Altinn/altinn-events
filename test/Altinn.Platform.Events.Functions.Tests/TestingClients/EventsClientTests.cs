@@ -4,6 +4,7 @@ using System.Security.Cryptography.X509Certificates;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Functions.Clients;
 using Altinn.Platform.Events.Functions.Configuration;
+using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
 using CloudNative.CloudEvents;
@@ -75,6 +76,39 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             handlerMock.VerifyAll();
         }
 
+        [Theory]
+        [InlineData("resource")]
+        [InlineData(null)]
+        public async Task PostLogEntry_SuccessResponse(string resource)
+        {
+            // Arrange
+            var handlerMock = CreateMessageHandlerMock(
+                "https://platform.test.altinn.cloud/events/api/v1/storage/events/logs",
+                HttpStatusCode.OK);
+
+            var sut = new EventsClient(
+                new HttpClient(handlerMock.Object),
+                _atgMock.Object,
+                _srMock.Object,
+                _platformSettings,
+                _loggerMock.Object);
+
+            _cloudEvent["resource"] = resource;
+
+            var cloudEnvelope = new CloudEventEnvelope
+            {
+                CloudEvent = _cloudEvent,
+                SubscriptionId = 1337,
+                Endpoint = new Uri("https://localhost:5000")
+            };
+
+            // Act
+            await sut.LogWebhookHttpStatusCode(cloudEnvelope, HttpStatusCode.Created);
+
+            // Assert
+            handlerMock.VerifyAll();
+        }
+
         [Fact]
         public async Task SaveCloudEvent_NonSuccessResponse_ErrorLoggedAndExceptionThrown()
         {
@@ -141,7 +175,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("PostInbound event with id 1337 failed with status code ServiceUnavailable")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), 
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
                 Times.Once);
         }
 
@@ -186,7 +220,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("PostOutbound event with id 1337 failed with status code ServiceUnavailable")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), 
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
                 Times.Once);
         }
 

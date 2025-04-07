@@ -24,6 +24,7 @@ namespace Altinn.Platform.Events.Services
         private const string _originalSubjectKey = "originalsubjectreplacedforauthorization";
 
         private readonly ICloudEventRepository _repository;
+        private readonly ITraceLogService _traceLogService;
         private readonly IEventsQueueClient _queueClient;
 
         private readonly IRegisterService _registerService;
@@ -35,12 +36,14 @@ namespace Altinn.Platform.Events.Services
         /// </summary>
         public EventsService(
             ICloudEventRepository repository,
+            ITraceLogService traceLogService,
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
             ILogger<EventsService> logger)
         {
             _repository = repository;
+            _traceLogService = traceLogService;
             _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
@@ -74,6 +77,7 @@ namespace Altinn.Platform.Events.Services
                 throw receipt.Exception;
             }
 
+            await _traceLogService.CreateRegisteredEntry(cloudEvent); // log entry for registering a new event
             return cloudEvent.Id;
         }
 
