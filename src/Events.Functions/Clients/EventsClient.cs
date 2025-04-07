@@ -136,7 +136,7 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// </summary>
         /// <param name="cloudEventEnvelope">Wrapper object for cloud event and subscriber data</param>
         /// <param name="statusCode">Http status code returned</param>
-        /// <returns></returns>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode)
         {
             try
