@@ -1,0 +1,18 @@
+﻿{
+    "data": [
+        {
+        "partyType": "person",
+            "partyUuid": "8be970b6-b361-42c6-9b53-5cd3ab5efbe9",
+            "partyId": 50002207,
+            "personIdentifier": "02056241046",
+            "organizationIdentifier": null
+        },
+        {
+        "partyType": "person",
+            "partyUuid": "930423fe-8bbd-43f0-bf4c-3ddf5a5eb4e7",
+            "partyId": 50023810,
+            "personIdentifier": "31073102351",
+            "organizationIdentifier": null
+        }
+    ]
+}

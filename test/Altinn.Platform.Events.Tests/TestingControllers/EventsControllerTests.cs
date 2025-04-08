@@ -6,10 +6,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
+
 using Altinn.Platform.Events.Controllers;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -124,7 +126,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Content = new StringContent(invalidEvent, Encoding.UTF8, "application/cloudevents+json")
                 };
 
-                HttpClient client = GetTestClient(null, null, true);
+                HttpClient client = GetTestClient(null, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 // Act
@@ -148,7 +150,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Content = new StringContent(invalidEvent, Encoding.UTF8, "application/cloudevents+json")
                 };
 
-                HttpClient client = GetTestClient(null, null, true);
+                HttpClient client = GetTestClient(null, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 // Act
@@ -166,7 +168,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/events";
 
-                HttpClient client = GetTestClient(null, null, true);
+                HttpClient client = GetTestClient(null, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
@@ -195,7 +197,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
                             .ReturnsAsync(true);
 
-                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object, true);
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
@@ -224,7 +226,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
                             .ReturnsAsync(true);
 
-                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object, true);
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
@@ -254,7 +256,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
                             .ReturnsAsync(false);
 
-                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object, true);
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
@@ -328,10 +330,10 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=0&subject=%2Fparty%2F1337&size=1500";
                 Mock<IEventsService> eventsMock = new();
                 eventsMock
-                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 1000)))
+                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 1000), It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new List<CloudEvent>());
 
-                HttpClient client = GetTestClient(eventsMock.Object, null, true);
+                HttpClient client = GetTestClient(eventsMock.Object, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -353,25 +355,26 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             ///   The response has correct status.
             /// </summary>
             [Fact]
-            public async Task GetEvents_SizeIsLessThanZero_ReturnsBadRequest()
+            public async Task GetEvents_SizeIsLessThanZero_UsesSize50()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:test&size=-5&after=e31dbb11-2208-4dda-a549-92a0db8c8808";
-                string expected = "The 'size' parameter must be a number larger that 0.";
+                Mock<IEventsService> eventsMock = new();
+                eventsMock
+                    .Setup(e => e.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.Is<int>(i => i == 50), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new List<CloudEvent>());
 
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
+                HttpClient client = GetTestClient(eventsMock.Object, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string content = await response.Content.ReadAsStringAsync();
-                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
 
                 // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal(expected, actual.Detail);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                eventsMock.VerifyAll();
             }
 
             /// <summary>
@@ -389,7 +392,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expected = "The 'after' parameter must be defined.";
 
                 string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&size=5&subject=/party/1337";
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -418,7 +421,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange   
                 string expected = "The resource field is required.";
                 string requestUri = $"{BasePath}/events?after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5&subject=/party/1337";
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -447,7 +450,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=0&subject=%2Fparty%2F1337";
-                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -478,7 +481,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expected = "The 'resource' parameter must begin with `urn:altinn:resource:`";
 
                 string requestUri = $"{BasePath}/events?resource=random&after=e31dbb11-2208-4dda-a549-92a0db8c7708size=5";
-                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null, true);
+                HttpClient client = GetTestClient(new Mock<IEventsService>().Object, null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -509,7 +512,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&resource=urn:altinn:resource:systemx&subject=/party/1337";
                 int expectedCount = 2;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -541,7 +544,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&resource=urn:altinn:resource:systemx&subject=/party/1337";
                 int expectedCount = 1;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -572,7 +575,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=e31dbb11-2208-4dda-a549-92a0db8c7708&subject=/party/567890";
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
                 eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
-                HttpClient client = GetTestClient(eventsService.Object, null, true);
+                HttpClient client = GetTestClient(eventsService.Object, null);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
@@ -600,7 +603,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string expectedNext = $"http://localhost:5080/events/api/v1/events?after=e31dbb11-2208-4dda-a549-92a0db8c8808&resource=urn:altinn:resource:systemx&subject=/party/1337";
                 int expectedCount = 2;
 
-                HttpClient client = GetTestClient(new EventsServiceMock(3), null, true);
+                HttpClient client = GetTestClient(new EventsServiceMock(3), null);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, requestUri);
@@ -618,7 +621,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
             }
 
-            private HttpClient GetTestClient(IEventsService eventsService = null, IAuthorization authorizationService = null, bool enableExternalEvents = false)
+            private HttpClient GetTestClient(IEventsService eventsService = null, IAuthorization authorizationService = null)
             {
                 if (eventsService == null)
                 {

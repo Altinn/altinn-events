@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessTokenClient.Services;
@@ -31,9 +34,11 @@ namespace Altinn.Platform.Events.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly GeneralSettings _generalSettings;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
-        private readonly ILogger<IRegisterService> _logger;
+        private readonly ILogger _logger;
 
         private readonly JsonSerializerOptions _serializerOptions;
+
+        private readonly int _chunkSize;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RegisterService"/> class.
@@ -44,15 +49,17 @@ namespace Altinn.Platform.Events.Services
             IAccessTokenGenerator accessTokenGenerator,
             IOptions<GeneralSettings> generalSettings,
             IOptions<PlatformSettings> platformSettings,
-            ILogger<IRegisterService> logger)
+            ILogger<RegisterService> logger)
         {
-            httpClient.BaseAddress = new Uri(platformSettings.Value.ApiRegisterEndpoint);
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _client = httpClient;
             _httpContextAccessor = httpContextAccessor;
             _generalSettings = generalSettings.Value;
             _accessTokenGenerator = accessTokenGenerator;
             _logger = logger;
+
+            _client.BaseAddress = new Uri(platformSettings.Value.RegisterApiBaseAddress);
+            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _chunkSize = platformSettings.Value.RegisterApiChunkSize;
 
             _serializerOptions = new()
             {
@@ -64,7 +71,7 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<int> PartyLookup(string orgNo, string person)
         {
-            string endpointUrl = "parties/lookup";
+            string endpointUrl = "v1/parties/lookup";
 
             PartyLookup partyLookup = new PartyLookup() { Ssn = person, OrgNo = orgNo };
 
@@ -83,10 +90,47 @@ namespace Altinn.Platform.Events.Services
             else
             {
                 string reason = await response.Content.ReadAsStringAsync();
-                _logger.LogError("// RegisterService // PartyLookup // Failed to lookup party in platform register. Response {response}. \n Reason {reason}.", response, reason);
+                _logger.LogError("// RegisterService // PartyLookup // Failed to lookup party in platform register. Response {Response}. Reason {Reason}.", response, reason);
 
                 throw await PlatformHttpException.CreateAsync(response);
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<PartyIdentifiers>> PartyLookup(
+            IEnumerable<string> partyUrnList, 
+            CancellationToken cancellationToken)
+        {
+            string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
+            List<PartyIdentifiers> partyIdentifiers = [];
+
+            // The Register API only supports 100 entries per request
+            foreach (string[] chunk in partyUrnList.Chunk(_chunkSize))
+            {
+                PartiesRegisterQueryRequest partyLookup = new() { Data = chunk };
+
+                StringContent content = new(JsonSerializer.Serialize(partyLookup));
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+
+                const string RequestUri = "v2/internal/parties/query?fields=identifiers";
+                HttpResponseMessage response = await _client.PostAsync(
+                    RequestUri, content, accessToken, cancellationToken);
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    PartiesRegisterQueryResponse queryResults = 
+                        await response.Content.ReadFromJsonAsync<PartiesRegisterQueryResponse>(
+                            _serializerOptions, cancellationToken);
+
+                    partyIdentifiers.AddRange(queryResults.Data);
+                }
+                else
+                {
+                    throw await PlatformHttpException.CreateAsync(response);
+                }
+            }
+
+            return partyIdentifiers;
         }
     }
 }

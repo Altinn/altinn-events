@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Services.Interfaces;
@@ -101,7 +102,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
-        public Task<List<CloudEvent>> GetEvents(string resource, string after, string subject, string alternativeSubject, List<string> type, int size)
+        public Task<List<CloudEvent>> GetEvents(string resource, string after, string subject, string alternativeSubject, List<string> type, int size, CancellationToken cancellationToken)
         {
             string eventsPath = Path.Combine(GetEventsPath(), $@"{_eventsCollection}.json");
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -9,7 +10,7 @@ using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
-
+using Altinn.Profile.Tests.Testdata;
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
@@ -296,7 +297,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c0008", expectedSubject, null, new List<string>() { }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c0008", expectedSubject, null, new List<string>() { }, 50, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -319,7 +320,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, new List<string>() { }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, new List<string>() { }, 50, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -351,7 +352,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:app_ttd_apps-test", null, expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:app_ttd_apps-test", null, expectedSubject, string.Empty, new List<string>() { "instance.completed" }, 50, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -382,7 +383,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, null, string.Empty, string.Empty, new List<string>(), 50);
+            List<CloudEvent> actual = await eventsService.GetEvents(null, null, string.Empty, string.Empty, new List<string>(), 50, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -405,7 +406,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(registerMock: registerMock);
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents("1", "https://ttd.apps.at22.altinn.cloud/ttd/app-test/", null, null, new List<string>(), 50);
+            List<CloudEvent> actual = await eventsService.GetEvents("1", "https://ttd.apps.at22.altinn.cloud/ttd/app-test/", null, null, new List<string>(), 50, CancellationToken.None);
 
             // Assert
             registerMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -461,6 +462,98 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEvent()));
 
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetEvents_InputEventsFiveSubjects_LogicManipluateSubjectCorrectly()
+        {
+            List<CloudEvent> cloudEvents = [
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:02056241046"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:organization:identifier-no:312508729"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:31073102351"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:31073102351"),
+                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:notfound")];
+
+            Mock<ICloudEventRepository> repoMock = new();
+            repoMock.Setup(q => q.GetEvents(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<List<string>>(),
+                It.IsAny<int>())).ReturnsAsync(cloudEvents);
+
+            List<PartyIdentifiers> partyIdentifiers =
+                (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+                .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
+                {
+                    Assert.Equal(3, requestedUrnList.Count());
+                    Assert.Equal("urn:altinn:person:identifier-no:02056241046", requestedUrnList.ElementAt(0));
+                    Assert.Equal("urn:altinn:person:identifier-no:31073102351", requestedUrnList.ElementAt(1));
+                    Assert.Equal("urn:altinn:person:identifier-no:notfound", requestedUrnList.ElementAt(2));
+                })
+                .ReturnsAsync(partyIdentifiers);
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock.Setup(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>()))
+                .Callback((List<CloudEvent> cloudEventsForAuth) =>
+                {
+                    Assert.Equal(5, cloudEventsForAuth.Count);
+                    Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[0].Subject);
+                    Assert.Equal(
+                        "urn:altinn:person:identifier-no:02056241046", 
+                        cloudEventsForAuth[0]["originalsubjectreplacedforauthorization"].ToString());
+
+                    Assert.Equal("urn:altinn:organization:identifier-no:312508729", cloudEventsForAuth[1].Subject);
+                    Assert.Null(cloudEventsForAuth[1]["originalsubjectreplacedforauthorization"]);
+
+                    Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[2].Subject);
+                    Assert.Equal(
+                        "urn:altinn:person:identifier-no:31073102351", 
+                        cloudEventsForAuth[2]["originalsubjectreplacedforauthorization"].ToString());
+
+                    Assert.StartsWith("urn:altinn:party:uuid:", cloudEventsForAuth[3].Subject);
+                    Assert.Equal(
+                        "urn:altinn:person:identifier-no:31073102351",
+                        cloudEventsForAuth[3]["originalsubjectreplacedforauthorization"].ToString());
+
+                    Assert.Null(cloudEventsForAuth[4].Subject);
+                    Assert.Equal(
+                        "urn:altinn:person:identifier-no:notfound",
+                        cloudEventsForAuth[4]["originalsubjectreplacedforauthorization"].ToString());
+                })
+                .ReturnsAsync((List<CloudEvent> events) => events);
+
+            Mock<ILogger<EventsService>> logger = new Mock<ILogger<EventsService>>();
+            EventsService target = GetEventsService(
+                repositoryMock: repoMock.Object,
+                registerMock: registerMock,
+                authorizationMock: authorizationMock,
+                loggerMock: logger);
+
+            // Act
+            List<CloudEvent> finalCloudEvents = await target.GetEvents(string.Empty, string.Empty, string.Empty, string.Empty, [], 50, CancellationToken.None);
+
+            Assert.NotNull(finalCloudEvents);
+
+            Assert.Equal(5, finalCloudEvents.Count);
+            Assert.StartsWith("urn:altinn:person:identifier-no:02056241046", finalCloudEvents[0].Subject);
+            Assert.Null(finalCloudEvents[0]["originalsubjectreplacedforauthorization"]);
+
+            Assert.StartsWith("urn:altinn:organization:identifier-no:", finalCloudEvents[1].Subject);
+            Assert.Null(finalCloudEvents[1]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:31073102351", finalCloudEvents[2].Subject);
+            Assert.Null(finalCloudEvents[2]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:31073102351", finalCloudEvents[3].Subject);
+            Assert.Null(finalCloudEvents[3]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:notfound", finalCloudEvents[4].Subject);
+            Assert.Null(finalCloudEvents[4]["originalsubjectreplacedforauthorization"]);
         }
 
         private EventsService GetEventsService(
@@ -525,6 +618,21 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Time = DateTime.Now,
                 Subject = "/person/16069412345"
             };
+
+            return cloudEvent;
+        }
+
+        private static CloudEvent GetCloudEvent(string resource, string subject)
+        {
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "something.important.happened",
+                Time = DateTime.Now,
+                Subject = subject
+            };
+
+            cloudEvent["resource"] = resource;
 
             return cloudEvent;
         }
