@@ -30,12 +30,12 @@ namespace Altinn.Platform.Events.Repository
         {
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_insertTraceLogSql);
 
-            pgcom.Parameters.AddWithValue("cloudeventid", traceLog.CloudEventId);
-            pgcom.Parameters.AddWithValue("resource", traceLog.Resource);
-            pgcom.Parameters.AddWithValue("eventtype", traceLog.EventType);
             pgcom.Parameters.AddWithValue("activity", traceLog.Activity.ToString());
 
             // nullable values
+            pgcom.Parameters.AddWithValue("cloudeventid", traceLog.CloudEventId ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("eventtype", traceLog.EventType ?? (object)DBNull.Value);
+            pgcom.Parameters.AddWithValue("resource", traceLog.Resource ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("consumer", traceLog.Consumer ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("subscriptionid", traceLog.SubscriptionId ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue("responsecode", traceLog.ResponseCode ?? (object)DBNull.Value);
