@@ -23,7 +23,7 @@ using CloudNative.CloudEvents;
 namespace Altinn.Platform.Events.Services;
 
 /// <summary>
-/// The authorization service
+/// An implementation of the <see cref="IAuthorization"/> interface that handles authorization for events.
 /// </summary>
 public class AuthorizationService : IAuthorization
 {
@@ -33,8 +33,8 @@ public class AuthorizationService : IAuthorization
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthorizationService"/> class with provided dependencies.
     /// </summary>
-    /// <param name="pdp">The policy decision point</param>
-    /// <param name="claimsPrincipalProvider">A service</param>
+    /// <param name="pdp">A client implementation for policy decision point.</param>
+    /// <param name="claimsPrincipalProvider">A service that can provide the ClaimsPrincipal for active user.</param>
     public AuthorizationService(
         IPDP pdp, 
         IClaimsPrincipalProvider claimsPrincipalProvider)
