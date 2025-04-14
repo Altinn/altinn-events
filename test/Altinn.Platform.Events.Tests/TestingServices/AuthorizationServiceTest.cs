@@ -256,7 +256,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task AuthorizeEvents_InputEventsFiveSubjects_LogicManipluateSubjectCorrectly()
+        public async Task AuthorizeEvents_InputEventsFiveSubjects_LogicManipulateSubjectCorrectly()
         {
             List<CloudEvent> cloudEvents = [
                 GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:02056241046"),
