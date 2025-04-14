@@ -187,14 +187,16 @@ public class AuthorizationService : IAuthorization
 
     private static void ReplaceSubject(CloudEvent cloudEvent, IEnumerable<PartyIdentifiers> partyIdentifiersList)
     {
-        if (cloudEvent.Subject is null)
+        if (!UnsupportedSubject(cloudEvent))
         {
             return;
         }
 
-        cloudEvent[_originalSubjectKey] = cloudEvent.Subject;
+        // Backup the original subject in the event
+        cloudEvent[_originalSubjectKey] = cloudEvent.Subject!;
 
-        string nationalIdentityNumber = cloudEvent.Subject.Split(":")[4];
+        // The subject is in the format urn:altinn:person:identifier-no:08895699684
+        string nationalIdentityNumber = cloudEvent.Subject!.Replace("urn:altinn:person:identifier-no:", string.Empty);
 
         PartyIdentifiers? partyIdentifiers =
             partyIdentifiersList.FirstOrDefault(p => p.PersonIdentifier == nationalIdentityNumber);
