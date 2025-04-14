@@ -127,7 +127,7 @@ namespace Altinn.Platform.Events.Controllers
             {
                 if (tce.CancellationToken.IsCancellationRequested)
                 {
-                    return Problem(tce.StackTrace, null, 499, tce.Message);
+                    return Problem(null, null, 499, "Cancellation was requested.");
                 }
 
                 throw;

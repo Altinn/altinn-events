@@ -259,11 +259,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task AuthorizeEvents_InputEventsFiveSubjects_LogicManipluateSubjectCorrectly()
         {
             List<CloudEvent> cloudEvents = [
-                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:02056241046"),
-                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:organization:identifier-no:312508729"),
-                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:31073102351"),
-                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:31073102351"),
-                GetCloudEvent("urn:altinn:resource:super-simple-service", "urn:altinn:person:identifier-no:notfound")];
+                GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:02056241046"),
+                GetCloudEvent("ef14212c-0f9d-4f88-89c5-255d946e5f18", "urn:altinn:organization:identifier-no:312508729"),
+                GetCloudEvent("29168d79-b081-4299-9eec-2db9b5259fac", "urn:altinn:person:identifier-no:31073102351"),
+                GetCloudEvent("bf1411fe-c55e-4472-9f37-10e2c2403ecb", "urn:altinn:person:identifier-no:31073102351"),
+                GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "urn:altinn:person:identifier-no:notfound")];
 
             List<PartyIdentifiers> partyIdentifiers =
                 (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
@@ -278,6 +278,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     Assert.Equal("urn:altinn:person:identifier-no:notfound", requestedUrnList.ElementAt(2));
                 })
                 .ReturnsAsync(partyIdentifiers);
+
+            XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_five");
 
             Mock<IPDP> pdpMock = new();
             pdpMock
@@ -303,16 +305,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
                     Assert.Equal(4, resources[4].Attribute.Count); // No party identifier found
                 })
-                .ReturnsAsync(new XacmlJsonResponse
-                {
-                    Response =
-                    [
-                        new XacmlJsonResult
-                        {
-                            Decision = "Permit"
-                        }
-                    ]
-                });
+                .ReturnsAsync(decisionResponse);
 
             AuthorizationService target = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
 
@@ -322,10 +315,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.NotNull(finalCloudEvents);
 
             Assert.Equal(5, finalCloudEvents.Count);
-            Assert.StartsWith("urn:altinn:person:identifier-no:02056241046", finalCloudEvents[0].Subject);
+            Assert.Equal("urn:altinn:person:identifier-no:02056241046", finalCloudEvents[0].Subject);
             Assert.Null(finalCloudEvents[0]["originalsubjectreplacedforauthorization"]);
 
-            Assert.StartsWith("urn:altinn:organization:identifier-no:", finalCloudEvents[1].Subject);
+            Assert.Equal("urn:altinn:organization:identifier-no:312508729", finalCloudEvents[1].Subject);
             Assert.Null(finalCloudEvents[1]["originalsubjectreplacedforauthorization"]);
 
             Assert.Equal("urn:altinn:person:identifier-no:31073102351", finalCloudEvents[2].Subject);
@@ -338,18 +331,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Null(finalCloudEvents[4]["originalsubjectreplacedforauthorization"]);
         }
 
-        private static CloudEvent GetCloudEvent(string resource, string subject)
+        private static CloudEvent GetCloudEvent(string eventId, string subject)
         {
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = eventId,
                 Type = "something.important.happened",
                 Time = DateTime.Now,
                 Subject = subject,
                 Source = new Uri($"https://dialogporten.no/api/v1/dialogs/{Guid.NewGuid()}")
             };
 
-            cloudEvent["resource"] = resource;
+            cloudEvent["resource"] = "urn:altinn:resource:super-simple-service";
 
             return cloudEvent;
         }

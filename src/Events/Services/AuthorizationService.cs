@@ -3,7 +3,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -97,11 +96,7 @@ public class AuthorizationService : IAuthorization
 
         foreach (CloudEvent cloudEvent in authorizedEvents)
         {
-            if (cloudEvent[_originalSubjectKey] is not null)
-            {
-                cloudEvent.Subject = cloudEvent[_originalSubjectKey]!.ToString();
-                cloudEvent[_originalSubjectKey] = null;
-            }
+            RestoreSubject(cloudEvent);
         }
 
         return authorizedEvents;
@@ -192,9 +187,14 @@ public class AuthorizationService : IAuthorization
 
     private static void ReplaceSubject(CloudEvent cloudEvent, IEnumerable<PartyIdentifiers> partyIdentifiersList)
     {
-        cloudEvent[_originalSubjectKey] = cloudEvent.Subject!;
+        if (cloudEvent.Subject is null)
+        {
+            return;
+        }
 
-        string nationalIdentityNumber = cloudEvent.Subject!.Split(":")[4];
+        cloudEvent[_originalSubjectKey] = cloudEvent.Subject;
+
+        string nationalIdentityNumber = cloudEvent.Subject.Split(":")[4];
 
         PartyIdentifiers? partyIdentifiers =
             partyIdentifiersList.FirstOrDefault(p => p.PersonIdentifier == nationalIdentityNumber);
@@ -208,6 +208,15 @@ public class AuthorizationService : IAuthorization
             // If the party is not found in register, it's a data quality issue across systems.
             // For example a difference in the data between Dialogporten and Register.
             cloudEvent.Subject = null;
+        }
+    }
+
+    private static void RestoreSubject(CloudEvent cloudEvent)
+    {
+        if (cloudEvent[_originalSubjectKey] is not null)
+        {
+            cloudEvent.Subject = cloudEvent[_originalSubjectKey]!.ToString();
+            cloudEvent[_originalSubjectKey] = null;
         }
     }
 }

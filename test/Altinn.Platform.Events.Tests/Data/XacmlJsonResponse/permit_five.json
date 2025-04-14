@@ -47,7 +47,7 @@
           "Attribute": [
             {
               "AttributeId": "urn:altinn:event-id",
-              "Value": "99253099-eeac-4ca3-b758-350fcde53356",
+              "Value": "e7c581bc-e931-46c8-bfc0-3c6716d8da15",
               "Issuer": null,
               "DataType": "http://www.w3.org/2001/XMLSchema#string",
               "IncludeInResult": false
@@ -104,7 +104,7 @@
           "Attribute": [
             {
               "AttributeId": "urn:altinn:event-id",
-              "Value": "b8902f90-0b5b-42c2-9841-954f3c031f05",
+              "Value": "ef14212c-0f9d-4f88-89c5-255d946e5f18",
               "Issuer": null,
               "DataType": "http://www.w3.org/2001/XMLSchema#string",
               "IncludeInResult": false
@@ -161,7 +161,7 @@
           "Attribute": [
             {
               "AttributeId": "urn:altinn:event-id",
-              "Value": "3d7b17ad-a53e-47ca-8cfb-2b2a72a37804",
+              "Value": "29168d79-b081-4299-9eec-2db9b5259fac",
               "Issuer": null,
               "DataType": "http://www.w3.org/2001/XMLSchema#string",
               "IncludeInResult": false
@@ -218,7 +218,7 @@
           "Attribute": [
             {
               "AttributeId": "urn:altinn:event-id",
-              "Value": "81d89359-373a-48d3-af5c-44aa378ba97f",
+              "Value": "bf1411fe-c55e-4472-9f37-10e2c2403ecb",
               "Issuer": null,
               "DataType": "http://www.w3.org/2001/XMLSchema#string",
               "IncludeInResult": false
@@ -275,7 +275,7 @@
           "Attribute": [
             {
               "AttributeId": "urn:altinn:event-id",
-              "Value": "ef4c26b2-4ea6-4914-851b-560bc1b33cff",
+              "Value": "95d53441-5ecf-4165-83d8-a757afd8a7e2",
               "Issuer": null,
               "DataType": "http://www.w3.org/2001/XMLSchema#string",
               "IncludeInResult": false
