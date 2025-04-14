@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
@@ -23,8 +24,12 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Authorizes and filters events based on authorization
         /// </summary>
         /// <param name="cloudEvents">The list of events</param>
+        /// <param name="cancellationToken">
+        /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
+        /// </param>
         /// <returns>A list of authorized events</returns>
-        public Task<List<CloudEvent>> AuthorizeEvents(List<CloudEvent> cloudEvents);
+        public Task<List<CloudEvent>> AuthorizeEvents(
+            IEnumerable<CloudEvent> cloudEvents, CancellationToken cancellationToken);
 
         /// <summary>
         /// Authorizes the currents user's right to publish the provided event

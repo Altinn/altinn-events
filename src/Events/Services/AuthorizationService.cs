@@ -3,6 +3,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Authorization.ABAC.Xacml;
@@ -27,20 +29,26 @@ namespace Altinn.Platform.Events.Services;
 /// </summary>
 public class AuthorizationService : IAuthorization
 {
+    private const string _originalSubjectKey = "originalsubjectreplacedforauthorization";
+
     private readonly IPDP _pdp;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
+    private readonly IRegisterService _registerService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthorizationService"/> class with provided dependencies.
     /// </summary>
     /// <param name="pdp">A client implementation for policy decision point.</param>
     /// <param name="claimsPrincipalProvider">A service that can provide the ClaimsPrincipal for active user.</param>
+    /// <param name="registerService">A service that can perform obtain more party details.</param>
     public AuthorizationService(
-        IPDP pdp, 
-        IClaimsPrincipalProvider claimsPrincipalProvider)
+        IPDP pdp,
+        IClaimsPrincipalProvider claimsPrincipalProvider,
+        IRegisterService registerService)
     {
         _pdp = pdp;
         _claimsPrincipalProvider = claimsPrincipalProvider;
+        _registerService = registerService;
     }
 
     /// <inheritdoc/>
@@ -54,14 +62,49 @@ public class AuthorizationService : IAuthorization
     }
 
     /// <inheritdoc/>
-    public async Task<List<CloudEvent>> AuthorizeEvents(List<CloudEvent> cloudEvents)
+    public async Task<List<CloudEvent>> AuthorizeEvents(
+        IEnumerable<CloudEvent> cloudEvents, CancellationToken cancellationToken)
     {
         ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
 
-        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, "subscribe", cloudEvents);
+        /********
+         * Authorization doesn't support event subject on the format urn:altinn:person:identifier-no:08895699684.
+         * We need to obtain the party UUID and use that instead when building the authorization request.
+         *******/
+
+        List<string> unsupportedSubjects = cloudEvents
+            .Where(UnsupportedSubject)
+            .Select(e => e.Subject!) // The where clause ensures that Subject is not null
+            .Distinct()
+            .ToList();
+
+        if (unsupportedSubjects.Count > 0)
+        {
+            IEnumerable<PartyIdentifiers> partyIdentifiersList = 
+                await _registerService.PartyLookup(unsupportedSubjects, cancellationToken);
+
+            foreach (CloudEvent cloudEvent in cloudEvents.Where(UnsupportedSubject))
+            {
+                ReplaceSubject(cloudEvent, partyIdentifiersList);
+            }
+        }
+
+        XacmlJsonRequestRoot xacmlJsonRequest = 
+            GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, "subscribe", cloudEvents.ToList());
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
-        return FilterAuthorizedRequests(cloudEvents, consumer, response);
+        List<CloudEvent> authorizedEvents = FilterAuthorizedRequests(cloudEvents.ToList(), consumer, response);
+
+        foreach (CloudEvent cloudEvent in authorizedEvents)
+        {
+            if (cloudEvent[_originalSubjectKey] is not null)
+            {
+                cloudEvent.Subject = cloudEvent[_originalSubjectKey]!.ToString();
+                cloudEvent[_originalSubjectKey] = null;
+            }
+        }
+
+        return authorizedEvents;
     }
 
     /// <inheritdoc/>
@@ -104,16 +147,6 @@ public class AuthorizationService : IAuthorization
         return IsPermit(response);
     }
 
-    private static bool IsPermit(XacmlJsonResponse response)
-    {
-        if (response.Response[0].Decision.Equals(XacmlContextDecision.Permit.ToString()))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
     /// <summary>
     /// Composes a list of events that the consumer is authorized to receive based on the provided xacml response
     /// </summary>
@@ -140,5 +173,41 @@ public class AuthorizationService : IAuthorization
         }
 
         return authorizedEventsList;
+    }
+
+    private static bool IsPermit(XacmlJsonResponse response)
+    {
+        if (response.Response[0].Decision.Equals(XacmlContextDecision.Permit.ToString()))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool UnsupportedSubject(CloudEvent e)
+    {
+        return e.Subject is not null && e.Subject.StartsWith("urn:altinn:person:identifier-no:");
+    }
+
+    private static void ReplaceSubject(CloudEvent cloudEvent, IEnumerable<PartyIdentifiers> partyIdentifiersList)
+    {
+        cloudEvent[_originalSubjectKey] = cloudEvent.Subject!;
+
+        string nationalIdentityNumber = cloudEvent.Subject!.Split(":")[4];
+
+        PartyIdentifiers? partyIdentifiers =
+            partyIdentifiersList.FirstOrDefault(p => p.PersonIdentifier == nationalIdentityNumber);
+
+        if (partyIdentifiers is not null)
+        {
+            cloudEvent.Subject = $"urn:altinn:party:uuid:{partyIdentifiers.PartyUuid}";
+        }
+        else
+        {
+            // If the party is not found in register, it's a data quality issue across systems.
+            // For example a difference in the data between Dialogporten and Register.
+            cloudEvent.Subject = null;
+        }
     }
 }

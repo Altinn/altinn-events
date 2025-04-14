@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Altinn.Profile.Tests.Testdata;
+namespace Altinn.Platform.Events.Tests.Utils;
 
 public static class TestDataLoader
 {
@@ -17,7 +17,7 @@ public static class TestDataLoader
 
         if (!File.Exists(path))
         {
-            return default(T);
+            return default;
         }
 
         string fileContent = await File.ReadAllTextAsync(path);
