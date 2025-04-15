@@ -86,14 +86,14 @@ public class SubscriptionRepository : ISubscriptionRepository
 
     /// <inheritdoc/>
     public async Task<List<Subscription>> GetSubscriptions(
-        string resource, string subject, string type, CancellationToken cancellationToken)
+        string resource, string subject, string eventType, CancellationToken cancellationToken)
     {
         List<Subscription> searchResult = [];
 
         await using NpgsqlCommand command = _dataSource.CreateCommand(_getSubscriptionsSql);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, resource);
         command.Parameters.AddWithValue(NpgsqlDbType.Varchar, subject ?? string.Empty);
-        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, type);
+        command.Parameters.AddWithValue(NpgsqlDbType.Varchar, eventType);
 
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 

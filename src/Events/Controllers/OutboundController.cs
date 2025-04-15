@@ -60,7 +60,7 @@ public class OutboundController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "// OutboundController.Post failed for {cloudEventId}.", cloudEvent?.Id);
+            _logger.LogError(e, "// OutboundController.Post failed for {CloudEventId}.", cloudEvent?.Id);
             return StatusCode(503, e.Message);
         }
     }
