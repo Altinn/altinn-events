@@ -14,9 +14,9 @@ using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Tests.Mocks;
+using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
-using Altinn.Profile.Tests.Testdata;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;

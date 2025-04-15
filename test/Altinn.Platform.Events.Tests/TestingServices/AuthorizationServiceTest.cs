@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+
 using Altinn.Common.PEP.Interfaces;
+
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Utils;
@@ -26,6 +29,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     {
         private readonly CloudEvent _cloudEvent;
         private readonly Mock<IClaimsPrincipalProvider> _principalMock = new();
+        private readonly Mock<IRegisterService> _registerServiceMock = new();
 
         public AuthorizationServiceTest()
         {
@@ -50,7 +54,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task AuthorizeConsumerForAltinnAppEvent_Self()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            AuthorizationService authzHelper = new AuthorizationService(pdp, _principalMock.Object);
+            AuthorizationService authzHelper = 
+                new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
 
             // Act
             bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(_cloudEvent, "/user/1337");
@@ -66,7 +71,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task AuthorizeConsumerForAltinnAppEvent_OrgAccessToEventForUser()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            AuthorizationService authzHelper = new AuthorizationService(pdp, _principalMock.Object);
+            AuthorizationService authzHelper = 
+                new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
 
             // Act
             bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(_cloudEvent, "/org/ttd");
@@ -82,7 +88,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task AuthorizeConsumerForAltinnAppEvent_OrgAccessToEventForUserNotAuthorized()
         {
             PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-            AuthorizationService authzHelper = new AuthorizationService(pdp, _principalMock.Object);
+            AuthorizationService authzHelper = 
+                new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
 
             CloudEvent cloudEvent = new()
             {
@@ -103,8 +110,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             Mock<IPDP> pdpMock = GetPDPMockWithRespose("Permit");
 
-            // Act            
-            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
+            // Act
+            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
 
             bool actual = await sut.AuthorizeConsumerForGenericEvent(_cloudEvent, "/org/ttd/");
 
@@ -122,7 +129,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
             XacmlJsonResponse response = TestdataUtil.GetXacmlJsonResponse(testCase);
 
-            // Act            
+            // Act
             List<CloudEvent> actual = AuthorizationService.FilterAuthorizedRequests(cloudEvents, consumer, response);
 
             // Assert
@@ -139,7 +146,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
             XacmlJsonResponse response = TestdataUtil.GetXacmlJsonResponse(testCase);
 
-            // Act            
+            // Act
             List<CloudEvent> actual = AuthorizationService.FilterAuthorizedRequests(cloudEvents, consumer, response);
 
             // Assert
@@ -155,7 +162,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
             ClaimsPrincipal consumer = PrincipalUtil.GetSystemUserPrincipal("system_identifier", "9485C31D-6ECE-477F-B81C-1E2593FC1309", "random_org", 3);
 
-            // Act            
+            // Act
             List<CloudEvent> actual = AuthorizationService.FilterAuthorizedRequests(cloudEvents, consumer, response);
 
             // Assert
@@ -169,8 +176,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             Mock<IPDP> pdpMock = GetPDPMockWithRespose("Permit");
 
-            // Act            
-            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
+            // Act
+            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 
@@ -185,8 +192,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             Mock<IPDP> pdpMock = GetPDPMockWithRespose("Deny");
 
-            // Act            
-            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
+            // Act
+            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 
@@ -201,8 +208,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             Mock<IPDP> pdpMock = GetPDPMockWithRespose("Indeterminate");
 
-            // Act            
-            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object);
+            // Act
+            var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 
@@ -221,7 +228,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678", "altinn:events.publish.admin", "AuthenticationTypes.Federation"));
 
             // Act
-            var sut = new AuthorizationService(pdpMock.Object, principalMock.Object);
+            var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 
@@ -240,12 +247,104 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678", "somerandomprefix:altinn:events.publish.admin", "AuthenticationTypes.Federation"));
 
             // Act
-            var sut = new AuthorizationService(pdpMock.Object, principalMock.Object);
+            var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object);
 
             bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
 
             // Assert
             Assert.False(actual);
+        }
+
+        [Fact]
+        public async Task AuthorizeEvents_InputEventsFiveSubjects_LogicManipulateSubjectCorrectly()
+        {
+            List<CloudEvent> cloudEvents = [
+                GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:02056241046"),
+                GetCloudEvent("ef14212c-0f9d-4f88-89c5-255d946e5f18", "urn:altinn:organization:identifier-no:312508729"),
+                GetCloudEvent("29168d79-b081-4299-9eec-2db9b5259fac", "urn:altinn:person:identifier-no:31073102351"),
+                GetCloudEvent("bf1411fe-c55e-4472-9f37-10e2c2403ecb", "urn:altinn:person:identifier-no:31073102351"),
+                GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "urn:altinn:person:identifier-no:notfound")];
+
+            List<PartyIdentifiers> partyIdentifiers =
+                (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+                .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
+                {
+                    Assert.Equal(3, requestedUrnList.Count());
+                    Assert.Equal("urn:altinn:person:identifier-no:02056241046", requestedUrnList.ElementAt(0));
+                    Assert.Equal("urn:altinn:person:identifier-no:31073102351", requestedUrnList.ElementAt(1));
+                    Assert.Equal("urn:altinn:person:identifier-no:notfound", requestedUrnList.ElementAt(2));
+                })
+                .ReturnsAsync(partyIdentifiers);
+
+            XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_five");
+
+            Mock<IPDP> pdpMock = new();
+            pdpMock
+                .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+                .Callback((XacmlJsonRequestRoot authRequest) =>
+                {
+                    List<XacmlJsonCategory> resources = authRequest.Request.Resource;
+
+                    // Analyze the generated resources with focus on the manipulated subjects
+                    Assert.Equal(5, resources.Count);
+
+                    Assert.Equal("urn:altinn:party:uuid", resources[0].Attribute[4].AttributeId);
+                    Assert.Equal("8be970b6-b361-42c6-9b53-5cd3ab5efbe9", resources[0].Attribute[4].Value);
+
+                    Assert.Equal("urn:altinn:organization:identifier-no", resources[1].Attribute[4].AttributeId);
+                    Assert.Equal("312508729", resources[1].Attribute[4].Value);
+
+                    Assert.Equal("urn:altinn:party:uuid", resources[2].Attribute[4].AttributeId);
+                    Assert.Equal("930423fe-8bbd-43f0-bf4c-3ddf5a5eb4e7", resources[2].Attribute[4].Value);
+
+                    Assert.Equal("urn:altinn:party:uuid", resources[3].Attribute[4].AttributeId);
+                    Assert.Equal("930423fe-8bbd-43f0-bf4c-3ddf5a5eb4e7", resources[3].Attribute[4].Value);
+
+                    Assert.Equal(4, resources[4].Attribute.Count); // No party identifier found
+                })
+                .ReturnsAsync(decisionResponse);
+
+            AuthorizationService target = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
+
+            // Act
+            List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, CancellationToken.None);
+
+            Assert.NotNull(finalCloudEvents);
+
+            Assert.Equal(5, finalCloudEvents.Count);
+            Assert.Equal("urn:altinn:person:identifier-no:02056241046", finalCloudEvents[0].Subject);
+            Assert.Null(finalCloudEvents[0]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:organization:identifier-no:312508729", finalCloudEvents[1].Subject);
+            Assert.Null(finalCloudEvents[1]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:31073102351", finalCloudEvents[2].Subject);
+            Assert.Null(finalCloudEvents[2]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:31073102351", finalCloudEvents[3].Subject);
+            Assert.Null(finalCloudEvents[3]["originalsubjectreplacedforauthorization"]);
+
+            Assert.Equal("urn:altinn:person:identifier-no:notfound", finalCloudEvents[4].Subject);
+            Assert.Null(finalCloudEvents[4]["originalsubjectreplacedforauthorization"]);
+        }
+
+        private static CloudEvent GetCloudEvent(string eventId, string subject)
+        {
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
+            {
+                Id = eventId,
+                Type = "something.important.happened",
+                Time = DateTime.Now,
+                Subject = subject,
+                Source = new Uri($"https://dialogporten.no/api/v1/dialogs/{Guid.NewGuid()}")
+            };
+
+            cloudEvent["resource"] = "urn:altinn:resource:super-simple-service";
+
+            return cloudEvent;
         }
 
         private static Mock<IPDP> GetPDPMockWithRespose(string decision)
