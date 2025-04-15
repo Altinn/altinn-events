@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
@@ -74,7 +75,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 var cloudEvent = GetCloudEventRequest();
 
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
-                service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>()));
+                service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()));
 
                 HttpClient client = GetTestClient(service.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -107,7 +108,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/outbound";
                 var cloudEvent = GetCloudEventRequest();
                 Mock<IOutboundService> service = new Mock<IOutboundService>();
-                service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
+                service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>())).Throws(new Exception());
                 HttpClient client = GetTestClient(service.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
