@@ -6,7 +6,7 @@ import {
   buildHeaderWithContentType,
   buildHeaderWithCookie,
 } from "../apiHelpers.js";
-import { platformAuthentication, portalAuthentication } from "../config.js";
+import { platformAuthentication, portalAuthentication, authCookieName } from "../config.js";
 import { stopIterationOnFail, addErrorCount } from "../errorhandler.js";
 
 const userName = __ENV.userName;
@@ -68,13 +68,11 @@ export function authenticateUser() {
     res
   );
 
-  var aspxAuthCookieName = ".ASPXAUTH";
-
-  var aspxAuthCookie = res.cookies[aspxAuthCookieName][0].value;
+  var aspxAuthCookie = res.cookies[authCookieName][0].value;
 
   var endpoint = platformAuthentication.refresh;
 
-  var params = buildHeaderWithCookie(aspxAuthCookieName, aspxAuthCookie);
+  var params = buildHeaderWithCookie(authCookieName, aspxAuthCookie);
 
   var res = http.get(endpoint, params);
   var success = check(res, {
