@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-using Altinn.Authorization.ABAC.Xacml.JsonProfile;
-
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Tests.Utils
@@ -16,23 +14,9 @@ namespace Altinn.Platform.Events.Tests.Utils
             PropertyNameCaseInsensitive = true
         };
 
-        public static XacmlJsonResponse GetXacmlJsonResponse(string testCase)
+        public static List<CloudEvent> GetCloudEventList()
         {
-            string xacmlResponsePath = Path.Combine(GetXacmlResponsePath(), $@"{testCase}.json");
-
-            if (File.Exists(xacmlResponsePath))
-            {
-                string content = File.ReadAllText(xacmlResponsePath);
-                XacmlJsonResponse response = JsonSerializer.Deserialize<XacmlJsonResponse>(content, _options);
-                return response;
-            }
-
-            return null;
-        }
-
-        public static List<CloudEvent> GetXacmlRequestCloudEventList()
-        {
-            string eventListPath = Path.Combine(GetXacmlResponsePath(), $@"events.json");
+            string eventListPath = Path.Combine(GetEventsPath(), $@"events.json");
 
             if (File.Exists(eventListPath))
             {
@@ -70,10 +54,10 @@ namespace Altinn.Platform.Events.Tests.Utils
             return copy;
         }
 
-        private static string GetXacmlResponsePath()
+        private static string GetEventsPath()
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(TestdataUtil).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "xacmlresponses");
+            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "events");
         }
     }
 }

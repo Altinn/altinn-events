@@ -141,7 +141,7 @@ public class AuthorizationServiceTest
             })
             .ReturnsAsync([partiesRegisterQueryResponse.Data[0]]);
 
-        XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_one");
+        XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_subscribe_one");
 
         Mock<IPDP> pdpMock = new();
         pdpMock.Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
@@ -169,13 +169,12 @@ public class AuthorizationServiceTest
     }
 
     [Fact]
-    public void FilterAuthorizedRequests_PermitAll()
+    public async Task FilterAuthorizedRequests_PermitAll()
     {
         // Arrange
         ClaimsPrincipal consumer = PrincipalUtil.GetClaimsPrincipal(12345, 3);
-        string testCase = "permit_all";
-        List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
-        XacmlJsonResponse response = TestdataUtil.GetXacmlJsonResponse(testCase);
+        List<CloudEvent> cloudEvents = TestdataUtil.GetCloudEventList();
+        XacmlJsonResponse response = await TestDataLoader.Load<XacmlJsonResponse>("permit_read_all");
 
         // Act
         List<CloudEvent> actual = AuthorizationService.FilterAuthorizedRequests(cloudEvents, consumer, response);
@@ -186,13 +185,12 @@ public class AuthorizationServiceTest
     }
 
     [Fact]
-    public void FilterAuthorizedRequests_PermitOne()
+    public async Task FilterAuthorizedRequests_PermitOne()
     {
         // Arrange
         ClaimsPrincipal consumer = PrincipalUtil.GetClaimsPrincipal(12345, 3);
-        string testCase = "permit_one";
-        List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
-        XacmlJsonResponse response = TestdataUtil.GetXacmlJsonResponse(testCase);
+        List<CloudEvent> cloudEvents = TestdataUtil.GetCloudEventList();
+        XacmlJsonResponse response = await TestDataLoader.Load<XacmlJsonResponse>("permit_read_one");
 
         // Act
         List<CloudEvent> actual = AuthorizationService.FilterAuthorizedRequests(cloudEvents, consumer, response);
@@ -202,12 +200,11 @@ public class AuthorizationServiceTest
     }
 
     [Fact]
-    public void FilterAuthorizedRequests_PermitAll_SystemUser()
+    public async Task FilterAuthorizedRequests_PermitAll_SystemUser()
     {
         // Arrange
-        string testCase = "permit_all";
-        XacmlJsonResponse response = TestdataUtil.GetXacmlJsonResponse(testCase);
-        List<CloudEvent> cloudEvents = TestdataUtil.GetXacmlRequestCloudEventList();
+        XacmlJsonResponse response = await TestDataLoader.Load<XacmlJsonResponse>("permit_read_all");
+        List<CloudEvent> cloudEvents = TestdataUtil.GetCloudEventList();
         ClaimsPrincipal consumer = PrincipalUtil.GetSystemUserPrincipal("system_identifier", "9485C31D-6ECE-477F-B81C-1E2593FC1309", "random_org", 3);
 
         // Act
@@ -311,7 +308,8 @@ public class AuthorizationServiceTest
             GetCloudEvent("ef14212c-0f9d-4f88-89c5-255d946e5f18", "urn:altinn:organization:identifier-no:312508729"),
             GetCloudEvent("29168d79-b081-4299-9eec-2db9b5259fac", "urn:altinn:person:identifier-no:31073102351"),
             GetCloudEvent("bf1411fe-c55e-4472-9f37-10e2c2403ecb", "urn:altinn:person:identifier-no:31073102351"),
-            GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "urn:altinn:person:identifier-no:notfound")];
+            GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "urn:altinn:person:identifier-no:notfound"),
+            GetCloudEvent("a7c7b7bf-3151-4de8-b326-aeaa5c36e7c4", null)];
 
         List<PartyIdentifiers> partyIdentifiers =
             (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
@@ -327,7 +325,7 @@ public class AuthorizationServiceTest
             })
             .ReturnsAsync(partyIdentifiers);
 
-        XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_five");
+        XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_subscribe_five");
 
         Mock<IPDP> pdpMock = new();
         pdpMock
@@ -337,7 +335,7 @@ public class AuthorizationServiceTest
                 List<XacmlJsonCategory> resources = authRequest.Request.Resource;
 
                 // Analyze the generated resources with focus on the manipulated subjects
-                Assert.Equal(5, resources.Count);
+                Assert.Equal(6, resources.Count);
 
                 Assert.Equal("urn:altinn:party:uuid", resources[0].Attribute[4].AttributeId);
                 Assert.Equal("8be970b6-b361-42c6-9b53-5cd3ab5efbe9", resources[0].Attribute[4].Value);
@@ -352,6 +350,7 @@ public class AuthorizationServiceTest
                 Assert.Equal("930423fe-8bbd-43f0-bf4c-3ddf5a5eb4e7", resources[3].Attribute[4].Value);
 
                 Assert.Equal(4, resources[4].Attribute.Count); // No party identifier found
+                Assert.Equal(4, resources[5].Attribute.Count); // No subject
             })
             .ReturnsAsync(decisionResponse);
 
@@ -362,7 +361,7 @@ public class AuthorizationServiceTest
 
         Assert.NotNull(finalCloudEvents);
 
-        Assert.Equal(5, finalCloudEvents.Count);
+        Assert.Equal(5, finalCloudEvents.Count); // The last event was not authorized
         Assert.Equal("urn:altinn:person:identifier-no:02056241046", finalCloudEvents[0].Subject);
         Assert.Null(finalCloudEvents[0]["originalsubjectreplacedforauthorization"]);
 
@@ -379,7 +378,7 @@ public class AuthorizationServiceTest
         Assert.Null(finalCloudEvents[4]["originalsubjectreplacedforauthorization"]);
     }
 
-    private static CloudEvent GetCloudEvent(string eventId, string subject)
+    private static CloudEvent GetCloudEvent(string eventId, string? subject)
     {
         CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
         {
