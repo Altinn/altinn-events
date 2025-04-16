@@ -1,0 +1,34 @@
+﻿{
+  "Response": [
+    {
+      "Decision": "Permit",
+      "Status": {
+        "StatusMessage": null,
+        "StatusDetails": null,
+        "StatusCode": {
+          "Value": "urn:oasis:names:tc:xacml:1.0:status:ok",
+          "StatusCode": null
+        }
+      },
+      "Obligations": null,
+      "AssociateAdvice": null,
+      "Category": [
+        {
+          "CategoryId": "urn:oasis:names:tc:xacml:3.0:attribute-category:resource",
+          "Id": null,
+          "Content": null,
+          "Attribute": [
+            {
+              "AttributeId": "urn:altinn:event-id",
+              "Value": "87cb556f-6721-4b23-b410-77d8286e1cf3",
+              "Issuer": null,
+              "DataType": "http://www.w3.org/2001/XMLSchema#string",
+              "IncludeInResult": false
+            }
+          ]
+        }
+      ],
+      "PolicyIdentifierList": null
+    }
+  ]
+}

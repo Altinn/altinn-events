@@ -52,7 +52,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object);
 
             // Act
-            await service.PostOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -87,7 +87,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
-            await service.PostOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -117,13 +117,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .Setup(a => a.AuthorizeConsumerForGenericEvent(
+                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
 
             var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
-            await service.PostOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(1));
@@ -151,13 +152,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .Setup(a => a.AuthorizeConsumerForGenericEvent(
+                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false);
 
             var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
-            await service.PostOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
@@ -184,13 +186,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .Setup(a => a.AuthorizeConsumerForGenericEvent(
+                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false);
 
             var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
-            await service.PostOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -224,7 +227,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
-            await service.PostOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(4));
@@ -258,7 +261,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object, authorizationMock: authorizationMock.Object);
 
             // Act
-            await service.PostOutbound(cloudEvent);
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             loggerMock.Verify(

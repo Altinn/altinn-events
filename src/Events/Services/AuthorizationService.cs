@@ -119,10 +119,23 @@ public class AuthorizationService : IAuthorization
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AuthorizeConsumerForGenericEvent(CloudEvent cloudEvent, string consumer)
+    public async Task<bool> AuthorizeConsumerForGenericEvent(
+        CloudEvent cloudEvent, string consumer, CancellationToken cancellationToken)
     {
+        if (UnsupportedSubject(cloudEvent))
+        {
+            IEnumerable<PartyIdentifiers> partyIdentifiersList =
+                await _registerService.PartyLookup([cloudEvent.Subject!], cancellationToken);
+
+            ReplaceSubject(cloudEvent, partyIdentifiersList);
+        }
+
         XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateDecisionRequest(consumer, "subscribe", cloudEvent);
+
+        RestoreSubject(cloudEvent);
+
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+
         return IsPermit(response);
     }
 

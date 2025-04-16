@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
@@ -20,7 +21,6 @@ using AltinnCore.Authentication.JwtCookie;
 using CloudNative.CloudEvents;
 
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,188 +30,183 @@ using Moq;
 
 using Xunit;
 
-namespace Altinn.Platform.Events.Tests.TestingControllers
+namespace Altinn.Platform.Events.Tests.TestingControllers;
+
+/// <summary>
+/// Represents a collection of integration tests of the <see cref="OutboundController"/>.
+/// </summary>
+public class OutboundControllerTests : IClassFixture<WebApplicationFactory<OutboundController>>
 {
+    private const string BasePath = "/events/api/v1";
+
+    private readonly WebApplicationFactory<OutboundController> _factory;
+
+    private readonly Mock<ITraceLogService> _traceLogService = new();
+
     /// <summary>
-    /// Represents a collection of integration tests.
+    /// Initializes a new instance of the <see cref="OutboundControllerTests"/> class with the given <see cref="WebApplicationFactory{TOutboundController}"/>.
     /// </summary>
-    public partial class IntegrationTests
+    /// <param name="factory">The <see cref="WebApplicationFactory{TPushController}"/> to use when setting up the test server.</param>
+    public OutboundControllerTests(WebApplicationFactory<OutboundController> factory)
     {
-        /// <summary>
-        /// Represents a collection of integration tests of the <see cref="OutboundController"/>.
-        /// </summary>
-        public class OutboundControllerTests : IClassFixture<WebApplicationFactory<OutboundController>>
+        _factory = factory;
+    }
+
+    /// <summary>
+    /// Scenario:
+    ///   Post a valid CloudEventRequest instance.
+    /// Expected result:
+    ///   Returns HttpStatus Created and the Id for the instance.
+    /// Success criteria:
+    ///   The response has correct status and correct responseId.
+    /// </summary>
+    [Fact]
+    public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
+    {
+        // Arrange
+        string requestUri = $"{BasePath}/outbound";
+        string responseId = Guid.NewGuid().ToString();
+        var cloudEvent = GetCloudEventRequest();
+
+        Mock<IOutboundService> service = new Mock<IOutboundService>();
+        service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()));
+
+        HttpClient client = GetTestClient(service.Object);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
         {
-            private const string BasePath = "/events/api/v1";
+            Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
+        };
 
-            private readonly WebApplicationFactory<OutboundController> _factory;
+        httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
-            private readonly Mock<ITraceLogService> _traceLogService = new();
+        // Act
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
-            /// <summary>
-            /// Initializes a new instance of the <see cref="OutboundControllerTests"/> class with the given <see cref="WebApplicationFactory{TOutboundController}"/>.
-            /// </summary>
-            /// <param name="factory">The <see cref="WebApplicationFactory{TPushController}"/> to use when setting up the test server.</param>
-            public OutboundControllerTests(WebApplicationFactory<OutboundController> factory)
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Scenario:
+    ///   Post a valid cloud event, unexpected error when storing document
+    /// Expected result:
+    ///   Returns HttpStatus Internal Server Error.
+    /// Success criteria:
+    ///   The response has correct status.
+    /// </summary>
+    [Fact]
+    public async Task Post_RepositoryThrowsException_ReturnsServiceUnavailable()
+    {
+        // Arrange
+        string requestUri = $"{BasePath}/outbound";
+        CloudEvent cloudEvent = GetCloudEventRequest();
+
+        Mock<IOutboundService> service = new();
+        service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>())).Throws(new Exception());
+
+        HttpClient client = GetTestClient(service.Object);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+        HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
+        };
+        httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+        // Act
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Scenario:
+    ///   Post a cloud event, without bearer token.
+    /// Expected result:
+    ///   Returns HttpStatus Unauthorized.
+    /// Success criteria:
+    ///   The response has correct status.
+    /// </summary>
+    [Fact]
+    public async Task Post_MissingBearerToken_ReturnsForbidden()
+    {
+        // Arrange
+        string requestUri = $"{BasePath}/outbound";
+        HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
+
+        StringContent content = new StringContent(string.Empty);
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+
+        // Act
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Scenario:
+    ///   Post a cloud event, without access token.
+    /// Expected result:
+    ///   Returns HttpStatus Forbidden.
+    /// Success criteria:
+    ///   The response has correct status.
+    /// </summary>
+    [Fact]
+    public async Task Post_MissingAccessToken_ReturnsForbidden()
+    {
+        // Arrange
+        string requestUri = $"{BasePath}/outbound";
+
+        HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+
+        StringContent content = new StringContent(string.Empty);
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+
+        // Act
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    private HttpClient GetTestClient(IOutboundService outboundService)
+    {
+        HttpClient client = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((hostingContext, config) =>
             {
-                _factory = factory;
-            }
+                config.AddConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.unittest.json").Build());
+            });
 
-            /// <summary>
-            /// Scenario:
-            ///   Post a valid CloudEventRequest instance.
-            /// Expected result:
-            ///   Returns HttpStatus Created and the Id for the instance.
-            /// Success criteria:
-            ///   The response has correct status and correct responseId.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenValidCloudEvent_ReturnsStatusCreatedAndCorrectData()
+            builder.ConfigureTestServices(services =>
             {
-                // Arrange
-                string requestUri = $"{BasePath}/outbound";
-                string responseId = Guid.NewGuid().ToString();
-                var cloudEvent = GetCloudEventRequest();
+                services.AddSingleton(outboundService);
+                services.AddSingleton(_traceLogService.Object);
 
-                Mock<IOutboundService> service = new Mock<IOutboundService>();
-                service.Setup(s => s.PostOutbound(It.IsAny<CloudEvent>()));
+                // Set up mock authentication so that not well known endpoint is used
+                services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
+                services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
+                services.AddSingleton<IPDP, PepWithPDPAuthorizationMockSI>();
+            });
+        }).CreateClient();
 
-                HttpClient client = GetTestClient(service.Object);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
-                };
+        return client;
+    }
 
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post a valid cloud event, unexpected error when storing document
-            /// Expected result:
-            ///   Returns HttpStatus Internal Server Error.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async Task Post_RepositoryThrowsException_ReturnsInternalServerError()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/outbound";
-                var cloudEvent = GetCloudEventRequest();
-                Mock<IOutboundService> service = new Mock<IOutboundService>();
-                service.Setup(er => er.PostOutbound(It.IsAny<CloudEvent>())).Throws(new Exception());
-                HttpClient client = GetTestClient(service.Object);
-
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
-                };
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post a cloud event, without bearer token.
-            /// Expected result:
-            ///   Returns HttpStatus Unauthorized.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async Task Post_MissingBearerToken_ReturnsForbidden()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/outbound";
-                HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
-
-                StringContent content = new StringContent(string.Empty);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            }
-
-            /// <summary>
-            /// Scenario:
-            ///   Post a cloud event, without access token.
-            /// Expected result:
-            ///   Returns HttpStatus Forbidden.
-            /// Success criteria:
-            ///   The response has correct status.
-            /// </summary>
-            [Fact]
-            public async Task Post_MissingAccessToken_ReturnsForbidden()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/outbound";
-
-                HttpClient client = GetTestClient(new Mock<IOutboundService>().Object);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
-
-                StringContent content = new StringContent(string.Empty);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/cloudevents+json");
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-            }
-
-            private HttpClient GetTestClient(IOutboundService outboundService)
-            {
-                HttpClient client = _factory.WithWebHostBuilder(builder =>
-                {
-                    builder.ConfigureAppConfiguration((hostingContext, config) =>
-                    {
-                        config.AddConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.unittest.json").Build());
-                    });
-
-                    builder.ConfigureTestServices(services =>
-                    {
-                        services.AddSingleton(outboundService);
-                        services.AddSingleton(_traceLogService.Object);
-
-                        // Set up mock authentication so that not well known endpoint is used
-                        services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>, JwtCookiePostConfigureOptionsStub>();
-                        services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProviderMock>();
-                        services.AddSingleton<IPDP, PepWithPDPAuthorizationMockSI>();
-                    });
-                }).CreateClient();
-
-                return client;
-            }
-
-            private static CloudEvent GetCloudEventRequest()
-            {
-                return new CloudEvent(CloudEventsSpecVersion.V1_0)
-                {
-                    Id = Guid.NewGuid().ToString(),
-                    Type = "system.event.occurred",
-                    Subject = "/person/16069412345",
-                    Source = new Uri("urn:isbn:1234567890"),
-                };
-            }
-        }
+    private static CloudEvent GetCloudEventRequest()
+    {
+        return new CloudEvent(CloudEventsSpecVersion.V1_0)
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = "system.event.occurred",
+            Subject = "/person/16069412345",
+            Source = new Uri("urn:isbn:1234567890"),
+        };
     }
 }
