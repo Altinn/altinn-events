@@ -39,7 +39,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
         /// </param>
         /// <returns>A boolean indicating if the publisher is authorized or not</returns>
-        public Task<bool> AuthorizePublishEvent(CloudEvent cloudEvent,CancellationToken cancellationToken);
+        public Task<bool> AuthorizePublishEvent(CloudEvent cloudEvent, CancellationToken cancellationToken);
 
         /// <summary>
         /// Method to authorize access to an Altinn App event
