@@ -103,7 +103,7 @@ public class AuthorizationService : IAuthorization
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AuthorizePublishEvent(CloudEvent cloudEvent)
+    public async Task<bool> AuthorizePublishEvent(CloudEvent cloudEvent, CancellationToken cancellationToken)
     {
         ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
 
@@ -112,7 +112,17 @@ public class AuthorizationService : IAuthorization
             return true;
         }
 
+        if (UnsupportedSubject(cloudEvent))
+        {
+            IEnumerable<PartyIdentifiers> partyIdentifiersList =
+                await _registerService.PartyLookup([cloudEvent.Subject!], cancellationToken);
+            ReplaceSubject(cloudEvent, partyIdentifiersList);
+        }
+
         XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateDecisionRequest(consumer, "publish", cloudEvent);
+
+        RestoreSubject(cloudEvent);
+
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
         return IsPermit(response);

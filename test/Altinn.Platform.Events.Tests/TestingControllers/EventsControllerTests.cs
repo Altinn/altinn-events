@@ -191,11 +191,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 Mock<IEventsService> eventMock = new();
                 eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
-                          .ReturnsAsync(Guid.NewGuid().ToString());
+                         .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
-                authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
-                            .ReturnsAsync(true);
+                authorizationMock
+                    .Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(true);
 
                 HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
@@ -220,11 +221,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 Mock<IEventsService> eventMock = new();
                 eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
-                          .ReturnsAsync(Guid.NewGuid().ToString());
+                         .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
-                authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
-                            .ReturnsAsync(true);
+                authorizationMock
+                    .Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(true);
 
                 HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
@@ -250,11 +252,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 Mock<IEventsService> eventMock = new();
                 eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
-                          .ReturnsAsync(Guid.NewGuid().ToString());
+                         .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
-                authorizationMock.Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>()))
-                            .ReturnsAsync(false);
+                authorizationMock
+                    .Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(false);
 
                 HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
