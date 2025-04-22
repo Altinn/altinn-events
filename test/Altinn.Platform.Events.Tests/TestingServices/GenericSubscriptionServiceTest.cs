@@ -133,8 +133,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                          .ReturnsAsync((Subscription)null);
 
             repoMock
-                .Setup(r => r.CreateSubscription(It.IsAny<Subscription>(), It.IsAny<string>()))
-                        .ReturnsAsync((Subscription s, string _) =>
+                .Setup(r => r.CreateSubscription(It.IsAny<Subscription>()))
+                        .ReturnsAsync((Subscription s) =>
                         {
                             s.Id = new Random().Next(1, int.MaxValue);
                             s.Created = DateTime.Now;

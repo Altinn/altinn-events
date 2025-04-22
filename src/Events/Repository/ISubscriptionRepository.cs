@@ -22,8 +22,7 @@ public interface ISubscriptionRepository
     /// Creates an subscription in repository
     /// </summary>
     /// <param name="eventsSubscription">The subscription to persist in repository</param>
-    /// <param name="sourceFilterHash">The hashed subscription source filter to persist in repository</param>
-    Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash);
+    Task<Subscription> CreateSubscription(Subscription eventsSubscription);
 
     /// <summary>
     /// Gets a specific subscription

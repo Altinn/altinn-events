@@ -53,9 +53,9 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash)
+        public async Task<Subscription> CreateSubscription(Subscription eventsSubscription)
         {
-            return await _decoratedService.CreateSubscription(eventsSubscription, sourceFilterHash);
+            return await _decoratedService.CreateSubscription(eventsSubscription);
         }
 
         /// <inheritdoc/>
