@@ -45,14 +45,18 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Endpoint for posting a new cloud event
+        /// Registers a new cloud event to be stored and processed.
         /// </summary>
-        /// <param name="cloudEvent">The incoming cloud event</param>
-        /// <returns>The cloud event subject and id</returns>
+        /// <param name="cloudEvent">The cloud event to be stored and processed.</param>
+        /// <param name="cancellationToken">
+        /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
+        /// </param>
+        /// <returns>A task representing the asyncronous operation containing the final action result.</returns>
         [HttpPost]
         [Authorize(Policy = AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS)]
         [Consumes("application/cloudevents+json")]
-        public async Task<ActionResult<string>> Post([FromBody] CloudEvent cloudEvent)
+        public async Task<ActionResult> Post(
+            [FromBody] CloudEvent cloudEvent, CancellationToken cancellationToken)
         {
             (bool isValid, string errorMessage) = ValidateCloudEvent(cloudEvent);
             if (!isValid)
@@ -60,21 +64,14 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            bool isAuthorizedToPublish = await _authorizationService.AuthorizePublishEvent(cloudEvent);
+            bool isAuthorizedToPublish = await _authorizationService.AuthorizePublishEvent(cloudEvent, cancellationToken);
             if (!isAuthorizedToPublish)
             {
                 return Forbid();
             }
 
-            try
-            {
-                await _eventsService.RegisterNew(cloudEvent);
-                return Ok();
-            }
-            catch
-            {
-                return StatusCode(500, $"Unable to register cloud event.");
-            }
+            await _eventsService.RegisterNew(cloudEvent);
+            return Ok();
         }
 
         /// <summary>

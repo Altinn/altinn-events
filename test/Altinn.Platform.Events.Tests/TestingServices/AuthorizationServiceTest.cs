@@ -224,7 +224,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
         // Assert
         pdpMock.VerifyAll();
@@ -240,7 +240,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
         // Assert
         pdpMock.VerifyAll();
@@ -256,10 +256,56 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
         // Assert
         Assert.False(actual);
+    }
+
+    [Fact]
+    public async Task AuthorizePublishEvent_CloudEventWithUnsupportedSubject_SubjectIsReplacedAndRestored()
+    {
+        // Arrange
+        CloudEvent cloudEvent =
+            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:18874198354");
+
+        PartiesRegisterQueryResponse partiesRegisterQueryResponse =
+            await TestDataLoader.Load<PartiesRegisterQueryResponse>("oneperson");
+
+        Mock<IRegisterService> registerMock = new();
+        registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
+            {
+                Assert.Single(requestedUrnList);
+                Assert.Equal("urn:altinn:person:identifier-no:18874198354", requestedUrnList.ElementAt(0));
+            })
+            .ReturnsAsync([partiesRegisterQueryResponse.Data[0]]);
+
+        XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_publish_one");
+
+        Mock<IPDP> pdpMock = new();
+        pdpMock.Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Callback((XacmlJsonRequestRoot authRequest) =>
+            {
+                List<XacmlJsonCategory> resources = authRequest.Request.Resource;
+
+                Assert.Single(resources);
+
+                Assert.Equal("urn:altinn:party:uuid", resources[0].Attribute[4].AttributeId);
+                Assert.Equal("4a80af94-14be-4af5-9f95-a6a0824c5b55", resources[0].Attribute[4].Value);
+            })
+            .ReturnsAsync(decisionResponse);
+
+        // Act
+        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
+
+        bool actual = await sut.AuthorizePublishEvent(cloudEvent, CancellationToken.None);
+
+        // Assert
+        Assert.True(actual);
+
+        // Check that the cloud event is back to the original subject
+        Assert.Equal("urn:altinn:person:identifier-no:18874198354", cloudEvent.Subject);
     }
 
     [Fact]
@@ -275,7 +321,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
         // Assert
         Assert.True(actual);
@@ -294,7 +340,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
         // Assert
         Assert.False(actual);

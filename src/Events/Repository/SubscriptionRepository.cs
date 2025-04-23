@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Repository;
 public class SubscriptionRepository : ISubscriptionRepository
 {
     private readonly string _findSubscriptionSql = "select * from events.find_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl)";
-    private readonly string _insertSubscriptionSql = "select * from events.insert_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated, @sourcefilterhash)";
+    private readonly string _insertSubscriptionSql = "select * from events.insert_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated)";
     private readonly string _getSubscriptionSql = "select * from events.getsubscription_v2(@_id)";
     private readonly string _deleteSubscription = "call events.deletesubscription(@_id)";
     private readonly string _setValidSubscription = "call events.setvalidsubscription(@_id)";
@@ -38,7 +38,7 @@ public class SubscriptionRepository : ISubscriptionRepository
     }
 
     /// <inheritdoc/>
-    public async Task<Subscription> CreateSubscription(Subscription eventsSubscription, string sourceFilterHash)
+    public async Task<Subscription> CreateSubscription(Subscription eventsSubscription)
     {
         await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_insertSubscriptionSql);
         pgcom.Parameters.AddWithValue("resourcefilter", eventsSubscription.ResourceFilter.ToLower());
@@ -51,7 +51,6 @@ public class SubscriptionRepository : ISubscriptionRepository
         pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
         pgcom.Parameters.AddWithValue("createdby", eventsSubscription.CreatedBy);
         pgcom.Parameters.AddWithValue("validated", false);
-        pgcom.Parameters.AddWithNullableString("sourcefilterhash", sourceFilterHash);
 
         await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();
         await reader.ReadAsync();
