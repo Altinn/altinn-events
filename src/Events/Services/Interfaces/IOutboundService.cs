@@ -1,16 +1,23 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services.Interfaces;
 
 /// <summary>
-/// Defines the methods required for an implementation of the Outbound service.
+/// Represents the requirements of an outbound sericve implementation with the capability to
+/// identify subscriptions and queue events for delivery.
 /// </summary>
 public interface IOutboundService
 {
     /// <summary>
-    /// Deliver outbound cloudEvent to each matching subscriber.
+    /// Finds subscriptions that match the given event and queues the event for delivery to those subscriptions.
     /// </summary>
-    Task PostOutbound(CloudEvent cloudEvent);
+    /// <param name="cloudEvent">The CloudEvent to be processed.</param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
+    /// </param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task PostOutbound(CloudEvent cloudEvent, CancellationToken cancellationToken);
 }
