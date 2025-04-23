@@ -15,7 +15,9 @@ public interface ISubscriptionRepository
     /// Attempt to find existing subscriptions with properties matching the given subscription.
     /// </summary>
     /// <param name="eventsSubscription">The subscription to be used as base in the search.</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation if needed.</param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
+    /// </param>
     Task<Subscription> FindSubscription(Subscription eventsSubscription, CancellationToken cancellationToken);
 
     /// <summary>
