@@ -38,13 +38,15 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptions(string resource, string subject, string type, CancellationToken ct)
+        public async Task<List<Subscription>> GetSubscriptions(
+            string resource, string subject, string eventType, CancellationToken cancellationToken)
         {
-            string cacheKey = GetSubscriptionCacheKey(resource, subject, type);
+            string cacheKey = GetSubscriptionCacheKey(resource, subject, eventType);
 
             if (!_memoryCache.TryGetValue(cacheKey, out List<Subscription> subscriptions))
             {
-                subscriptions = await _decoratedService.GetSubscriptions(resource, subject, type, ct);
+                subscriptions = 
+                    await _decoratedService.GetSubscriptions(resource, subject, eventType, cancellationToken);
 
                 _memoryCache.Set(cacheKey, subscriptions, _cacheOptions);
             }
@@ -65,9 +67,9 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<Subscription> FindSubscription(Subscription eventsSubscription, CancellationToken ct)
+        public async Task<Subscription> FindSubscription(Subscription eventsSubscription, CancellationToken cancellationToken)
         {
-            return await _decoratedService.FindSubscription(eventsSubscription, ct);
+            return await _decoratedService.FindSubscription(eventsSubscription, cancellationToken);
         }
 
         /// <inheritdoc/>
