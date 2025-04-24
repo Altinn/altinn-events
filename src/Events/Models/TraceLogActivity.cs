@@ -33,6 +33,16 @@
         /// <summary>
         /// Subscription is invalid
         /// </summary>
-        InvalidSubscription
+        InvalidSubscription,
+
+        /// <summary>
+        /// The response code is 2xx ie successful
+        /// </summary>
+        EndpointValidationSuccess,
+
+        /// <summary>
+        /// The response code implies that validation failed
+        /// </summary>
+        EndpointValidationFailed,
     }
 }

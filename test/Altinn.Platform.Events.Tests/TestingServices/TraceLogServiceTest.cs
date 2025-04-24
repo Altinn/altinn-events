@@ -284,16 +284,56 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   Log entry should be saved with activity based on cloud event type
+        ///   Log entry should be saved with activity based on cloud event type and status code success, as returned by the http response
         /// Returns:
         ///   Either valid Guid or empty string if guid can't be parsed
         /// Success criteria:
-        ///   Cloud event type platform.events.validatesubscription should result in activity InvalidSubscription. Else: WebhookPostResponse
+        ///   Cloud event type platform.events.validatesubscription should result in activity EndpointValidationSuccess or EndpointValidationFailed, depending on status code.
+        /// </summary>
+        /// <param name="isSuccessStatusCode">Whether the status code response is successful or not</param>
+        /// <returns></returns>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task Create_TraceLogFromWebhookWithCloudEventType_ShouldSetActivityBasedOnSuccessStatusCode(bool isSuccessStatusCode)
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+
+            // Act
+            await traceLogService.CreateWebhookResponseEntry(new LogEntryDto
+            {
+                CloudEventId = _cloudEvent.Id,
+                CloudEventResource = _cloudEvent["resource"]?.ToString(),
+                Consumer = "consumer",
+                SubscriptionId = 1,
+                IsSuccessStatusCode = isSuccessStatusCode,
+                Endpoint = new Uri("https://localhost:3000"),
+                StatusCode = HttpStatusCode.OK,
+                CloudEventType = "platform.events.validatesubscription"
+            });
+
+            traceLogRepositoryMock.Verify(
+                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.EndpointValidationSuccess)), isSuccessStatusCode ? Times.Once : Times.Never);
+
+            traceLogRepositoryMock.Verify(
+                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.EndpointValidationFailed)), !isSuccessStatusCode ? Times.Once : Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Log entry should be saved with activity based on cloud event type and status code success, as returned by the http response
+        /// Returns:
+        ///   Either valid Guid or empty string if guid can't be parsed
+        /// Success criteria:
+        ///   Cloud event type platform.events.validatesubscription should result in activity EndpointValidationSuccess or EndpointValidationFailed, depending on status code. Else: WebhookPostResponse
         /// </summary>
         /// <param name="type">string representation of a cloud event type</param>
         /// <returns></returns>
         [Theory]
         [InlineData("platform.events.validatesubscription")]
+        [InlineData("platform.events")]
         [InlineData("")]
         [InlineData(null)]
         public async Task Create_TraceLogFromWebhookWithCloudEventType_ShouldSetActivityBasedOnType(string type)
@@ -314,11 +354,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 CloudEventType = type
             });
 
+            // Check for WebhookPostResponse activity only when NOT a validation event
+            var expectedTimes = type != null && string.Equals(type, "platform.events.validatesubscription", StringComparison.Ordinal) ? Times.Never() : Times.Once();
+        
             traceLogRepositoryMock.Verify(
-                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.InvalidSubscription)), type == "platform.events.validatesubscription" ? Times.Once : Times.Never);
-
-            traceLogRepositoryMock.Verify(
-                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.WebhookPostResponse)), type != "platform.events.validatesubscription" ? Times.Once : Times.Never);
+            x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.WebhookPostResponse)), expectedTimes);
         }
 
         /// <summary>

@@ -21,8 +21,11 @@ namespace Altinn.Platform.Events.Functions.Clients.Interfaces
         /// <summary>
         /// Posts an event with the given statusCode
         /// </summary>
+        /// <param name="cloudEventEnvelope">Wrapper object for cloud event and subscriber data</param>
+        /// <param name="statusCode">Http status code returned</param>
+        /// <param name="isSuccessStatusCode">Boolean value that indicates whether the status code was successful or not</param>
         /// <returns></returns>
-        Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, System.Net.HttpStatusCode statusCode);
+        Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, System.Net.HttpStatusCode statusCode, bool isSuccessStatusCode);
 
         /// <summary>
         /// Send cloudEvent for outbound processing.

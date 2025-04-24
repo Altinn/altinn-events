@@ -103,7 +103,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
             };
 
             // Act
-            await sut.LogWebhookHttpStatusCode(cloudEnvelope, HttpStatusCode.Created);
+            await sut.LogWebhookHttpStatusCode(cloudEnvelope, HttpStatusCode.Created, isSuccessStatusCode: true);
 
             // Assert
             handlerMock.VerifyAll();

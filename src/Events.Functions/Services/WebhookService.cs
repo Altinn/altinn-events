@@ -47,7 +47,7 @@ namespace Altinn.Platform.Events.Functions.Services
                 HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent);
 
                 // log response from webhook to Events
-                await _eventsClient.LogWebhookHttpStatusCode(envelope, response.StatusCode);
+                await _eventsClient.LogWebhookHttpStatusCode(envelope, response.StatusCode, response.IsSuccessStatusCode);
 
                 if (!response.IsSuccessStatusCode)
                 {
