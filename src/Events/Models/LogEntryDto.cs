@@ -49,6 +49,6 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// Boolean value based on whether or not the response from the subscriber was successful
         /// </summary>
-        public bool IsSuccessStatusCode { get; set; }
+        public bool? IsSuccessStatusCode { get; set; } = false;
     }
 }

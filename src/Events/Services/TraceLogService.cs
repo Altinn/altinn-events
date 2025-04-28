@@ -124,7 +124,7 @@ namespace Altinn.Platform.Events.Services
 
             if (isValidationType)
             {
-                return logEntryDto.IsSuccessStatusCode ? TraceLogActivity.EndpointValidationSuccess : TraceLogActivity.EndpointValidationFailed;
+                return logEntryDto.IsSuccessStatusCode == true ? TraceLogActivity.EndpointValidationSuccess : TraceLogActivity.EndpointValidationFailed;
             }
 
             return TraceLogActivity.WebhookPostResponse;
