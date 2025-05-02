@@ -108,7 +108,7 @@ namespace Altinn.Platform.Events.Services
                     SubscriberEndpoint = logEntryDto.Endpoint?.ToString(),
                     SubscriptionId = logEntryDto.SubscriptionId,
                     ResponseCode = (int?)logEntryDto.StatusCode,
-                    Activity = IsValidationType(logEntryDto.CloudEventType) ? TraceLogActivity.InvalidSubscription : TraceLogActivity.WebhookPostResponse
+                    Activity = DetermineActivityBasedOnTypeAndResponse(logEntryDto)
                 };
                 await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
                 return logEntryDto.CloudEventId ?? string.Empty;
@@ -118,9 +118,16 @@ namespace Altinn.Platform.Events.Services
             return string.Empty;
         }
 
-        private static bool IsValidationType(string? cloudEventType)
+        private static TraceLogActivity DetermineActivityBasedOnTypeAndResponse(LogEntryDto logEntryDto)
         {
-            return cloudEventType != null && cloudEventType.Equals(_validationType);
+            var isValidationType = logEntryDto.CloudEventType != null && logEntryDto.CloudEventType.Equals(_validationType);
+
+            if (isValidationType)
+            {
+                return logEntryDto.IsSuccessStatusCode == true ? TraceLogActivity.EndpointValidationSuccess : TraceLogActivity.EndpointValidationFailed;
+            }
+
+            return TraceLogActivity.WebhookPostResponse;
         }
 
         /// <summary>

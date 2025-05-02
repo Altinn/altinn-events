@@ -42,5 +42,10 @@ namespace Altinn.Platform.Events.Functions.Models
         /// The staus code returned from the subscriber endpoint
         /// </summary>
         public HttpStatusCode StatusCode { get; set; }
+
+        /// <summary>
+        /// Boolean value based on whether or not the response from the subscriber was successful
+        /// </summary>
+        public bool IsSuccessStatusCode { get; set; }
     }
 }

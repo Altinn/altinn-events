@@ -136,8 +136,9 @@ namespace Altinn.Platform.Events.Functions.Clients
         /// </summary>
         /// <param name="cloudEventEnvelope">Wrapper object for cloud event and subscriber data</param>
         /// <param name="statusCode">Http status code returned</param>
+        /// <param name="isSuccessStatusCode">Boolean value that indicates whether the status code was successful or not</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode)
+        public async Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, HttpStatusCode statusCode, bool isSuccessStatusCode)
         {
             try
             {
@@ -149,6 +150,7 @@ namespace Altinn.Platform.Events.Functions.Clients
                     CloudEventType = cloudEventEnvelope.CloudEvent.Type,
                     CloudEventResource = cloudEventEnvelope.CloudEvent["resource"]?.ToString(),
                     Consumer = cloudEventEnvelope.Consumer,
+                    IsSuccessStatusCode = isSuccessStatusCode,
                     Endpoint = cloudEventEnvelope.Endpoint,
                     SubscriptionId = cloudEventEnvelope.SubscriptionId,
                     StatusCode = statusCode,
