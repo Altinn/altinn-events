@@ -1,0 +1,22 @@
+# Prepend with the general automatic normalization (convert crlf -> lf) that uses Git's binary detection
+* text=auto
+
+# Override with explicit specific settings for known and/or likely text files in our repo that should be normalized
+*.cmd      text
+*.cs       text diff=csharp
+*.csproj   text
+*.css      text diff=css
+Dockerfile text
+*.json     text
+*.md       text diff=markdown
+*.msbuild  text
+*.ps1      text
+*.sln      text
+*.yaml     text
+*.yml      text
+
+# Images should be treated as binary ('binary' is a macro for '-text -diff', i.e. "don't normalize or diff on content")
+*.cer     binary
+*.jpeg    binary
+*.pfx     binary
+*.png     binary
