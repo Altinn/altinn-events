@@ -7,9 +7,9 @@
 		<ProjectGuid>{6599d6d0-228d-4057-87c3-31cd33068bbd}</ProjectGuid>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Altinn.Common.AccessTokenClient" Version="3.0.14" />
+		<PackageReference Include="Altinn.Common.AccessTokenClient" Version="3.0.15" />
 		<PackageReference Include="Altinn.Common.PEP" Version="4.1.2" />
-		<PackageReference Include="Altinn.Common.AccessToken" Version="5.0.3" />
+		<PackageReference Include="Altinn.Common.AccessToken" Version="5.0.4" />
 		<PackageReference Include="Altinn.Platform.Models" Version="1.6.1" />
 		<PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
 		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
@@ -25,8 +25,8 @@
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
 		<PackageReference Include="JWTCookieAuthentication" Version="4.0.4" />
 		<PackageReference Include="Scrutor" Version="6.0.1" />
-		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
-		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="8.1.1" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.2" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="8.1.2" />
 		<PackageReference Include="Yuniql.AspNetCore" Version="1.2.25" />
 		<PackageReference Include="Yuniql.PostgreSql" Version="1.3.15" />
 	</ItemGroup>
