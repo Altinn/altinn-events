@@ -70,6 +70,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 ConfigureWebHostCreationLogging();
 
+if (builder.Configuration["settings:connectionString"] == null)
+{
+    // Log?
+    System.Environment.Exit(160);
+}
+
 await SetConfigurationProviders(builder.Configuration);
 
 ConfigureApplicationLogging(builder.Logging);
