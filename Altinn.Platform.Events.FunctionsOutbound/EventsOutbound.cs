@@ -1,22 +1,24 @@
-using Azure.Storage.Queues.Models;
+using Altinn.Platform.Events.Functions.Models;
+using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.FunctionsOutbound
 {
     public class EventsOutbound
     {
-        private readonly ILogger<EventsOutbound> _logger;
+        private readonly IWebhookService _webhookService;
 
-        public EventsOutbound(ILogger<EventsOutbound> logger)
+        public EventsOutbound(IWebhookService webhookService)
         {
-            _logger = logger;
+            _webhookService = webhookService;
         }
 
         [Function(nameof(EventsOutbound))]
-        public void Run([QueueTrigger("myqueue-items", Connection = "StorageConnection")] QueueMessage message)
+        public async Task Run([QueueTrigger("events-outbound", Connection = "QueueStorage")] string item)
         {
-            _logger.LogInformation($"C# Queue trigger function processed: {message.MessageText}");
+            var cloudEventEnvelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
+
+            await _webhookService.Send(cloudEventEnvelope);
         }
     }
 }

@@ -24,6 +24,9 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.3" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\src\Events.Functions\Altinn.Platform.Events.Functions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -34,5 +37,10 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext" />
+  </ItemGroup>
+  <ItemGroup>
+	  <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+		  <_Parameter1>$(MSBuildProjectName).Tests</_Parameter1>
+	  </AssemblyAttribute>
   </ItemGroup>
 </Project>

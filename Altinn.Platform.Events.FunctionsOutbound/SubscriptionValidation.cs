@@ -1,23 +1,65 @@
-using System;
-using Azure.Storage.Queues.Models;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
+using Altinn.Platform.Events.Functions.Clients.Interfaces;
+using Altinn.Platform.Events.Functions.Configuration;
+using Altinn.Platform.Events.Functions.Models;
+using Altinn.Platform.Events.Functions.Services.Interfaces;
+using Altinn.Platform.Events.Models;
+using CloudNative.CloudEvents;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.FunctionsOutbound
 {
     public class SubscriptionValidation
     {
-        private readonly ILogger<SubscriptionValidation> _logger;
+        private readonly IWebhookService _webhookService;
+        private readonly PlatformSettings _platformSettings;
+        private readonly IEventsClient _eventsClient;
 
-        public SubscriptionValidation(ILogger<SubscriptionValidation> logger)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SubscriptionValidation"/> class.
+        /// </summary>
+        public SubscriptionValidation(
+            IOptions<PlatformSettings> eventsConfig,
+            IWebhookService webhookService,
+            IEventsClient eventsClient)
         {
-            _logger = logger;
+            _platformSettings = eventsConfig.Value;
+            _webhookService = webhookService;
+            _eventsClient = eventsClient;
         }
 
-        [Function(nameof(SubscriptionValidation))]
-        public void Run([QueueTrigger("myqueue-items", Connection = "")] QueueMessage message)
+        /// <summary>
+        /// Retrieves messages from subscription-validation queue and verify endpoint. If valid
+        /// it will call subscription service
+        /// </summary>
+        [FunctionName(nameof(SubscriptionValidation))]
+        public async Task Run([Microsoft.Azure.Functions.Worker.QueueTrigger("subscription-validation", Connection = "QueueStorage")] string item)
         {
-            _logger.LogInformation($"C# Queue trigger function processed: {message.MessageText}");
+            Subscription subscription = Subscription.Deserialize(item);
+            CloudEventEnvelope cloudEventEnvelope = CreateValidateEvent(subscription);
+            await _webhookService.Send(cloudEventEnvelope);
+            await _eventsClient.ValidateSubscription(cloudEventEnvelope.SubscriptionId);
+        }
+
+        /// <summary>
+        /// Createas a cloud event envelope to wrap the subscription validation event
+        /// </summary>
+        internal CloudEventEnvelope CreateValidateEvent(Subscription subscription)
+        {
+            CloudEventEnvelope cloudEventEnvelope = new()
+            {
+                Consumer = subscription.Consumer,
+                Endpoint = subscription.EndPoint,
+                SubscriptionId = subscription.Id,
+                CloudEvent = new(CloudEventsSpecVersion.V1_0)
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
+                    Type = Functions.Constants.EventConstants.ValidationType,
+                }
+            };
+
+            return cloudEventEnvelope;
         }
     }
 }
