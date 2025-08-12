@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.FunctionsOutbound
         }
 
         [Function(nameof(EventsOutbound))]
-        public async Task Run([QueueTrigger("events-outbound", Connection = "QueueStorage")] string item)
+        public async Task Run([QueueTrigger("events-outbound", Connection = "AzureWebJobsStorage")] string item)
         {
             var cloudEventEnvelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
 
