@@ -41,7 +41,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             string expectedCloudEventType = EventConstants.ValidationType;
             CloudEventsSpecVersion expectedSpecVersion = CloudEventsSpecVersion.V1_0;
 
-            var sut = new Altinn.Platform.Events.FunctionsOutbound.SubscriptionValidation(
+            var sut = new IsolatedFunctions.SubscriptionValidation(
                 Options.Create(new PlatformSettings
                 {
                     ApiEventsEndpoint = "https://platform.at22.altinn.cloud/events/api/v1/"

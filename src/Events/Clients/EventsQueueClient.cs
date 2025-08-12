@@ -6,6 +6,7 @@ using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Azure.Storage.Queues;
+using CloudNative.CloudEvents;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Events.Clients
@@ -49,6 +50,20 @@ namespace Altinn.Platform.Events.Clients
             }
 
             return new QueuePostReceipt { Success = true };
+        }
+
+        /// <inheritdoc/>
+        public async Task<QueuePostReceipt> EnqueueRegistration(CloudEvent cloudEvent)
+        {
+            var retryWrapper = new RetryableEventWrapper
+            {
+                CloudEvent = cloudEvent,
+                DequeueCount = 0
+            };
+
+            string content = retryWrapper.Serialize();
+
+            return await EnqueueRegistration(content);
         }
 
         /// <inheritdoc/>

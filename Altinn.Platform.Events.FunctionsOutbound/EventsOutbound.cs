@@ -2,7 +2,7 @@ using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Azure.Functions.Worker;
 
-namespace Altinn.Platform.Events.FunctionsOutbound
+namespace Altinn.Platform.Events.IsolatedFunctions
 {
     public class EventsOutbound
     {

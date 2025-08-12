@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Models;
+using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Tests.Mocks
 {
@@ -44,6 +45,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         public Task<QueuePostReceipt> EnqueueSubscriptionValidation(string content)
+        {
+            return Task.FromResult(new QueuePostReceipt { Success = true });
+        }
+
+        public Task<QueuePostReceipt> EnqueueRegistration(CloudEvent cloudEvent)
         {
             return Task.FromResult(new QueuePostReceipt { Success = true });
         }

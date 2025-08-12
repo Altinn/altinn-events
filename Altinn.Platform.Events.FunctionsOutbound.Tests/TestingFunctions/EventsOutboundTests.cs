@@ -36,7 +36,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
                 .Callback<CloudEventEnvelope>(cee => actualServiceInput = cee)
                 .Returns(Task.CompletedTask);
 
-            var sut = new FunctionsOutbound.EventsOutbound(webhookServiceMock.Object);
+            var sut = new IsolatedFunctions.EventsOutbound(webhookServiceMock.Object);
 
             // Act
             await sut.Run(serializedCloudEnvelope);

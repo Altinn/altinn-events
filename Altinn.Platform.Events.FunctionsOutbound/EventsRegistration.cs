@@ -1,26 +1,21 @@
 ﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
-using Altinn.Platform.Events.Functions.Extensions; 
+using Altinn.Platform.Events.Functions.Extensions;
 using CloudNative.CloudEvents;
 using Microsoft.Azure.Functions.Worker;
 
-namespace Altinn.Platform.Events.FunctionsOutbound;
+namespace Altinn.Platform.Events.IsolatedFunctions;
 
 /// <summary>
 /// Process incoming CloudEvents in "events-registration" queue.
 /// CloudEvents are first saved to the database
 /// before being added to the "events-inbound" queue.
 /// </summary>
-public class EventsRegistration
+/// <remarks>
+/// Initializes a new instance of the <see cref="EventsInbound"/> class.
+/// </remarks>
+public class EventsRegistration(IEventsClient eventsClient)
 {
-    private readonly IEventsClient _eventsClient;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="EventsInbound"/> class.
-    /// </summary>
-    public EventsRegistration(IEventsClient eventsClient)
-    {
-        _eventsClient = eventsClient;
-    }
+    private readonly IEventsClient _eventsClient = eventsClient;
 
     /// <summary>
     /// Saves cloudEvents from events-registration queue to persistent storage
