@@ -6,6 +6,7 @@ using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Factories;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+using Altinn.Platform.Events.IsolatedFunctions.Services;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Azure.WebJobs.Host.Queues;
@@ -47,6 +48,7 @@ builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
 builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
 builder.Services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
 builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
+builder.Services.AddSingleton<RetryBackoffService>();
 builder.Services.AddHttpClient<IEventsClient, EventsClient>();
 builder.Services.AddHttpClient<IWebhookService, WebhookService>();
 

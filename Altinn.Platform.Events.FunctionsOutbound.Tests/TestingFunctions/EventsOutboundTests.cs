@@ -2,16 +2,20 @@ using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Altinn.Platform.Events.IsolatedFunctions.Models;
+using Altinn.Platform.Events.IsolatedFunctions.Services;
 using CloudNative.CloudEvents;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions;
 
 public class EventsOutboundTests
 {
     private readonly JsonSerializerOptions _jsonSerializerOptions;
+    private readonly RetryBackoffService _retryBackoffService = new(NullLogger<RetryBackoffService>.Instance, null);
 
     public EventsOutboundTests()
     {
@@ -47,7 +51,7 @@ public class EventsOutboundTests
             .Callback<CloudEventEnvelope>(cee => actualServiceInput = cee)
             .Returns(Task.CompletedTask);
 
-        var sut = new EventsOutbound(webhookServiceMock.Object);
+        var sut = new EventsOutbound(NullLogger<EventsOutbound>.Instance, webhookServiceMock.Object, _retryBackoffService);
 
         // Act
         await sut.Run(serializedCloudEnvelope);
@@ -87,7 +91,7 @@ public class EventsOutboundTests
         var retryableEventWrapper = new RetryableEventWrapper
         {
             Payload = envelope.Serialize(),
-            DequeueCount = 2,
+            DequeueCount = 1,
             FirstProcessedAt = DateTime.UtcNow,
             CorrelationId = Guid.NewGuid().ToString()
         };
@@ -96,8 +100,8 @@ public class EventsOutboundTests
         string serializedWrapper = JsonSerializer.Serialize(retryableEventWrapper, _jsonSerializerOptions);
 
         Mock<IWebhookService> webhookServiceMock = new();
-        
-        var sut = new EventsOutbound(webhookServiceMock.Object);
+
+        var sut = new EventsOutbound(NullLogger<EventsOutbound>.Instance, webhookServiceMock.Object, _retryBackoffService);
 
         // Act
         await sut.Run(serializedWrapper);
