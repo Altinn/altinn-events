@@ -27,7 +27,7 @@ public class EventsRegistration(IEventsClient eventsClient)
     public async Task Run([QueueTrigger("events-registration", Connection = "AzureWebJobsStorage")] string item)
     {
         RetryableEventWrapper? eventWrapper = item.DeserializeToRetryableEventWrapper();
-        CloudEvent cloudEvent = ExtractCloudEvent(item, eventWrapper);
+        CloudEvent cloudEvent = eventWrapper != null ? eventWrapper.ExtractCloudEvent() : item.DeserializeToCloudEvent();
 
         EnsureCorrectResourceFormat(cloudEvent);
 
@@ -41,17 +41,6 @@ public class EventsRegistration(IEventsClient eventsClient)
         await _eventsClient.PostInbound(cloudEvent);
 
      
-    }
-
-    /// <summary>
-    /// Support extracting CloudEvent from RetryableEventWrapper or directly from the item for backwards compatibility.
-    /// </summary>
-    /// <param name="item"></param>
-    /// <param name="eventWrapper"></param>
-    /// <returns></returns>
-    private static CloudEvent ExtractCloudEvent(string item, RetryableEventWrapper? eventWrapper)
-    {
-        return eventWrapper != null ? eventWrapper.CloudEvent.DeserializeToCloudEvent() : item.DeserializeToCloudEvent();
     }
 
     /// <summary>

@@ -1,5 +1,7 @@
 ﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Extensions;
+using Altinn.Platform.Events.IsolatedFunctions.Extensions;
+using Altinn.Platform.Events.IsolatedFunctions.Models;
 using CloudNative.CloudEvents;
 using Microsoft.Azure.Functions.Worker;
 
@@ -18,7 +20,9 @@ namespace Altinn.Platform.Events.IsolatedFunctions
         [Function(nameof(EventsInbound))]
         public async Task Run([QueueTrigger("events-inbound", Connection = "QueueStorage")] string item)
         {
-            CloudEvent cloudEvent = item.DeserializeToCloudEvent();
+            RetryableEventWrapper? eventWrapper = item.DeserializeToRetryableEventWrapper();
+
+            CloudEvent cloudEvent = eventWrapper != null ? eventWrapper.ExtractCloudEvent() : item.DeserializeToCloudEvent();
             await _eventsClient.PostOutbound(cloudEvent);
         }
     }

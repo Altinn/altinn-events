@@ -60,5 +60,23 @@ namespace Altinn.Platform.Events.Functions.Models
 
             return cloudEventEnvelope;
         }
+
+        /// <summary>
+        /// Serializes the current instance to a JSON string representation, including the CloudEvent.
+        /// </summary>
+        /// <returns></returns>
+        public string Serialize()
+        {
+            var cloudEvent = CloudEvent;
+            string serializedCloudEvent = CloudEvent.Serialize();
+            CloudEvent = null;
+
+            var partalSerializedEnvelope = JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+            var index = partalSerializedEnvelope.LastIndexOf('}');
+            string serializedEnvelope = partalSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
+
+            CloudEvent = cloudEvent;
+            return serializedEnvelope;
+        }
     }
 }

@@ -93,7 +93,7 @@ public class EventRegistrationTests
         // Create a RetryableEventWrapper structure with a CloudEvent
         RetryableEventWrapper retryableEventWrapper = new()
         {
-            CloudEvent = serializedCloudEvent,
+            Payload = serializedCloudEvent,
             DequeueCount = 3,
             FirstProcessedAt = DateTime.UtcNow
         };

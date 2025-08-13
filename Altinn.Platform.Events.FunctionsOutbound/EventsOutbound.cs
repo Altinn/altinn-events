@@ -1,5 +1,6 @@
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+using Altinn.Platform.Events.IsolatedFunctions.Extensions;
 using Microsoft.Azure.Functions.Worker;
 
 namespace Altinn.Platform.Events.IsolatedFunctions
@@ -16,7 +17,9 @@ namespace Altinn.Platform.Events.IsolatedFunctions
         [Function(nameof(EventsOutbound))]
         public async Task Run([QueueTrigger("events-outbound", Connection = "AzureWebJobsStorage")] string item)
         {
-            var cloudEventEnvelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
+            var retryableEventWrapper = item.DeserializeToRetryableEventWrapper();
+
+            var cloudEventEnvelope = retryableEventWrapper != null ? CloudEventEnvelope.DeserializeToCloudEventEnvelope(retryableEventWrapper.Payload) : CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
 
             await _webhookService.Send(cloudEventEnvelope);
         }
