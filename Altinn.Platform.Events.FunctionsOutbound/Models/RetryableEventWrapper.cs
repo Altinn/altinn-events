@@ -14,9 +14,9 @@ public record RetryableEventWrapper
     };
 
     /// <summary>
-    /// Contains the actual payload of the event.
+    /// Contains the actual payload of the event as a serialized string.
     /// </summary>
-    public required CloudEvent CloudEvent { get; set; }
+    public required string CloudEvent { get; set; }
 
     /// <summary>
     /// Specifies the number of times the message has been retried.

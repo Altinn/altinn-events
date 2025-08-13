@@ -1,5 +1,7 @@
 ﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Extensions;
+using Altinn.Platform.Events.IsolatedFunctions.Extensions;
+using Altinn.Platform.Events.IsolatedFunctions.Models;
 using CloudNative.CloudEvents;
 using Microsoft.Azure.Functions.Worker;
 
@@ -24,7 +26,9 @@ public class EventsRegistration(IEventsClient eventsClient)
     [Function(nameof(EventsRegistration))]
     public async Task Run([QueueTrigger("events-registration", Connection = "AzureWebJobsStorage")] string item)
     {
-        CloudEvent cloudEvent = item.DeserializeToCloudEvent();
+        RetryableEventWrapper? eventWrapper = item.DeserializeToRetryableEventWrapper();
+        CloudEvent cloudEvent = ExtractCloudEvent(item, eventWrapper);
+
         EnsureCorrectResourceFormat(cloudEvent);
 
         /*
@@ -35,6 +39,19 @@ public class EventsRegistration(IEventsClient eventsClient)
 
         await _eventsClient.SaveCloudEvent(cloudEvent);
         await _eventsClient.PostInbound(cloudEvent);
+
+     
+    }
+
+    /// <summary>
+    /// Support extracting CloudEvent from RetryableEventWrapper or directly from the item for backwards compatibility.
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="eventWrapper"></param>
+    /// <returns></returns>
+    private static CloudEvent ExtractCloudEvent(string item, RetryableEventWrapper? eventWrapper)
+    {
+        return eventWrapper != null ? eventWrapper.CloudEvent.DeserializeToCloudEvent() : item.DeserializeToCloudEvent();
     }
 
     /// <summary>
