@@ -1,14 +1,14 @@
+using System.Text.Json;
+
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Altinn.Platform.Events.IsolatedFunctions.Models;
 using Altinn.Platform.Events.IsolatedFunctions.Services;
+
 using CloudNative.CloudEvents;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using System.Text.Json;
 
 namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions;
 

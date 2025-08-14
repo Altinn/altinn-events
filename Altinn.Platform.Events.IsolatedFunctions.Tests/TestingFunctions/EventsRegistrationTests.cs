@@ -1,9 +1,7 @@
 ﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
-using Altinn.Platform.Events.Functions.Extensions;
-using Altinn.Platform.Events.IsolatedFunctions.Models;
+
 using CloudNative.CloudEvents;
 using Moq;
-using System.Text.Json;
 
 namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions;
 
@@ -37,7 +35,7 @@ public class EventRegistrationTests
             Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
             .Returns(Task.CompletedTask);
 
-        EventsRegistration sut = new EventsRegistration(clientMock.Object);
+        EventsRegistration sut = new(clientMock.Object);
 
         // Act
         try
@@ -70,41 +68,6 @@ public class EventRegistrationTests
 
         // Act
         await sut.Run(serializedCloudEvent);
-
-        // Assert
-        clientMock.Verify(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()), Times.Once);
-        clientMock.Verify(c => c.PostInbound(It.IsAny<CloudEvent>()), Times.Once);
-    }
-
-
-    [Fact]
-    public async Task Run_WithRetryableEventWrapper_ProcessesCloudEventSuccessfully()
-    {
-        // Arrange
-        Mock<IEventsClient> clientMock = new();
-
-        clientMock.Setup(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()))
-            .Returns(Task.CompletedTask);
-
-        clientMock.
-            Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
-            .Returns(Task.CompletedTask);
-
-        // Create a RetryableEventWrapper structure with a CloudEvent
-        RetryableEventWrapper retryableEventWrapper = new()
-        {
-            Payload = serializedCloudEvent,
-            DequeueCount = 3,
-            FirstProcessedAt = DateTime.UtcNow
-        };
-
-        // Serialize the wrapper
-        string serializedWrapper = retryableEventWrapper.Serialize();
-
-        EventsRegistration sut = new(clientMock.Object);
-
-        // Act
-        await sut.Run(serializedWrapper);
 
         // Assert
         clientMock.Verify(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()), Times.Once);

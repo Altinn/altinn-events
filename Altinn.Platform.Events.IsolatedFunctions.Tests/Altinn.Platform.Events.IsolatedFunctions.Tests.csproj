@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Altinn.Platform.Events.FunctionsOutbound\Altinn.Platform.Events.IsolatedFunctions.csproj" />
+    <ProjectReference Include="..\Altinn.Platform.Events.IsolatedFunctions\Altinn.Platform.Events.IsolatedFunctions.csproj" />
     <ProjectReference Include="..\src\Events.Functions\Altinn.Platform.Events.Functions.csproj" />
   </ItemGroup>
 

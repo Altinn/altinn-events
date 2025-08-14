@@ -1,53 +1,12 @@
 ﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
-using Altinn.Platform.Events.IsolatedFunctions.Models;
+
 using CloudNative.CloudEvents;
-using Microsoft.Extensions.Logging;
 using Moq;
-using System.Text.Json;
 
 namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions
 {
     public class EventsInboundTests
     {
-        private readonly string serializedCloudEvent = "{\"id\":\"event-id\",\"source\":\"source\",\"type\":\"event-type\",\"subject\":\"subject\",\"time\":\"2023-01-01T12:00:00Z\",\"specversion\":\"1.0\",\"datacontenttype\":\"application/json\"}";
-        private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
-        [Fact]
-        public async Task ProcessInboundEvent_WithRetryableEventWrapper_ProcessesCloudEventSuccessfully()
-        {
-            // Arrange
-            Mock<IEventsClient> clientMock = new();
-            Mock<ILogger> loggerMock = new();
-
-            clientMock.Setup(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()))
-                .Returns(Task.CompletedTask);
-
-            // Create RetryableEventWrapper
-            var retryableEventWrapper = new RetryableEventWrapper
-            {
-                Payload = serializedCloudEvent,
-                DequeueCount = 1,
-                FirstProcessedAt = DateTime.UtcNow,
-                CorrelationId = Guid.NewGuid().ToString()
-            };
-
-            // Serialize with custom options
-            string serializedWrapper = JsonSerializer.Serialize(retryableEventWrapper, _serializerOptions);
-
-            // Arrange the EventsInbound function (assuming it exists)
-            var eventsInbound = new EventsInbound(clientMock.Object);
-
-            // Act
-            await eventsInbound.Run(serializedWrapper);
-
-            // Assert
-            clientMock.Verify(c => c.PostOutbound(It.IsAny<CloudEvent>()), Times.Once);
-        }
-
         [Fact]
         public async Task Run_ConfirmDeserializationOfEvent_AlternativeSubject()
         {

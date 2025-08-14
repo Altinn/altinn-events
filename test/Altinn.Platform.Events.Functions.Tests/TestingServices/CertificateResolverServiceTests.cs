@@ -1,3 +1,5 @@
+using System.Security.Cryptography.X509Certificates;
+
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
@@ -21,7 +23,7 @@ namespace Altinn.Platform.Events.Functions.Tests.Services
             var certificateResolverService = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
 
             var certBase64 = File.ReadAllLines(@$"../../../TestingServices/platform-org.pfx")[0];
-            var x509Certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(Convert.FromBase64String(certBase64));
+            var x509Certificate = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(certBase64));
             keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(certBase64);
 
             // Act
@@ -43,7 +45,7 @@ namespace Altinn.Platform.Events.Functions.Tests.Services
             var certificateResolverService = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
 
             var certBase64 = File.ReadAllLines(@$"../../../TestingServices/platform-org.pfx")[0];
-            var x509Certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(Convert.FromBase64String(certBase64));
+            var x509Certificate = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(certBase64));
             keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(certBase64);
 
             // Act

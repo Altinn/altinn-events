@@ -3,6 +3,7 @@ using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Altinn.Platform.Events.Models;
+
 using CloudNative.CloudEvents;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Options;

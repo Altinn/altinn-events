@@ -13,9 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.Platform.Events.Func
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbTools", "src\DbTools\DbTools.csproj", "{926F89EE-00F2-49F6-991D-32ABD3610C05}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Platform.Events.IsolatedFunctions", "Altinn.Platform.Events.FunctionsOutbound\Altinn.Platform.Events.IsolatedFunctions.csproj", "{8772FA38-D31A-420C-BF14-61803D2C152E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Platform.Events.IsolatedFunctions", "Altinn.Platform.Events.IsolatedFunctions\Altinn.Platform.Events.IsolatedFunctions.csproj", "{8772FA38-D31A-420C-BF14-61803D2C152E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Platform.Events.IsolatedFunctions.Tests", "Altinn.Platform.Events.FunctionsOutbound.Tests\Altinn.Platform.Events.IsolatedFunctions.Tests.csproj", "{B68B1CE7-FD9E-46FE-B13D-E7CB9C4AB613}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Platform.Events.IsolatedFunctions.Tests", "Altinn.Platform.Events.IsolatedFunctions.Tests\Altinn.Platform.Events.IsolatedFunctions.Tests.csproj", "{B68B1CE7-FD9E-46FE-B13D-E7CB9C4AB613}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
