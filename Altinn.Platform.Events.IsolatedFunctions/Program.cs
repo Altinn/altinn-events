@@ -46,7 +46,8 @@ builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
 builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
 builder.Services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
 builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
-builder.Services.AddSingleton<RetryBackoffService>();
+builder.Services.AddSingleton<IRetryBackoffService, RetryBackoffService>();
+builder.Services.AddSingleton<IQueueClientFactory, QueueClientFactory>();
 builder.Services.AddHttpClient<IEventsClient, EventsClient>();
 builder.Services.AddHttpClient<IWebhookService, WebhookService>();
 

@@ -8,7 +8,7 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Services;
 /// <summary>
 /// Factory for creating and managing Azure Storage Queue clients.
 /// </summary>
-public class QueueClientFactory
+public class QueueClientFactory : IQueueClientFactory
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<QueueClientFactory> _logger;

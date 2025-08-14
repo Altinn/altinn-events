@@ -1,4 +1,5 @@
 ﻿using Altinn.Platform.Events.Functions.Extensions;
+using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.IsolatedFunctions.Models;
 using CloudNative.CloudEvents;
 using System.Text.Json;
@@ -35,5 +36,15 @@ public static class RetryableEventWrapperExtensions
     public static CloudEvent ExtractCloudEvent(this RetryableEventWrapper retryableEventWrapper)
     {
         return retryableEventWrapper.Payload.DeserializeToCloudEvent();
+    }
+
+    /// <summary>
+    /// Extracts the CloudEventEnvelope from a RetryableEventWrapper payload.
+    /// </summary>
+    /// <param name="retryableEventWrapper"></param>
+    /// <returns></returns>
+    public static CloudEventEnvelope ExtractCloudEventEnvelope(this RetryableEventWrapper retryableEventWrapper)
+    {
+       return CloudEventEnvelope.DeserializeToCloudEventEnvelope(retryableEventWrapper.Payload);
     }
 }

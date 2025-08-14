@@ -5,10 +5,12 @@ using System.Text.Json;
 
 namespace Altinn.Platform.Events.IsolatedFunctions.Services;
 
-public class RetryBackoffService
+public class RetryBackoffService(
+    ILogger<RetryBackoffService> logger,
+    IQueueClientFactory queueClientFactory) : IRetryBackoffService
 {
-    private readonly ILogger<RetryBackoffService> _logger;
-    private readonly QueueClientFactory _queueClientFactory;
+    private readonly ILogger<RetryBackoffService> _logger = logger;
+    private readonly IQueueClientFactory _queueClientFactory = queueClientFactory;
     private readonly int _maxDequeueCount = 12;
     private readonly TimeSpan _timeToLive = TimeSpan.FromDays(7);
     private readonly JsonSerializerOptions _jsonOptions = new()
@@ -17,20 +19,8 @@ public class RetryBackoffService
         WriteIndented = false
     };
 
-    public RetryBackoffService(
-        ILogger<RetryBackoffService> logger,
-        QueueClientFactory queueClientFactory,
-        string initialQueueType = "events")
-    {
-        _logger = logger;
-        _queueClientFactory = queueClientFactory;
-    }
-
     public async Task RequeueWithBackoff(RetryableEventWrapper message, Exception exception, string queueName)
     {
-        // Get the appropriate queue client on demand
-        QueueClient queueClient = _queueClientFactory.GetQueueClient(queueName);
-        
         // Don't retry on certain exceptions
         if (exception is JsonException || exception is ArgumentException)
         {
@@ -56,11 +46,18 @@ public class RetryBackoffService
         {
             // Serialize the metadata and original message
             string newMessageSerialized = JsonSerializer.Serialize(newMessage, _jsonOptions);
-
-            await queueClient.SendMessageAsync(newMessageSerialized,
-                GetVisibilityTimeout(newMessage.DequeueCount), // Visibility timeout (delay before processing)
-                _timeToLive); // Time-to-live
+            await SendToQueue(newMessage, newMessageSerialized, queueName);
         }
+    }
+
+    public async Task SendToQueue(RetryableEventWrapper newMessage, string newMessageSerialized, string queueName)
+    {
+        // Get the appropriate queue client on demand
+        QueueClient queueClient = _queueClientFactory.GetQueueClient(queueName);
+
+        await queueClient.SendMessageAsync(newMessageSerialized,
+            GetVisibilityTimeout(newMessage.DequeueCount), // Visibility timeout (delay before processing)
+            _timeToLive); // Time-to-live
     }
 
     public async Task SendToPoisonQueue(RetryableEventWrapper message, string queueName)
@@ -73,7 +70,7 @@ public class RetryBackoffService
         await poisonQueueClient.SendMessageAsync(messageSerialized, TimeSpan.FromSeconds(0), TimeSpan.FromDays(7));
     }
 
-    public virtual TimeSpan GetVisibilityTimeout(int deQueueCount)
+    public TimeSpan GetVisibilityTimeout(int deQueueCount)
     {
         var visibilityTimeout = deQueueCount switch
         {

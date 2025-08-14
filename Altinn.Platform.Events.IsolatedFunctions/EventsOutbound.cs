@@ -9,12 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.IsolatedFunctions;
 
-public class EventsOutbound(ILogger<EventsOutbound> logger, IWebhookService webhookService, RetryBackoffService retryBackoffService)
+public class EventsOutbound(ILogger<EventsOutbound> logger, IWebhookService webhookService, IRetryBackoffService retryBackoffService)
 {
     private const string _queueName = "events-outbound";
     private readonly ILogger<EventsOutbound> _logger = logger;
     private readonly IWebhookService _webhookService = webhookService;
-    private readonly RetryBackoffService _retryBackoffService = retryBackoffService;
+    private readonly IRetryBackoffService _retryBackoffService = retryBackoffService;
 
     [Function(nameof(EventsOutbound))]
     public async Task Run([QueueTrigger(_queueName, Connection = "AzureWebJobsStorage")] string item)
