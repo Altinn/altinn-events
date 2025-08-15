@@ -17,13 +17,12 @@ namespace Altinn.Platform.Events.Clients.Interfaces
         public Task<QueuePostReceipt> EnqueueRegistration(string content);
 
         /// <summary>
-        /// Enqueues the provided CloudEvent to the registration queue
-        /// Overload that accepts a CloudEvent object directly before wrapping it in a <see cref="RetryableEventWrapper"/>.
+        /// Enqueues the provided CloudEvent to the registration queue.
+        /// Overload that accepts a CloudEvent object directly, allowing callers or implementations to perform any necessary wrapping/serialization.
         /// </summary>
         /// <param name="cloudEvent">The cloud event object that contains the payload <see cref="CloudEvent"/></param>
         /// <returns>Returns a queue receipt</returns>
         Task<QueuePostReceipt> EnqueueRegistration(CloudEvent cloudEvent);
-
         /// <summary>
         /// Enqueues the provided content to the inbound queue
         /// </summary>
