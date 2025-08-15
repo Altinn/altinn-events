@@ -73,13 +73,23 @@ namespace Altinn.Platform.Events.Functions.Models
         /// <returns></returns>
         public string Serialize()
         {
+            if (CloudEvent == null)
+            {
+                throw new InvalidOperationException("CloudEvent cannot be null during serialization.");
+            }
+
             var cloudEvent = CloudEvent;
             string serializedCloudEvent = CloudEvent.Serialize();
             CloudEvent = null;
 
-            var partalSerializedEnvelope = JsonSerializer.Serialize(this, _cachedIgnoreNullOptions);
-            var index = partalSerializedEnvelope.LastIndexOf('}');
-            string serializedEnvelope = partalSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
+            var partialSerializedEnvelope = JsonSerializer.Serialize(this, _cachedIgnoreNullOptions);
+            var index = partialSerializedEnvelope.LastIndexOf('}');
+            if (index == -1)
+            {
+                CloudEvent = cloudEvent; // Restore before throwing
+                throw new InvalidOperationException("Invalid JSON structure during serialization.");
+            }
+            string serializedEnvelope = partialSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
 
             CloudEvent = cloudEvent;
             return serializedEnvelope;
