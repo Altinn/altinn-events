@@ -5,7 +5,9 @@ using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+using Altinn.Platform.Events.IsolatedFunctions.ServiceConfiguration;
 using Altinn.Platform.Events.IsolatedFunctions.Services;
+
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Configuration;
@@ -46,9 +48,10 @@ builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
 builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
 builder.Services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
 builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
-builder.Services.AddSingleton<IRetryBackoffService, RetryBackoffService>();
-builder.Services.AddSingleton<IQueueClientFactory, QueueClientFactory>();
 builder.Services.AddHttpClient<IEventsClient, EventsClient>();
 builder.Services.AddHttpClient<IWebhookService, WebhookService>();
+
+builder.Services.AddQueueSenders(builder.Configuration);
+builder.Services.AddTransient<IRetryBackoffService, RetryBackoffService>();
 
 builder.Build().Run();

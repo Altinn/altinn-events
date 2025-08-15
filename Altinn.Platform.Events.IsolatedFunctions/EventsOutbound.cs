@@ -30,7 +30,7 @@ public class EventsOutbound(ILogger<EventsOutbound> logger, IWebhookService webh
         catch (Exception ex)
         {
             if (retryableEventWrapper != null)
-                await _retryBackoffService.RequeueWithBackoff(retryableEventWrapper, ex, _queueName);
+                await _retryBackoffService.RequeueWithBackoff(retryableEventWrapper, ex);
             else
             {
                 // If retryableEventWrapper is null, it means we are dealing with a legacy message format
@@ -42,7 +42,7 @@ public class EventsOutbound(ILogger<EventsOutbound> logger, IWebhookService webh
                     FirstProcessedAt = DateTime.UtcNow
                 };
 
-                await _retryBackoffService.RequeueWithBackoff(initWrapper, ex, _queueName);
+                await _retryBackoffService.RequeueWithBackoff(initWrapper, ex);
             }
         }
     }

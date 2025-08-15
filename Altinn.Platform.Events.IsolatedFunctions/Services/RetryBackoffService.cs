@@ -1,78 +1,84 @@
-﻿using Altinn.Platform.Events.IsolatedFunctions.Models;
-using Azure.Storage.Queues;
+﻿using Altinn.Platform.Events.Functions.Queues;
+using Altinn.Platform.Events.IsolatedFunctions.Models;
 using Microsoft.Extensions.Logging;
+using System.Text;
 using System.Text.Json;
 
-namespace Altinn.Platform.Events.IsolatedFunctions.Services;
-
-public class RetryBackoffService(
-    ILogger<RetryBackoffService> logger,
-    IQueueClientFactory queueClientFactory) : IRetryBackoffService
+namespace Altinn.Platform.Events.IsolatedFunctions.Services
 {
-    private readonly ILogger<RetryBackoffService> _logger = logger;
-    private readonly IQueueClientFactory _queueClientFactory = queueClientFactory;
-    private readonly int _maxDequeueCount = 12;
-    private readonly TimeSpan _timeToLive = TimeSpan.FromDays(7);
-    private readonly JsonSerializerOptions _jsonOptions = new()
+    /// <summary>
+    /// Provides functionality for handling retryable events with exponential backoff and poison queue handling.
+    /// </summary>
+    /// <remarks>This service is designed to manage the requeuing of events that fail processing, applying a
+    /// backoff strategy based on the number of retries. If the maximum retry count is exceeded or a permanent failure
+    /// is detected, the event is moved to a poison queue for further investigation.</remarks>
+    public class RetryBackoffService : IRetryBackoffService
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
-    };
+        private readonly ILogger<RetryBackoffService> _logger;
+        private readonly QueueSendDelegate _sendToQueue;
+        private readonly PoisonQueueSendDelegate _sendToPoison;
+        private readonly int _maxDequeueCount = 12;
+        private readonly TimeSpan _ttl = TimeSpan.FromDays(7);
 
-    public async Task RequeueWithBackoff(RetryableEventWrapper message, Exception exception, string queueName)
-    {
-        // Don't retry on certain exceptions
-        if (exception is JsonException || exception is ArgumentException)
+        private readonly JsonSerializerOptions _jsonOptions = new()
         {
-            _logger.LogWarning("Permanent error detected - sending to poison queue immediately");
-            await SendToPoisonQueue(message, queueName);
-            return;
-        }
-
-        // For transient errors, apply backoff strategy
-        var newMessage = message with
-        {
-            DequeueCount = message.DequeueCount + 1 // Increment the dequeue count
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
         };
 
-        if (newMessage.DequeueCount > _maxDequeueCount)
+        public RetryBackoffService(
+            ILogger<RetryBackoffService> logger,
+            QueueSendDelegate sendToQueue,
+            PoisonQueueSendDelegate sendToPoison)
         {
-            // If the message has been dequeued too many times, send it to the poison queue
-            _logger.LogWarning("Message has exceeded maximum dequeue count. Sending to poison queue.");
-            await SendToPoisonQueue(newMessage, queueName);
-            return;
+            _logger = logger;
+            _sendToQueue = sendToQueue;
+            _sendToPoison = sendToPoison;
         }
-        else
+
+        public async Task RequeueWithBackoff(
+            RetryableEventWrapper wrapper,
+            Exception exception)
         {
-            // Serialize the metadata and original message
-            string newMessageSerialized = JsonSerializer.Serialize(newMessage, _jsonOptions);
-            await SendToQueue(newMessage, newMessageSerialized, queueName);
+            // Permanent failure?
+            if (exception is JsonException or ArgumentException)
+            {
+                _logger.LogWarning(exception,
+                    "Permanent failure, sending to poison queue. CorrelationId={CorrelationId}",
+                    wrapper.CorrelationId);
+                await SendToPoisonAsync(wrapper);
+                return;
+            }
+
+            var updated = wrapper with { DequeueCount = wrapper.DequeueCount + 1 };
+
+            if (updated.DequeueCount > _maxDequeueCount)
+            {
+                _logger.LogWarning("Exceeded max retries, moving to poison queue. CorrelationId={CorrelationId}",
+                    updated.CorrelationId);
+                await SendToPoisonAsync(updated);
+                return;
+            }
+
+            string payload = JsonSerializer.Serialize(updated, _jsonOptions);
+            TimeSpan visibility = GetVisibilityTimeout(updated.DequeueCount);
+
+            _logger.LogDebug(
+                "Requeueing message CorrelationId={CorrelationId} DequeueCount={DequeueCount} Visibility={Visibility}",
+                updated.CorrelationId,
+                updated.DequeueCount,
+                visibility);
+
+            await _sendToQueue(Convert.ToBase64String(Encoding.UTF8.GetBytes(payload)), visibility, _ttl);
         }
-    }
 
-    public async Task SendToQueue(RetryableEventWrapper newMessage, string newMessageSerialized, string queueName)
-    {
-        // Get the appropriate queue client on demand
-        QueueClient queueClient = _queueClientFactory.GetQueueClient(queueName);
+        public async Task SendToPoisonAsync(RetryableEventWrapper wrapper)
+        {
+            string payload = JsonSerializer.Serialize(wrapper, _jsonOptions);
+            await _sendToPoison(Convert.ToBase64String(Encoding.UTF8.GetBytes(payload)), TimeSpan.FromSeconds(0), _ttl);
+        }
 
-        await queueClient.SendMessageAsync(newMessageSerialized,
-            GetVisibilityTimeout(newMessage.DequeueCount), // Visibility timeout (delay before processing)
-            _timeToLive); // Time-to-live
-    }
-
-    public async Task SendToPoisonQueue(RetryableEventWrapper message, string queueName)
-    {
-        // Get the poison queue client on demand
-        QueueClient poisonQueueClient = _queueClientFactory.GetPoisonQueueClient(queueName);
-        
-        // Serialize the message for the poison queue
-        string messageSerialized = JsonSerializer.Serialize(message, _jsonOptions);
-        await poisonQueueClient.SendMessageAsync(messageSerialized, TimeSpan.FromSeconds(0), TimeSpan.FromDays(7));
-    }
-
-    public TimeSpan GetVisibilityTimeout(int deQueueCount)
-    {
-        var visibilityTimeout = deQueueCount switch
+        public virtual TimeSpan GetVisibilityTimeout(int count) => count switch
         {
             1 => TimeSpan.FromSeconds(10),
             2 => TimeSpan.FromSeconds(30),
@@ -83,11 +89,7 @@ public class RetryBackoffService(
             7 => TimeSpan.FromHours(1),
             8 => TimeSpan.FromHours(3),
             9 => TimeSpan.FromHours(6),
-            10 => TimeSpan.FromHours(12),
-            11 => TimeSpan.FromHours(12),
-            _ => TimeSpan.FromHours(12),
+            10 or 11 or _ => TimeSpan.FromHours(12)
         };
-
-        return visibilityTimeout;
     }
 }
