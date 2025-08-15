@@ -48,10 +48,5 @@ namespace Altinn.Platform.Events.Tests.Mocks
         {
             return Task.FromResult(new QueuePostReceipt { Success = true });
         }
-
-        public Task<QueuePostReceipt> EnqueueRegistration(CloudEvent cloudEvent)
-        {
-            return Task.FromResult(new QueuePostReceipt { Success = true });
-        }
     }
 }
