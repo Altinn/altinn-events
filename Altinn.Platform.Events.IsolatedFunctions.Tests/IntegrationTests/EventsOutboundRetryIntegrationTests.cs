@@ -108,7 +108,8 @@ public class EventsOutboundRetryIntegrationTests
             if (msgs.Value.Length > 0)
             {
                 var msg = msgs.Value[0];
-                requeued = Encoding.UTF8.GetString(Convert.FromBase64String(msg.Body.ToString())).DeserializeToRetryableEventWrapper();
+                var raw = msg.Body.ToString(); // Body is already decoded by the SDK
+                requeued = raw.DeserializeToRetryableEventWrapper();
                 received = true;
                 break;
             }
