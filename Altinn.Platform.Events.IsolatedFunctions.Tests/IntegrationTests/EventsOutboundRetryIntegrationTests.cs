@@ -37,12 +37,8 @@ public class EventsOutboundRetryIntegrationTests
     {
         var qc = new QueueClient(_connectionString, name);
         qc.CreateIfNotExists();
-        // Drain existing messages (best effort)
-        for (; ; )
-        {
-            var batch = qc.ReceiveMessages(maxMessages: 32, visibilityTimeout: TimeSpan.FromSeconds(1));
-            if (batch.Value.Length == 0) break;
-        }
+        // Clear any residual messages deterministically
+        qc.ClearMessages();
         return qc;
     }
 
@@ -143,7 +139,7 @@ public class EventsOutboundRetryIntegrationTests
 
         var svc = new TestableRetryBackoffService(NullLogger<TestableRetryBackoffService>.Instance, mainSender, poisonSender);
 
-        // We'll drive several failures manually (simulate the function’s catch flow)
+        // We'll drive several failures manually (simulate the functionâ€™s catch flow)
         int[] plannedCounts = { 0, 1, 2, 3 }; // expect requeued as 1,2,3,4 with vis 1s,2s,3s,4s
         foreach (var current in plannedCounts)
         {
