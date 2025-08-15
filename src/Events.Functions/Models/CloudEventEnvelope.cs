@@ -13,6 +13,16 @@ namespace Altinn.Platform.Events.Functions.Models
     /// </summary>
     public class CloudEventEnvelope
     {
+        private static readonly JsonSerializerOptions _cachedJsonSerializerOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        private static readonly JsonSerializerOptions _cachedIgnoreNullOptions = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
         /// <summary>
         /// The Event to push
         /// </summary>
@@ -50,11 +60,7 @@ namespace Altinn.Platform.Events.Functions.Models
             var cloudEvent = serializedCloudEvent.DeserializeToCloudEvent();
 
             n["cloudEvent"] = null;
-            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(_cachedJsonSerializerOptions);
 
             cloudEventEnvelope.CloudEvent = cloudEvent;
 
@@ -71,7 +77,7 @@ namespace Altinn.Platform.Events.Functions.Models
             string serializedCloudEvent = CloudEvent.Serialize();
             CloudEvent = null;
 
-            var partalSerializedEnvelope = JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+            var partalSerializedEnvelope = JsonSerializer.Serialize(this, _cachedIgnoreNullOptions);
             var index = partalSerializedEnvelope.LastIndexOf('}');
             string serializedEnvelope = partalSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
 

@@ -17,8 +17,8 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions;
 
 public class SubscriptionValidationTests
 {
-    private static Subscription _subscription;
-    private static string _serializedSubscription;
+    private static Subscription? _subscription;
+    private static string? _serializedSubscription;
 
     public SubscriptionValidationTests()
     {

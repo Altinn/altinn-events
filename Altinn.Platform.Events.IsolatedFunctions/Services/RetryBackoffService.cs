@@ -1,8 +1,9 @@
-﻿using Altinn.Platform.Events.Functions.Queues;
+﻿using System.Text;
+using System.Text.Json;
+
+using Altinn.Platform.Events.Functions.Queues;
 using Altinn.Platform.Events.IsolatedFunctions.Models;
 using Microsoft.Extensions.Logging;
-using System.Text;
-using System.Text.Json;
 
 namespace Altinn.Platform.Events.IsolatedFunctions.Services
 {
@@ -26,6 +27,12 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Services
             WriteIndented = false
         };
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RetryBackoffService"/> class.
+        /// </summary>
+        /// <param name="logger">The logger used to log diagnostic and operational messages.</param>
+        /// <param name="sendToQueue">A delegate that sends messages to the primary queue.</param>
+        /// <param name="sendToPoison">A delegate that sends messages to the poison queue for handling failed messages.</param>
         public RetryBackoffService(
             ILogger<RetryBackoffService> logger,
             QueueSendDelegate sendToQueue,
@@ -36,25 +43,28 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Services
             _sendToPoison = sendToPoison;
         }
 
+        /// <inheritdoc/>
         public async Task RequeueWithBackoff(
-            RetryableEventWrapper wrapper,
+            RetryableEventWrapper message,
             Exception exception)
         {
             // Permanent failure?
             if (exception is JsonException or ArgumentException)
             {
-                _logger.LogWarning(exception,
+                _logger.LogWarning(
+                    exception,
                     "Permanent failure, sending to poison queue. CorrelationId={CorrelationId}",
-                    wrapper.CorrelationId);
-                await SendToPoisonAsync(wrapper);
+                    message.CorrelationId);
+                await SendToPoisonAsync(message);
                 return;
             }
 
-            var updated = wrapper with { DequeueCount = wrapper.DequeueCount + 1 };
+            var updated = message with { DequeueCount = message.DequeueCount + 1 };
 
             if (updated.DequeueCount > _maxDequeueCount)
             {
-                _logger.LogWarning("Exceeded max retries, moving to poison queue. CorrelationId={CorrelationId}",
+                _logger.LogWarning(
+                    "Exceeded max retries, moving to poison queue. CorrelationId={CorrelationId}",
                     updated.CorrelationId);
                 await SendToPoisonAsync(updated);
                 return;
@@ -72,13 +82,15 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Services
             await _sendToQueue(Convert.ToBase64String(Encoding.UTF8.GetBytes(payload)), visibility, _ttl);
         }
 
-        public async Task SendToPoisonAsync(RetryableEventWrapper wrapper)
+        /// <inheritdoc/>
+        public async Task SendToPoisonAsync(RetryableEventWrapper message)
         {
-            string payload = JsonSerializer.Serialize(wrapper, _jsonOptions);
+            string payload = JsonSerializer.Serialize(message, _jsonOptions);
             await _sendToPoison(Convert.ToBase64String(Encoding.UTF8.GetBytes(payload)), TimeSpan.FromSeconds(0), _ttl);
         }
 
-        public virtual TimeSpan GetVisibilityTimeout(int count) => count switch
+        /// <inheritdoc/>
+        public virtual TimeSpan GetVisibilityTimeout(int dequeueCount) => dequeueCount switch
         {
             1 => TimeSpan.FromSeconds(10),
             2 => TimeSpan.FromSeconds(30),
@@ -89,7 +101,7 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Services
             7 => TimeSpan.FromHours(1),
             8 => TimeSpan.FromHours(3),
             9 => TimeSpan.FromHours(6),
-            10 or 11 or _ => TimeSpan.FromHours(12)
+            _ => TimeSpan.FromHours(12)
         };
     }
 }

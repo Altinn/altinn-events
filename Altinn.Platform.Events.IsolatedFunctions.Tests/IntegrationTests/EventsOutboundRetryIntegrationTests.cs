@@ -1,6 +1,3 @@
-using System.Text;
-using System.Text.Json;
-
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Queues;
@@ -8,18 +5,18 @@ using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Altinn.Platform.Events.IsolatedFunctions.Extensions;
 using Altinn.Platform.Events.IsolatedFunctions.Models;
 using Azure.Storage.Queues;
-
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using System.Text;
+using System.Text.Json;
 
 namespace Altinn.Platform.Events.IsolatedFunctions.Tests.IntegrationTests;
 
 public class EventsOutboundRetryIntegrationTests
 {
     private const string _connectionString = "UseDevelopmentStorage=true"; // Azurite must be running
-    private const string _queueLogicalName = "outbound-it";                // Logical name used when requeueing
-    private const string _queueName = _queueLogicalName;                    // Physical queue name
-    private const string _poisonQueueName = _queueLogicalName + "-poison";
+    private const string _queueName = "outbound-it";                // name used when requeueing
+    private const string _poisonQueueName = _queueName + "-poison";
 
     private const string _cloudEventJson = "{" +
          "\"id\":\"de1c9d5c-a7c2-4ad0-9d5b-2d2e3b3f1e11\"," +
@@ -36,7 +33,7 @@ public class EventsOutboundRetryIntegrationTests
         WriteIndented = false
     };
 
-    private QueueClient CreateQueue(string name)
+    private static QueueClient CreateQueue(string name)
     {
         var qc = new QueueClient(_connectionString, name);
         qc.CreateIfNotExists();
@@ -77,7 +74,6 @@ public class EventsOutboundRetryIntegrationTests
                .ThrowsAsync(new InvalidOperationException("Simulated failure"));
 
         var sut = new EventsOutbound(
-            NullLogger<EventsOutbound>.Instance,
             webhook.Object,
             retryService);
 

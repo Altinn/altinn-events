@@ -75,7 +75,7 @@ public class EventsOutboundTests
             .Callback<CloudEventEnvelope>(cee => actualServiceInput = cee)
             .Returns(Task.CompletedTask);
 
-        var sut = new EventsOutbound(NullLogger<EventsOutbound>.Instance, webhookServiceMock.Object, _retryBackoffService);
+        var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
 
         // Act
         await sut.Run(serializedCloudEnvelope);
@@ -125,7 +125,7 @@ public class EventsOutboundTests
 
         Mock<IWebhookService> webhookServiceMock = new();
 
-        var sut = new EventsOutbound(NullLogger<EventsOutbound>.Instance, webhookServiceMock.Object, _retryBackoffService);
+        var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
 
         // Act
         await sut.Run(serializedWrapper);
@@ -157,8 +157,8 @@ public class EventsOutboundTests
         };
 
         // Capture what's requeued
-        RetryableEventWrapper requeuedWrapper = null;
-        Exception caughtException = null;
+        RetryableEventWrapper? requeuedWrapper = null;
+        Exception? caughtException = null;
 
         // Set up webhook service mock to throw exception
         Mock<IWebhookService> webhookServiceMock = new();
@@ -180,7 +180,6 @@ public class EventsOutboundTests
 
         // Create the SUT
         var sut = new EventsOutbound(
-            NullLogger<EventsOutbound>.Instance,
             webhookServiceMock.Object,
             retryServiceMock.Object);
 
@@ -240,7 +239,7 @@ public class EventsOutboundTests
           .Setup(s => s.Send(It.IsAny<CloudEventEnvelope>()))
           .ThrowsAsync(new InvalidOperationException("Webhook service failed"));
 
-        var sut = new EventsOutbound(NullLogger<EventsOutbound>.Instance, webhookServiceMock.Object, _retryBackoffService);
+        var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
 
         // Act
         await sut.Run(serializedEnvelope);

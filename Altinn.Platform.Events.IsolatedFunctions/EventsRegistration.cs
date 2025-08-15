@@ -42,20 +42,26 @@ public class EventsRegistration(IEventsClient eventsClient)
     /// </summary>
     internal static void EnsureCorrectResourceFormat(CloudEvent cloudEvent)
     {
-        if (cloudEvent["resource"].ToString().StartsWith("urn:altinn:resource:altinnapp."))
+        var resource = cloudEvent["resource"];
+
+        if (resource is not null)
         {
-            string org = null;
-            string app = null;
-
-            string[] pathParams = cloudEvent.Source.AbsolutePath.Split("/");
-
-            if (pathParams.Length > 5)
+            string resourceValue = resource.ToString();
+            if (resourceValue.StartsWith("urn:altinn:resource:altinnapp."))
             {
-                org = pathParams[1];
-                app = pathParams[2];
-            }
+                string org = null;
+                string app = null;
 
-            cloudEvent.SetAttributeFromString("resource", $"urn:altinn:resource:app_{org}_{app}");
+                string[] pathParams = cloudEvent.Source.AbsolutePath.Split("/");
+
+                if (pathParams.Length > 5)
+                {
+                    org = pathParams[1];
+                    app = pathParams[2];
+                }
+
+                cloudEvent.SetAttributeFromString("resource", $"urn:altinn:resource:app_{org}_{app}");
+            }
         }
     }
 }

@@ -27,8 +27,8 @@ public class RetryBackoffServiceTests
     public async Task RequeueWithBackoff_IncrementsDequeue_And_UsesVisibility()
     {
         // Arrange
-        string sentMain = null;
-        string sentPoison = null;
+        string? sentMain = null;
+        string? sentPoison = null;
         TimeSpan? capturedVisibility = null;
 
         QueueSendDelegate mainDelegate = (msg, vis, ttl, ct) =>
@@ -72,8 +72,8 @@ public class RetryBackoffServiceTests
     [Fact]
     public async Task RequeueWithBackoff_PermanentError_GoesToPoison()
     {
-        string sentMain = null;
-        string sentPoison = null;
+        string? sentMain = null;
+        string? sentPoison = null;
 
         QueueSendDelegate mainDelegate = (msg, vis, ttl, ct) =>
         {

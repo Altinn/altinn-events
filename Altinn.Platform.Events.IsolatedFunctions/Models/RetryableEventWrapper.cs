@@ -1,6 +1,4 @@
-﻿using CloudNative.CloudEvents;
-
-namespace Altinn.Platform.Events.IsolatedFunctions.Models;
+﻿namespace Altinn.Platform.Events.IsolatedFunctions.Models;
 
 /// <summary>
 /// This record contains metadata related to manual retry operations.
@@ -26,7 +24,7 @@ public record RetryableEventWrapper
     /// <summary>
     /// Unique identifier for all events belonging to the same content, across retries.
     /// </summary>
-    public string? CorrelationId { get; set; } = Guid.NewGuid().ToString();
+    public string CorrelationId { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
     /// Timestamp indicating when the event was first fired.
