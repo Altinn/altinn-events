@@ -41,7 +41,7 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetRegistrationQueueClient();
-                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
+                await client.SendMessageAsync(content);
             }
             catch (Exception e)
             {
@@ -57,7 +57,7 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetInboundQueueClient();
-                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
+                await client.SendMessageAsync(content);
             }
             catch (Exception e)
             {
@@ -73,7 +73,7 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetOutboundQueueClient();
-                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
+                await client.SendMessageAsync(content);
             }
             catch (Exception e)
             {
@@ -89,7 +89,7 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetValidationQueueClient();
-                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
+                await client.SendMessageAsync(content);
             }
             catch (Exception e)
             {
