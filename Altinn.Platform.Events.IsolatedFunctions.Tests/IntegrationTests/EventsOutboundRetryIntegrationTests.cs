@@ -170,8 +170,8 @@ public class EventsOutboundRetryIntegrationTests
                 var msgs = await main.ReceiveMessagesAsync(1, TimeSpan.FromSeconds(1));
                 if (msgs.Value.Length > 0)
                 {
-                    var raw = Encoding.UTF8.GetString(Convert.FromBase64String(msgs.Value[0].Body.ToString()));
-                    received = JsonSerializer.Deserialize<RetryableEventWrapper>(raw, _json);
+                    var raw = msgs.Value[0].Body.ToString(); // Already decoded
+                    received = raw.DeserializeToRetryableEventWrapper();
                     break;
                 }
                 await Task.Delay(100);
