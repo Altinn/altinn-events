@@ -8,7 +8,6 @@
     <UserSecretsId>bc45f666-b63a-4878-ba2c-031a937ee427</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Azure.Data.Tables" Version="12.11.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
     <PackageReference Include="Azure.Storage.Files.Shares" Version="12.23.0" />
