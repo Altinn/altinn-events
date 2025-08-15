@@ -222,7 +222,7 @@ public class EventsOutboundRetryIntegrationTests
         Assert.Empty((await main.PeekMessagesAsync(1)).Value);
         var poisonMsgs = await poison.PeekMessagesAsync(1);
         Assert.Single(poisonMsgs.Value);
-        var body = Encoding.UTF8.GetString(Convert.FromBase64String(poisonMsgs.Value[0].Body.ToString()));
+        var body = poisonMsgs.Value[0].Body.ToString(); // Already decoded
         var stored = body.DeserializeToRetryableEventWrapper();
         Assert.Equal(0, stored!.DequeueCount); // not incremented
     }

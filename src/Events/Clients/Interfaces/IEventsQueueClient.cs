@@ -23,6 +23,7 @@ namespace Altinn.Platform.Events.Clients.Interfaces
         /// <param name="cloudEvent">The cloud event object that contains the payload <see cref="CloudEvent"/></param>
         /// <returns>Returns a queue receipt</returns>
         Task<QueuePostReceipt> EnqueueRegistration(CloudEvent cloudEvent);
+        
         /// <summary>
         /// Enqueues the provided content to the inbound queue
         /// </summary>

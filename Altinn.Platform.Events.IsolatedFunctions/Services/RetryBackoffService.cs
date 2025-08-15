@@ -79,14 +79,14 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Services
                 updated.DequeueCount,
                 visibility);
 
-            await _sendToQueue(Convert.ToBase64String(Encoding.UTF8.GetBytes(payload)), visibility, _ttl);
+            await _sendToQueue(payload, visibility, _ttl);
         }
 
         /// <inheritdoc/>
         public async Task SendToPoisonAsync(RetryableEventWrapper message)
         {
             string payload = JsonSerializer.Serialize(message, _jsonOptions);
-            await _sendToPoison(Convert.ToBase64String(Encoding.UTF8.GetBytes(payload)), TimeSpan.FromSeconds(0), _ttl);
+            await _sendToPoison(payload, TimeSpan.FromSeconds(0), _ttl);
         }
 
         /// <inheritdoc/>

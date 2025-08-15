@@ -89,6 +89,7 @@ namespace Altinn.Platform.Events.Functions.Models
                 CloudEvent = cloudEvent; // Restore before throwing
                 throw new InvalidOperationException("Invalid JSON structure during serialization.");
             }
+
             string serializedEnvelope = partialSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
 
             CloudEvent = cloudEvent;

@@ -34,7 +34,7 @@ public class RetryBackoffServiceTests
         QueueSendDelegate mainDelegate = (msg, vis, ttl, ct) =>
         {
             // Decode base64 back to UTF8 string
-            sentMain = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(msg));
+            sentMain = msg;
             capturedVisibility = vis;
             return Task.CompletedTask;
         };
