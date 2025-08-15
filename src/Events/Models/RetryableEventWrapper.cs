@@ -28,7 +28,10 @@ public record RetryableEventWrapper
     /// <summary>
     /// Unique identifier for all events belonging to the same content, across retries.
     /// </summary>
-    public string? CorrelationId { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>
+    /// Unique identifier for all events belonging to the same content, across retries.
+    /// </summary>
+    public string CorrelationId { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
     /// Timestamp indicating when the event was first fired.
