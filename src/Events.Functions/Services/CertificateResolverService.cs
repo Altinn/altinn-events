@@ -55,10 +55,13 @@ public class CertificateResolverService : ICertificateResolverService
 
             lock (_lockObject)
             {
-                _cachedX509Certificate = new X509Certificate2(
+                var newCert = new X509Certificate2(
                     Convert.FromBase64String(certBase64),
                     (string)null,
                     X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                var old = _cachedX509Certificate;
+                _cachedX509Certificate = newCert;
+                old?.Dispose();
                 _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds);
                 _logger.LogInformation("Certificate reloaded.");
             }

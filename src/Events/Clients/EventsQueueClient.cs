@@ -1,10 +1,11 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
+
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
 
@@ -17,6 +18,11 @@ namespace Altinn.Platform.Events.Clients
     public class EventsQueueClient : IEventsQueueClient
     {
         private readonly QueueStorageSettings _settings;
+
+        private readonly QueueClientOptions _queueClientOptions = new QueueClientOptions
+        {
+            MessageEncoding = QueueMessageEncoding.Base64
+        };
 
         private QueueClient _registrationQueueClient;
 
@@ -103,7 +109,7 @@ namespace Altinn.Platform.Events.Clients
         {
             if (_registrationQueueClient == null)
             {
-                _registrationQueueClient = new QueueClient(_settings.ConnectionString, _settings.RegistrationQueueName);
+                _registrationQueueClient = new QueueClient(_settings.ConnectionString, _settings.RegistrationQueueName, _queueClientOptions);
                 await _registrationQueueClient.CreateIfNotExistsAsync();
             }
 
@@ -114,7 +120,7 @@ namespace Altinn.Platform.Events.Clients
         {
             if (_inboundQueueClient == null)
             {
-                _inboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.InboundQueueName);
+                _inboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.InboundQueueName, _queueClientOptions);
                 await _inboundQueueClient.CreateIfNotExistsAsync();
             }
 
@@ -125,7 +131,7 @@ namespace Altinn.Platform.Events.Clients
         {
             if (_outboundQueueClient == null)
             {
-                _outboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.OutboundQueueName);
+                _outboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.OutboundQueueName, _queueClientOptions);
                 await _outboundQueueClient.CreateIfNotExistsAsync();
             }
 
@@ -136,7 +142,7 @@ namespace Altinn.Platform.Events.Clients
         {
             if (_validationQueueClient == null)
             {
-                _validationQueueClient = new QueueClient(_settings.ConnectionString, _settings.ValidationQueueName);
+                _validationQueueClient = new QueueClient(_settings.ConnectionString, _settings.ValidationQueueName, _queueClientOptions);
                 await _validationQueueClient.CreateIfNotExistsAsync();
             }
 
