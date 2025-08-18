@@ -9,12 +9,14 @@ public sealed class RequiresAzuriteFactAttribute : FactAttribute
     {
         if (!AzuriteTestsEnabled())
         {
-            Skip = "Skipped: These tests require Azurite running on a local machine).";
+            Skip = "Skipped: These tests require Azurite running on a local machine.";
         }
     }
 
     private static bool AzuriteTestsEnabled()
     {
-        return false;
+        var v = Environment.GetEnvironmentVariable("ENABLE_AZURITE_TESTS");
+        return string.Equals(v, "1", StringComparison.Ordinal)
+        || string.Equals(v, "true", StringComparison.OrdinalIgnoreCase);
     }
 }
