@@ -10,7 +10,7 @@ namespace Altinn.Platform.Events.Functions.Tests.IntegrationTests;
 internal sealed class TestableRetryBackoffService: RetryBackoffService
 {
     public TestableRetryBackoffService(
-        ILogger<TestableRetryBackoffService> logger,
+        ILogger<RetryBackoffService> logger,
         QueueSendDelegate sendToQueue,
         PoisonQueueSendDelegate sendToPoison)
         : base(logger, sendToQueue, sendToPoison)
