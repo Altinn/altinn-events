@@ -2,14 +2,15 @@
 
 using CloudNative.CloudEvents;
 using Moq;
+using Xunit;
 
-namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions;
+namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions;
 
-public class EventRegistrationTests
+public class EventsRegistrationTests
 {
     private readonly string serializedCloudEvent;
 
-    public EventRegistrationTests()
+    public EventsRegistrationTests()
     {
         serializedCloudEvent = "{" +
             "\"id\":\"f276d3da-9b72-492b-9fee-9cf71e2826a2\"," +

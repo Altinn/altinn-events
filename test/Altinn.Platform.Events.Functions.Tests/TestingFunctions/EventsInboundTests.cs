@@ -1,9 +1,9 @@
 ﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
-
 using CloudNative.CloudEvents;
 using Moq;
+using Xunit;
 
-namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions
+namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
 {
     public class EventsInboundTests
     {
@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions
         public async Task Run_ConfirmDeserializationOfEvent_DataPropertiesPerserved()
         {
             // Arrange
-            CloudEvent? serviceInput = null;
+            CloudEvent serviceInput = null;
 
             string serializedCloudEvent = "{" +
                 "\"id\":\"f276d3da-9b72-492b-9fee-9cf71e2826a2\"," +
@@ -102,7 +102,7 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions
                 return false;
             }
 
-            string? actualExtensionAttribute = cloudEvent
+            string actualExtensionAttribute = cloudEvent
                 .GetPopulatedAttributes()
                 .Where(kv => kv.Key.ToString() == extensionAttributeName)
                 .Select(kv => kv.Value)
@@ -120,4 +120,3 @@ namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions
         }
     }
 }
-

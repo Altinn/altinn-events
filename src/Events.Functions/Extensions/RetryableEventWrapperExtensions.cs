@@ -1,21 +1,18 @@
 ﻿using System.Text.Json;
-
-using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
-using Altinn.Platform.Events.IsolatedFunctions.Models;
 using CloudNative.CloudEvents;
 
-namespace Altinn.Platform.Events.IsolatedFunctions.Extensions;
+namespace Altinn.Platform.Events.Functions.Extensions;
 
 /// <summary>
 /// Extension methods for <see cref="RetryableEventWrapper"/> to facilitate serialization and deserialization.
 /// </summary>
 public static class RetryableEventWrapperExtensions
 {
-    private static readonly System.Text.Json.JsonSerializerOptions _serializerOptions = new System.Text.Json.JsonSerializerOptions
+    private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
     {
         WriteIndented = false,
-        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
     /// <summary>
@@ -27,7 +24,7 @@ public static class RetryableEventWrapperExtensions
     /// <param name="item">The JSON string to deserialize. Must represent a valid <see cref="RetryableEventWrapper"/> object.</param>
     /// <returns>A <see cref="RetryableEventWrapper"/> instance if the deserialization is successful; otherwise, <see
     /// langword="null"/> if the input is invalid or deserialization fails.</returns>
-    public static RetryableEventWrapper? DeserializeToRetryableEventWrapper(this string item)
+    public static RetryableEventWrapper DeserializeToRetryableEventWrapper(this string item)
     {
         try
         {

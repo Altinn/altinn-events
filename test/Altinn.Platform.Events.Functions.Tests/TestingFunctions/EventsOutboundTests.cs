@@ -1,16 +1,16 @@
+using System.Text.Json;
+
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Queues;
+using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
-using Altinn.Platform.Events.IsolatedFunctions.Extensions;
-using Altinn.Platform.Events.IsolatedFunctions.Models;
-using Altinn.Platform.Events.IsolatedFunctions.Services;
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using System.Text.Json;
+using Xunit;
 
-namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions;
+namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions;
 
 public class EventsOutboundTests
 {
@@ -157,8 +157,8 @@ public class EventsOutboundTests
         };
 
         // Capture what's requeued
-        RetryableEventWrapper? requeuedWrapper = null;
-        Exception? caughtException = null;
+        RetryableEventWrapper requeuedWrapper = null;
+        Exception caughtException = null;
 
         // Set up webhook service mock to throw exception
         Mock<IWebhookService> webhookServiceMock = new();
@@ -248,5 +248,3 @@ public class EventsOutboundTests
         webhookServiceMock.Verify(x => x.Send(It.IsAny<CloudEventEnvelope>()), Times.Once);
     }
 }
-
-

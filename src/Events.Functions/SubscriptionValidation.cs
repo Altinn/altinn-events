@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Models;
@@ -8,7 +10,7 @@ using CloudNative.CloudEvents;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Events.IsolatedFunctions;
+namespace Altinn.Platform.Events.Functions;
 
 /// <summary>
 /// Initializes a new instance of the <see cref="SubscriptionValidation"/> class.
@@ -49,7 +51,7 @@ public class SubscriptionValidation(
             {
                 Id = Guid.NewGuid().ToString(),
                 Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
-                Type = Functions.Constants.EventConstants.ValidationType,
+                Type = Constants.EventConstants.ValidationType,
             }
         };
 

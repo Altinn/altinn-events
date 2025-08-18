@@ -1,16 +1,14 @@
+using System.Text.Json;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Queues;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
-using Altinn.Platform.Events.IsolatedFunctions.Extensions;
-using Altinn.Platform.Events.IsolatedFunctions.Models;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using System.Text;
-using System.Text.Json;
+using Xunit;
 
-namespace Altinn.Platform.Events.IsolatedFunctions.Tests.IntegrationTests;
+namespace Altinn.Platform.Events.Functions.Tests.IntegrationTests;
 
 public class EventsOutboundRetryIntegrationTests
 {
@@ -37,7 +35,6 @@ public class EventsOutboundRetryIntegrationTests
     {
         var qc = new QueueClient(_connectionString, name);
         qc.CreateIfNotExists();
-        // Clear any residual messages deterministically
         qc.ClearMessages();
         return qc;
     }
@@ -65,8 +62,8 @@ public class EventsOutboundRetryIntegrationTests
             poisonSender);
 
         // Mock webhook service to fail
-        var webhook = new Moq.Mock<IWebhookService>();
-        webhook.Setup(w => w.Send(Moq.It.IsAny<CloudEventEnvelope>()))
+        var webhook = new Mock<IWebhookService>();
+        webhook.Setup(w => w.Send(It.IsAny<CloudEventEnvelope>()))
                .ThrowsAsync(new InvalidOperationException("Simulated failure"));
 
         var sut = new EventsOutbound(
@@ -96,7 +93,7 @@ public class EventsOutboundRetryIntegrationTests
         await sut.Run(wrapper.Serialize());
 
         // Assert: after visibility timeout (10s for first retry) the message appears.
-        RetryableEventWrapper? requeued = null;
+        RetryableEventWrapper requeued = null;
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(18));
         var start = DateTime.UtcNow;
         bool received = false;
@@ -163,7 +160,7 @@ public class EventsOutboundRetryIntegrationTests
             // Wait up to expectedVisibility + small slack
             var expectedVis = svc.GetVisibilityTimeout(current + 1);
             var deadline = DateTime.UtcNow + expectedVis.Add(TimeSpan.FromSeconds(1));
-            RetryableEventWrapper? received = null;
+            RetryableEventWrapper received = null;
 
             while (DateTime.UtcNow < deadline)
             {
@@ -174,6 +171,7 @@ public class EventsOutboundRetryIntegrationTests
                     received = raw.DeserializeToRetryableEventWrapper();
                     break;
                 }
+
                 await Task.Delay(100);
             }
 

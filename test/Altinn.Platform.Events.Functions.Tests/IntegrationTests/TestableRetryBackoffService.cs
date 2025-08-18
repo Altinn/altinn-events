@@ -1,8 +1,8 @@
 using Altinn.Platform.Events.Functions.Queues;
-using Altinn.Platform.Events.IsolatedFunctions.Services;
+using Altinn.Platform.Events.Functions.Services;
 using Microsoft.Extensions.Logging;
 
-namespace Altinn.Platform.Events.IsolatedFunctions.Tests.IntegrationTests;
+namespace Altinn.Platform.Events.Functions.Tests.IntegrationTests;
 
 /// <summary>
 /// Overrides the visibility timeout logic for integration tests.
@@ -20,7 +20,7 @@ internal sealed class TestableRetryBackoffService: RetryBackoffService
     /// <summary>
     /// Compressed visbility timeout based on dequeue count for integration tests.
     /// </summary>
-    /// <param name="dequeueCount"></param>
+    /// <param name="dequeueCount">The number of times the event has been put back on the queue</param>
     /// <returns></returns>
     public override TimeSpan GetVisibilityTimeout(int dequeueCount) => dequeueCount switch
     {

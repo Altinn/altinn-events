@@ -1,4 +1,6 @@
-﻿namespace Altinn.Platform.Events.IsolatedFunctions.Models;
+﻿using System;
+
+namespace Altinn.Platform.Events.Functions.Models;
 
 /// <summary>
 /// This record contains metadata related to manual retry operations.

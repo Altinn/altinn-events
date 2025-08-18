@@ -1,12 +1,13 @@
+using System;
+using System.Threading.Tasks;
+
+using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
-using Altinn.Platform.Events.IsolatedFunctions.Extensions;
-using Altinn.Platform.Events.IsolatedFunctions.Models;
-using Altinn.Platform.Events.IsolatedFunctions.Services;
 
 using Microsoft.Azure.Functions.Worker;
 
-namespace Altinn.Platform.Events.IsolatedFunctions;
+namespace Altinn.Platform.Events.Functions;
 
 /// <summary>
 /// Processes outbound events from a queue and sends them to a webhook endpoint.

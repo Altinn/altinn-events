@@ -1,9 +1,10 @@
-﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
+﻿using System.Threading.Tasks;
+using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Extensions;
 using CloudNative.CloudEvents;
 using Microsoft.Azure.Functions.Worker;
 
-namespace Altinn.Platform.Events.IsolatedFunctions;
+namespace Altinn.Platform.Events.Functions;
 
 /// <summary>
 /// Initializes a new instance of the <see cref="EventsInbound"/> class.

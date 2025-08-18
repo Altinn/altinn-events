@@ -13,12 +13,12 @@ using Moq;
 
 using Xunit;
 
-namespace Altinn.Platform.Events.IsolatedFunctions.Tests.TestingFunctions;
+namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions;
 
 public class SubscriptionValidationTests
 {
-    private static Subscription? _subscription;
-    private static string? _serializedSubscription;
+    private static Subscription _subscription;
+    private static string _serializedSubscription;
 
     public SubscriptionValidationTests()
     {
