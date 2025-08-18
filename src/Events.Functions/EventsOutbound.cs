@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Threading.Tasks;
 
@@ -30,35 +32,43 @@ public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService
     /// <param name="item">A base64 decoded string representation of the payload</param>
     /// <returns></returns>
     [Function(nameof(EventsOutbound))]
-    public async Task Run([QueueTrigger(_queueName, Connection = "AzureWebJobsStorage")] string item)
+    public async Task Run([QueueTrigger(_queueName, Connection = "QueueStorage")] string item)
     {
-        var retryableEventWrapper = item.DeserializeToRetryableEventWrapper();
-
-        var cloudEventEnvelope = retryableEventWrapper != null ? CloudEventEnvelope.DeserializeToCloudEventEnvelope(retryableEventWrapper.Payload) : CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
-
+        RetryableEventWrapper? wrapperCandidate = null;
         try
         {
-            await _webhookService.Send(cloudEventEnvelope);
-        }
-        catch (Exception ex)
-        {
-            if (retryableEventWrapper != null)
+            wrapperCandidate = item.DeserializeToRetryableEventWrapper();
+            CloudEventEnvelope envelope;
+
+            if (wrapperCandidate is not null && !string.IsNullOrWhiteSpace(wrapperCandidate.Payload))
             {
-                await _retryBackoffService.RequeueWithBackoff(retryableEventWrapper, ex);
+                envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(wrapperCandidate.Payload);
             }
             else
             {
-                // If retryableEventWrapper is null, it means we are dealing with a legacy message format
-                var initWrapper = new RetryableEventWrapper
+                // Treat input as a legacy envelope JSON, meaning without a wrapper object
+                envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
+                
+                // Ensure wrapperCandidate is null in this branch to drive legacy requeue behavior
+                wrapperCandidate = null;
+            }
+
+            await _webhookService.Send(envelope);
+        }
+        catch (Exception ex)
+        {
+            // If we had a valid wrapper with payload, requeue that; otherwise, wrap original input.
+            var toRequeue = (wrapperCandidate is not null && !string.IsNullOrWhiteSpace(wrapperCandidate.Payload))
+                ? wrapperCandidate
+                : new RetryableEventWrapper
                 {
-                    Payload = cloudEventEnvelope.Serialize(),
+                    Payload = item,
                     DequeueCount = 0,
                     CorrelationId = Guid.NewGuid().ToString(),
                     FirstProcessedAt = DateTime.UtcNow
                 };
 
-                await _retryBackoffService.RequeueWithBackoff(initWrapper, ex);
-            }
+            await _retryBackoffService.RequeueWithBackoff(toRequeue, ex);
         }
     }
 }

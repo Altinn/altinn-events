@@ -23,7 +23,7 @@ public class EventsRegistration(IEventsClient eventsClient)
     /// and sends to events-inbound queue storage.
     /// </summary>
     [Function(nameof(EventsRegistration))]
-    public async Task Run([QueueTrigger("events-registration", Connection = "AzureWebJobsStorage")] string item)
+    public async Task Run([QueueTrigger("events-registration", Connection = "QueueStorage")] string item)
     {
         CloudEvent cloudEvent = item.DeserializeToCloudEvent();
         EnsureCorrectResourceFormat(cloudEvent);
