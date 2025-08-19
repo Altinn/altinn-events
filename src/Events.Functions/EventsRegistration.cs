@@ -7,12 +7,12 @@ using Microsoft.Azure.Functions.Worker;
 namespace Altinn.Platform.Events.Functions;
 
 /// <summary>
-/// Process incoming CloudEvents in "events-registration" queue.
-/// CloudEvents are first saved to the database
-/// before being added to the "events-inbound" queue.
+/// Processes incoming CloudEvents from the "events-registration" queue.
+/// CloudEvents are first persisted and then routed via the Events API inbound endpoint
+/// (which enqueues to the "events-inbound" queue).
 /// </summary>
 /// <remarks>
-/// Initializes a new instance of the <see cref="EventsInbound"/> class.
+/// Initializes a new instance of the <see cref="EventsRegistration"/> class.
 /// </remarks>
 public class EventsRegistration(IEventsClient eventsClient)
 {
