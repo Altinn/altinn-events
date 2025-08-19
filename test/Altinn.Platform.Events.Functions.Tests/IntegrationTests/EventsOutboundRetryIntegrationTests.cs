@@ -86,10 +86,9 @@ public class EventsOutboundRetryIntegrationTests
         // Act: run function (which will attempt webhook -> fail -> requeue)
         await sut.Run(wrapper.Serialize());
 
-        // Assert: after visibility timeout (10s for first retry) the message appears.
+        // Assert: after visibility timeout (1s for first retry (TestableRetryBackoffService override) the message appears.
         RetryableEventWrapper requeued = null;
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(18));
-        var start = DateTime.UtcNow;
         bool received = false;
 
         while (!cts.IsCancellationRequested)

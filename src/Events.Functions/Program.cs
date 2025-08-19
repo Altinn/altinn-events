@@ -14,26 +14,10 @@ var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
 
-builder.Services.AddOptions<PlatformSettings>()
-             .Configure<IConfiguration>((settings, configuration) =>
-             {
-                 configuration.GetSection("Platform").Bind(settings);
-             });
-builder.Services.AddOptions<KeyVaultSettings>()
-    .Configure<IConfiguration>((settings, configuration) =>
-    {
-        configuration.GetSection("KeyVault").Bind(settings);
-    });
-builder.Services.AddOptions<CertificateResolverSettings>()
-    .Configure<IConfiguration>((settings, configuration) =>
-    {
-        configuration.GetSection("CertificateResolver").Bind(settings);
-    });
-builder.Services.AddOptions<EventsOutboundSettings>()
-    .Configure<IConfiguration>((settings, configuration) =>
-    {
-        configuration.GetSection("EventsOutboundSettings").Bind(settings);
-    });
+builder.Services.Configure<PlatformSettings>(builder.Configuration.GetSection("Platform"));
+builder.Services.Configure<KeyVaultSettings>(builder.Configuration.GetSection("KeyVault"));
+builder.Services.Configure<CertificateResolverSettings>(builder.Configuration.GetSection("CertificateResolver"));
+builder.Services.Configure<EventsOutboundSettings>(builder.Configuration.GetSection("EventsOutboundSettings"));
 
 builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
 
