@@ -22,7 +22,7 @@ public class CertificateResolverService : ICertificateResolverService
     private readonly object _lockObject = new object();
 
     /// <summary>
-    /// Default constructor
+    /// Class to resolve certificate to generate an access token
     /// </summary>
     /// <param name="logger">The logger</param>
     /// <param name="certificateResolverSettings">Settings for certificate resolver</param>

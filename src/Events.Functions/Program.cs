@@ -29,4 +29,4 @@ builder.Services.AddHttpClient<IWebhookService, WebhookService>();
 builder.Services.AddQueueSenders(builder.Configuration);
 builder.Services.AddTransient<IRetryBackoffService, RetryBackoffService>();
 
-builder.Build().Run();
+await builder.Build().RunAsync();

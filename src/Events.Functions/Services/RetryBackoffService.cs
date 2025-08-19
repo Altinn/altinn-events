@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Queues;
@@ -10,11 +8,9 @@ using Microsoft.Extensions.Logging;
 namespace Altinn.Platform.Events.Functions.Services;
 
 /// <summary>
-/// Provides functionality for handling retryable events with exponential backoff and poison queue handling.
+/// Implementation of <see cref="IRetryBackoffService"/> that provides exponential backoff retries
+/// and handles message failure with configurable retry limits.
 /// </summary>
-/// <remarks>This service is designed to manage the requeuing of events that fail processing, applying a
-/// backoff strategy based on the number of retries. If the maximum retry count is exceeded or a permanent failure
-/// is detected, the event is moved to a poison queue for further investigation.</remarks>
 public class RetryBackoffService : IRetryBackoffService
 {
     private readonly ILogger<RetryBackoffService> _logger;
@@ -23,18 +19,12 @@ public class RetryBackoffService : IRetryBackoffService
     private readonly int _maxDequeueCount = 12;
     private readonly TimeSpan _ttl = TimeSpan.FromDays(7);
 
-    private readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
-    };
-
     /// <summary>
     /// Initializes a new instance of the <see cref="RetryBackoffService"/> class.
     /// </summary>
-    /// <param name="logger">The logger used to log diagnostic and operational messages.</param>
-    /// <param name="sendToQueue">A delegate that sends messages to the primary queue.</param>
-    /// <param name="sendToPoison">A delegate that sends messages to the poison queue for handling failed messages.</param>
+    /// <param name="logger">The logger used for diagnostic and operational messages.</param>
+    /// <param name="sendToQueue">Delegate to send messages to the primary queue.</param>
+    /// <param name="sendToPoison">Delegate to send messages to the poison queue.</param>
     public RetryBackoffService(
         ILogger<RetryBackoffService> logger,
         QueueSendDelegate sendToQueue,
@@ -72,7 +62,7 @@ public class RetryBackoffService : IRetryBackoffService
             return;
         }
 
-        string payload = JsonSerializer.Serialize(updated, _jsonOptions);
+        string payload = updated.Serialize();
         TimeSpan visibility = GetVisibilityTimeout(updated.DequeueCount);
 
         _logger.LogDebug(
@@ -87,7 +77,7 @@ public class RetryBackoffService : IRetryBackoffService
     /// <inheritdoc/>
     public async Task SendToPoisonAsync(RetryableEventWrapper message)
     {
-        string payload = JsonSerializer.Serialize(message, _jsonOptions);
+        string payload = message.Serialize();
         await _sendToPoison(payload, TimeSpan.FromSeconds(0), _ttl);
     }
 

@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Functions.Models
         /// <summary>
         /// The Event to push
         /// </summary>
-        public CloudEvent CloudEvent { get; set; }
+        public CloudEvent? CloudEvent { get; set; }
 
         /// <summary>
         /// The time the event was pushed to queue
@@ -36,12 +36,12 @@ namespace Altinn.Platform.Events.Functions.Models
         /// <summary>
         /// Target URI to push event
         /// </summary>
-        public Uri Endpoint { get; set; }
+        public Uri? Endpoint { get; set; }
 
         /// <summary>
         /// The consumer of the events
         /// </summary>
-        public string Consumer { get; set; }
+        public string? Consumer { get; set; }
 
         /// <summary>
         /// The subscription id that matched.
@@ -55,12 +55,23 @@ namespace Altinn.Platform.Events.Functions.Models
         public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
         {
             var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
+            if (n == null)
+            {
+                throw new ArgumentException("Failed to parse serialized envelope as JSON", nameof(serializedEnvelope));
+            }
 
-            string serializedCloudEvent = n["cloudEvent"].ToString();
+            var cloudEventNode = n["cloudEvent"];
+            if (cloudEventNode == null)
+            {
+                throw new ArgumentException("Serialized envelope does not contain a cloudEvent property", nameof(serializedEnvelope));
+            }
+
+            string serializedCloudEvent = cloudEventNode.ToString();
             var cloudEvent = serializedCloudEvent.DeserializeToCloudEvent();
 
             n["cloudEvent"] = null;
-            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(_cachedJsonSerializerOptions);
+            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(_cachedJsonSerializerOptions) 
+                ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
 
             cloudEventEnvelope.CloudEvent = cloudEvent;
 

@@ -30,7 +30,7 @@ public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService
     /// The function consumes messages from the "events-outbound" queue.
     /// </summary>
     /// <param name="item">A base64 decoded string representation of the payload</param>
-    /// <returns></returns>
+    /// <returns>An asynchronous task</returns>
     [Function(nameof(EventsOutbound))]
     public async Task Run([QueueTrigger(_queueName, Connection = "QueueStorage")] string item)
     {

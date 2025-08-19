@@ -38,16 +38,6 @@ public static class RetryableEventWrapperExtensions
     }
 
     /// <summary>
-    /// Support extracting CloudEvent from RetryableEventWrapper or directly from the item for backwards compatibility.
-    /// </summary>
-    /// <param name="retryableEventWrapper">The wrapper object containing the cloud event</param>
-    /// <returns></returns>
-    public static CloudEvent ExtractCloudEvent(this RetryableEventWrapper retryableEventWrapper)
-    {
-        return retryableEventWrapper.Payload.DeserializeToCloudEvent();
-    }
-
-    /// <summary>
     /// Extracts the CloudEventEnvelope from a RetryableEventWrapper payload.
     /// </summary>
     /// <param name="retryableEventWrapper">The wrapper object containing the cloud event envelope</param>

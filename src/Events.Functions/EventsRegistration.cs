@@ -47,13 +47,13 @@ public class EventsRegistration(IEventsClient eventsClient)
 
         if (resource is not null)
         {
-            string resourceValue = resource.ToString();
-            if (resourceValue.StartsWith("urn:altinn:resource:altinnapp."))
+            string? resourceValue = resource.ToString();
+            if (resourceValue != null && resourceValue.StartsWith("urn:altinn:resource:altinnapp."))
             {
-                string org = null;
-                string app = null;
+                string? org = null;
+                string? app = null;
 
-                string[] pathParams = cloudEvent.Source.AbsolutePath.Split("/");
+                string[] pathParams = cloudEvent.Source?.AbsolutePath.Split("/") ?? Array.Empty<string>();
 
                 if (pathParams.Length > 5)
                 {

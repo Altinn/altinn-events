@@ -51,7 +51,7 @@ public class EventsOutboundTests
     }
 
     [Fact]
-    public async Task Run_ConfirmDeserializationOCloudEventEnvelope_CloudEventPersisted()
+    public async Task Run_ConfirmDeserializationOfCloudEventEnvelope_CloudEventPersisted()
     {
         // Arrange
         CloudEventEnvelope actualServiceInput = null;

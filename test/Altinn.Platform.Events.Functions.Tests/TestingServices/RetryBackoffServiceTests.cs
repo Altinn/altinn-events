@@ -58,7 +58,7 @@ public class RetryBackoffServiceTests
         var originalEvent = new RetryableEventWrapper
         {
             Payload = "test-payload",
-            DequeueCount = 2,
+            DequeueCount = 0,
             FirstProcessedAt = DateTime.UtcNow.AddMinutes(-5),
             CorrelationId = "test-correlation"
         };
@@ -75,10 +75,10 @@ public class RetryBackoffServiceTests
             Times.Never);
 
         var requeuedEvent = JsonSerializer.Deserialize<RetryableEventWrapper>(capturedMessage, _jsonOptions);
-        Assert.Equal(3, requeuedEvent.DequeueCount); // Incremented from 2 to 3
+        Assert.Equal(1, requeuedEvent.DequeueCount); // Incremented from 1 to 2
         Assert.Equal("test-correlation", requeuedEvent.CorrelationId);
         Assert.Equal("test-payload", requeuedEvent.Payload);
-        Assert.Equal(TimeSpan.FromMinutes(1), capturedVisibility); // For dequeue count 3
+        Assert.Equal(TimeSpan.FromSeconds(10), capturedVisibility); // For dequeue count 1
     }
 
     [Fact]
@@ -243,7 +243,6 @@ public class RetryBackoffServiceTests
 
         QueueSendDelegate mainDelegate = (msg, vis, ttl, ct) =>
         {
-            // Decode base64 back to UTF8 string
             sentMain = msg;
             capturedVisibility = vis;
             return Task.CompletedTask;
