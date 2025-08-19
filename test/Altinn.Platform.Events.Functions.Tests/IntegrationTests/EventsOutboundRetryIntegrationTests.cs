@@ -25,12 +25,6 @@ public class EventsOutboundRetryIntegrationTests
          "\"time\":\"2024-01-13T09:47:41.1680188Z\"" +
          "}";
 
-    private readonly JsonSerializerOptions _json = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false
-    };
-
     private static QueueClient CreateQueue(string name)
     {
         var qc = new QueueClient(_connectionString, name);

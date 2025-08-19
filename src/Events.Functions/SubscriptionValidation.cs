@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Models;

@@ -37,16 +37,20 @@ public static class QueueRegistration
         this IServiceCollection services,
         IConfiguration config)
     {
-        string conn = config.GetConnectionString("QueueStorage")
-            ?? config["QueueStorageSettings:ConnectionString"]
+        string conn = config["QueueStorage"] 
             ?? throw new InvalidOperationException("Queue storage connection not configured.");
 
-        string mainQueue = config["QueueStorageSettings:OutboundQueueName"] ?? "events-outbound";
-        string poisonQueue = mainQueue + "-poison";
+        string queueUsingExponentialBackoff = "events-outbound";
+        string poisonQueueUsingExponentialBackoff = queueUsingExponentialBackoff + "-poison";
 
-        var mainClient = new QueueClient(conn, mainQueue);
+        QueueClientOptions options = new()
+        {
+            MessageEncoding = QueueMessageEncoding.Base64,
+        };
+
+        var mainClient = new QueueClient(conn, queueUsingExponentialBackoff, options);
         mainClient.CreateIfNotExists();
-        var poisonClient = new QueueClient(conn, poisonQueue);
+        var poisonClient = new QueueClient(conn, poisonQueueUsingExponentialBackoff, options);
         poisonClient.CreateIfNotExists();
 
         QueueSendDelegate mainDelegate = async (msg, vis, ttl, ct) =>
