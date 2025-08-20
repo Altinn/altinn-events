@@ -61,10 +61,6 @@ namespace Altinn.Platform.Events.Models
             return serializedEnvelope;
         }
 
-        /// <summary>
-        /// Deserializes a serialized cloud event envelope using a specialized deserializer for the cloud event property.
-        /// </summary>
-        /// <returns>The cloud event envelope object</returns>
         public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
         {
             var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
@@ -73,8 +69,8 @@ namespace Altinn.Platform.Events.Models
                 throw new ArgumentException("Failed to parse serialized envelope as JSON", nameof(serializedEnvelope));
             }
 
-            var cloudEventNode = n["cloudEvent"];
-            if (cloudEventNode == null)
+            var cloudEventNode = n["cloudEvent"] ?? n["CloudEvent"];
+            if (cloudEventNode is null)
             {
                 throw new ArgumentException("Serialized envelope does not contain a cloudEvent property", nameof(serializedEnvelope));
             }
@@ -82,7 +78,12 @@ namespace Altinn.Platform.Events.Models
             string serializedCloudEvent = cloudEventNode.ToString();
             var cloudEvent = serializedCloudEvent.DeserializeToCloudEvent();
 
-            n["cloudEvent"] = null;
+            if (n is JsonObject obj)
+            {
+                // Remove both variants to be explicit regardless of parsed casing
+                obj.Remove("cloudEvent");
+                obj.Remove("CloudEvent");
+            }
             CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(_cachedJsonSerializerOptions)
                 ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
 
