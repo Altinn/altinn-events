@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Altinn.Platform.Events.Functions.Models;
+﻿namespace Altinn.Platform.Events.Common.Models;
 
 /// <summary>
 /// This record contains metadata related to manual retry operations.
@@ -37,7 +35,7 @@ public record RetryableEventWrapper
     /// Serializes the current instance to a JSON string representation.
     /// </summary>
     /// <returns></returns>
-    internal string Serialize()
+    public string Serialize()
     {
         return System.Text.Json.JsonSerializer.Serialize(this, _serializerOptions);
     }

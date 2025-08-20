@@ -34,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Altinn.Platform.Events.Common\Altinn.Platform.Events.Common.csproj" />
     <ProjectReference Include="..\..\src\Events.Functions\Altinn.Platform.Events.Functions.csproj" />
   </ItemGroup>
 

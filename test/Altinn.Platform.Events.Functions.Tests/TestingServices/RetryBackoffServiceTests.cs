@@ -1,9 +1,10 @@
 ﻿using System.Text.Json;
 
+using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Functions.Extensions;
-using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Queues;
 using Altinn.Platform.Events.Functions.Services;
+
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;

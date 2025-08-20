@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Altinn.Platform.Events.Functions.Models;
+﻿using Altinn.Platform.Events.Common.Models;
 
 namespace Altinn.Platform.Events.Functions.Services.Interfaces;
 

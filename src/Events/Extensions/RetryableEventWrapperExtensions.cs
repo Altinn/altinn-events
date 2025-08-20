@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
-using Altinn.Platform.Events.Models;
+
+using Altinn.Platform.Events.Common.Models;
 
 namespace Altinn.Platform.Events.Extensions;
 
