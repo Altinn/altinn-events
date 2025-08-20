@@ -61,6 +61,15 @@ namespace Altinn.Platform.Events.Models
             return serializedEnvelope;
         }
 
+        /// <summary>
+        /// Deserializes a CloudEventEnvelope from a JSON string that embeds a CloudEvent
+        /// in either "CloudEvent" or "cloudEvent".
+        /// </summary>
+        /// <param name="serializedEnvelope">The serialized envelope JSON.</param>
+        /// <returns>The reconstructed CloudEventEnvelope with CloudEvent populated.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when JSON parsing fails or the "cloudEvent"/"CloudEvent" property is missing.
+        /// </exception>
         public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
         {
             var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
