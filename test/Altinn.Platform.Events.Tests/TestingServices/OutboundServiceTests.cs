@@ -340,6 +340,22 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(cloudEvent.Subject, envelope.CloudEvent.Subject);
         }
 
+        [Fact]
+        public void DeserializeToRetryableEventWrapper_InvalidJsonAndEmptyString_ReturnNull()
+        {
+            // Arrange
+            string invalidJson = "{\"CorrelationId\":\"test-id\", \"DequeueCount\":0, malformed json}";
+            string emptyString = string.Empty;
+            
+            // Act
+            var result = invalidJson.DeserializeToRetryableEventWrapper();
+            var resultEmpty = emptyString.DeserializeToRetryableEventWrapper();
+
+            // Assert
+            Assert.Null(result);
+            Assert.Null(resultEmpty);
+        }
+
         private static IOutboundService GetOutboundService(
             IEventsQueueClient queueMock = null,
             Mock<ITraceLogService> traceLogServiceMock = null,
@@ -370,8 +386,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             if (authorizationMock == null)
             {
-                Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new Mock<IClaimsPrincipalProvider>();
-                Mock<IRegisterService> registerServiceMock = new Mock<IRegisterService>();
+                Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
+                Mock<IRegisterService> registerServiceMock = new();
 
                 authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object, registerServiceMock.Object);
             }
@@ -403,18 +419,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             {
                 Id = 16,
                 SourceFilter = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2"),
-                Consumer = "/org/ttd",
-                CreatedBy = "/org/ttd",
-                TypeFilter = "app.instance.process.completed"
-            };
-        }
-
-        private static Subscription GetGenericEventsSubscription()
-        {
-            return new Subscription()
-            {
-                Id = 16,
-                SourceFilter = new Uri("urn:testing-events:test-source"),
                 Consumer = "/org/ttd",
                 CreatedBy = "/org/ttd",
                 TypeFilter = "app.instance.process.completed"
