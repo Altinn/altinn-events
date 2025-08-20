@@ -1,5 +1,5 @@
-using System;
 using Altinn.Platform.Events.Functions.Queues;
+
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,10 +29,11 @@ public static class QueueRegistration
         this IServiceCollection services,
         IConfiguration config)
     {
-        string conn = config["QueueStorage"] 
+        string conn = config["QueueStorage"]
             ?? throw new InvalidOperationException("Queue storage connection not configured.");
 
-        string queueUsingExponentialBackoff = "events-outbound";
+        var queueName = config["ExponentialRetryBackoff:QueueName"] ?? throw new InvalidOperationException("Exponential retry backoff queue name not configured.");
+        string queueUsingExponentialBackoff = queueName;
         string poisonQueueUsingExponentialBackoff = queueUsingExponentialBackoff + "-poison";
 
         QueueClientOptions options = new()
