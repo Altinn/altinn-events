@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,11 +16,9 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
 using CloudNative.CloudEvents;
-
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-
 using Moq;
 
 using Xunit;
@@ -292,11 +292,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var expectedResource = "urn:altinn:resource:app_ttd_endring-av-navn-v2";
 
             CloudEvent cloudEvent = GetCloudEvent(
-                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), 
-                expectedSubject, 
-                expectedType, 
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                expectedSubject,
+                expectedType,
                 expectedResource);
-            
+
             string capturedQueueMessage = null;
 
             Mock<IEventsQueueClient> queueMock = new();
@@ -311,7 +311,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync(true);
 
             var sut = GetOutboundService(
-                queueMock: queueMock.Object, 
+                queueMock: queueMock.Object,
                 authorizationMock: authorizationMock.Object);
 
             // Act
@@ -319,9 +319,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.AtLeastOnce());
-            
+
             Assert.NotNull(capturedQueueMessage);
-            
+
             // Deserialize to RetryableEventWrapper
             var wrapper = capturedQueueMessage.DeserializeToRetryableEventWrapper();
 
@@ -329,10 +329,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.NotNull(wrapper);
             Assert.Equal(0, wrapper.DequeueCount);
             Assert.NotNull(wrapper.Payload);
-            
+
             // Verify we can deserialize the payload back to CloudEventEnvelope
-            var envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(wrapper.Payload);
-            
+            var envelope = DeserializeToCloudEventEnvelope(wrapper.Payload);
+
             // Verify envelope contents
             Assert.NotNull(envelope);
             Assert.Equal(cloudEvent.Type, envelope.CloudEvent.Type);
@@ -346,7 +346,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             string invalidJson = "{\"CorrelationId\":\"test-id\", \"DequeueCount\":0, malformed json}";
             string emptyString = string.Empty;
-            
+
             // Act
             var result = invalidJson.DeserializeToRetryableEventWrapper();
             var resultEmpty = emptyString.DeserializeToRetryableEventWrapper();
@@ -440,6 +440,53 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             cloudEvent.SetResourceIfNotDefined(resoure);
 
             return cloudEvent;
+        }
+
+        /// <summary>
+        /// Deserializes a CloudEventEnvelope from a JSON string that embeds a CloudEvent
+        /// in either "CloudEvent" or "cloudEvent".
+        /// </summary>
+        /// <param name="serializedEnvelope">The serialized envelope JSON.</param>
+        /// <returns>The reconstructed CloudEventEnvelope with CloudEvent populated.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when JSON parsing fails or the "cloudEvent"/"CloudEvent" property is missing.
+        /// </exception>
+        private static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
+        {
+            var cachedJsonSerializerOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
+
+            if (n == null)
+            {
+                throw new ArgumentException("Failed to parse serialized envelope as JSON", nameof(serializedEnvelope));
+            }
+
+            var cloudEventNode = n["cloudEvent"] ?? n["CloudEvent"];
+            if (cloudEventNode is null)
+            {
+                throw new ArgumentException("Serialized envelope does not contain a cloudEvent property", nameof(serializedEnvelope));
+            }
+
+            string serializedCloudEvent = cloudEventNode.ToString();
+            var cloudEvent = serializedCloudEvent.DeserializeToCloudEvent();
+
+            if (n is JsonObject obj)
+            {
+                // Remove both variants to be explicit regardless of parsed casing
+                obj.Remove("cloudEvent");
+                obj.Remove("CloudEvent");
+            }
+
+            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(cachedJsonSerializerOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
+
+            cloudEventEnvelope.CloudEvent = cloudEvent;
+
+            return cloudEventEnvelope;
         }
     }
 }

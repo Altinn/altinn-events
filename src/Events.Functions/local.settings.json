@@ -4,6 +4,7 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "QueueStorage": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "ExponentialRetryBackoff:QueueName": "events-outbound",
     "Platform:ApiEventsEndpoint": "http://localhost:5080/events/api/v1/",
     "KeyVault:KeyVaultURI": "https://altinn-at21-kv.vault.azure.net/"
   }

@@ -289,4 +289,108 @@ public class EventsOutboundTests
         Assert.Throws<ArgumentNullException>(() => nullString.DeserializeToCloudEvent());
         Assert.ThrowsAny<JsonException>(() => emptyString.DeserializeToCloudEvent());
     }
+
+    [Fact]
+    public void DeserializeToCloudEventEnvelope_ValidJson_ReturnsCorrectObject()
+    {
+        // Arrange
+        string validEnvelope = "{" +
+            "\"Pushed\": \"2023-01-17T16:09:10.9090958+00:00\"," +
+            "\"Endpoint\": \"https://hooks.slack.com/services/weebhook-endpoint\"," +
+            "\"Consumer\": \"/org/ttd\"," +
+            "\"SubscriptionId\": 427," +
+            "\"CloudEvent\": {" +
+                "\"specversion\": \"1.0\"," +
+                "\"id\": \"42849881-3659-4ff4-9ee1-c577646ea44b\"," +
+                "\"source\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50002108/7806177e-5594-431b-8240-f173d92ed84d\"," +
+                "\"type\": \"app.instance.created\"," +
+                "\"subject\": \"/party/50002108\"," +
+                "\"time\": \"2023-01-17T16:09:07.3146561Z\"" +
+            "}}";
+
+        // Act
+        var result = CloudEventEnvelope.DeserializeToCloudEventEnvelope(validEnvelope);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(427, result.SubscriptionId);
+        Assert.Equal("/org/ttd", result.Consumer);
+        Assert.Equal("https://hooks.slack.com/services/weebhook-endpoint", result.Endpoint.ToString());
+        Assert.NotNull(result.CloudEvent);
+        Assert.Equal("42849881-3659-4ff4-9ee1-c577646ea44b", result.CloudEvent.Id);
+        Assert.Equal("app.instance.created", result.CloudEvent.Type);
+    }
+
+    [Fact]
+    public void DeserializeToCloudEventEnvelope_InvalidJson_ThrowsJsonException()
+    {
+        // Arrange
+        string invalidJson = "{\"Pushed\": \"2023-01-17T16:09:10.9090958+00:00\", malformed json}";
+
+        // Act & Assert
+        Assert.ThrowsAny<JsonException>(() => CloudEventEnvelope.DeserializeToCloudEventEnvelope(invalidJson));
+    }
+
+    [Fact]
+    public void DeserializeToCloudEventEnvelope_NullOrEmptyInput_ThrowsArgumentException()
+    {
+        // Arrange
+        string nullString = null;
+        string emptyString = string.Empty;
+
+        // Act & Assert
+        Assert.ThrowsAny<ArgumentException>(() => CloudEventEnvelope.DeserializeToCloudEventEnvelope(nullString));
+        Assert.ThrowsAny<JsonException>(() => CloudEventEnvelope.DeserializeToCloudEventEnvelope(emptyString));
+    }
+
+    [Fact]
+    public void DeserializeToCloudEventEnvelope_MissingRequiredFields_ThrowsException()
+    {
+        // Arrange - Missing CloudEvent field which is required
+        string missingCloudEvent = "{" +
+            "\"Pushed\": \"2023-01-17T16:09:10.9090958+00:00\"," +
+            "\"Endpoint\": \"https://hooks.slack.com/services/weebhook-endpoint\"," +
+            "\"Consumer\": \"/org/ttd\"," +
+            "\"SubscriptionId\": 427}";
+
+        // Act & Assert
+        var exception = Assert.ThrowsAny<Exception>(() => 
+            CloudEventEnvelope.DeserializeToCloudEventEnvelope(missingCloudEvent));
+    }
+
+    [Fact]
+    public void Serialize()
+    {
+        // Arrange
+        var envelope = new CloudEventEnvelope
+        {
+            Pushed = DateTime.UtcNow,
+            Endpoint = new Uri("https://example.com/endpoint"),
+            Consumer = "/org/test",
+            SubscriptionId = 123,
+            CloudEvent = null
+        };
+
+        // Act and Assert
+        Assert.Throws<InvalidOperationException>(() => 
+            envelope.Serialize());
+    }
+
+    [Fact]
+    public void Serialize_WithNullCloudEvent_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var envelope = new CloudEventEnvelope
+        {
+            Pushed = DateTime.UtcNow,
+            Endpoint = new Uri("https://example.com/endpoint"),
+            Consumer = "/org/test",
+            SubscriptionId = 123,
+            CloudEvent = null
+        };
+
+        // Act and Assert
+        Assert.Throws<InvalidOperationException>(() => 
+            envelope.Serialize());
+    }
 }

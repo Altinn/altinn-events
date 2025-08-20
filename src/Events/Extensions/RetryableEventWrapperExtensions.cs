@@ -34,14 +34,4 @@ public static class RetryableEventWrapperExtensions
             return null;
         }
     }
-
-    /// <summary>
-    /// Extracts the CloudEventEnvelope from a RetryableEventWrapper payload.
-    /// </summary>
-    /// <param name="retryableEventWrapper">The wrapper object containing the cloud event envelope</param>
-    /// <returns></returns>
-    public static CloudEventEnvelope ExtractCloudEventEnvelope(this RetryableEventWrapper retryableEventWrapper)
-    {
-        return CloudEventEnvelope.DeserializeToCloudEventEnvelope(retryableEventWrapper.Payload);
-    }
 }

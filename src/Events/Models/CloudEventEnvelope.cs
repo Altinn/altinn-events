@@ -12,11 +12,6 @@ namespace Altinn.Platform.Events.Models
     /// </summary>
     public class CloudEventEnvelope
     {
-        private static readonly JsonSerializerOptions _cachedJsonSerializerOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         /// <summary>
         /// The Event to push
         /// </summary>
@@ -59,47 +54,6 @@ namespace Altinn.Platform.Events.Models
 
             CloudEvent = cloudEvent;
             return serializedEnvelope;
-        }
-
-        /// <summary>
-        /// Deserializes a CloudEventEnvelope from a JSON string that embeds a CloudEvent
-        /// in either "CloudEvent" or "cloudEvent".
-        /// </summary>
-        /// <param name="serializedEnvelope">The serialized envelope JSON.</param>
-        /// <returns>The reconstructed CloudEventEnvelope with CloudEvent populated.</returns>
-        /// <exception cref="ArgumentException">
-        /// Thrown when JSON parsing fails or the "cloudEvent"/"CloudEvent" property is missing.
-        /// </exception>
-        public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
-        {
-            var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
-            if (n == null)
-            {
-                throw new ArgumentException("Failed to parse serialized envelope as JSON", nameof(serializedEnvelope));
-            }
-
-            var cloudEventNode = n["cloudEvent"] ?? n["CloudEvent"];
-            if (cloudEventNode is null)
-            {
-                throw new ArgumentException("Serialized envelope does not contain a cloudEvent property", nameof(serializedEnvelope));
-            }
-
-            string serializedCloudEvent = cloudEventNode.ToString();
-            var cloudEvent = serializedCloudEvent.DeserializeToCloudEvent();
-
-            if (n is JsonObject obj)
-            {
-                // Remove both variants to be explicit regardless of parsed casing
-                obj.Remove("cloudEvent");
-                obj.Remove("CloudEvent");
-            }
-
-            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(_cachedJsonSerializerOptions)
-                ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
-
-            cloudEventEnvelope.CloudEvent = cloudEvent;
-
-            return cloudEventEnvelope;
         }
     }
 }
