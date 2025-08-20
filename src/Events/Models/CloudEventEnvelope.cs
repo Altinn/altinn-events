@@ -93,6 +93,7 @@ namespace Altinn.Platform.Events.Models
                 obj.Remove("cloudEvent");
                 obj.Remove("CloudEvent");
             }
+
             CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(_cachedJsonSerializerOptions)
                 ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
 
