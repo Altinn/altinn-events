@@ -1,13 +1,14 @@
+using System.Text.Json;
+
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Queues;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
-using Azure.Core;
+
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using System.Text.Json;
 using Xunit;
 
 namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions;
@@ -251,5 +252,41 @@ public class EventsOutboundTests
         // Assert
         retryMock.Verify(r => r.RequeueWithBackoff(It.IsAny<RetryableEventWrapper>(), It.IsAny<Exception>()), Times.Once);
         webhookServiceMock.Verify(x => x.Send(It.IsAny<CloudEventEnvelope>()), Times.Once);
+    }
+
+    [Fact]
+    public void DeserializeToCloudEvent_InvalidJson_ThrowsJsonException()
+    {
+        // Arrange
+        string invalidJson = "{\"id\":\"test-id\", \"source\":\"invalid-uri\", \"specversion\":\"1.0\", \"type\":\"test-type\", malformedJson}";
+        
+        // Act & Assert
+        Assert.ThrowsAny<JsonException>(() => invalidJson.DeserializeToCloudEvent());
+    }
+
+    [Fact]
+    public void DeserializeToCloudEvent_MissingRequiredFields_ThrowsException()
+    {
+        // Arrange
+        // Missing specversion and source which are required fields
+        string incompleteJson = "{\"id\":\"test-id\", \"type\":\"test-type\"}";
+        
+        // Act & Assert
+        var exception = Assert.ThrowsAny<Exception>(() => incompleteJson.DeserializeToCloudEvent());
+        
+        // The specific exception type might vary based on the implementation, but we expect some exception
+        Assert.Equal("structured mode content does not represent a cloudevent", exception.Message.ToLowerInvariant());
+    }
+
+    [Fact]
+    public void DeserializeToCloudEvent_NullOrEmptyInput_ThrowsArgumentException()
+    {
+        // Arrange
+        string nullString = null;
+        string emptyString = string.Empty;
+        
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => nullString.DeserializeToCloudEvent());
+        Assert.ThrowsAny<JsonException>(() => emptyString.DeserializeToCloudEvent());
     }
 }
