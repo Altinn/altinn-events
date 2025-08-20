@@ -27,7 +27,8 @@ public class EventsOutboundRetryIntegrationTests
 
     private static QueueClient CreateQueue(string name)
     {
-        var qc = new QueueClient(_connectionString, name);
+        var options = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
+        var qc = new QueueClient(_connectionString, name, options);
         qc.CreateIfNotExists();
         qc.ClearMessages();
         return qc;

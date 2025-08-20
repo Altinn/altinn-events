@@ -1,13 +1,13 @@
-using System.Text.Json;
-
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Queues;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
+using Azure.Core;
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using System.Text.Json;
 using Xunit;
 
 namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions;
@@ -124,6 +124,9 @@ public class EventsOutboundTests
         string serializedWrapper = JsonSerializer.Serialize(retryableEventWrapper, _jsonSerializerOptions);
 
         Mock<IWebhookService> webhookServiceMock = new();
+        webhookServiceMock
+            .Setup(s => s.Send(It.IsAny<CloudEventEnvelope>()))
+            .Returns(Task.CompletedTask);
 
         var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
 
@@ -239,12 +242,14 @@ public class EventsOutboundTests
           .Setup(s => s.Send(It.IsAny<CloudEventEnvelope>()))
           .ThrowsAsync(new InvalidOperationException("Webhook service failed"));
 
-        var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
+        var retryMock = new Mock<IRetryBackoffService>();
+        var sut = new EventsOutbound(webhookServiceMock.Object, retryMock.Object);
 
         // Act
         await sut.Run(serializedEnvelope);
 
         // Assert
+        retryMock.Verify(r => r.RequeueWithBackoff(It.IsAny<RetryableEventWrapper>(), It.IsAny<Exception>()), Times.Once);
         webhookServiceMock.Verify(x => x.Send(It.IsAny<CloudEventEnvelope>()), Times.Once);
     }
 }

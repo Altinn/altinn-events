@@ -10,8 +10,7 @@ public static class RetryableEventWrapperExtensions
 {
     private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
     {
-        WriteIndented = false,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        PropertyNameCaseInsensitive = true
     };
 
     /// <summary>
