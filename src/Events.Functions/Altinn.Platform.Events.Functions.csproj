@@ -61,7 +61,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Altinn.Platform.Events.Common\Altinn.Platform.Events.Common.csproj" />
+    <ProjectReference Include="..\Events.Common\Altinn.Platform.Events.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
