@@ -93,7 +93,15 @@ public class OutboundService : IOutboundService
         {
             CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
 
-            var receipt = await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
+            var wrapper = new RetryableEventWrapper
+            {
+                Payload = cloudEventEnvelope.Serialize(),
+                DequeueCount = 0,
+                CorrelationId = Guid.NewGuid().ToString(),
+                FirstProcessedAt = DateTime.UtcNow
+            };
+
+            var receipt = await _queueClient.EnqueueOutbound(wrapper.Serialize());
 
             if (!receipt.Success)
             {

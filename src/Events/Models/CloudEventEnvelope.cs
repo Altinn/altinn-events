@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 using Altinn.Platform.Events.Extensions;
-
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Models
@@ -12,6 +12,11 @@ namespace Altinn.Platform.Events.Models
     /// </summary>
     public class CloudEventEnvelope
     {
+        private static readonly JsonSerializerOptions _cachedJsonSerializerOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         /// <summary>
         /// The Event to push
         /// </summary>
@@ -54,6 +59,36 @@ namespace Altinn.Platform.Events.Models
 
             CloudEvent = cloudEvent;
             return serializedEnvelope;
+        }
+
+        /// <summary>
+        /// Deserializes a serialized cloud event envelope using a specialized deserializer for the cloud event property.
+        /// </summary>
+        /// <returns>The cloud event envelope object</returns>
+        public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
+        {
+            var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
+            if (n == null)
+            {
+                throw new ArgumentException("Failed to parse serialized envelope as JSON", nameof(serializedEnvelope));
+            }
+
+            var cloudEventNode = n["cloudEvent"];
+            if (cloudEventNode == null)
+            {
+                throw new ArgumentException("Serialized envelope does not contain a cloudEvent property", nameof(serializedEnvelope));
+            }
+
+            string serializedCloudEvent = cloudEventNode.ToString();
+            var cloudEvent = serializedCloudEvent.DeserializeToCloudEvent();
+
+            n["cloudEvent"] = null;
+            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(_cachedJsonSerializerOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
+
+            cloudEventEnvelope.CloudEvent = cloudEvent;
+
+            return cloudEventEnvelope;
         }
     }
 }

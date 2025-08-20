@@ -275,6 +275,71 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.VerifyAll();
         }
 
+        /// <summary>
+        /// Scenario:
+        ///   Post a valid event for outbound push. The event is enqueued as a RetryableEventWrapper
+        /// Expected result:
+        ///   The event is wrapped and contains correct metadata
+        /// Success criteria:
+        ///   A single call is made to enqueue the outbound event
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_EnqueuesRetryableEventWrapper_WithCorrectMetadata()
+        {
+            // Arrange
+            var expectedSubject = "uniqueSubject";
+            var expectedType = "app.instance.process.completed";
+            var expectedResource = "urn:altinn:resource:app_ttd_endring-av-navn-v2";
+
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), 
+                expectedSubject, 
+                expectedType, 
+                expectedResource);
+            
+            string capturedQueueMessage = null;
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .Callback<string>(msg => capturedQueueMessage = msg) // assign the captured message
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            var sut = GetOutboundService(
+                queueMock: queueMock.Object, 
+                authorizationMock: authorizationMock.Object);
+
+            // Act
+            await sut.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.AtLeastOnce());
+            
+            Assert.NotNull(capturedQueueMessage);
+            
+            // Deserialize to RetryableEventWrapper
+            var wrapper = capturedQueueMessage.DeserializeToRetryableEventWrapper();
+
+            // Verify wrapper properties
+            Assert.NotNull(wrapper);
+            Assert.Equal(0, wrapper.DequeueCount);
+            Assert.NotNull(wrapper.Payload);
+            
+            // Verify we can deserialize the payload back to CloudEventEnvelope
+            var envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(wrapper.Payload);
+            
+            // Verify envelope contents
+            Assert.NotNull(envelope);
+            Assert.Equal(cloudEvent.Type, envelope.CloudEvent.Type);
+            Assert.Equal(cloudEvent.Source.ToString(), envelope.CloudEvent.Source.ToString());
+            Assert.Equal(cloudEvent.Subject, envelope.CloudEvent.Subject);
+        }
+
         private static IOutboundService GetOutboundService(
             IEventsQueueClient queueMock = null,
             Mock<ITraceLogService> traceLogServiceMock = null,
