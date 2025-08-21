@@ -18,7 +18,7 @@ public class CertificateResolverService : ICertificateResolverService
     private readonly IKeyVaultService _keyVaultService;
     private readonly KeyVaultSettings _keyVaultSettings;
     private DateTime _reloadTime;
-    private X509Certificate2 _cachedX509Certificate = null;
+    private X509Certificate2? _cachedX509Certificate = null;
     private readonly object _lockObject = new object();
 
     /// <summary>
@@ -57,7 +57,7 @@ public class CertificateResolverService : ICertificateResolverService
             {
                 var newCert = new X509Certificate2(
                     Convert.FromBase64String(certBase64),
-                    (string)null,
+                    (string?)null,
                     X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
                 var old = _cachedX509Certificate;
                 _cachedX509Certificate = newCert;
