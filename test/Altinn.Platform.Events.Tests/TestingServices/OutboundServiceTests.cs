@@ -453,11 +453,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// </exception>
         private static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
         {
-            var cachedJsonSerializerOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
             var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
 
             if (n == null)
@@ -481,7 +476,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 obj.Remove("CloudEvent");
             }
 
-            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(cachedJsonSerializerOptions)
+            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>()
                 ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
 
             cloudEventEnvelope.CloudEvent = cloudEvent;
