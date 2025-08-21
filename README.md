@@ -87,6 +87,9 @@ To access swagger use http://localhost:5080/swagger.
   
 Start Altinn Events Functions
 ```bash
-cd src/Altinn.Events.Functions
+cd src/Events.Functions
 func start
 ```
+
+#### Integration tests that require Azurite
+Some integration tests require Azurite in order to run. These are tagged with a custom attribute that will skip these tests unless an environment variable _ENABLE_AZURITE_TESTS_ is set to "1" or "true". In order to run these locally, set the environment variable, and start Azurite before running the tests from the Test Explorer.
