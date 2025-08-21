@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
@@ -16,11 +18,11 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
 using CloudNative.CloudEvents;
+using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -467,7 +469,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             }
 
             string serializedCloudEvent = cloudEventNode.ToString();
-            var cloudEvent = serializedCloudEvent.DeserializeToCloudEvent();
+            var cloudEvent = DeserializeToCloudEvent(serializedCloudEvent);
 
             if (n is JsonObject obj)
             {
@@ -482,6 +484,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             cloudEventEnvelope.CloudEvent = cloudEvent;
 
             return cloudEventEnvelope;
+        }
+
+        /// <summary>
+        ///  Deserializes a json string to a the cloud event using a JsonEventFormatter
+        /// </summary>
+        /// <returns>The cloud event</returns>
+        private static CloudEvent DeserializeToCloudEvent(string item)
+        {
+            var formatter = new JsonEventFormatter();
+
+            var cloudEvent = formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(item)), null, null);
+            return cloudEvent;
         }
     }
 }
