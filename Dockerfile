@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0.304-alpine3.21@sha256:430bd56f4348f9dd400331f0d71403554ec83ae1700a7dcfe1e1519c9fd12174 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0.304-alpine3.22@sha256:13bcf0489c133ab4b285578a63b1d7d61f0e411a3494ac3e8d87ba528636cf5d AS build
 
 COPY src/Events ./Events
 COPY src/DbTools ./DbTools
