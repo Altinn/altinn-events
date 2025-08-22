@@ -22,7 +22,7 @@ internal sealed class TestableRetryBackoffService: RetryBackoffService
     /// </summary>
     /// <param name="dequeueCount">The number of times the event has been put back on the queue</param>
     /// <returns></returns>
-    public override TimeSpan GetVisibilityTimeout(int dequeueCount) => dequeueCount switch
+    internal override TimeSpan GetVisibilityTimeout(int dequeueCount) => dequeueCount switch
     {
         1 => TimeSpan.FromSeconds(1),
         2 => TimeSpan.FromSeconds(2),

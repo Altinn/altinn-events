@@ -81,8 +81,12 @@ public class RetryBackoffService : IRetryBackoffService
         await _sendToPoison(payload, TimeSpan.FromSeconds(0), _ttl);
     }
 
-    /// <inheritdoc/>
-    public virtual TimeSpan GetVisibilityTimeout(int dequeueCount) => dequeueCount switch
+    /// <summary>
+    /// Calculates visibility timeout based on the message's dequeue count.
+    /// </summary>
+    /// <param name="dequeueCount">Number of times the message has been dequeued.</param>
+    /// <returns>TimeSpan representing the appropriate visibility timeout.</returns>
+    internal virtual TimeSpan GetVisibilityTimeout(int dequeueCount) => dequeueCount switch
     {
         1 => TimeSpan.FromSeconds(10),
         2 => TimeSpan.FromSeconds(30),

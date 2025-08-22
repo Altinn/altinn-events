@@ -8,13 +8,6 @@ namespace Altinn.Platform.Events.Functions.Services.Interfaces;
 public interface IRetryBackoffService
 {
     /// <summary>
-    /// Calculates visibility timeout based on the message's dequeue count.
-    /// </summary>
-    /// <param name="dequeueCount">Number of times the message has been dequeued.</param>
-    /// <returns>TimeSpan representing the appropriate visibility timeout.</returns>
-    TimeSpan GetVisibilityTimeout(int dequeueCount);
-
-    /// <summary>
     /// Requeues a failed message with appropriate backoff delay.
     /// </summary>
     /// <param name="message">The message to requeue.</param>
