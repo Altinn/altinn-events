@@ -92,4 +92,21 @@ func start
 ```
 
 #### Integration tests that require Azurite
-Some integration tests require Azurite in order to run. These are tagged with a custom attribute that will skip these tests unless an environment variable _ENABLE_AZURITE_TESTS_ is set to "1" or "true". In order to run these locally, set the environment variable, and start Azurite before running the tests from the Test Explorer.
+Some integration tests require Azurite to run. They are tagged with a custom attribute and will be skipped unless the environment variable `ENABLE_AZURITE_TESTS` is set to `1` or `true`.
+
+To run them locally:
+1. Start Azurite.
+2. Set `ENABLE_AZURITE_TESTS`.
+3. Run the tests from your Test Explorer or via CLI:
+
+   Windows (PowerShell):
+   ```powershell
+   $env:ENABLE_AZURITE_TESTS = "1"
+   dotnet test test/Altinn.Platform.Events.Functions.Tests
+   ```
+
+   macOS/Linux (bash/zsh):
+   ```bash
+   export ENABLE_AZURITE_TESTS=1
+   dotnet test test/Altinn.Platform.Events.Functions.Tests
+   ```
