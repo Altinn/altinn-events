@@ -19,7 +19,7 @@ public record RetryableEventWrapper
     /// <summary>
     /// Specifies the number of times the message has been retried.
     /// </summary>
-    public int DequeueCount { get; set; }
+    public int DequeueCount { get; set; } = 0;
 
     /// <summary>
     /// Unique identifier for all events belonging to the same content, across retries.

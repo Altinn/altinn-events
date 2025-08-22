@@ -117,8 +117,6 @@ public class EventsOutboundTests
         {
             Payload = envelope.Serialize(),
             DequeueCount = 1,
-            FirstProcessedAt = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid().ToString()
         };
 
         // Serialize with custom options
@@ -155,9 +153,6 @@ public class EventsOutboundTests
         var retryableEventWrapper = new RetryableEventWrapper
         {
             Payload = envelope.Serialize(),
-            DequeueCount = 0,
-            FirstProcessedAt = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid().ToString()
         };
 
         // Capture what's requeued
@@ -262,8 +257,6 @@ public class EventsOutboundTests
         {
             Payload = _serializedCloudEnvelope,
             DequeueCount = 1,
-            FirstProcessedAt = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid().ToString()
         };
 
         // Mock webhook service to succeed (no exception thrown)

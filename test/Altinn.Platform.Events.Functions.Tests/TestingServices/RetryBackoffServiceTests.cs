@@ -105,7 +105,6 @@ public class RetryBackoffServiceTests
         {
             Payload = "invalid-json",
             DequeueCount = 0,
-            FirstProcessedAt = DateTime.UtcNow,
             CorrelationId = "test-correlation"
         };
 
@@ -263,9 +262,6 @@ public class RetryBackoffServiceTests
         var wrapper = new RetryableEventWrapper
         {
             Payload = _serializedCloudEnvelope,
-            DequeueCount = 0,
-            FirstProcessedAt = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid().ToString()
         };
 
         // Act
@@ -304,9 +300,6 @@ public class RetryBackoffServiceTests
         var wrapper = new RetryableEventWrapper
         {
             Payload = _serializedCloudEnvelope,
-            DequeueCount = 0,
-            FirstProcessedAt = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid().ToString()
         };
 
         await svc.RequeueWithBackoff(wrapper, new JsonException("Bad json"));

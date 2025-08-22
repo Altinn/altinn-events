@@ -59,9 +59,6 @@ public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService
                 : new RetryableEventWrapper
                 {
                     Payload = item,
-                    DequeueCount = 0,
-                    CorrelationId = Guid.NewGuid().ToString(),
-                    FirstProcessedAt = DateTime.UtcNow
                 };
 
             await _retryBackoffService.RequeueWithBackoff(toRequeue, ex);

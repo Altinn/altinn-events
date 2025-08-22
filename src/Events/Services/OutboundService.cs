@@ -96,10 +96,7 @@ public class OutboundService : IOutboundService
 
             var wrapper = new RetryableEventWrapper
             {
-                Payload = cloudEventEnvelope.Serialize(),
-                DequeueCount = 0,
-                CorrelationId = Guid.NewGuid().ToString(),
-                FirstProcessedAt = DateTime.UtcNow
+                Payload = cloudEventEnvelope.Serialize()
             };
 
             var receipt = await _queueClient.EnqueueOutbound(wrapper.Serialize());

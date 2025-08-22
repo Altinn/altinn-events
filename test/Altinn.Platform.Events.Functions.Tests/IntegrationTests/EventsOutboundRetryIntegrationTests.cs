@@ -80,9 +80,6 @@ public class EventsOutboundRetryIntegrationTests
         var wrapper = new RetryableEventWrapper
         {
             Payload = envelope.Serialize(),
-            DequeueCount = 0,
-            FirstProcessedAt = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid().ToString()
         };
 
         await mainQueue.ClearMessagesAsync(); // Ensure queue is empty before test
@@ -143,8 +140,6 @@ public class EventsOutboundRetryIntegrationTests
             {
                 Payload = "{}",
                 DequeueCount = current,
-                FirstProcessedAt = DateTime.UtcNow,
-                CorrelationId = Guid.NewGuid().ToString()
             };
 
             // Simulate transient failure requeue
@@ -204,9 +199,6 @@ public class EventsOutboundRetryIntegrationTests
         var wrapper = new RetryableEventWrapper
         {
             Payload = envelope.Serialize(),
-            DequeueCount = 0,
-            FirstProcessedAt = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid().ToString()
         };
 
         // Act
@@ -236,8 +228,6 @@ public class EventsOutboundRetryIntegrationTests
         {
             Payload = "{}",
             DequeueCount = 12, // next => 13 > max (12)
-            FirstProcessedAt = DateTime.UtcNow,
-            CorrelationId = Guid.NewGuid().ToString()
         };
 
         await svc.RequeueWithBackoff(wrapper, new Exception("still failing"));
