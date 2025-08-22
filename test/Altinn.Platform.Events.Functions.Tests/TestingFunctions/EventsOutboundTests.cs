@@ -389,7 +389,6 @@ public class EventsOutboundTests
             CloudEventEnvelope.DeserializeToCloudEventEnvelope(missingCloudEvent));
     }
 
-
     [Fact]
     public void Serialize_WithNullCloudEvent_ThrowsInvalidOperationException()
     {
