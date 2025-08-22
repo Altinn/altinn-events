@@ -389,23 +389,6 @@ public class EventsOutboundTests
             CloudEventEnvelope.DeserializeToCloudEventEnvelope(missingCloudEvent));
     }
 
-    [Fact]
-    public void Serialize()
-    {
-        // Arrange
-        var envelope = new CloudEventEnvelope
-        {
-            Pushed = DateTime.UtcNow,
-            Endpoint = new Uri("https://example.com/endpoint"),
-            Consumer = "/org/test",
-            SubscriptionId = 123,
-            CloudEvent = null
-        };
-
-        // Act and Assert
-        Assert.Throws<InvalidOperationException>(() => 
-            envelope.Serialize());
-    }
 
     [Fact]
     public void Serialize_WithNullCloudEvent_ThrowsInvalidOperationException()
