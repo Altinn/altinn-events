@@ -28,6 +28,20 @@ public class EventsOutboundTests
             "\"alternativesubject\":\"/person/16035001577\"" +
             "}";
 
+    private const string _serializedCloudEnvelope = "{" +
+            "\"Pushed\": \"2023-01-17T16:09:10.9090958+00:00\"," +
+            "  \"Endpoint\": \"https://hooks.slack.com/services/weebhook-endpoint\"," +
+            "  \"Consumer\": \"/org/ttd\"," +
+            "  \"SubscriptionId\": 427," +
+            "  \"CloudEvent\": {" +
+                " \"specversion\": \"1.0\"," +
+                " \"id\": \"42849881-3659-4ff4-9ee1-c577646ea44b\"," +
+                " \"source\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50002108/7806177e-5594-431b-8240-f173d92ed84d\"," +
+                " \"type\": \"app.instance.created\"," +
+                " \"subject\": \"/party/50002108\"," +
+                " \"time\": \"2023-01-17T16:09:07.3146561Z\"," +
+                " \"alternativesubject\": \"/person/01014922047\"}}";
+
     public EventsOutboundTests()
     {
         _jsonSerializerOptions = new JsonSerializerOptions
@@ -57,21 +71,6 @@ public class EventsOutboundTests
     {
         // Arrange
         CloudEventEnvelope actualServiceInput = null;
-
-        string serializedCloudEnvelope = "{" +
-            "\"Pushed\": \"2023-01-17T16:09:10.9090958+00:00\"," +
-            "  \"Endpoint\": \"https://hooks.slack.com/services/weebhook-endpoint\"," +
-            "  \"Consumer\": \"/org/ttd\"," +
-            "  \"SubscriptionId\": 427," +
-            "  \"CloudEvent\": {" +
-                " \"specversion\": \"1.0\"," +
-                " \"id\": \"42849881-3659-4ff4-9ee1-c577646ea44b\"," +
-                " \"source\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50002108/7806177e-5594-431b-8240-f173d92ed84d\"," +
-                " \"type\": \"app.instance.created\"," +
-                " \"subject\": \"/party/50002108\"," +
-                " \"time\": \"2023-01-17T16:09:07.3146561Z\"," +
-                " \"alternativesubject\": \"/person/01014922047\"}}";
-
         Mock<IWebhookService> webhookServiceMock = new();
         webhookServiceMock.Setup(wh => wh.Send(It.Is<CloudEventEnvelope>(cee => cee.CloudEvent != null)))
             .Callback<CloudEventEnvelope>(cee => actualServiceInput = cee)
@@ -80,7 +79,7 @@ public class EventsOutboundTests
         var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
 
         // Act
-        await sut.Run(serializedCloudEnvelope);
+        await sut.Run(_serializedCloudEnvelope);
 
         // Assert
         webhookServiceMock.VerifyAll();
@@ -253,6 +252,44 @@ public class EventsOutboundTests
         // Assert
         retryMock.Verify(r => r.RequeueWithBackoff(It.IsAny<RetryableEventWrapper>(), It.IsAny<Exception>()), Times.Once);
         webhookServiceMock.Verify(x => x.Send(It.IsAny<CloudEventEnvelope>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EventsOutbound_WebhookSucceeds_RetryBackoffServiceNeverCalled()
+    {
+        // Arrange
+        var retryableEventWrapper = new RetryableEventWrapper
+        {
+            Payload = _serializedCloudEnvelope,
+            DequeueCount = 1,
+            FirstProcessedAt = DateTime.UtcNow,
+            CorrelationId = Guid.NewGuid().ToString()
+        };
+
+        // Mock webhook service to succeed (no exception thrown)
+        var webhookServiceMock = new Mock<IWebhookService>();
+        webhookServiceMock
+            .Setup(s => s.Send(It.IsAny<CloudEventEnvelope>()))
+            .Returns(Task.CompletedTask); // Success - no exception
+
+        // Mock retry service to track if it's called
+        var retryServiceMock = new Mock<IRetryBackoffService>();
+
+        var sut = new EventsOutbound(
+            webhookServiceMock.Object,
+            retryServiceMock.Object);
+
+        // Act
+        await sut.Run(retryableEventWrapper.Serialize());
+
+        // Assert
+        webhookServiceMock.Verify(
+            s => s.Send(It.IsAny<CloudEventEnvelope>()),
+            Times.Once);
+
+        retryServiceMock.Verify(
+            r => r.RequeueWithBackoff(It.IsAny<RetryableEventWrapper>(), It.IsAny<Exception>()),
+            Times.Never);
     }
 
     [Fact]
