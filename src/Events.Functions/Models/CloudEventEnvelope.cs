@@ -99,15 +99,15 @@ namespace Altinn.Platform.Events.Functions.Models
 
             var partialSerializedEnvelope = JsonSerializer.Serialize(this, _cachedIgnoreNullOptions);
             var index = partialSerializedEnvelope.LastIndexOf('}');
+            CloudEvent = cloudEvent; // Restore CloudEvent to its original state
+
             if (index == -1)
             {
-                CloudEvent = cloudEvent; // Restore before throwing
                 throw new InvalidOperationException("Invalid JSON structure during serialization.");
             }
 
             string serializedEnvelope = partialSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
 
-            CloudEvent = cloudEvent;
             return serializedEnvelope;
         }
     }
