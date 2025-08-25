@@ -34,6 +34,7 @@
 		<ProjectReference Include="..\DbTools\DbTools.csproj">
       <TreatAsUsed>true</TreatAsUsed>
     </ProjectReference>
+		<ProjectReference Include="..\Events.Common\Altinn.Platform.Events.Common.csproj" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(Configuration)'=='Debug'">
 		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
