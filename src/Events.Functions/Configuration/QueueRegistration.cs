@@ -46,11 +46,9 @@ public static class QueueRegistration
         var poisonClient = new QueueClient(conn, poisonQueueUsingExponentialBackoff, options);
         poisonClient.CreateIfNotExists();
 
-        QueueSendDelegate mainDelegate = async (msg, vis, ttl, ct) =>
-            await mainClient.SendMessageAsync(msg, vis, ttl, ct);
-
-        PoisonQueueSendDelegate poisonDelegate = async (msg, vis, ttl, ct) =>
-            await poisonClient.SendMessageAsync(msg, vis, ttl, ct);
+        // both delegates will point to SendMessageAsync method of their respective clients
+        QueueSendDelegate mainDelegate = mainClient.SendMessageAsync;
+        PoisonQueueSendDelegate poisonDelegate = poisonClient.SendMessageAsync;
 
         services.AddSingleton(mainDelegate);
         services.AddSingleton(poisonDelegate);

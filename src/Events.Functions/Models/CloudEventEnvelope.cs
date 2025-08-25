@@ -1,4 +1,3 @@
-using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -21,6 +20,11 @@ namespace Altinn.Platform.Events.Functions.Models
         private static readonly JsonSerializerOptions _cachedIgnoreNullOptions = new JsonSerializerOptions
         {
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
+        private static readonly JsonNodeOptions _jsonNodeOptions = new() 
+        { 
+            PropertyNameCaseInsensitive = true 
         };
 
         /// <summary>
@@ -54,7 +58,7 @@ namespace Altinn.Platform.Events.Functions.Models
         /// <returns>The cloud event envelope object</returns>
         public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
         {
-            var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
+            var n = JsonNode.Parse(serializedEnvelope, _jsonNodeOptions);
             if (n == null)
             {
                 throw new ArgumentException("Failed to parse serialized envelope as JSON", nameof(serializedEnvelope));
