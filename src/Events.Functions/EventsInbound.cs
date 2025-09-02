@@ -1,37 +1,25 @@
-using System.Threading.Tasks;
-
+﻿using System.Threading.Tasks;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Extensions;
-
 using CloudNative.CloudEvents;
+using Microsoft.Azure.Functions.Worker;
 
-using Microsoft.Azure.WebJobs;
+namespace Altinn.Platform.Events.Functions;
 
-namespace Altinn.Platform.Events.Functions
+/// <summary>
+/// Initializes a new instance of the <see cref="EventsInbound"/> class.
+/// </summary>
+public class EventsInbound(IEventsClient eventsClient)
 {
+    private readonly IEventsClient _eventsClient = eventsClient;
+
     /// <summary>
-    /// Azure Function class.
+    /// Retrieves messages from events-inbound queue and push events controller
     /// </summary>
-    public class EventsInbound
+    [Function(nameof(EventsInbound))]
+    public async Task Run([QueueTrigger("events-inbound", Connection = "QueueStorage")] string item)
     {
-        private readonly IEventsClient _eventsClient;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EventsInbound"/> class.
-        /// </summary>
-        public EventsInbound(IEventsClient eventsClient)
-        {
-            _eventsClient = eventsClient;
-        }
-
-        /// <summary>
-        /// Retrieves messages from events-inbound queue and push events controller
-        /// </summary>
-        [FunctionName("EventsInbound")]
-        public async Task Run([QueueTrigger("events-inbound", Connection = "QueueStorage")] string item)
-        {
-            CloudEvent cloudEvent = item.DeserializeToCloudEvent();
-            await _eventsClient.PostOutbound(cloudEvent);
-        }
+        CloudEvent cloudEvent = item.DeserializeToCloudEvent();
+        await _eventsClient.PostOutbound(cloudEvent);
     }
 }

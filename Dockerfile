@@ -2,13 +2,18 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0.304-alpine3.22@sha256:13bcf0489c133ab4b285
 
 COPY src/Events ./Events
 COPY src/DbTools ./DbTools
+COPY src/Events.Common ./Events.Common
 COPY src/Events/Migration ./Migration
 
-WORKDIR DbTools/
+WORKDIR /DbTools
 RUN dotnet build ./DbTools.csproj -c Release -o /app_tools
 
-WORKDIR ../Events/
+# Build common library first since it's a dependency
+WORKDIR /Events.Common
+RUN dotnet build ./Altinn.Platform.Events.Common.csproj -c Release -o /app_output
 
+# Build the Events project
+WORKDIR /Events
 RUN dotnet build ./Altinn.Platform.Events.csproj -c Release -o /app_output
 RUN dotnet publish ./Altinn.Platform.Events.csproj -c Release -o /app_output
 
