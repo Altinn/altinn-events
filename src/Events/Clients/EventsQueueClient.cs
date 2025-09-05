@@ -1,11 +1,10 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Threading.Tasks;
-
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
-
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
 
@@ -18,11 +17,6 @@ namespace Altinn.Platform.Events.Clients
     public class EventsQueueClient : IEventsQueueClient
     {
         private readonly QueueStorageSettings _settings;
-
-        private readonly QueueClientOptions _queueClientOptions = new QueueClientOptions
-        {
-            MessageEncoding = QueueMessageEncoding.Base64
-        };
 
         private QueueClient _registrationQueueClient;
 
@@ -47,7 +41,7 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetRegistrationQueueClient();
-                await client.SendMessageAsync(content);
+                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
             }
             catch (Exception e)
             {
@@ -63,7 +57,7 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetInboundQueueClient();
-                await client.SendMessageAsync(content);
+                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
             }
             catch (Exception e)
             {
@@ -79,7 +73,7 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetOutboundQueueClient();
-                await client.SendMessageAsync(content);
+                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
             }
             catch (Exception e)
             {
@@ -95,7 +89,7 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetValidationQueueClient();
-                await client.SendMessageAsync(content);
+                await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
             }
             catch (Exception e)
             {
@@ -109,7 +103,7 @@ namespace Altinn.Platform.Events.Clients
         {
             if (_registrationQueueClient == null)
             {
-                _registrationQueueClient = new QueueClient(_settings.ConnectionString, _settings.RegistrationQueueName, _queueClientOptions);
+                _registrationQueueClient = new QueueClient(_settings.ConnectionString, _settings.RegistrationQueueName);
                 await _registrationQueueClient.CreateIfNotExistsAsync();
             }
 
@@ -120,7 +114,7 @@ namespace Altinn.Platform.Events.Clients
         {
             if (_inboundQueueClient == null)
             {
-                _inboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.InboundQueueName, _queueClientOptions);
+                _inboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.InboundQueueName);
                 await _inboundQueueClient.CreateIfNotExistsAsync();
             }
 
@@ -131,7 +125,7 @@ namespace Altinn.Platform.Events.Clients
         {
             if (_outboundQueueClient == null)
             {
-                _outboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.OutboundQueueName, _queueClientOptions);
+                _outboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.OutboundQueueName);
                 await _outboundQueueClient.CreateIfNotExistsAsync();
             }
 
@@ -142,7 +136,7 @@ namespace Altinn.Platform.Events.Clients
         {
             if (_validationQueueClient == null)
             {
-                _validationQueueClient = new QueueClient(_settings.ConnectionString, _settings.ValidationQueueName, _queueClientOptions);
+                _validationQueueClient = new QueueClient(_settings.ConnectionString, _settings.ValidationQueueName);
                 await _validationQueueClient.CreateIfNotExistsAsync();
             }
 

@@ -1,9 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,11 +14,13 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
 using CloudNative.CloudEvents;
-using CloudNative.CloudEvents.SystemTextJson;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
 using Moq;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -277,87 +275,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.VerifyAll();
         }
 
-        /// <summary>
-        /// Scenario:
-        ///   Post a valid event for outbound push. The event is enqueued as a RetryableEventWrapper
-        /// Expected result:
-        ///   The event is wrapped and contains correct metadata
-        /// Success criteria:
-        ///   A single call is made to enqueue the outbound event
-        /// </summary>
-        [Fact]
-        public async Task PostOutbound_EnqueuesRetryableEventWrapper_WithCorrectMetadata()
-        {
-            // Arrange
-            var expectedSubject = "uniqueSubject";
-            var expectedType = "app.instance.process.completed";
-            var expectedResource = "urn:altinn:resource:app_ttd_endring-av-navn-v2";
-
-            CloudEvent cloudEvent = GetCloudEvent(
-                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
-                expectedSubject,
-                expectedType,
-                expectedResource);
-
-            string capturedQueueMessage = null;
-
-            Mock<IEventsQueueClient> queueMock = new();
-            queueMock
-                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
-                .Callback<string>(msg => capturedQueueMessage = msg) // assign the captured message
-                .ReturnsAsync(new QueuePostReceipt { Success = true });
-
-            Mock<IAuthorization> authorizationMock = new();
-            authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
-
-            var sut = GetOutboundService(
-                queueMock: queueMock.Object,
-                authorizationMock: authorizationMock.Object);
-
-            // Act
-            await sut.PostOutbound(cloudEvent, CancellationToken.None);
-
-            // Assert
-            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.AtLeastOnce());
-
-            Assert.NotNull(capturedQueueMessage);
-
-            // Deserialize to RetryableEventWrapper
-            var wrapper = capturedQueueMessage.DeserializeToRetryableEventWrapper();
-
-            // Verify wrapper properties
-            Assert.NotNull(wrapper);
-            Assert.Equal(0, wrapper.DequeueCount);
-            Assert.NotNull(wrapper.Payload);
-
-            // Verify we can deserialize the payload back to CloudEventEnvelope
-            var envelope = DeserializeToCloudEventEnvelope(wrapper.Payload);
-
-            // Verify envelope contents
-            Assert.NotNull(envelope);
-            Assert.Equal(cloudEvent.Type, envelope.CloudEvent.Type);
-            Assert.Equal(cloudEvent.Source.ToString(), envelope.CloudEvent.Source.ToString());
-            Assert.Equal(cloudEvent.Subject, envelope.CloudEvent.Subject);
-        }
-
-        [Fact]
-        public void DeserializeToRetryableEventWrapper_InvalidJsonAndEmptyString_ReturnNull()
-        {
-            // Arrange
-            string invalidJson = "{\"CorrelationId\":\"test-id\", \"DequeueCount\":0, malformed json}";
-            string emptyString = string.Empty;
-
-            // Act
-            var result = invalidJson.DeserializeToRetryableEventWrapper();
-            var resultEmpty = emptyString.DeserializeToRetryableEventWrapper();
-
-            // Assert
-            Assert.Null(result);
-            Assert.Null(resultEmpty);
-        }
-
         private static IOutboundService GetOutboundService(
             IEventsQueueClient queueMock = null,
             Mock<ITraceLogService> traceLogServiceMock = null,
@@ -388,8 +305,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             if (authorizationMock == null)
             {
-                Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
-                Mock<IRegisterService> registerServiceMock = new();
+                Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new Mock<IClaimsPrincipalProvider>();
+                Mock<IRegisterService> registerServiceMock = new Mock<IRegisterService>();
 
                 authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object, registerServiceMock.Object);
             }
@@ -427,6 +344,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
         }
 
+        private static Subscription GetGenericEventsSubscription()
+        {
+            return new Subscription()
+            {
+                Id = 16,
+                SourceFilter = new Uri("urn:testing-events:test-source"),
+                Consumer = "/org/ttd",
+                CreatedBy = "/org/ttd",
+                TypeFilter = "app.instance.process.completed"
+            };
+        }
+
         private static CloudEvent GetCloudEvent(Uri source, string subject, string type, string resoure = "urn:altinn:resource:testresource")
         {
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
@@ -441,60 +370,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             cloudEvent.SetResourceIfNotDefined(resoure);
 
-            return cloudEvent;
-        }
-
-        /// <summary>
-        /// Deserializes a CloudEventEnvelope from a JSON string that embeds a CloudEvent
-        /// in either "CloudEvent" or "cloudEvent".
-        /// </summary>
-        /// <param name="serializedEnvelope">The serialized envelope JSON.</param>
-        /// <returns>The reconstructed CloudEventEnvelope with CloudEvent populated.</returns>
-        /// <exception cref="ArgumentException">
-        /// Thrown when JSON parsing fails or the "cloudEvent"/"CloudEvent" property is missing.
-        /// </exception>
-        private static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
-        {
-            var n = JsonNode.Parse(serializedEnvelope, new JsonNodeOptions { PropertyNameCaseInsensitive = true });
-
-            if (n == null)
-            {
-                throw new ArgumentException("Failed to parse serialized envelope as JSON", nameof(serializedEnvelope));
-            }
-
-            var cloudEventNode = n["cloudEvent"] ?? n["CloudEvent"];
-            if (cloudEventNode is null)
-            {
-                throw new ArgumentException("Serialized envelope does not contain a cloudEvent property", nameof(serializedEnvelope));
-            }
-
-            string serializedCloudEvent = cloudEventNode.ToString();
-            var cloudEvent = DeserializeToCloudEvent(serializedCloudEvent);
-
-            if (n is JsonObject obj)
-            {
-                // Remove both variants to be explicit regardless of parsed casing
-                obj.Remove("cloudEvent");
-                obj.Remove("CloudEvent");
-            }
-
-            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>()
-                ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
-
-            cloudEventEnvelope.CloudEvent = cloudEvent;
-
-            return cloudEventEnvelope;
-        }
-
-        /// <summary>
-        ///  Deserializes a json string to a the cloud event using a JsonEventFormatter
-        /// </summary>
-        /// <returns>The cloud event</returns>
-        private static CloudEvent DeserializeToCloudEvent(string item)
-        {
-            var formatter = new JsonEventFormatter();
-
-            var cloudEvent = formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(item)), null, null);
             return cloudEvent;
         }
     }

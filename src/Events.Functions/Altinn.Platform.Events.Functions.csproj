@@ -1,34 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <ProjectGuid>{1F3A1E44-1333-46B8-8A70-08BE01C074F6}</ProjectGuid>
-	<OutputType>Exe</OutputType>
-	<Nullable>enable</Nullable>
-	<ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-	  <PackageReference Include="Azure.Data.Tables" Version="12.11.0" />
-	  <PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
-	  <PackageReference Include="Azure.Storage.Files.Shares" Version="12.23.0" />
-	  <PackageReference Include="Azure.Storage.Queues" Version="12.23.0" />
-	  <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.0.0" />
-	  <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
-	  <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.0.2" />
-	  <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.2" />
-	  <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.5" />
-	  <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
-	  <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.8" />
-	  <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
-	  <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.2.0" />
-	  
-	  <PackageReference Include="Altinn.Common.AccessTokenClient" Version="3.0.15" />
-	  <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
-	  <PackageReference Include="Azure.Security.KeyVault.Certificates" Version="4.8.0" />
-	  <PackageReference Include="CloudNative.CloudEvents.SystemTextJson" Version="2.8.0" />
-	  <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.8" />
-	  <PackageReference Include="System.Text.Json" Version="9.0.8" />
+    <!-- Upgrading to 1.1.5 will cause the function to fail, must upgrade function to .net 7 first-->
+    <PackageReference Include="Altinn.Common.AccessTokenClient" Version="[1.1.3]" />
+	<!-- Upgrading to 4.8.0 will cause the function to fail, must upgrade function from .Net 6 first-->
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.7.0" />
+	<!-- Upgrading to 4.8.0 will cause the function to fail, must upgrade function from .Net 6 first-->
+    <PackageReference Include="Azure.Security.KeyVault.Certificates" Version="4.7.0" />
+    <PackageReference Include="CloudNative.CloudEvents.SystemTextJson" Version="2.8.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
+	<!-- Upgrading to 5.3.5 will cause the function to fail, must upgrade function from .Net 6 first-->
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage.Queues" Version="5.3.4" />
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
@@ -36,9 +25,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-	<AdditionalFiles Include="..\..\stylecop.json">
-		<Link>stylecop.json</Link>
-	</AdditionalFiles>
+    <AdditionalFiles Include="..\..\stylecop.json">
+      <Link>stylecop.json</Link>
+    </AdditionalFiles>
   </ItemGroup>
 
   <PropertyGroup>
@@ -59,9 +48,5 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>$(MSBuildProjectName).Tests</_Parameter1>
     </AssemblyAttribute>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Events.Common\Altinn.Platform.Events.Common.csproj" />
   </ItemGroup>
 </Project>

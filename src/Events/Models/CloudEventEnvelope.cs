@@ -2,6 +2,7 @@ using System;
 using System.Text.Json;
 
 using Altinn.Platform.Events.Extensions;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Models

@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
-using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
@@ -94,12 +93,7 @@ public class OutboundService : IOutboundService
         {
             CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
 
-            var wrapper = new RetryableEventWrapper
-            {
-                Payload = cloudEventEnvelope.Serialize()
-            };
-
-            var receipt = await _queueClient.EnqueueOutbound(wrapper.Serialize());
+            var receipt = await _queueClient.EnqueueOutbound(cloudEventEnvelope.Serialize());
 
             if (!receipt.Success)
             {

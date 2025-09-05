@@ -1,6 +1,9 @@
-﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
+using Altinn.Platform.Events.Functions.Clients.Interfaces;
+
 using CloudNative.CloudEvents;
+
 using Moq;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
@@ -90,24 +93,19 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingFunctions
             // Assert
             clientMock.VerifyAll();
             Assert.NotNull(serviceInput);
-            Assert.Contains("<heading>Reminder</heading>", serviceInput.Data?.ToString());
-            Assert.Equal("https://github.com/cloudevents", serviceInput.DataSchema?.ToString());
-            Assert.Equal("text/xml", serviceInput.DataContentType?.ToString());
+            Assert.Contains("<heading>Reminder</heading>", serviceInput.Data.ToString());
+            Assert.Equal("https://github.com/cloudevents", serviceInput.DataSchema.ToString());
+            Assert.Equal("text/xml", serviceInput.DataContentType.ToString());
         }
 
         private static bool AssertExpectedCloudEvent(CloudEvent cloudEvent, int expectedExtensionAttributeCount, string extensionAttributeName, string expectedValue)
         {
-            if (cloudEvent == null)
-            {
-                return false;
-            }
-
             string actualExtensionAttribute = cloudEvent
                 .GetPopulatedAttributes()
                 .Where(kv => kv.Key.ToString() == extensionAttributeName)
                 .Select(kv => kv.Value)
                 .FirstOrDefault()
-                ?.ToString();
+                .ToString();
 
             Assert.Equal(expectedValue, actualExtensionAttribute);
             Assert.Equal(expectedExtensionAttributeCount, cloudEvent.ExtensionAttributes.ToList().Count);
