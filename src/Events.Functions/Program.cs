@@ -9,7 +9,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -46,9 +45,5 @@ var host = new HostBuilder()
         s.AddQueueSenders(configuration);
         s.AddTransient<IRetryBackoffService, RetryBackoffService>();
     }).Build();
-
-// Log after the host is built
-var logger = host.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Function host configured successfully");
 
 host.Run();
