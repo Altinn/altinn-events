@@ -32,7 +32,7 @@ public static class QueueRegistration
         string conn = config["QueueStorage"]
             ?? throw new InvalidOperationException("Queue storage connection not configured.");
 
-        var queueName = config["ExponentialRetryBackoff:QueueName"] ?? throw new InvalidOperationException("Exponential retry backoff queue name not configured.");
+        var queueName = config["ExponentialRetryBackoff:QueueName"] ?? "events-outbound";
         string queueUsingExponentialBackoff = queueName;
         string poisonQueueUsingExponentialBackoff = queueUsingExponentialBackoff + "-poison";
 
