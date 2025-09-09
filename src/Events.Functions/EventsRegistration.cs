@@ -3,6 +3,7 @@ using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Extensions;
 using CloudNative.CloudEvents;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions;
 
@@ -14,9 +15,10 @@ namespace Altinn.Platform.Events.Functions;
 /// <remarks>
 /// Initializes a new instance of the <see cref="EventsRegistration"/> class.
 /// </remarks>
-public class EventsRegistration(IEventsClient eventsClient)
+public class EventsRegistration(IEventsClient eventsClient, ILogger<EventsRegistration> logger)
 {
     private readonly IEventsClient _eventsClient = eventsClient;
+    private readonly ILogger<EventsRegistration> _logger = logger;
 
     /// <summary>
     /// Saves cloudEvents from events-registration queue to persistent storage
@@ -25,6 +27,7 @@ public class EventsRegistration(IEventsClient eventsClient)
     [Function(nameof(EventsRegistration))]
     public async Task Run([QueueTrigger("events-registration", Connection = "QueueStorage")] string item)
     {
+        _logger.LogWarning("Processing message from events-registration queue. {Item}", item);
         CloudEvent cloudEvent = item.DeserializeToCloudEvent();
         EnsureCorrectResourceFormat(cloudEvent);
 
