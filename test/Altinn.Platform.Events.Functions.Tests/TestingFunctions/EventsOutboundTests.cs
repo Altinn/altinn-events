@@ -76,7 +76,7 @@ public class EventsOutboundTests
             .Callback<CloudEventEnvelope>(cee => actualServiceInput = cee)
             .Returns(Task.CompletedTask);
 
-        var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService, NullLogger<EventsOutbound>.Instance);
+        var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
 
         // Act
         await sut.Run(_serializedCloudEnvelope);
@@ -127,7 +127,7 @@ public class EventsOutboundTests
             .Setup(s => s.Send(It.IsAny<CloudEventEnvelope>()))
             .Returns(Task.CompletedTask);
 
-        var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService, NullLogger<EventsOutbound>.Instance);
+        var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
 
         // Act
         await sut.Run(serializedWrapper);
@@ -180,8 +180,7 @@ public class EventsOutboundTests
         // Create the SUT
         var sut = new EventsOutbound(
             webhookServiceMock.Object,
-            retryServiceMock.Object,
-            NullLogger<EventsOutbound>.Instance);
+            retryServiceMock.Object);
 
         // Serialize wrapper
         string serializedWrapper = JsonSerializer.Serialize(retryableEventWrapper, _jsonSerializerOptions);
@@ -240,7 +239,7 @@ public class EventsOutboundTests
           .ThrowsAsync(new InvalidOperationException("Webhook service failed"));
 
         var retryMock = new Mock<IRetryBackoffService>();
-        var sut = new EventsOutbound(webhookServiceMock.Object, retryMock.Object, NullLogger<EventsOutbound>.Instance);
+        var sut = new EventsOutbound(webhookServiceMock.Object, retryMock.Object);
 
         // Act
         await sut.Run(serializedEnvelope);
@@ -271,8 +270,7 @@ public class EventsOutboundTests
 
         var sut = new EventsOutbound(
             webhookServiceMock.Object,
-            retryServiceMock.Object,
-            NullLogger<EventsOutbound>.Instance);
+            retryServiceMock.Object);
 
         // Act
         await sut.Run(retryableEventWrapper.Serialize());

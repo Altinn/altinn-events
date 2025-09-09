@@ -4,7 +4,6 @@ using Altinn.Platform.Events.Functions.Models;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions;
 
@@ -17,13 +16,11 @@ namespace Altinn.Platform.Events.Functions;
 /// <see cref="IRetryBackoffService"/>.</remarks>
 /// <param name="webhookService">The service making the http calls</param>
 /// <param name="retryBackoffService">The service that handles the exponential backoff retries</param>
-/// <param name="logger">The logger associated with the events outbound queue trigger</param>
-public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService retryBackoffService, ILogger<EventsOutbound> logger)
+public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService retryBackoffService)
 {
     private const string _queueName = "events-outbound";
     private readonly IWebhookService _webhookService = webhookService;
     private readonly IRetryBackoffService _retryBackoffService = retryBackoffService;
-    private readonly ILogger<EventsOutbound> _logger = logger;
 
     /// <summary>
     /// The function consumes messages from the "events-outbound" queue.
@@ -41,14 +38,10 @@ public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService
 
             if (wrapperCandidate is not null && !string.IsNullOrWhiteSpace(wrapperCandidate.Payload))
             {
-                _logger.LogInformation("Item trying to deserialize from wrapper payload: {item}", wrapperCandidate.Payload);
-
                 envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(wrapperCandidate.Payload);
             }
             else
             {
-                _logger.LogInformation("CloudeventEnvelope item trying to deserialize: {item}", item);
-
                 // Treat input as a legacy envelope JSON, meaning without a wrapper object
                 envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
                 

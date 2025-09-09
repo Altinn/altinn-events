@@ -6,30 +6,44 @@ using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-var builder = FunctionsApplication.CreateBuilder(args);
+var host = new HostBuilder()
+    .ConfigureFunctionsWorkerDefaults()
+    .ConfigureServices((context, s) =>
+    {
+        var configuration = context.Configuration;
+        
+        s.AddOptions<PlatformSettings>()
+       .Configure<IConfiguration>((settings, config) =>
+       {
+           config.GetSection("Platform").Bind(settings);
+       });
+        s.AddOptions<KeyVaultSettings>()
+        .Configure<IConfiguration>((settings, configuration) =>
+        {
+            configuration.GetSection("KeyVault").Bind(settings);
+        });
+        s.AddOptions<CertificateResolverSettings>()
+         .Configure<IConfiguration>((settings, configuration) =>
+         {
+             configuration.GetSection("CertificateResolver").Bind(settings);
+         });
 
-builder.ConfigureFunctionsWebApplication();
+        s.AddApplicationInsightsTelemetryWorkerService();
+        s.ConfigureFunctionsApplicationInsights();
 
-builder.Services.AddApplicationInsightsTelemetryWorkerService();
-builder.Services.ConfigureFunctionsApplicationInsights();
+        s.AddSingleton<IKeyVaultService, KeyVaultService>();
+        s.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
+        s.AddSingleton<ICertificateResolverService, CertificateResolverService>();
 
-builder.Services.Configure<PlatformSettings>(builder.Configuration.GetSection("Platform"));
-builder.Services.Configure<KeyVaultSettings>(builder.Configuration.GetSection("KeyVault"));
-builder.Services.Configure<CertificateResolverSettings>(builder.Configuration.GetSection("CertificateResolver"));
-builder.Services.Configure<EventsOutboundSettings>(builder.Configuration.GetSection("EventsOutboundSettings"));
+        s.AddHttpClient<IEventsClient, EventsClient>();
+        s.AddHttpClient<IWebhookService, WebhookService>();
 
-builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
+        s.AddQueueSenders(configuration);
+        s.AddTransient<IRetryBackoffService, RetryBackoffService>();
+    }).Build();
 
-builder.Services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
-builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
-builder.Services.AddHttpClient<IEventsClient, EventsClient>();
-builder.Services.AddHttpClient<IWebhookService, WebhookService>();
-
-builder.Services.AddQueueSenders(builder.Configuration);
-builder.Services.AddTransient<IRetryBackoffService, RetryBackoffService>();
-
-await builder.Build().RunAsync();
+host.Run();
