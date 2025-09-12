@@ -29,7 +29,6 @@ namespace Altinn.Platform.Events.Functions.Services
                 if (certificateProperties.Enabled == true &&
                     (certificateProperties.ExpiresOn == null || certificateProperties.ExpiresOn >= DateTime.UtcNow))
                 {
-                    _logger.LogInformation("Found {Name} {Version}", certificateProperties.Name, certificateProperties.Version);
                     X509Certificate2 cert = await certificateClient.DownloadCertificateAsync(certificateProperties.Name, certificateProperties.Version);
                     return cert;
                 }
