@@ -23,7 +23,7 @@ public class CertificateResolverServiceTests
 
         var certBase64 = File.ReadAllLines(@$"../../../TestingServices/platform-org.pfx")[0];
         var x509Certificate = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(certBase64));
-        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(certBase64);
+        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(x509Certificate);
 
         // Act
         var result = await certificateResolverService.GetCertificateAsync();
@@ -45,7 +45,7 @@ public class CertificateResolverServiceTests
 
         var certBase64 = File.ReadAllLines(@$"../../../TestingServices/platform-org.pfx")[0];
         var x509Certificate = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(certBase64));
-        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(certBase64);
+        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(x509Certificate);
 
         // Act
         var result1 = await certificateResolverService.GetCertificateAsync();
@@ -67,12 +67,11 @@ public class CertificateResolverServiceTests
         var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://altinn-at21-kv.vault.azure.net", PlatformCertSecretId = "platform-cert" });
         var certificateResolverService = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
 
-        // Simulate invalid certificate data (non-base64 encoded)
-        var invalidCertBase64 = "invalid_certificate_data";
-        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(invalidCertBase64);
+        // Simulate null is returned from the method which means the certificate could not be loaded
+        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((X509Certificate2?)null);
 
         // Act and Assert
-        var exception = await Assert.ThrowsAsync<FormatException>(() => certificateResolverService.GetCertificateAsync());
-        Assert.Contains("The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.", exception.Message);
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => certificateResolverService.GetCertificateAsync());
+        Assert.Contains("Could not load certificate", exception.Message);
     }
 }
