@@ -66,8 +66,7 @@ public class EventsOutboundRetryIntegrationTests
 
         var sut = new EventsOutbound(
             webhook.Object,
-            retryService,
-            NullLogger<EventsOutbound>.Instance);
+            retryService);
 
         var envelope = new CloudEventEnvelope
         {

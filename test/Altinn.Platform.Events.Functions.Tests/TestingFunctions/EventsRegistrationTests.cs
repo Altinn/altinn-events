@@ -1,7 +1,6 @@
 ﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
 
 using CloudNative.CloudEvents;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -37,7 +36,7 @@ public class EventsRegistrationTests
             Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
             .Returns(Task.CompletedTask);
 
-        EventsRegistration sut = new(clientMock.Object, NullLogger<EventsRegistration>.Instance);
+        EventsRegistration sut = new(clientMock.Object);
 
         // Act
         try
@@ -66,7 +65,7 @@ public class EventsRegistrationTests
             Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
             .Returns(Task.CompletedTask);
 
-        EventsRegistration sut = new EventsRegistration(clientMock.Object, NullLogger<EventsRegistration>.Instance);
+        EventsRegistration sut = new EventsRegistration(clientMock.Object);
 
         // Act
         await sut.Run(serializedCloudEvent);
