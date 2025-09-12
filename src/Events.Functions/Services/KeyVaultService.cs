@@ -6,6 +6,7 @@ using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Azure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Certificates;
+using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions.Services
 {
@@ -14,8 +15,10 @@ namespace Altinn.Platform.Events.Functions.Services
     /// </summary>
     /// <remarks>This class is excluded from code coverage because it has no logic to be tested.</remarks>
     [ExcludeFromCodeCoverage]
-    public class KeyVaultService : IKeyVaultService
+    public class KeyVaultService(ILogger<KeyVaultService> logger) : IKeyVaultService
     {
+        private readonly ILogger<KeyVaultService> _logger = logger;
+
         /// <inheritdoc/>
         public async Task<X509Certificate2?> GetCertificateAsync(string vaultUri, string secretId)
         {
@@ -26,10 +29,9 @@ namespace Altinn.Platform.Events.Functions.Services
                 if (certificateProperties.Enabled == true &&
                     (certificateProperties.ExpiresOn == null || certificateProperties.ExpiresOn >= DateTime.UtcNow))
                 {
-                    {
-                        X509Certificate2 cert = await certificateClient.DownloadCertificateAsync(certificateProperties.Name, certificateProperties.Version);
-                        return cert;
-                    }
+                    _logger.LogInformation("Found {Name} {Version}", certificateProperties.Name, certificateProperties.Version);
+                    X509Certificate2 cert = await certificateClient.DownloadCertificateAsync(certificateProperties.Name, certificateProperties.Version);
+                    return cert;
                 }
             }
 

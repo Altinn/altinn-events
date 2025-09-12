@@ -56,22 +56,4 @@ public class CertificateResolverServiceTests
         Assert.NotNull(result2);
         keyVaultServiceMock.Verify(x => x.GetCertificateAsync(keyVaultSettings.Value.KeyVaultURI, keyVaultSettings.Value.PlatformCertSecretId), Times.Once);
     }
-
-    [Fact]
-    public async Task GetCertificateAsync_ShouldFailWhenCertificateFormatIsInvalid()
-    {
-        // Arrange
-        var loggerMock = new Mock<ILogger<ICertificateResolverService>>();
-        var certificateResolverSettings = Options.Create(new CertificateResolverSettings { CacheCertLifetimeInSeconds = 3600 }); // 1 hour cache lifetime
-        var keyVaultServiceMock = new Mock<IKeyVaultService>();
-        var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://altinn-at21-kv.vault.azure.net", PlatformCertSecretId = "platform-cert" });
-        var certificateResolverService = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
-
-        // Simulate null is returned from the method which means the certificate could not be loaded
-        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((X509Certificate2?)null);
-
-        // Act and Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => certificateResolverService.GetCertificateAsync());
-        Assert.Contains("Could not load certificate", exception.Message);
-    }
 }

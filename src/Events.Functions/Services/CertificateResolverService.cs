@@ -50,25 +50,16 @@ namespace Altinn.Platform.Events.Functions.Services
         {
             if (DateTime.UtcNow > _reloadTime || _cachedX509Certificate == null)
             {
-                var cert = await _keyVaultService.GetCertificateAsync(
+                var certificate = await _keyVaultService.GetCertificateAsync(
                     _keyVaultSettings.KeyVaultURI,
                     _keyVaultSettings.PlatformCertSecretId);
-
-                if (cert != null)
+                lock (_lockObject)
                 {
-                    lock (_lockObject)
-                    {
-                        _cachedX509Certificate = cert;
-                        _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds);
-                        _logger.LogInformation("Certificate reloaded.");
-                    }
-                }
-            }
+                    _cachedX509Certificate = certificate;
 
-            if (_cachedX509Certificate == null)
-            {
-                _logger.LogError("Could not load certificate from key vault");
-                throw new InvalidOperationException("Could not load certificate from key vault");
+                    _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds);
+                    _logger.LogInformation("Certificate reloaded.");
+                }
             }
 
             return _cachedX509Certificate;
