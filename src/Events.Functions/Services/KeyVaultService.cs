@@ -15,10 +15,8 @@ namespace Altinn.Platform.Events.Functions.Services
     /// </summary>
     /// <remarks>This class is excluded from code coverage because it has no logic to be tested.</remarks>
     [ExcludeFromCodeCoverage]
-    public class KeyVaultService(ILogger<KeyVaultService> logger) : IKeyVaultService
+    public class KeyVaultService : IKeyVaultService
     {
-        private readonly ILogger<KeyVaultService> _logger = logger;
-
         /// <inheritdoc/>
         public async Task<X509Certificate2?> GetCertificateAsync(string vaultUri, string secretId)
         {

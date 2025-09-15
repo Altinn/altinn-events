@@ -19,7 +19,7 @@ namespace Altinn.Platform.Events.Functions.Services
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
         private DateTime _reloadTime;
-        private X509Certificate2 _cachedX509Certificate = null;
+        private X509Certificate2? _cachedX509Certificate = null;
         private readonly object _lockObject = new object();
 
         /// <summary>
@@ -60,6 +60,11 @@ namespace Altinn.Platform.Events.Functions.Services
                     _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds);
                     _logger.LogInformation("Certificate reloaded.");
                 }
+            }
+            
+            if (_cachedX509Certificate is null)
+            {
+                throw new InvalidOperationException("Could not load certificate from Key Vault");
             }
 
             return _cachedX509Certificate;

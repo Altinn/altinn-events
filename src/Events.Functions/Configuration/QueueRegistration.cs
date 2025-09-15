@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 using Altinn.Platform.Events.Functions.Queues;
 
 using Azure.Storage.Queues;
@@ -25,6 +27,8 @@ public static class QueueRegistration
     /// <param name="config">The <see cref="IConfiguration"/> instance used to retrieve queue storage settings.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
     /// <exception cref="InvalidOperationException">Thrown if the queue storage connection string is not configured in the provided <paramref name="config"/>.</exception>
+    /// <remarks>This class is excluded from code coverage because it has no logic to be tested.</remarks>
+    [ExcludeFromCodeCoverage]
     public static IServiceCollection AddQueueSenders(
         this IServiceCollection services,
         IConfiguration config)
@@ -38,7 +42,7 @@ public static class QueueRegistration
 
         QueueClientOptions options = new()
         {
-            MessageEncoding = QueueMessageEncoding.Base64,
+            MessageEncoding = QueueMessageEncoding.Base64
         };
 
         var mainClient = new QueueClient(conn, queueUsingExponentialBackoff, options);
