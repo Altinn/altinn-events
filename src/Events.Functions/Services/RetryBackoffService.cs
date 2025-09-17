@@ -74,8 +74,12 @@ public class RetryBackoffService : IRetryBackoffService
         await _sendToQueue(payload, visibility, _ttl);
     }
 
-    /// <inheritdoc/>
-    public async Task SendToPoisonAsync(RetryableEventWrapper message)
+    /// <summary>
+    /// Sends a message to the poison queue when it can no longer be processed.
+    /// </summary>
+    /// <param name="message">The message to send to the poison queue.</param>
+    /// <returns>Task representing the send operation.</returns>
+    private async Task SendToPoisonAsync(RetryableEventWrapper message)
     {
         string payload = message.Serialize();
         await _sendToPoison(payload, TimeSpan.FromSeconds(0), _ttl);

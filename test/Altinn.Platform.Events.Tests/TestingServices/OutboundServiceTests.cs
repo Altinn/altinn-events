@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
@@ -32,6 +33,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
     /// </summary>
     public class OutboundServiceTests
     {
+        private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         [Fact]
         public async Task PostOutbound_AppEvent_SourceFilterIsSimplified()
         {
@@ -325,7 +331,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.NotNull(capturedQueueMessage);
 
             // Deserialize to RetryableEventWrapper
-            var wrapper = capturedQueueMessage.DeserializeToRetryableEventWrapper();
+            var wrapper = DeserializeToRetryableEventWrapper(capturedQueueMessage);
 
             // Verify wrapper properties
             Assert.NotNull(wrapper);
@@ -350,8 +356,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             string emptyString = string.Empty;
 
             // Act
-            var result = invalidJson.DeserializeToRetryableEventWrapper();
-            var resultEmpty = emptyString.DeserializeToRetryableEventWrapper();
+            var result = DeserializeToRetryableEventWrapper(invalidJson);
+            var resultEmpty = DeserializeToRetryableEventWrapper(emptyString);
 
             // Assert
             Assert.Null(result);
@@ -496,6 +502,19 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var cloudEvent = formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(item)), null, null);
             return cloudEvent;
+        }
+
+        private RetryableEventWrapper DeserializeToRetryableEventWrapper(string item)
+        {
+            try
+            {
+                var eventWrapper = JsonSerializer.Deserialize<RetryableEventWrapper>(item, _serializerOptions);
+                return eventWrapper;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
         }
     }
 }

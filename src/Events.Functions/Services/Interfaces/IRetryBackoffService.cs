@@ -14,11 +14,4 @@ public interface IRetryBackoffService
     /// <param name="exception">The exception that caused processing failure.</param>
     /// <returns>Task representing the requeue operation.</returns>
     Task RequeueWithBackoff(RetryableEventWrapper message, Exception exception);
-
-    /// <summary>
-    /// Sends a message to the poison queue when it can no longer be processed.
-    /// </summary>
-    /// <param name="message">The message to send to the poison queue.</param>
-    /// <returns>Task representing the send operation.</returns>
-    Task SendToPoisonAsync(RetryableEventWrapper message);
 }
