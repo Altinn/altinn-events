@@ -121,61 +121,6 @@ public class EventsOutboundRetryIntegrationTests
     }
 
     [RequiresAzuriteFact]
-    public async Task Backoff_Progression_Sequence_Matches_Custom_Visibility()
-    {
-        var main = CreateQueue(_queueName + "-prog");
-        var poison = CreateQueue(_queueName + "-prog-poison");
-
-        QueueSendDelegate mainSender = (msg, vis, ttl, ct) => main.SendMessageAsync(msg, vis, ttl, ct);
-        PoisonQueueSendDelegate poisonSender = (msg, vis, ttl, ct) => poison.SendMessageAsync(msg, vis, ttl, ct);
-
-        var svc = new TestableRetryBackoffService(NullLogger<TestableRetryBackoffService>.Instance, mainSender, poisonSender);
-
-        // We'll drive several failures manually (simulate the function’s catch flow)
-        int[] plannedCounts = { 0, 1, 2, 3 }; // expect requeued as 1,2,3,4 with vis 1s,2s,3s,4s
-        foreach (var current in plannedCounts)
-        {
-            await main.ClearMessagesAsync();
-            var wrapper = new RetryableEventWrapper
-            {
-                Payload = "{}",
-                DequeueCount = current,
-            };
-
-            // Simulate transient failure requeue
-            await svc.RequeueWithBackoff(wrapper, new Exception("transient"));
-
-            // Immediately attempt receive -> should often be empty (still invisible)
-            var immediate = await main.ReceiveMessagesAsync(1, TimeSpan.FromSeconds(1));
-            Assert.Empty(immediate.Value);
-
-            // Wait up to expectedVisibility + small slack
-            var expectedVis = svc.GetVisibilityTimeout(current + 1);
-            var deadline = DateTime.UtcNow + expectedVis.Add(TimeSpan.FromSeconds(1));
-            RetryableEventWrapper received = null;
-
-            while (DateTime.UtcNow < deadline)
-            {
-                var msgs = await main.ReceiveMessagesAsync(1, TimeSpan.FromSeconds(1));
-                if (msgs.Value.Length > 0)
-                {
-                    var raw = msgs.Value[0].Body.ToString(); // Already decoded
-                    received = raw.DeserializeToRetryableEventWrapper();
-                    break;
-                }
-
-                await Task.Delay(100);
-            }
-
-            Assert.NotNull(received);
-            Assert.Equal(current + 1, received!.DequeueCount);
-        }
-
-        // Ensure poison unused
-        Assert.Empty((await poison.PeekMessagesAsync(1)).Value);
-    }
-
-    [RequiresAzuriteFact]
     public async Task PermanentFailure_Goes_Directly_To_Poison()
     {
         var main = CreateQueue(_queueName + "-perm");

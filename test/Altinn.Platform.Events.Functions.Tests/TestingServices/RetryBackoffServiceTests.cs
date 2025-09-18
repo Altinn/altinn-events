@@ -157,10 +157,18 @@ public class RetryBackoffServiceTests
 
         // Assert
         mainSenderMock.Verify(
-            m => m(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()),
+            m => m(
+            It.IsAny<string>(), 
+            It.IsAny<TimeSpan?>(), 
+            It.IsAny<TimeSpan?>(), 
+            It.IsAny<CancellationToken>()),
             Times.Never);
         poisonSenderMock.Verify(
-            p => p(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()),
+            p => p(
+            It.IsAny<string>(), 
+            It.IsAny<TimeSpan?>(), 
+            It.IsAny<TimeSpan?>(), 
+            It.IsAny<CancellationToken>()),
             Times.Once);
 
         var poisonedEvent = JsonSerializer.Deserialize<RetryableEventWrapper>(capturedPoisonMessage, _jsonOptions);

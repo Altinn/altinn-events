@@ -22,7 +22,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
     public class EventsClientTests
     {
         private readonly Mock<ILogger<EventsClient>> _loggerMock = new Mock<ILogger<EventsClient>>();
-        private readonly Mock<IKeyVaultService> _kvMock = new Mock<IKeyVaultService>();
         private readonly Mock<IAccessTokenGenerator> _atgMock = new Mock<IAccessTokenGenerator>();
         private readonly Mock<ICertificateResolverService> _srMock = new Mock<ICertificateResolverService>();
 
@@ -46,8 +45,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
 
         public EventsClientTests()
         {
-            string base64 = "MIID/zCCAuegAwIBAgIQF2ov3ZZUmJVKtoz0a1fabDANBgkqhkiG9w0BAQsFADB/\r\nMRMwEQYKCZImiZPyLGQBGRYDY29tMRcwFQYKCZImiZPyLGQBGRYHY29udG9zbzEU\r\nMBIGCgmSJomT8ixkARkWBGNvcnAxFTATBgNVBAsMDFVzZXJBY2NvdW50czEiMCAG\r\nA1UEAwwZQWx0aW5uIFBsYXRmb3JtIFVuaXQgdGVzdDAgFw0yMDA0MTQwOTMwMTda\r\nGA8yMTIwMDQxNDA5NDAxOFowfzETMBEGCgmSJomT8ixkARkWA2NvbTEXMBUGCgmS\r\nJomT8ixkARkWB2NvbnRvc28xFDASBgoJkiaJk/IsZAEZFgRjb3JwMRUwEwYDVQQL\r\nDAxVc2VyQWNjb3VudHMxIjAgBgNVBAMMGUFsdGlubiBQbGF0Zm9ybSBVbml0IHRl\r\nc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDCAKc+q5jbYFyQFxM1\r\nxU3v0N477ppnMu03K8qlEkX0+yffRHcR1I0Kku8yg1S+LQjeqh1K42b270myKiIt\r\nvxeuNnanRwdehTZthThembr8RXoGcmzaXfMet7NVDgUa7gNzPXbqjhTFdyWoZzeU\r\nX6TWTgFtciTs5M1F50H+3nieGKX2dvLUIEXWFO7yevj9bqtI8k0b66eLgBjchnjW\r\n8B7oYOFZW44VDDnqQrvFJ9aMQ44FfLAWWLcy6nBzcDdK+Z+yq9FNVgduyl0J7vRo\r\n3UtcVazLUvmDdwASLIB3IwB7YmT6fuOyM+6eyw5F1CdjXbc/bhop0pCDY1aAEsZA\r\nCjT9AgMBAAGjdTBzMA4GA1UdDwEB/wQEAwIHgDATBgNVHSUEDDAKBggrBgEFBQcD\r\nAjAtBgNVHREEJjAkoCIGCisGAQQBgjcUAgOgFAwSdGVzdEBhbHRpbm4uc3R1ZGlv\r\nMB0GA1UdDgQWBBTv8Cpf5J7nfmGds20LU/J3bg05XTANBgkqhkiG9w0BAQsFAAOC\r\nAQEAahWeu6ymaiJe9+LiMlQwNsUIV4KaLX+jCsRyF1jUJ0C13aFALGM4k9svqqXR\r\nDzBdCXXr0c1E+Ks3sCwBLfK5yj5fTI+pL26ceEmHahcVyLvzEBljtNb4FnGFs92P\r\nCH0NuCz45hQ2O9/Tv4cZAdgledTznJTKzzQNaF8M6iINmP6sf4kOg0BQx0K71K4f\r\n7j2oQvYKiT7Zv1e83cdk9pS4ihDe+ZWYiGUM/IuaXNPl6OzVk4rY88PZJAoz7q33\r\nrYjlT+zkcl3dzTc3E0CWzbIWjhaXCRWvlI44cLRtdpmPqJUHI6a/tcGwNb5vWiT4\r\nYfZJ0EZ2iSRQlpU3+jMs8Ci2AA==";
-            _kvMock.Setup(kv => kv.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(base64);
             _atgMock.Setup(atg => atg.GenerateAccessToken(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<X509Certificate2>())).Returns(string.Empty);
         }
 

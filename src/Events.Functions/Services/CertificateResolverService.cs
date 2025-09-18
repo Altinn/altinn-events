@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Functions.Configuration;
@@ -6,67 +7,67 @@ using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Altinn.Platform.Events.Functions.Services;
-
-/// <summary>
-/// Class to resolve certificate to generate an access token
-/// </summary>
-public class CertificateResolverService : ICertificateResolverService
+namespace Altinn.Platform.Events.Functions.Services
 {
-    private readonly ILogger<ICertificateResolverService> _logger;
-    private readonly CertificateResolverSettings _certificateResolverSettings;
-    private readonly IKeyVaultService _keyVaultService;
-    private readonly KeyVaultSettings _keyVaultSettings;
-    private DateTime _reloadTime;
-    private X509Certificate2? _cachedX509Certificate = null;
-    private readonly object _lockObject = new object();
-
     /// <summary>
     /// Class to resolve certificate to generate an access token
     /// </summary>
-    /// <param name="logger">The logger</param>
-    /// <param name="certificateResolverSettings">Settings for certificate resolver</param>
-    /// <param name="keyVaultService">Key vault service</param>
-    /// <param name="keyVaultSettings">Key vault settings</param>
-    public CertificateResolverService(
-        ILogger<ICertificateResolverService> logger,
-        IOptions<CertificateResolverSettings> certificateResolverSettings,
-        IKeyVaultService keyVaultService,
-        IOptions<KeyVaultSettings> keyVaultSettings)
+    public class CertificateResolverService : ICertificateResolverService
     {
-        _logger = logger;
-        _certificateResolverSettings = certificateResolverSettings.Value;
-        _keyVaultService = keyVaultService;
-        _keyVaultSettings = keyVaultSettings.Value;
-        _reloadTime = DateTime.MinValue;
-    }
+        private readonly ILogger<ICertificateResolverService> _logger;
+        private readonly CertificateResolverSettings _certificateResolverSettings;
+        private readonly IKeyVaultService _keyVaultService;
+        private readonly KeyVaultSettings _keyVaultSettings;
+        private DateTime _reloadTime;
+        private X509Certificate2? _cachedX509Certificate = null;
+        private readonly object _lockObject = new object();
 
-    /// <summary>
-    /// Find the configured 
-    /// </summary>
-    /// <returns></returns>
-    public async Task<X509Certificate2> GetCertificateAsync()
-    {
-        if (DateTime.UtcNow > _reloadTime || _cachedX509Certificate == null)
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        /// <param name="logger">The logger</param>
+        /// <param name="certificateResolverSettings">Settings for certificate resolver</param>
+        /// <param name="keyVaultService">Key vault service</param>
+        /// <param name="keyVaultSettings">Key vault settings</param>
+        public CertificateResolverService(
+            ILogger<ICertificateResolverService> logger,
+            IOptions<CertificateResolverSettings> certificateResolverSettings,
+            IKeyVaultService keyVaultService,
+            IOptions<KeyVaultSettings> keyVaultSettings)
         {
-            string certBase64 = await _keyVaultService.GetCertificateAsync(
-                _keyVaultSettings.KeyVaultURI,
-                _keyVaultSettings.PlatformCertSecretId);
-
-            lock (_lockObject)
-            {
-                var newCert = new X509Certificate2(
-                    Convert.FromBase64String(certBase64),
-                    (string?)null,
-                    X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
-                var old = _cachedX509Certificate;
-                _cachedX509Certificate = newCert;
-                old?.Dispose();
-                _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds);
-                _logger.LogInformation("Certificate reloaded.");
-            }
+            _logger = logger;
+            _certificateResolverSettings = certificateResolverSettings.Value;
+            _keyVaultService = keyVaultService;
+            _keyVaultSettings = keyVaultSettings.Value;
+            _reloadTime = DateTime.MinValue;
         }
 
-        return _cachedX509Certificate;
+        /// <summary>
+        /// Find the configured 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<X509Certificate2> GetCertificateAsync()
+        {
+            if (DateTime.UtcNow > _reloadTime || _cachedX509Certificate == null)
+            {
+                var certificate = await _keyVaultService.GetCertificateAsync(
+                    _keyVaultSettings.KeyVaultURI,
+                    _keyVaultSettings.PlatformCertSecretId);
+                lock (_lockObject)
+                {
+                    _cachedX509Certificate = certificate;
+
+                    _reloadTime = DateTime.UtcNow.AddSeconds(_certificateResolverSettings.CacheCertLifetimeInSeconds);
+                    _logger.LogInformation("Certificate reloaded.");
+                }
+            }
+            
+            if (_cachedX509Certificate is null)
+            {
+                throw new InvalidOperationException("Could not load certificate from Key Vault");
+            }
+
+            return _cachedX509Certificate;
+        }
     }
 }

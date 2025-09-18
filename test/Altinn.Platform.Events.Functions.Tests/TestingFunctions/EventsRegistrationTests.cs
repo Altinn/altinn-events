@@ -32,8 +32,8 @@ public class EventsRegistrationTests
         clientMock.Setup(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()))
            .ThrowsAsync(new HttpRequestException("// SaveCloudEvent with id {cloudEvent.Id} failed with status code {statusCode}"));
 
-        clientMock.
-            Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
+        clientMock
+            .Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
             .Returns(Task.CompletedTask);
 
         EventsRegistration sut = new(clientMock.Object);
@@ -61,8 +61,8 @@ public class EventsRegistrationTests
         clientMock.Setup(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()))
             .Returns(Task.CompletedTask);
 
-        clientMock.
-            Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
+        clientMock
+            .Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
             .Returns(Task.CompletedTask);
 
         EventsRegistration sut = new EventsRegistration(clientMock.Object);

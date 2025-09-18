@@ -19,14 +19,14 @@ public class CertificateResolverServiceTests
         var certificateResolverSettings = Options.Create(new CertificateResolverSettings { CacheCertLifetimeInSeconds = 3600 }); // 1 hour cache lifetime
         var keyVaultServiceMock = new Mock<IKeyVaultService>();
         var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://example.vault.azure.net", PlatformCertSecretId = "platform-cert" });
-        var certificateResolverService = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
+        var sut = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
 
         var certBase64 = File.ReadAllLines(@$"../../../TestingServices/platform-org.pfx")[0];
         var x509Certificate = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(certBase64));
-        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(certBase64);
+        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(x509Certificate);
 
         // Act
-        var result = await certificateResolverService.GetCertificateAsync();
+        var result = await sut.GetCertificateAsync();
 
         // Assert
         Assert.NotNull(result);
@@ -41,15 +41,15 @@ public class CertificateResolverServiceTests
         var certificateResolverSettings = Options.Create(new CertificateResolverSettings { CacheCertLifetimeInSeconds = 3600 }); // 1 hour cache lifetime
         var keyVaultServiceMock = new Mock<IKeyVaultService>();
         var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://example.vault.azure.net", PlatformCertSecretId = "platform-cert" });
-        var certificateResolverService = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
+        var sut = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
 
         var certBase64 = File.ReadAllLines(@$"../../../TestingServices/platform-org.pfx")[0];
         var x509Certificate = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(certBase64));
-        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(certBase64);
+        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(x509Certificate);
 
         // Act
-        var result1 = await certificateResolverService.GetCertificateAsync();
-        var result2 = await certificateResolverService.GetCertificateAsync();
+        var result1 = await sut.GetCertificateAsync();
+        var result2 = await sut.GetCertificateAsync();
 
         // Assert
         Assert.NotNull(result1);
@@ -58,21 +58,22 @@ public class CertificateResolverServiceTests
     }
 
     [Fact]
-    public async Task GetCertificateAsync_ShouldFailWhenCertificateFormatIsInvalid()
+    public async Task GetCertificateAsync_WhenCertificateIsNull_ShouldThrowInvalidOperationException()
     {
         // Arrange
         var loggerMock = new Mock<ILogger<ICertificateResolverService>>();
-        var certificateResolverSettings = Options.Create(new CertificateResolverSettings { CacheCertLifetimeInSeconds = 3600 }); // 1 hour cache lifetime
+        var certificateResolverSettings = Options.Create(new CertificateResolverSettings { CacheCertLifetimeInSeconds = 3600 });
         var keyVaultServiceMock = new Mock<IKeyVaultService>();
-        var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://altinn-at21-kv.vault.azure.net", PlatformCertSecretId = "platform-cert" });
-        var certificateResolverService = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
+        var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://example.vault.azure.net", PlatformCertSecretId = "platform-cert" });
+        var sut = new CertificateResolverService(loggerMock.Object, certificateResolverSettings, keyVaultServiceMock.Object, keyVaultSettings);
 
-        // Simulate invalid certificate data (non-base64 encoded)
-        var invalidCertBase64 = "invalid_certificate_data";
-        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(invalidCertBase64);
+        // Setup KeyVault service to return null certificate
+        keyVaultServiceMock.Setup(x => x.GetCertificateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((X509Certificate2)null);
 
-        // Act and Assert
-        var exception = await Assert.ThrowsAsync<FormatException>(() => certificateResolverService.GetCertificateAsync());
-        Assert.Contains("The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.", exception.Message);
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.GetCertificateAsync());
+        
+        Assert.Equal("Could not load certificate from Key Vault", exception.Message);
+        keyVaultServiceMock.Verify(x => x.GetCertificateAsync(keyVaultSettings.Value.KeyVaultURI, keyVaultSettings.Value.PlatformCertSecretId), Times.Once);
     }
 }

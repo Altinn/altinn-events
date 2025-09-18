@@ -8,10 +8,6 @@ COPY src/Events/Migration ./Migration
 WORKDIR /DbTools
 RUN dotnet build ./DbTools.csproj -c Release -o /app_tools
 
-# Build common library first since it's a dependency
-WORKDIR /Events.Common
-RUN dotnet build ./Altinn.Platform.Events.Common.csproj -c Release -o /app_output
-
 # Build the Events project
 WORKDIR /Events
 RUN dotnet build ./Altinn.Platform.Events.csproj -c Release -o /app_output
