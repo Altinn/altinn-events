@@ -269,6 +269,42 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
             }
 
+            [Fact]
+            public async Task Post_ModelStateIsValidDoesNotRejectRequestObjectWithNullValues_ReturnsStatusBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest("ttd");
+                cloudEvent.DataSchema = null;
+                cloudEvent.DataContentType = null;
+                cloudEvent.Data = null;
+                cloudEvent.Source = null;
+                cloudEvent.SpecVersion = null;
+                cloudEvent.Type = null;
+                cloudEvent.Subject = null;
+                cloudEvent.AlternativeSubject = null;
+
+                Mock<IEventsService> eventsService = new Mock<IEventsService>();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+                
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                
+                // Assert
+                var content = await response.Content.ReadAsStringAsync();
+                ProblemDetails actual = JsonSerializer.Deserialize<ProblemDetails>(content, _options);
+
+                // Verifies that the request object was rejected by ValidateRequiredProperties(), not by the controller's model-state filter.
+                Assert.Equal("Missing parameter values: source, subject and type cannot be null", actual.Detail);
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            }
+
             /// <summary>
             /// Scenario:
             ///   Post a valid cloud event, unexpected error when storing document
