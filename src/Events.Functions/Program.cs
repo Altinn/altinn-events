@@ -1,10 +1,12 @@
 ﻿using Altinn.Common.AccessTokenClient.Services;
+using Altinn.Platform.Events.Functions;
 using Altinn.Platform.Events.Functions.Clients;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +28,7 @@ builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
 
 builder.Services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
 builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
+builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
 builder.Services.AddHttpClient<IEventsClient, EventsClient>();
 builder.Services.AddHttpClient<IWebhookService, WebhookService>();
 
