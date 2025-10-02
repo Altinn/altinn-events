@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 
+using Altinn.Common.PEP.Constants;
+
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Tests.Utils;
 
@@ -156,7 +158,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             // Act
             var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithResourceInstance);
-            var actualResourceInstancedAttribute = actual.Attribute.Find(a => a.AttributeId.Equals("urn:altinn:resourceinstance"));
+            var actualResourceInstancedAttribute = actual.Attribute.Find(a => a.AttributeId.Equals(AltinnXacmlUrns.ResourceInstance));
 
             // Assert
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
