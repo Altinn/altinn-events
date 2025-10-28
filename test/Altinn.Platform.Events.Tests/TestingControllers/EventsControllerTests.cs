@@ -118,7 +118,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async Task Post_EventMissingParameters_BadRequestResponse()
             {
                 // Arrange
-                string invalidEvent = "{ \"time\": \"2022-11-15T10:46:53.5339928Z\", \"type\": \"app.instance.created\", \"source\": \"https://ttd.apps.at21.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\", \"subject\": \"/party/50019855\", \"specversion\": \"1.0\", \"alternativesubject\": \"/person/stephanie\" }";
+                string invalidEvent = "{ \"time\": \"2022-11-15T10:46:53.5339928Z\", \"type\": \"app.instance.created\", \"source\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\", \"subject\": \"/party/50019855\", \"specversion\": \"1.0\", \"alternativesubject\": \"/person/stephanie\" }";
                 string requestUri = $"{BasePath}/events";
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
@@ -142,7 +142,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             public async Task Post_ResourceIsNotUrn_BadRequestResponse()
             {
                 // Arrange
-                string invalidEvent = "{ \"id\":\"random-id\", \"time\": \"2022-11-15T10:46:53.5339928Z\", \"type\": \"app.instance.created\", \"resource\":\"this-is.not-urn\", \"source\": \"https://ttd.apps.at21.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\", \"subject\": \"/party/50019855\", \"specversion\": \"1.0\", \"alternativesubject\": \"/person/stephanie\" }";
+                string invalidEvent = "{ \"id\":\"random-id\", \"time\": \"2022-11-15T10:46:53.5339928Z\", \"type\": \"app.instance.created\", \"resource\":\"this-is.not-urn\", \"source\": \"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd\", \"subject\": \"/party/50019855\", \"specversion\": \"1.0\", \"alternativesubject\": \"/person/stephanie\" }";
                 string requestUri = $"{BasePath}/events";
 
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
