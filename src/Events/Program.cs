@@ -17,6 +17,7 @@ using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
 
 using Altinn.Platform.Events.Authorization;
+using Altinn.Platform.Events.BridgeProxy;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
@@ -281,6 +282,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
+    services.AddBridgeProxy(builder.Configuration);
+
     services.AddHttpClient<IRegisterService, RegisterService>();
     services.AddSingleton<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
@@ -415,6 +418,8 @@ void Configure(IConfiguration config)
     app.MapControllers();
 
     app.MapHealthChecks("/health");
+
+    app.MapBridgeProxy("/sblbridge");
 }
 
 /// <summary>
