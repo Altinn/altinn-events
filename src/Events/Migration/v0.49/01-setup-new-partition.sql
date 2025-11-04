@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS events.trace_log_y2026 PARTITION OF events.trace_log
+FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');
