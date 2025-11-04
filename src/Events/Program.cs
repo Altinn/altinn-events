@@ -419,7 +419,7 @@ void Configure(IConfiguration config)
 
     app.MapHealthChecks("/health");
 
-    app.MapBridgeProxy("/sblbridge");
+    app.MapBridgeProxy(logger, "/sblbridge");
 }
 
 /// <summary>
