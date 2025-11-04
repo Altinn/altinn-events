@@ -31,11 +31,11 @@ namespace Altinn.Platform.Events.BridgeProxy
             try
             {
                 // /bridge/{**path} => strip the leading /bridge
-                ////var relative = ctx.Request.Path.Value!.Substring("/sblbridge".Length).TrimStart('/');
-                ////var targetPathAndQuery = string.IsNullOrEmpty(ctx.Request.QueryString.Value)
-                ////    ? relative
-                ////    : relative + ctx.Request.QueryString.Value;
-                var targetPathAndQuery = ctx.Request.Path.Value + (string.IsNullOrEmpty(ctx.Request.QueryString.Value) ? null : ctx.Request.QueryString.Value);
+                var relative = ctx.Request.Path.Value!.Substring(ctx.Request.Path.Value!.IndexOf("/sblbridge"));
+                var targetPathAndQuery = string.IsNullOrEmpty(ctx.Request.QueryString.Value)
+                    ? relative
+                    : relative + ctx.Request.QueryString.Value;
+                ////var targetPathAndQuery = ctx.Request.Path.Value + (string.IsNullOrEmpty(ctx.Request.QueryString.Value) ? null : ctx.Request.QueryString.Value);
 
                 var outbound = new HttpRequestMessage(new HttpMethod(ctx.Request.Method), targetPathAndQuery);
 
