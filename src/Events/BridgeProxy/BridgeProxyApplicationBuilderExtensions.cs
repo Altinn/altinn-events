@@ -28,6 +28,7 @@ namespace Altinn.Platform.Events.BridgeProxy
                 {
                     logger.LogWarning("BridgeProxy: Received request with invalid prefix '{FirstSegment}'. Expected '{RoutePrefix}'. Returning 404.", firstSegment, routePrefix.Trim('/'));
                     ctx.Response.StatusCode = 404;
+                    await ctx.Response.Body.WriteAsync(System.Text.Encoding.UTF8.GetBytes($"BridgeProxy: Received request with invalid prefix {firstSegment}. Expected {routePrefix}"));
                     return;
                 }
 
