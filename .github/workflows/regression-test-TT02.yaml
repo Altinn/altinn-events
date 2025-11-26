@@ -3,7 +3,7 @@ name: Regression test - TT02
 on:
   workflow_dispatch:
   schedule:
-  - cron: '0 12 * * 1-5'
+    - cron: '0 12 * * 1-5'
 
 jobs:
   regression-tests:
@@ -12,45 +12,44 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-    - name: Run app-events regression tests
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/app-events.js
-        flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=apps-test -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
-    - name: Run events regression tests (POST)
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/events/post.js
-        flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
-    - name: Run events regression tests (GET)
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/events/get.js
-        flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
-    - name: Run subscription regression tests
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/subscriptions.js
-        flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
-    - name: Build failure report
-      if: failure()
-      run: |
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - name: Run app-events regression tests
+        uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
+        with:
+          filename: test/k6/src/tests/app-events.js
+          flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=apps-test -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
+      - name: Run events regression tests (POST)
+        if: always()
+        uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
+        with:
+          filename: test/k6/src/tests/events/post.js
+          flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
+      - name: Run events regression tests (GET)
+        if: always()
+        uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
+        with:
+          filename: test/k6/src/tests/events/get.js
+          flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
+      - name: Run subscription regression tests
+        if: always()
+        uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
+        with:
+          filename: test/k6/src/tests/subscriptions.js
+          flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
+      - name: Build failure report
+        if: failure()
+        run: |
           report=":warning: Events regression test failure in ${{ vars.ENV }} :warning: \n"
           report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "stepreport="$report >> $GITHUB_ENV
-    - name: Report failure to Slack
-      if: failure()
-      id: slack
-      uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-      with:
-        webhook-type: incoming-webhook
-        webhook: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
-        payload: |
+      - name: Report failure to Slack
+        if: failure()
+        id: slack
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
+          payload: |
             {
               "text": "${{ env.stepreport }}"
             }
-
