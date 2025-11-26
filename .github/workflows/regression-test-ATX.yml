@@ -19,6 +19,8 @@ on:
         required: true
       WEBHOOK_ENDPOINT:
         required: true
+      SLACK_WEBHOOK_URL_TEST:
+        required: true
 
 jobs:
   regression-tests:
