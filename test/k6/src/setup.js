@@ -3,7 +3,7 @@ import * as maskinporten from "./api/maskinporten.js";
 import * as authentication from "./api/authentication.js";
 import { b64decode } from "k6/encoding";
 
-const environment = __ENV.ALTINN_ENV.toLowerCase();
+const environment = (__ENV.ALTINN_ENV || 'defaultVal').toLowerCase();
 
 /*
  * generate an altinn token for org based on the environment using AltinnTestTools
