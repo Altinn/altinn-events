@@ -25,8 +25,6 @@ export var authCookieNames = {
 
 //Get values from environment
 const environment = (__ENV.ALTINN_ENV || 'defaultVal').toLowerCase();
-console.log("environment: ", environment);
-
 export let baseUrl = baseUrls[environment];
 export let authCookieName = authCookieNames[environment];
 
