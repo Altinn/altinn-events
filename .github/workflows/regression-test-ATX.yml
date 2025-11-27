@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     env:
-      ALTINN_ENV: ${{ inputs.environment }}      
+      altinn_env: ${{ inputs.environment }}      
       tokenGeneratorUserName: ${{ secrets.TOKENGENERATOR_USERNAME }}
       tokenGeneratorUserPwd: ${{ secrets.TOKENGENERATOR_USERPASSWORD }}
       runFullTestSet: true
