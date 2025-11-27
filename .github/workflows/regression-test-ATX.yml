@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     env:
-      altinn_env: ${{ inputs.environment }}      
+      altinn_env: ${{ inputs.environment }}
       tokenGeneratorUserName: ${{ secrets.TOKENGENERATOR_USERNAME }}
       tokenGeneratorUserPwd: ${{ secrets.TOKENGENERATOR_USERPASSWORD }}
       runFullTestSet: true
@@ -54,7 +54,7 @@ jobs:
           path: test/k6/src/tests/events/get.js
       - name: Run subscription regression tests
         if: always()
-        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1    
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
         with:
           path: test/k6/src/tests/subscriptions.js
           flags: -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
