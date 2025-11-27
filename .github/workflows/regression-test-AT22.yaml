@@ -14,5 +14,5 @@ jobs:
       contents: read
     uses: ./.github/workflows/regression-test-ATX.yml
     with:
-      environment: AT22
+      environmentey: AT22
     secrets: inherit
