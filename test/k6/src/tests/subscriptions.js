@@ -36,7 +36,7 @@ const scopes =
 const webhookEndpoint = __ENV.webhookEndpoint;
 
 const org = "ttd";
-const app = __ENV.app.toLowerCase();
+const app = (__ENV.app || '').toLowerCase() ;
 const runFullTestSet = __ENV.runFullTestSet
   ? __ENV.runFullTestSet.toLowerCase().includes("true")
   : false;

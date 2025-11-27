@@ -1,5 +1,4 @@
 import http from "k6/http";
-import { check } from "k6";
 import encoding from "k6/encoding";
 
 import * as config from "../config.js";
@@ -8,7 +7,7 @@ import * as apiHelpers from "../apiHelpers.js";
 
 const tokenGeneratorUserName = __ENV.tokenGeneratorUserName;
 const tokenGeneratorUserPwd = __ENV.tokenGeneratorUserPwd;
-const environment = __ENV.env.toLowerCase();
+const environment = (__ENV.altinn_env || 'defaultVal').toLowerCase();
 
 /*
 Generate enterprise token for test environment
