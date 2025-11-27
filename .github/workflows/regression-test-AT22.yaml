@@ -1,6 +1,9 @@
 name: Regression Test - AT22
 
 on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize]
   workflow_dispatch:
   schedule:
   - cron: '0 12 * * 1-5'
