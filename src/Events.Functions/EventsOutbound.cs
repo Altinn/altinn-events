@@ -34,7 +34,7 @@ public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService
         try
         {
             wrapperCandidate = item.DeserializeToRetryableEventWrapper();
-            CloudEventEnvelope envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(wrapperCandidate.Payload);
+            CloudEventEnvelope envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(wrapperCandidate?.Payload);
 
             await _webhookService.Send(envelope);
         }

@@ -334,7 +334,7 @@ public class EventsOutboundTests
 
         // Act & Assert
         Assert.ThrowsAny<ArgumentException>(() => CloudEventEnvelope.DeserializeToCloudEventEnvelope(nullString));
-        Assert.ThrowsAny<JsonException>(() => CloudEventEnvelope.DeserializeToCloudEventEnvelope(emptyString));
+        Assert.ThrowsAny<ArgumentException>(() => CloudEventEnvelope.DeserializeToCloudEventEnvelope(emptyString));
     }
 
     [Fact]
