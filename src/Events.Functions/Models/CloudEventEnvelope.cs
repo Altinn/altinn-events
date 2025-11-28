@@ -58,7 +58,7 @@ namespace Altinn.Platform.Events.Functions.Models
         /// <returns>The cloud event envelope object</returns>
         public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string? serializedEnvelope)
         {
-            ArgumentException.ThrowIfNullOrEmpty(serializedEnvelope, nameof(serializedEnvelope));
+            ArgumentException.ThrowIfNullOrEmpty(serializedEnvelope);
 
             var n = JsonNode.Parse(serializedEnvelope, _jsonNodeOptions);
             if (n == null)
