@@ -67,7 +67,7 @@ public class EventsOutboundTests
     }
 
     [Fact]
-    public async Task Run_ConfirmDeserializationOfCloudEventEnvelope_CloudEventPersisted()
+    public async Task Run_ConfirmDeserializationOfWrappedCloudEventEnvelope_CloudEventPersisted()
     {
         // Arrange
         CloudEventEnvelope actualServiceInput = null;
@@ -77,9 +77,15 @@ public class EventsOutboundTests
             .Returns(Task.CompletedTask);
 
         var sut = new EventsOutbound(webhookServiceMock.Object, _retryBackoffService);
+        var retryableEventWrapper = new RetryableEventWrapper
+        {
+            Payload = _serializedCloudEnvelope,
+            DequeueCount = 1,
+        };
+        string serializedWrapper = JsonSerializer.Serialize(retryableEventWrapper, _jsonSerializerOptions);
 
         // Act
-        await sut.Run(_serializedCloudEnvelope);
+        await sut.Run(serializedWrapper);
 
         // Assert
         webhookServiceMock.VerifyAll();
@@ -204,49 +210,6 @@ public class EventsOutboundTests
         CloudEventEnvelope deserializedEnvelope = requeuedWrapper.ExtractCloudEventEnvelope();
         Assert.Equal(427, deserializedEnvelope.SubscriptionId);
         Assert.Equal("/org/ttd", deserializedEnvelope.Consumer);
-    }
-
-    [Fact]
-    public async Task Run_WithDirectCloudEventEnvelope_ProcessesCloudEventSuccessfully()
-    {
-        // Arrange
-        string serializedCloudEvent = "{" +
-             "\"id\":\"f276d3da-9b72-492b-9fee-9cf71e2826a2\"," +
-             "\"source\":\"https://ttd.apps.at23.altinn.cloud/ttd/apps-test/instances/50012356/8f66119a-39eb-49ea-a34e-6b99ec6af319\"," +
-             "\"specversion\":\"1.0\"," +
-             "\"type\":\"app.instance.created\"," +
-             "\"subject\":\"/party/50012356\"," +
-             "\"time\":\"2023-01-13T09:47:41.1680188Z\"," +
-             "\"alternativesubject\":\"/person/16035001577\"" +
-             "}";
-
-        // Create CloudEventEnvelope directly without using RetryableEventWrapper
-        var envelope = new CloudEventEnvelope
-        {
-            Pushed = DateTime.Parse("2023-01-17T16:09:10.9090958+00:00"),
-            Endpoint = new Uri("https://hooks.slack.com/services/weebhook-endpoint"),
-            Consumer = "/org/ttd",
-            SubscriptionId = 427,
-            CloudEvent = serializedCloudEvent.DeserializeToCloudEvent()
-        };
-
-        // Serialize the envelope directly
-        string serializedEnvelope = envelope.Serialize();
-
-        Mock<IWebhookService> webhookServiceMock = new();
-        webhookServiceMock
-          .Setup(s => s.Send(It.IsAny<CloudEventEnvelope>()))
-          .ThrowsAsync(new InvalidOperationException("Webhook service failed"));
-
-        var retryMock = new Mock<IRetryBackoffService>();
-        var sut = new EventsOutbound(webhookServiceMock.Object, retryMock.Object);
-
-        // Act
-        await sut.Run(serializedEnvelope);
-
-        // Assert
-        retryMock.Verify(r => r.RequeueWithBackoff(It.IsAny<RetryableEventWrapper>(), It.IsAny<Exception>()), Times.Once);
-        webhookServiceMock.Verify(x => x.Send(It.IsAny<CloudEventEnvelope>()), Times.Once);
     }
 
     [Fact]

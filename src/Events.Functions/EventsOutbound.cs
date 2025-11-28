@@ -34,20 +34,7 @@ public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService
         try
         {
             wrapperCandidate = item.DeserializeToRetryableEventWrapper();
-            CloudEventEnvelope envelope;
-
-            if (wrapperCandidate is not null && !string.IsNullOrWhiteSpace(wrapperCandidate.Payload))
-            {
-                envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(wrapperCandidate.Payload);
-            }
-            else
-            {
-                // Treat input as a legacy envelope JSON, meaning without a wrapper object
-                envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(item);
-                
-                // Ensure wrapperCandidate is null in this branch to drive legacy requeue behavior
-                wrapperCandidate = null;
-            }
+            CloudEventEnvelope envelope = CloudEventEnvelope.DeserializeToCloudEventEnvelope(wrapperCandidate.Payload);
 
             await _webhookService.Send(envelope);
         }
