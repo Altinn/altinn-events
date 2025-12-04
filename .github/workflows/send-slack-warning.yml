@@ -1,12 +1,12 @@
-name: Slack Notification
+name: Send Slack Warning
 
 on:
   workflow_call:
     inputs:
-      message:
+      warning-message:
         required: true
         type: string
-        description: 'The message to send to Slack'
+        description: 'The warning message to include in the Slack notification'
     secrets:
       SLACK_WEBHOOK_URL:
         required: true
@@ -23,5 +23,5 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
-              "text": "${{ inputs.message }}"
+              "text": ":warning: ${{ inputs.warning-message }} :warning: \n\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }

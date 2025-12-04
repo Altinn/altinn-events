@@ -46,8 +46,8 @@ jobs:
     if: failure()
     needs: regression-tests
     permissions: {}
-    uses: ./.github/workflows/slack-notify.yml
+    uses: ./.github/workflows/send-slack-warning.yml
     with:
-      message: ":warning: Events regression test failure in tt02 :warning: \n\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      warning-message: "Events regression test failure in tt02"
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
