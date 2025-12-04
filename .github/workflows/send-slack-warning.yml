@@ -12,7 +12,7 @@ on:
         required: true
 
 jobs:
-  notify:
+  slack-notify:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
