@@ -58,21 +58,13 @@ jobs:
         with:
           path: test/k6/src/tests/subscriptions.js
           flags: -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
-      - name: Build failure report
-        if: failure()
-        run: |
 
-          report=":warning: Events regression test failure in $altinn_env :warning: \n"
-          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "stepreport="$report >> $GITHUB_ENV
-      - name: Report failure to Slack
-        if: failure()
-        id: slack
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-        with:
-          webhook-type: incoming-webhook
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
-          payload: |
-            {
-              "text": "${{ env.stepreport }}"
-            }
+  slack-notify:
+    if: failure()
+    needs: regression-tests
+    uses: ./.github/workflows/slack-notify.yml
+    permissions: {}
+    with:
+      message: ":warning: Events regression test failure in ${{ inputs.environment }} :warning: \n\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}

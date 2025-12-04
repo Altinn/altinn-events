@@ -11,6 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      altinn_env: ${{ matrix.environment }}
+      encodedJwk: ${{ secrets.MP_ENCODEDJWK }}
+      mpKid: ${{ secrets.MP_KID }}
+      mpClientId: ${{ secrets.MP_CLIENT_ID }}
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       - name: Set up k6
@@ -19,40 +24,29 @@ jobs:
         uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
         with:
           path: test/k6/src/tests/app-events.js
-          flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=${{ secrets.APP_NAME}} -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
+          flags: -e app=${{ secrets.APP_NAME}} -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
       - name: Run events use case tests (POST)
         if: always()
         uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
         with:
           path: test/k6/src/tests/events/post.js
-          flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
       - name: Run events use case tests (GET)
         if: always()
         uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
         with:
           path: test/k6/src/tests/events/get.js
-          flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
       - name: Run subscription use case tests
         if: always()
         uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
         with:
           path: test/k6/src/tests/subscriptions.js
-          flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=${{ secrets.APP_NAME}} -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
-      - name: Build failure report
-        if: failure()
-        run: |
+          flags: -e app=${{ secrets.APP_NAME}} -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
 
-          report=":warning: Events use case test failure in ${{ vars.ENV }}  :warning: \n"
-          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "stepreport="$report >> $GITHUB_ENV
-      - name: Report failure to Slack
-        if: failure()
-        id: slack
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-        with:
-          webhook-type: incoming-webhook
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
-          payload: |
-            {
-              "text": "${{ env.stepreport }}"
-            }
+  slack-notify:
+    if: failure()
+    needs: use-case-test
+    uses: ./.github/workflows/slack-notify.yml
+    with:
+      message: ":warning: Events use case test failure in prod :warning: \n\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
