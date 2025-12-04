@@ -48,6 +48,6 @@ jobs:
     uses: ./.github/workflows/send-slack-warning.yml
     permissions: {}
     with:
-      warning-message: "Events regression test failure in prod"
+      warning-message: 'Events regression test failure in prod'
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}

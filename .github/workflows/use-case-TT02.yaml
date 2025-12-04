@@ -48,6 +48,6 @@ jobs:
     permissions: {}
     uses: ./.github/workflows/send-slack-warning.yml
     with:
-      warning-message: "Events use case test failure in TT02"
+      warning-message: 'Events use case test failure in TT02'
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
