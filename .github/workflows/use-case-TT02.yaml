@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
+    env: # Shared environment vars for k6 test scripts
       altinn_env: tt02
       encodedJwk: ${{ secrets.MP_ENCODEDJWK }}
       mpKid: ${{ secrets.MP_KID }}

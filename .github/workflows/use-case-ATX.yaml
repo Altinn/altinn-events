@@ -19,7 +19,7 @@ jobs:
       failed-at22: ${{ steps.set-failure.outputs.at22 }}
       failed-at23: ${{ steps.set-failure.outputs.at23 }}
       failed-at24: ${{ steps.set-failure.outputs.at24 }}
-    env:
+    env: # Shared environment vars for k6 test scripts
       altinn_env: ${{ matrix.environment }}
       tokenGeneratorUserName: ${{ secrets.TOKENGENERATOR_USERNAME }}
       tokenGeneratorUserPwd: ${{ secrets.TOKENGENERATOR_USERPASSWORD }}

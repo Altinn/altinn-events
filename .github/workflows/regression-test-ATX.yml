@@ -28,7 +28,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    env:
+    env: # Shared environment vars for k6 test scripts
       altinn_env: ${{ inputs.environment }}
       tokenGeneratorUserName: ${{ secrets.TOKENGENERATOR_USERNAME }}
       tokenGeneratorUserPwd: ${{ secrets.TOKENGENERATOR_USERPASSWORD }}
