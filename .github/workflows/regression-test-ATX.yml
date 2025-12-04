@@ -6,21 +6,6 @@ on:
       environment:
         required: true
         type: string
-    secrets:
-      TOKENGENERATOR_USERNAME:
-        required: true
-      TOKENGENERATOR_USERPASSWORD:
-        required: true
-      USER_ID:
-        required: true
-      PARTY_ID:
-        required: true
-      PERSON_NUMBER:
-        required: true
-      WEBHOOK_ENDPOINT:
-        required: true
-      SLACK_WEBHOOK_URL_TEST:
-        required: true
 
 jobs:
   regression-tests:
