@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: read
     env: # Shared environment vars for k6 test scripts
-      altinn_env: ${{ matrix.environment }}
+      altinn_env: prod
       encodedJwk: ${{ secrets.MP_ENCODEDJWK }}
       mpKid: ${{ secrets.MP_KID }}
       mpClientId: ${{ secrets.MP_CLIENT_ID }}
@@ -48,6 +48,6 @@ jobs:
     permissions: {}
     uses: ./.github/workflows/send-slack-warning.yml
     with:
-      warning-message: "Events use case test failure in prod"
+      warning-message: "Events use case test failure in Production"
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
