@@ -7,7 +7,7 @@ import * as apiHelpers from "../apiHelpers.js";
 
 const tokenGeneratorUserName = __ENV.tokenGeneratorUserName;
 const tokenGeneratorUserPwd = __ENV.tokenGeneratorUserPwd;
-const environment = (__ENV.altinn_foo || 'defaultVal').toLowerCase();
+const environment = (__ENV.altinn_env || 'defaultVal').toLowerCase();
 
 /*
 Generate enterprise token for test environment
