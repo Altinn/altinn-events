@@ -45,6 +45,7 @@ jobs:
   slack-notify:
     if: failure()
     needs: use-case-test
+    permissions: {}
     uses: ./.github/workflows/send-slack-warning.yml
     with:
       warning-message: "Events use case test failure in TT02"

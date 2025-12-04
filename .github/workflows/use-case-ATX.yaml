@@ -59,6 +59,7 @@ jobs:
   slack-notify:
     if: failure()
     needs: use-case-test
+    permissions: {}
     strategy:
       matrix:
         environment: [AT22, AT23, AT24]
@@ -70,7 +71,6 @@ jobs:
           - environment: AT24
             output: failed-at24
     runs-on: ubuntu-latest
-    permissions: {}
     steps:
       - name: Send notification
         if: needs.use-case-test.outputs[matrix.output] == 'true'
