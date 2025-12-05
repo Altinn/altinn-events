@@ -31,7 +31,7 @@ export const options = {
 
 export function setup() {
   var scopes = "altinn:serviceowner";
-  const app = (__ENV.app || '').toLowerCase();
+  const app = __ENV.app.toLowerCase();
   const org = "ttd";
   let partyId = __ENV.partyId;
 
