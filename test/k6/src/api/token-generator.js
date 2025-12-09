@@ -7,7 +7,7 @@ import * as apiHelpers from "../apiHelpers.js";
 
 const tokenGeneratorUserName = __ENV.tokenGeneratorUserName;
 const tokenGeneratorUserPwd = __ENV.tokenGeneratorUserPwd;
-const environment = (__ENV.altinn_env || '').toLowerCase();
+const environment = (__ENV.altinn_env || '').toLowerCase(); // Fallback value for when k6 inspect is run in script validation (env var evaluation yields 'undefined' in this phase)
 
 /*
 Generate enterprise token for test environment

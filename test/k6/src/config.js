@@ -24,7 +24,7 @@ export var authCookieNames = {
 };
 
 //Get values from environment
-const environment = (__ENV.altinn_env || '').toLowerCase();
+const environment = (__ENV.altinn_env || '').toLowerCase(); // Fallback value for when k6 inspect is run in script validation (env var evaluation yields 'undefined' in this phase)
 export let baseUrl = baseUrls[environment];
 export let authCookieName = authCookieNames[environment];
 
@@ -52,8 +52,8 @@ export var platformAuthentication = {
   exchange:
     "https://platform." + baseUrl + "/authentication/api/v1/exchange/maskinporten",
   refresh:
-  "https://platform." + baseUrl + "/authentication/api/v1/authentication?goto=" +
-  "https://platform." + baseUrl + "/authentication/api/v1/refresh",
+    "https://platform." + baseUrl + "/authentication/api/v1/authentication?goto=" +
+    "https://platform." + baseUrl + "/authentication/api/v1/refresh",
 };
 
 export var portalAuthentication = {
