@@ -1,5 +1,4 @@
 import http from "k6/http";
-import { check } from "k6";
 import encoding from "k6/encoding";
 
 import * as config from "../config.js";
@@ -8,7 +7,7 @@ import * as apiHelpers from "../apiHelpers.js";
 
 const tokenGeneratorUserName = __ENV.tokenGeneratorUserName;
 const tokenGeneratorUserPwd = __ENV.tokenGeneratorUserPwd;
-const environment = __ENV.env.toLowerCase();
+const environment = (__ENV.altinn_env || '').toLowerCase();
 
 /*
 Generate enterprise token for test environment
@@ -23,19 +22,19 @@ export function generateEnterpriseToken(queryParams) {
 
 export function generatePersonalToken() {
 
-  var userId =  __ENV.userId;
+  var userId = __ENV.userId;
   var partyId = __ENV.partyId;
   var pid = __ENV.personNumber
 
-  if(!userId){
+  if (!userId) {
     stopIterationOnFail("Required environment variable user id (userId) was not provided", false);
   }
 
-  if(!partyId){
+  if (!partyId) {
     stopIterationOnFail("Required environment variable party id (partyId) was not provided", false);
   }
 
-  if(!pid){
+  if (!pid) {
     stopIterationOnFail("Required environment variable person number (personNumber) was not provided", false);
   }
 

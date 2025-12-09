@@ -3,7 +3,7 @@ name: Use Case - TT02
 on:
   workflow_dispatch:
   schedule:
-  - cron: '*/15 * * * *'
+    - cron: '*/15 * * * *'
 
 jobs:
   use-case-test:
@@ -11,46 +11,43 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env: # Shared environment vars for k6 test scripts
+      altinn_env: tt02
+      encodedJwk: ${{ secrets.MP_ENCODEDJWK }}
+      mpKid: ${{ secrets.MP_KID }}
+      mpClientId: ${{ secrets.MP_CLIENT_ID }}
     steps:
-    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-    - name: Run app-events use case tests
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/app-events.js
-        flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=apps-test -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
-    - name: Run events use case tests (POST)
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/events/post.js
-        flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
-    - name: Run events use case tests (GET)
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/events/get.js
-        flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
-    - name: Run subscription use case tests
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/subscriptions.js
-        flags: -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
-    - name: Build failure report
-      if: failure()
-      run: |
-          report=":warning: Events use case test failure in ${{ vars.ENV }} :warning: \n"
-          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "stepreport="$report >> $GITHUB_ENV
-    - name: Report failure to Slack
-      if: failure()
-      id: slack
-      uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-      with:
-        webhook-type: incoming-webhook
-        webhook: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
-        payload: |
-            {
-              "text": "${{ env.stepreport }}"
-            }
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - name: Set up k6
+        uses: grafana/setup-k6-action@ffe7d7290dfa715e48c2ccc924d068444c94bde2 # v1.1.0
+      - name: Run app-events use case tests
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
+        with:
+          path: test/k6/src/tests/app-events.js
+          flags: -e app=apps-test -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
+      - name: Run events use case tests (POST)
+        if: always()
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
+        with:
+          path: test/k6/src/tests/events/post.js
+      - name: Run events use case tests (GET)
+        if: always()
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
+        with:
+          path: test/k6/src/tests/events/get.js
+      - name: Run subscription use case tests
+        if: always()
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
+        with:
+          path: test/k6/src/tests/subscriptions.js
+          flags: -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
 
+  slack-notify:
+    if: failure()
+    needs: use-case-test
+    permissions: {}
+    uses: ./.github/workflows/send-slack-warning.yml
+    with:
+      warning-message: 'Events use case test failure in TT02'
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
