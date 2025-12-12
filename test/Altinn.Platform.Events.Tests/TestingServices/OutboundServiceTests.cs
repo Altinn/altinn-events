@@ -15,6 +15,7 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Telemetry;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
@@ -370,7 +371,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             ISubscriptionRepository repositoryMock = null,
             IAuthorization authorizationMock = null,
             MemoryCache memoryCache = null,
-            ILogger<OutboundService> loggerMock = null)
+            ILogger<OutboundService> loggerMock = null,
+            TelemetryClient telemetryClient = null)
         {
             if (loggerMock == null)
             {
@@ -417,7 +419,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 }),
                 memoryCache,
                 loggerMock,
-                null);
+                telemetryClient);
 
             return service;
         }
