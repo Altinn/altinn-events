@@ -416,7 +416,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     AppsDomain = "apps.altinn.no"
                 }),
                 memoryCache,
-                loggerMock);
+                loggerMock,
+                null);
 
             return service;
         }

@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Telemetry
     /// Watch out for high cardinality when choosing tags. Most timeseries and tracing databases
     /// do not handle high cardinality well.
     /// </remarks>
-    public sealed partial class Telemetry : IDisposable
+    public sealed partial class TelemetryClient : IDisposable
     {
         /// <summary>
         /// A unique name of the application of use in the telemetry context.
@@ -49,15 +49,18 @@ namespace Altinn.Platform.Events.Telemetry
 
         private FrozenDictionary<string, Counter<long>> _counters;
 
+        private FrozenDictionary<string, Histogram<double>> _histograms;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="Telemetry"/> class.
+        /// Initializes a new instance of the <see cref="TelemetryClient"/> class.
         /// </summary>
-        public Telemetry()
+        public TelemetryClient()
         {
             ActivitySource = new ActivitySource(AppName);
             Meter = new Meter(AppName);
 
             _counters = FrozenDictionary<string, Counter<long>>.Empty;
+            _histograms = FrozenDictionary<string, Histogram<double>>.Empty;
 
             Init();
         }
@@ -77,9 +80,10 @@ namespace Altinn.Platform.Events.Telemetry
                 _isInitialized = true;
 
                 var counters = new Dictionary<string, Counter<long>>();
-                var context = new InitContext(counters);
+                var histograms = new Dictionary<string, Histogram<double>>();
+                var context = new InitContext(counters, histograms);
 
-                // TODO: InitContactRegisterUpdateJob(context);
+                InitSubscriptionMetrics(context);
 
                 // NOTE: This Telemetry class is registered as a singleton
                 // Metrics could be kept in fields of the respective objects that use them for instrumentation
@@ -87,11 +91,12 @@ namespace Altinn.Platform.Events.Telemetry
                 // So instead they are kept in frozen dicts here and looked up as they are incremented.
                 // Another option would be to keep them as plain fields here
                 _counters = counters.ToFrozenDictionary();
+                _histograms = histograms.ToFrozenDictionary();
             }
         }
 
         private readonly record struct InitContext(
-            Dictionary<string, Counter<long>> Counters);
+            Dictionary<string, Counter<long>> Counters, Dictionary<string, Histogram<double>> Histograms);
 
         /// <summary>
         /// Utility methods for creating metrics.
@@ -115,6 +120,15 @@ namespace Altinn.Platform.Events.Telemetry
             var counter = Meter.CreateCounter<long>(name, unit: null, description: null);
             context.Counters.Add(name, counter);
             init(counter);
+        }
+
+        private void InitHistogram(InitContext context, string name, string description)
+        {
+            var histogram = Meter.CreateHistogram<double>(
+            name,
+            unit: "ms",
+            description: description);
+            context.Histograms.Add(name, histogram);
         }
 
         /// <summary>

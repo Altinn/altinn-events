@@ -200,6 +200,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     }
 
     services.AddAutoMapper(typeof(Program));
+    services.AddSingleton<TelemetryClient>();
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
