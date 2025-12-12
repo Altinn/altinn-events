@@ -27,12 +27,12 @@ namespace Altinn.Platform.Events.Telemetry
             _histograms[MetricNameEventProcessingDuration].Record(durationInMs);
 
         /// <summary>
-        /// This class holds a set of constants for the telemetry metrics of the contact register update job.
+        /// This class holds a set of constants for the telemetry metrics of subscription processing.
         /// </summary>
         internal static class Subscriptions
         {
             /// <summary>
-            /// The name of the metric for the number of persons added through the sync job.
+            /// The name of the metric for counting failed authorization checks against subscriptions.
             /// </summary>
             internal static readonly string MetricNameSubscriptionFailedAuth = MetricName("authorization.failed");
 
