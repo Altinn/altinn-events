@@ -40,5 +40,48 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             Assert.Contains(histogramMeasurements, m => m.Name == "events.subscription.processing.duration" && m.Value == 123.4);
             Assert.Contains(counterMeasurements, m => m.Name == "events.subscription.authorization.failed" && m.Value == 1);
         }
+
+        [Fact]
+        public void Init_Is_Idempotent()
+        {
+            var publishedInstruments = new List<string>();
+
+            using var telemetry = new TelemetryClient();
+            using var listener = new MeterListener();
+            listener.InstrumentPublished = (instrument, _) =>
+            {
+                if (instrument.Meter.Name == TelemetryClient.AppName)
+                {
+                    publishedInstruments.Add(instrument.Name);
+                    listener.EnableMeasurementEvents(instrument);
+                }
+            };
+
+            listener.Start();
+
+            // Act: multiple calls should not register new instruments
+            telemetry.Init();
+            telemetry.Init();
+
+            listener.RecordObservableInstruments();
+            listener.Dispose();
+
+            // Assert: only the two instruments from constructor initialization should be registered
+            Assert.Equal(new[] { "events.subscription.authorization.failed", "events.subscription.processing.duration" }, publishedInstruments);
+        }
+
+        [Fact]
+        public void Dispose_Is_Idempotent()
+        {
+            var telemetry = new TelemetryClient();
+
+            // Act
+            var firstDispose = Record.Exception(() => telemetry.Dispose());
+            var secondDispose = Record.Exception(() => telemetry.Dispose());
+
+            // Assert
+            Assert.Null(firstDispose);
+            Assert.Null(secondDispose);
+        }
     }
 }
