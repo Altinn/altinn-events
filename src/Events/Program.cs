@@ -164,20 +164,16 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     logger.LogInformation("Program // ConfigureServices");
 
-    var attributes = new List<KeyValuePair<string, object>>(2)
-    {
-        KeyValuePair.Create("service.name", (object)"platform-events"),
-    };
-
     services.AddOpenTelemetry()
-        .ConfigureResource(resourceBuilder => resourceBuilder.AddAttributes(attributes))
+        .ConfigureResource(resourceBuilder => resourceBuilder.AddService(serviceName: TelemetryClient.AppName, serviceInstanceId: Environment.MachineName))
         .WithMetrics(metrics => 
         {
             metrics.AddAspNetCoreInstrumentation();
             metrics.AddMeter(
                 "Microsoft.AspNetCore.Hosting",
                 "Microsoft.AspNetCore.Server.Kestrel",
-                "System.Net.Http");
+                "System.Net.Http",
+                TelemetryClient.AppName);
         })
         .WithTracing(tracing => 
         {
@@ -186,6 +182,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 tracing.SetSampler(new AlwaysOnSampler());
             }
 
+            tracing.AddSource(TelemetryClient.AppName);
             tracing.AddAspNetCoreInstrumentation();
 
             tracing.AddHttpClientInstrumentation();
@@ -200,6 +197,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     }
 
     services.AddAutoMapper(typeof(Program));
+    services.AddSingleton<TelemetryClient>();
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");

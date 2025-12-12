@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
@@ -10,9 +10,8 @@ using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
-
+using Altinn.Platform.Events.Telemetry;
 using CloudNative.CloudEvents;
-
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -34,6 +33,7 @@ public class OutboundService : IOutboundService
     private readonly MemoryCacheEntryOptions _consumerAuthorizationEntryOptions;
 
     private readonly ILogger<OutboundService> _logger;
+    private readonly TelemetryClient _telemetry;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OutboundService"/> class.
@@ -45,7 +45,8 @@ public class OutboundService : IOutboundService
         IAuthorization authorizationService,
         IOptions<PlatformSettings> platformSettings,
         IMemoryCache memoryCache,
-        ILogger<OutboundService> logger)
+        ILogger<OutboundService> logger,
+        TelemetryClient telemetry)
     {
         _queueClient = queueClient;
         _traceLogService = traceLogService;
@@ -54,6 +55,7 @@ public class OutboundService : IOutboundService
         _platformSettings = platformSettings.Value;
         _memoryCache = memoryCache;
         _logger = logger;
+        _telemetry = telemetry;
 
         _consumerAuthorizationEntryOptions = new MemoryCacheEntryOptions()
           .SetPriority(CacheItemPriority.High)
@@ -85,6 +87,7 @@ public class OutboundService : IOutboundService
     private async Task AuthorizeAndEnqueueOutbound(
         CloudEvent cloudEvent, Subscription subscription, CancellationToken cancellationToken)
     {
+        var sw = Stopwatch.StartNew();
         var authorized =
             IsAppEvent(cloudEvent)
             ? await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer)
@@ -112,7 +115,11 @@ public class OutboundService : IOutboundService
         {
             // add unauthorized trace log entry
             await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.Unauthorized);
+            _telemetry?.SubscriptionAuthFailed();
         }
+
+        sw.Stop();
+        _telemetry?.RecordSubscriptionEventProcessingDuration(sw.ElapsedMilliseconds);
     }
 
     private async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
