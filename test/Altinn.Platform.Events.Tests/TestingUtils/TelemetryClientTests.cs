@@ -35,7 +35,6 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             telemetry.RecordSubscriptionEventProcessingDuration(123.4);
 
             listener.RecordObservableInstruments();
-            listener.Dispose();
 
             // Assert
             Assert.Contains(histogramMeasurements, m => m.Name == "events.subscription.processing.duration" && m.Value == 123.4);
