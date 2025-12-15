@@ -266,8 +266,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync(true);
 
             var loggerMock = new Mock<ILogger<OutboundService>>();
+            var telemetryClient = new TelemetryClient();
 
-            var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object, authorizationMock: authorizationMock.Object, telemetryClient: null);
+            var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object, authorizationMock: authorizationMock.Object, telemetryClient: telemetryClient);
 
             // Act
             await service.PostOutbound(cloudEvent, CancellationToken.None);
@@ -282,6 +283,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                Times.Once);
             queueMock.VerifyAll();
+
+            telemetryClient.Dispose();
         }
 
         /// <summary>
