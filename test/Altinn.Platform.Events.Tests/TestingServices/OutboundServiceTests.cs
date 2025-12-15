@@ -267,7 +267,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var loggerMock = new Mock<ILogger<OutboundService>>();
 
-            var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object, authorizationMock: authorizationMock.Object, telemetryClient: new TelemetryClient());
+            var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object, authorizationMock: authorizationMock.Object, telemetryClient: null);
 
             // Act
             await service.PostOutbound(cloudEvent, CancellationToken.None);
