@@ -192,7 +192,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Contains(counterMeasurements, m => m.Name == "events.subscription.authorization.failed" && m.Value == 1);
 
             telemetryClient.Dispose();
-
         }
 
         /// <summary>

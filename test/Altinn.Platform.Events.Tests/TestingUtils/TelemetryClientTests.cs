@@ -44,30 +44,31 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         [Fact]
         public void Init_Is_Idempotent()
         {
-            var publishedInstruments = new List<string>();
+           string[] expected = new[] { "events.subscription.authorization.failed", "events.subscription.processing.duration" };
+           var publishedInstruments = new List<string>();
 
-            using var telemetry = new TelemetryClient();
-            using var listener = new MeterListener();
-            listener.InstrumentPublished = (instrument, _) =>
-            {
+           using var telemetry = new TelemetryClient();
+           using var listener = new MeterListener();
+           listener.InstrumentPublished = (instrument, _) =>
+           {
                 if (instrument.Meter.Name == TelemetryClient.AppName)
                 {
                     publishedInstruments.Add(instrument.Name);
                     listener.EnableMeasurementEvents(instrument);
                 }
-            };
+           };
 
-            listener.Start();
+           listener.Start();
 
-            // Act: multiple calls should not register new instruments
-            telemetry.Init();
-            telemetry.Init();
+           // Act: multiple calls should not register new instruments
+           telemetry.Init();
+           telemetry.Init();
 
-            listener.RecordObservableInstruments();
-            listener.Dispose();
+           listener.RecordObservableInstruments();
+           listener.Dispose();
 
             // Assert: only the two instruments from constructor initialization should be registered
-            Assert.Equal(new[] { "events.subscription.authorization.failed", "events.subscription.processing.duration" }, publishedInstruments);
+           Assert.Equal(expected, publishedInstruments);
         }
 
         [Fact]
