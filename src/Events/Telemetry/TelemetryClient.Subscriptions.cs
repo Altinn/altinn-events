@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-using static Altinn.Platform.Events.Telemetry.TelemetryClient.Subscriptions;
+﻿using static Altinn.Platform.Events.Telemetry.TelemetryClient.Subscriptions;
 
 namespace Altinn.Platform.Events.Telemetry
 {
