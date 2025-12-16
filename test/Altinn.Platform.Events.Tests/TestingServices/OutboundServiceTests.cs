@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
@@ -15,9 +15,9 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Telemetry;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
-
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.Extensions.Caching.Memory;
@@ -164,13 +164,34 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(false);
 
-            var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
+            var telemetryClient = new TelemetryClient();
+            var counterMeasurements = new List<(string Name, long Value)>();
+            using var listener = new MeterListener();
+            listener.InstrumentPublished = (instrument, _) =>
+            {
+                if (instrument.Meter.Name == TelemetryClient.AppName)
+                {
+                    listener.EnableMeasurementEvents(instrument);
+                }
+            };
+
+            listener.SetMeasurementEventCallback<long>(
+                (inst, value, _, _) => counterMeasurements.Add((inst.Name, value)));
+
+            listener.Start();
+
+            var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object, telemetryClient: telemetryClient);
 
             // Act
             await service.PostOutbound(cloudEvent, CancellationToken.None);
+            listener.RecordObservableInstruments();
 
             // Assert
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
+
+            Assert.Contains(counterMeasurements, m => m.Name == "events.subscription.authorization.failed" && m.Value == 1);
+
+            telemetryClient.Dispose();
         }
 
         /// <summary>
@@ -265,8 +286,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync(true);
 
             var loggerMock = new Mock<ILogger<OutboundService>>();
+            var telemetryClient = new TelemetryClient();
 
-            var service = GetOutboundService(queueMock: queueMock.Object, loggerMock: loggerMock.Object, authorizationMock: authorizationMock.Object);
+            var service = GetOutboundService(queueMock: queueMock.Object, logger: loggerMock.Object, authorizationMock: authorizationMock.Object, telemetryClient: telemetryClient);
 
             // Act
             await service.PostOutbound(cloudEvent, CancellationToken.None);
@@ -281,6 +303,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                Times.Once);
             queueMock.VerifyAll();
+
+            telemetryClient.Dispose();
         }
 
         /// <summary>
@@ -370,11 +394,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             ISubscriptionRepository repositoryMock = null,
             IAuthorization authorizationMock = null,
             MemoryCache memoryCache = null,
-            ILogger<OutboundService> loggerMock = null)
+            ILogger<OutboundService> logger = null,
+            TelemetryClient telemetryClient = null)
         {
-            if (loggerMock == null)
+            if (logger == null)
             {
-                loggerMock = new Mock<ILogger<OutboundService>>().Object;
+                logger = new Mock<ILogger<OutboundService>>().Object;
             }
 
             if (queueMock == null)
@@ -416,7 +441,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     AppsDomain = "apps.altinn.no"
                 }),
                 memoryCache,
-                loggerMock);
+                logger,
+                telemetryClient);
 
             return service;
         }
