@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.Functions.Extensions
         /// <param name="content">The http content</param>
         /// <param name="platformAccessToken">The platformAccess tokens</param>
         /// <returns>A HttpResponseMessage</returns>
-        public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string requestUri, HttpContent content, string platformAccessToken = null)
+        public static Task<HttpResponseMessage> PostAsync(this HttpClient httpClient, string requestUri, HttpContent content, string? platformAccessToken = null)
         {
             HttpRequestMessage request = new(HttpMethod.Post, new Uri(requestUri, UriKind.Relative))
             {
@@ -43,7 +43,7 @@ namespace Altinn.Platform.Events.Functions.Extensions
         /// <param name="content">The http content</param>
         /// <param name="platformAccessToken">The platformAccess tokens</param>
         /// <returns>A HttpResponseMessage</returns>
-        public static Task<HttpResponseMessage> PutAsync(this HttpClient httpClient, string requestUri, HttpContent content, string platformAccessToken = null)
+        public static Task<HttpResponseMessage> PutAsync(this HttpClient httpClient, string requestUri, HttpContent? content, string? platformAccessToken = null)
         {
             HttpRequestMessage request = new(HttpMethod.Put, requestUri)
             {

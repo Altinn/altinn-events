@@ -8,6 +8,6 @@ namespace Altinn.Platform.Events.Functions.Configuration
         /// <summary>
         /// Gets or sets the url for the Events API endpoint.
         /// </summary>
-        public string ApiEventsEndpoint { get; set; }
+        public required string ApiEventsEndpoint { get; set; }
     }
 }

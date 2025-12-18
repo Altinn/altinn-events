@@ -54,7 +54,7 @@ namespace Altinn.Platform.Events.Services
             return await CompleteSubscriptionCreation(eventsSubscription);
         }
 
-        private void SetResourceFilterIfEmpty(Subscription eventsSubscription)
+        private static void SetResourceFilterIfEmpty(Subscription eventsSubscription)
         {
             eventsSubscription.ResourceFilter ??= GetResourceFilterFromSource(eventsSubscription.SourceFilter);
         }

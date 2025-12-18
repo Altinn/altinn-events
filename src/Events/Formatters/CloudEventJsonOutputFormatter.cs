@@ -35,15 +35,15 @@ namespace Altinn.Platform.Events.Formatters
         public override async Task WriteResponseBodyAsync(OutputFormatterWriteContext context, Encoding selectedEncoding)
         {
             var response = context.HttpContext.Response;
-            if (context.Object is CloudEvent)
+            if (context.Object is CloudEvent cloudEvent)
             {
-                await response.WriteAsync((context.Object as CloudEvent).Serialize(_formatter));
+                await response.WriteAsync(cloudEvent.Serialize(_formatter));
                 return;
             }
 
-            if (context.Object is IEnumerable<CloudEvent>)
+            if (context.Object is IEnumerable<CloudEvent> cloudEventCollection)
             {
-                var cloudEvents = new List<CloudEvent>(context.Object as IEnumerable<CloudEvent>);
+                var cloudEvents = new List<CloudEvent>(cloudEventCollection);
 
                 await response.WriteAsync("[");
                 for (int i = 0; i < cloudEvents.Count; i++)
