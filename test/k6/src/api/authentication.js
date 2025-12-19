@@ -13,11 +13,11 @@ const userName = __ENV.userName;
 const userPassword = __ENV.userPassword;
 
 export function exchangeToAltinnToken(token, test) {
-  var endpoint = platformAuthentication.exchange + "?test=" + test;
-  var params = buildHeaderWithBearer(token);
+  let endpoint = platformAuthentication.exchange + "?test=" + test;
+  let params = buildHeaderWithBearer(token);
 
-  var res = http.get(endpoint, params);
-  var success = check(res, {
+  let res = http.get(endpoint, params);
+  let success = check(res, {
     "// Setup // Authentication towards Altinn 3 Success": (r) =>
       r.status === 200,
   });
@@ -46,18 +46,18 @@ export function authenticateUser() {
     );
   }
 
-  var endpoint = portalAuthentication.authenticateWithPwd;
+  let endpoint = portalAuthentication.authenticateWithPwd;
 
-  var requestBody = {
+  let requestBody = {
     UserName: userName,
     UserPassword: userPassword,
   };
 
-  var params = buildHeaderWithContentType("application/json");
+  let params = buildHeaderWithContentType("application/json");
 
-  var res = http.post(endpoint, JSON.stringify(requestBody), params);
+  let res = http.post(endpoint, JSON.stringify(requestBody), params);
 
-  var success = check(res, {
+  let success = check(res, {
     "// Setup // Authentication towards Altinn 2 Success": (r) =>
       r.status === 200,
   });
@@ -68,23 +68,23 @@ export function authenticateUser() {
     res
   );
 
-  var aspxAuthCookie = res.cookies[authCookieName][0].value;
+  let aspxAuthCookie = res.cookies[authCookieName][0].value;
 
-  var endpoint = platformAuthentication.refresh;
+  let refreshEndpoint = platformAuthentication.refresh;
 
-  var params = buildHeaderWithCookie(authCookieName, aspxAuthCookie);
+  let headerParams = buildHeaderWithCookie(authCookieName, aspxAuthCookie);
 
-  var res = http.get(endpoint, params);
-  var success = check(res, {
+  let res2 = http.get(refreshEndpoint, headerParams);
+  let success2 = check(res2, {
     "// Setup // Authentication towards Altinn 3 Success": (r) =>
       r.status === 200,
   });
-  addErrorCount(success);
+  addErrorCount(success2);
   stopIterationOnFail(
     "// Setup // Authentication towards Altinn 3 Success",
-    success,
-    res
+    success2,
+    res2
   );
 
-  return res.body;
+  return res2.body;
 }

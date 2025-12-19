@@ -26,7 +26,7 @@ export function generateAccessToken(scopes) {
     stopIterationOnFail("Required environment variable maskinporten kid (mpKid) was not provided", false);
   }
 
-  var grant = createJwtGrant(scopes);
+  let grant = createJwtGrant(scopes);
 
   let body = {
     alg: "RS256",
@@ -36,7 +36,7 @@ export function generateAccessToken(scopes) {
 
   let res = http.post(config.maskinporten.token, body, buildHeaderWithContentType("application/x-www-form-urlencoded"));
 
-  var success = check(res, {
+  let success = check(res, {
     "// Setup // Authentication towards Maskinporten Success": (r) =>
       r.status === 200,
   });
@@ -58,9 +58,9 @@ function createJwtGrant(scopes) {
     kid: mpKid,
   };
 
-  var now = Math.floor(Date.now() / 1000);
+  let now = Math.floor(Date.now() / 1000);
 
-  var payload = {
+  let payload = {
     aud: config.maskinporten.audience,
     scope: scopes,
     iss: mpClientId,
@@ -69,7 +69,7 @@ function createJwtGrant(scopes) {
     jti: uuidv4(),
   };
 
-  var signedJWT = KJUR.jws.JWS.sign(
+  let signedJWT = KJUR.jws.JWS.sign(
     "RS256",
     header,
     payload,
