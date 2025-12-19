@@ -1052,11 +1052,11 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Get events with both partyId and unit defined as query parameters
+            ///   Get events with unit query parameter having wrong format (not 9 digits)
             /// Expected result:
             ///   The result be a problem detail object
             /// Success criteria:
-            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            ///   Result status is 400 bad request and the problem details specifying the unit format requirement.
             /// </summary>
             [Fact]
             public async Task GetForParty_WrongFormatQueryParamUnit_ReturnsBadRequest()
