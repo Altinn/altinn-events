@@ -5,7 +5,7 @@
  * @returns string a string like key1=value&key2=value2
  */
 export function buildQueryParametersForEndpoint(queryparams) {
-  let query = "?";
+  const query = "?";
   Object.keys(queryparams).forEach(function (key) {
     if (Array.isArray(queryparams[key])) {
       queryparams[key].forEach((value) => {
@@ -20,7 +20,7 @@ export function buildQueryParametersForEndpoint(queryparams) {
 }
 
 export function buildHeaderWithBearer(token) {
-  let params = {
+  const params = {
     headers: {
       Authorization: "Bearer " + token
     }
@@ -30,7 +30,7 @@ export function buildHeaderWithBearer(token) {
 }
 
 export function buildHeaderWithBasic(token) {
-  let params = {
+  const params = {
     headers: {
       Authorization: "Basic " + token
     }
@@ -40,7 +40,7 @@ export function buildHeaderWithBasic(token) {
 }
 
 export function buildHeaderWithBearerAndContentType(token, contentType) {
-  let params = {
+  const params = {
     headers: {
       Authorization: "Bearer " + token,
       "Content-Type": contentType
@@ -51,7 +51,7 @@ export function buildHeaderWithBearerAndContentType(token, contentType) {
 }
 
 export function buildHeaderWithContentType(contentType) {
-  let params = {
+  const params = {
     headers: {
       "Content-Type": contentType
     }
@@ -61,7 +61,7 @@ export function buildHeaderWithContentType(contentType) {
 }
 
 export function buildHeaderWithCookie(name, value) {
-  let params = {
+  const params = {
     headers: {
       Cookie: name + "=" + value,
     }

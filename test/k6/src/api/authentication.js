@@ -72,19 +72,19 @@ export function authenticateUser() {
 
   let refreshEndpoint = platformAuthentication.refresh;
 
-  let headerParams = buildHeaderWithCookie(authCookieName, aspxAuthCookie);
+  params = buildHeaderWithCookie(authCookieName, aspxAuthCookie);
 
-  let res2 = http.get(refreshEndpoint, headerParams);
-  let success2 = check(res2, {
+  res = http.get(refreshEndpoint, params);
+  success = check(res, {
     "// Setup // Authentication towards Altinn 3 Success": (r) =>
       r.status === 200,
   });
-  addErrorCount(success2);
+  addErrorCount(success);
   stopIterationOnFail(
     "// Setup // Authentication towards Altinn 3 Success",
-    success2,
-    res2
+    success,
+    res
   );
 
-  return res2.body;
+  return res.body;
 }
