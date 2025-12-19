@@ -5,7 +5,7 @@
  * @returns string a string like key1=value&key2=value2
  */
 export function buildQueryParametersForEndpoint(queryparams) {
-  const query = "?";
+  let query = "?";
   Object.keys(queryparams).forEach(function (key) {
     if (Array.isArray(queryparams[key])) {
       queryparams[key].forEach((value) => {

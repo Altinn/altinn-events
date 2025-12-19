@@ -13,11 +13,11 @@ const userName = __ENV.userName;
 const userPassword = __ENV.userPassword;
 
 export function exchangeToAltinnToken(token, test) {
-  let endpoint = platformAuthentication.exchange + "?test=" + test;
-  let params = buildHeaderWithBearer(token);
+  const endpoint = platformAuthentication.exchange + "?test=" + test;
+  const params = buildHeaderWithBearer(token);
 
-  let res = http.get(endpoint, params);
-  let success = check(res, {
+  const res = http.get(endpoint, params);
+  const success = check(res, {
     "// Setup // Authentication towards Altinn 3 Success": (r) =>
       r.status === 200,
   });
@@ -46,9 +46,9 @@ export function authenticateUser() {
     );
   }
 
-  let endpoint = portalAuthentication.authenticateWithPwd;
+  const endpoint = portalAuthentication.authenticateWithPwd;
 
-  let requestBody = {
+  const requestBody = {
     UserName: userName,
     UserPassword: userPassword,
   };
@@ -68,9 +68,9 @@ export function authenticateUser() {
     res
   );
 
-  let aspxAuthCookie = res.cookies[authCookieName][0].value;
+  const aspxAuthCookie = res.cookies[authCookieName][0].value;
 
-  let refreshEndpoint = platformAuthentication.refresh;
+  const refreshEndpoint = platformAuthentication.refresh;
 
   params = buildHeaderWithCookie(authCookieName, aspxAuthCookie);
 
