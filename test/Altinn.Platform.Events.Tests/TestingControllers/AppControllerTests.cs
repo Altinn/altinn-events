@@ -1052,6 +1052,64 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
+            ///   Get events with unit query parameter having wrong format (not 9 digits)
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying the unit format requirement.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_WrongFormatQueryParamUnit_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&size=5&unit=12345";
+
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("Value of 'Unit' needs to be exactly 9 digits.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with unit query parameter having wrong format (not 9 digits)
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying the unit format requirement.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_WrongFormatQueryParamUnitWithLetters_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&from=2020-01-01Z&size=5&unit=123456MVA";
+
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                string responseString = await response.Content.ReadAsStringAsync();
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("Value of 'Unit' needs to be exactly 9 digits.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
             ///   Get events with both partyId and person number defined as filter parameters
             /// Expected result:
             ///   The result be a problem detail object
