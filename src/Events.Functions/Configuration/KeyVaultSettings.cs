@@ -8,7 +8,7 @@ namespace Altinn.Platform.Events.Functions.Configuration
         /// <summary>
         /// Uri to keyvault
         /// </summary>
-        public string KeyVaultURI { get; set; }
+        public string? KeyVaultURI { get; set; }
 
         /// <summary>
         /// Name of the certificate secret

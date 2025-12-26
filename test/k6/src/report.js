@@ -1,4 +1,4 @@
-var replacements = {
+let replacements = {
   '&': '&amp;',
   '<': '&lt;',
   '>': '&gt;',
@@ -7,13 +7,13 @@ var replacements = {
 };
 
 function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g, function (char) {
+  return str.replaceAll(/[&<>'"]/g, function (char) {
     return replacements[char];
   });
 }
 
 function checksToTestcase(checks, failures) {
-  var testCases = [];
+  let testCases = [];
   if (checks.length > 0) {
     checks.forEach((check) => {
       if (check.passes >= 1 && check.fails === 0) {
@@ -34,15 +34,15 @@ function checksToTestcase(checks, failures) {
  * @returns junit xml string
  */
 export function generateJUnitXML(data, suiteName) {
-  var failures = 0;
-  var allTests = [],
+  let failures = 0;
+  let allTests = [],
     testSubset = [];
-  var time = data.state.testRunDurationMs ? data.state.testRunDurationMs : 0;
+  let time = data.state.testRunDurationMs ? data.state.testRunDurationMs : 0;
 
   if (data.root_group.hasOwnProperty('groups') && data.root_group.groups.length > 0) {
-    var groups = data.root_group.groups;
+    let groups = data.root_group.groups;
     groups.forEach((group) => {
-      var testSubset = [];
+      let testSubset = [];
       if (group.hasOwnProperty('checks')) [testSubset, failures] = checksToTestcase(group.checks, failures);
       allTests.push(...testSubset);
     });
@@ -53,7 +53,7 @@ export function generateJUnitXML(data, suiteName) {
 
   return (
     `<?xml version="1.0" encoding="UTF-8" ?>\n<testsuites tests="${allTests.length}" ` +
-    `failures="${failures}\" time="${time}">\n` +
+    `failures="${failures}" time="${time}">\n` +
     `<testsuite name="${escapeHTML(suiteName)}" tests="${allTests.length}" failures="${failures}" ` +
     `time="${time}" timestamp="${new Date().toISOString()}">\n` +
     `${allTests.join('\n')}\n</testsuite>\n</testsuites>`
@@ -66,7 +66,7 @@ export function generateJUnitXML(data, suiteName) {
  * @returns path
  */
 export function reportPath(reportName) {
-  var path = `src/reports/${reportName}`;
+  let path = `src/reports/${reportName}`;
   if (!(__ENV.OS || __ENV.AGENT_OS)) path = `/${path}`;
   return path;
 }

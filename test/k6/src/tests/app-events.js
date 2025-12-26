@@ -20,7 +20,6 @@
 import { check } from "k6";
 import * as setupToken from "../setup.js";
 import * as appEventsApi from "../api/app-events.js";
-import { generateJUnitXML, reportPath } from "../report.js";
 import { addErrorCount } from "../errorhandler.js";
 
 export const options = {
@@ -30,7 +29,7 @@ export const options = {
 };
 
 export function setup() {
-  var scopes = "altinn:serviceowner";
+  let scopes = "altinn:serviceowner";
   const app = __ENV.app.toLowerCase();
   const org = "ttd";
   let partyId = __ENV.partyId;
@@ -39,15 +38,15 @@ export function setup() {
     ? __ENV.runFullTestSet.toLowerCase().includes("true")
     : false;
 
-  var userToken = setupToken.getAltinnTokenForUser();
+  let userToken = setupToken.getAltinnTokenForUser();
 
   if (!partyId) {
     partyId = setupToken.getPartyIdFromTokenClaim(userToken);
   }
 
-  var orgToken = setupToken.getAltinnTokenForOrg(scopes, org);
+  let orgToken = setupToken.getAltinnTokenForOrg(scopes, org);
 
-  var data = {
+  let data = {
     runFullTestSet: runFullTestSet,
     userToken: userToken,
     userPartyId: partyId,
@@ -61,18 +60,16 @@ export function setup() {
 
 // 01 - GET events for org. Query parameter 'after'
 function TC01_GetAppEventsForOrg(data) {
-  var response, success;
-
-  response = appEventsApi.getEventsForOrg(
+  let response = appEventsApi.getEventsForOrg(
     data.org,
     data.app,
     { after: 1 },
     data.orgToken
   );
 
-  var nextUrl = response.headers["Next"];
+  let nextUrl = response.headers["Next"];
 
-  success = check(response, {
+  let success = check(response, {
     "01 - GET app events for org. Query parameter 'after'. Status is 200": (
       r
     ) => r.status === 200,
@@ -88,10 +85,9 @@ function TC01_GetAppEventsForOrg(data) {
 
 // 02 - GET events for org from next url
 function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
-  var response, success;
-  response = appEventsApi.getEventsFromNextLink(nextUrl, data.orgToken);
+  let response = appEventsApi.getEventsFromNextLink(nextUrl, data.orgToken);
 
-  success = check(response, {
+  let success = check(response, {
     "02 - GET app events for org from next url. Status is 200": (r) =>
       r.status === 200,
   });
@@ -101,16 +97,14 @@ function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
 
 // 03 -  GET app events for party. Query parameters: partyId, after.
 function TC03_GetAppEventsForParty(data) {
-  var response, success;
-
-  response = appEventsApi.getEventsForParty(
+  let response = appEventsApi.getEventsForParty(
     { after: 1, party: data.userPartyId },
     data.userToken
   );
 
-  var nextUrl = response.headers["Next"];
+  let nextUrl = response.headers["Next"];
 
-  success = check(response, {
+  let success = check(response, {
     "03 - GET app events for party. Query parameters: partyId, after. Status is 200":
       (r) => r.status === 200,
     "03 - GET app events for party. Query parameters: partyId, after. List contains minimum one element":
@@ -126,11 +120,9 @@ function TC03_GetAppEventsForParty(data) {
 
 // 04 - GET events for party from 'next' url
 function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
-  var response, success;
+  let response = appEventsApi.getEventsFromNextLink(nextUrl, data.userToken);
 
-  response = appEventsApi.getEventsFromNextLink(nextUrl, data.userToken);
-
-  success = check(response, {
+  let success = check(response, {
     "04 - GET app events for party from 'next' url. Status is 200": (r) =>
       r.status === 200,
   });
@@ -144,7 +136,7 @@ function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
  * 03 -  GET app events for party. Query parameters: partyId, after
  * 04 - GET app events for party from 'next'
  */
-export default function (data) {
+export default function runTests(data) {
   try {
     if (data.runFullTestSet) {
       let nextUrl = TC01_GetAppEventsForOrg(data);

@@ -47,7 +47,7 @@ namespace Altinn.Platform.Events.Formatters
             catch (Exception ex)
             {
                 context.ModelState.TryAddModelError("RequestBody", ex.Message);
-                return InputFormatterResult.Failure();
+                return await InputFormatterResult.FailureAsync();
             }
         }
 

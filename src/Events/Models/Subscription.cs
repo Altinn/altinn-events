@@ -9,6 +9,9 @@ namespace Altinn.Platform.Events.Models
     /// </summary>
     public class Subscription
     {
+        private static readonly JsonSerializerOptions _serializerOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+        private static readonly JsonSerializerOptions _deserializerOptions = new();
+
         /// <summary>
         /// Subscription Id
         /// </summary>
@@ -70,7 +73,7 @@ namespace Altinn.Platform.Events.Models
         /// <returns>Serialized cloud event</returns>
         public string Serialize()
         {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+            return JsonSerializer.Serialize(this, _serializerOptions);
         }
 
         /// <summary>
@@ -79,7 +82,7 @@ namespace Altinn.Platform.Events.Models
         /// <returns>Cloud event</returns>
         public static Subscription Deserialize(string jsonString)
         {
-            return JsonSerializer.Deserialize<Subscription>(jsonString, new JsonSerializerOptions { });
+            return JsonSerializer.Deserialize<Subscription>(jsonString, _deserializerOptions);
         }
     }
 }

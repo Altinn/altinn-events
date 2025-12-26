@@ -11,6 +11,11 @@ namespace Altinn.Platform.Events.Models
     /// </summary>
     public class CloudEventEnvelope
     {
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
         /// <summary>
         /// The Event to push
         /// </summary>
@@ -47,7 +52,7 @@ namespace Altinn.Platform.Events.Models
             string serializedCloudEvent = CloudEvent.Serialize();
             CloudEvent = null;
 
-            var partalSerializedEnvelope = JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+            var partalSerializedEnvelope = JsonSerializer.Serialize(this, _jsonSerializerOptions);
             var index = partalSerializedEnvelope.LastIndexOf('}');
             string serializedEnvelope = partalSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
 

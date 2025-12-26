@@ -10,6 +10,8 @@ namespace Altinn.Platform.Events.Models
     /// </summary>
     public class AppCloudEventRequestModel
     {
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+
         /// <summary>
         /// Gets or sets the source of the event.
         /// </summary>
@@ -67,7 +69,7 @@ namespace Altinn.Platform.Events.Models
         /// <returns>Serialized cloud event request</returns>
         public string Serialize()
         {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+            return JsonSerializer.Serialize(this, _jsonSerializerOptions);
         }
 
         /// <summary>

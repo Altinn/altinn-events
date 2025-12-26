@@ -19,7 +19,6 @@ import { check, sleep } from "k6";
 import * as subscriptionsApi from "../api/subscriptions.js";
 import * as config from "../config.js";
 import { addErrorCount } from "../errorhandler.js";
-import { generateJUnitXML, reportPath } from "../report.js";
 import * as setupToken from "../setup.js";
 
 const appSubscription = JSON.parse(
@@ -52,12 +51,12 @@ export const options = {
 };
 
 export function setup() {
-  var orgToken = setupToken.getAltinnTokenForOrg(scopes);
-  var incorrectScopeToken = setupToken.getAltinnTokenForOrg(
+  let orgToken = setupToken.getAltinnTokenForOrg(scopes);
+  let incorrectScopeToken = setupToken.getAltinnTokenForOrg(
     "altinn:serviceowner"
   );
 
-  var data = {
+  let data = {
     runFullTestSet: runFullTestSet,
     orgToken: orgToken,
     incorrectScopeToken: incorrectScopeToken,
@@ -73,14 +72,14 @@ export function setup() {
 
 // 01 - POST new subscription for app event source
 function TC01_PostNewSubscriptionForAppEventSource(data) {
-  var response, success;
+  let response, success;
 
   response = subscriptionsApi.postSubscription(
     data.appSubscription,
     data.orgToken
   );
 
-  var subscription = JSON.parse(response.body);
+  let subscription = JSON.parse(response.body);
   success = check(response, {
     "01 - POST new subscription for app event source. Status is 201": (r) =>
       r.status === 201,
@@ -94,14 +93,12 @@ function TC01_PostNewSubscriptionForAppEventSource(data) {
 
 // 02 - GET existing subscriptions for org
 function TC02_GetExistingSubscriptionsForOrg(data) {
-  var response, success;
+  let response = subscriptionsApi.getAllSubscriptions(data.orgToken);
 
-  response = subscriptionsApi.getAllSubscriptions(data.orgToken);
+  let subscriptionList = JSON.parse(response.body);
+  let subscriptions = subscriptionList.subscriptions;
 
-  var subscriptionList = JSON.parse(response.body);
-  var subscriptions = subscriptionList.subscriptions;
-
-  success = check(response, {
+  let success = check(response, {
     "02 - GET existing subscriptions for org. Status is 200.": (r) =>
       r.status === 200,
     "02 - GET existing subscriptions for org. Count is at least 1":
@@ -117,15 +114,14 @@ function TC02_GetExistingSubscriptionsForOrg(data) {
 
 // 03 - POST existing subscription
 function TC03_PostExistingSubscription(data) {
-  var response, success;
 
-  response = subscriptionsApi.postSubscription(
+  let response = subscriptionsApi.postSubscription(
     data.appSubscription,
     data.orgToken
   );
 
-  var subscription = JSON.parse(response.body);
-  success = check(response, {
+  let subscription = JSON.parse(response.body);
+  let success = check(response, {
     "03 - POST existing subscription. Status is 201": (r) => r.status === 201,
     "03 - POST existing subscription. Subscription id is defined":
       subscription.id != "undefined",
@@ -137,12 +133,10 @@ function TC03_PostExistingSubscription(data) {
 // 04 - GET existing subscriptions for org. Known count.
 
 function TC04_GetExistingSubscriptionsForOrg(data, expectedSubscriptionCount) {
-  var response, success;
+  let response = subscriptionsApi.getAllSubscriptions(data.orgToken);
 
-  response = subscriptionsApi.getAllSubscriptions(data.orgToken);
-
-  var responseObject = JSON.parse(response.body);
-  success = check(response, {
+  let responseObject = JSON.parse(response.body);
+  let success = check(response, {
     "04 - GET existing subscriptions for org again. Count matches expected subscription count":
       responseObject.count === expectedSubscriptionCount,
   });
@@ -155,21 +149,19 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
   // delay to ensure subscription has time to be validated
   sleep(15);
 
-  var response, success;
-
-  response = subscriptionsApi.getSubscriptionById(
+  let response = subscriptionsApi.getSubscriptionById(
     subscriptionId,
     data.orgToken
   );
 
-  success = check(response, {
+  let success = check(response, {
     "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200,
   });
 
   addErrorCount(success);
 
   if (success) {
-    var subscription = JSON.parse(response.body);
+    let subscription = JSON.parse(response.body);
 
     success = check(response, {
       "05 - Get subscription by id. Returned subscription is validated":
@@ -181,10 +173,8 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
 
 // 06 - DELETE subscription
 function TC06_DeleteSubscription(data, subscriptionId) {
-  var response, success;
-
-  response = subscriptionsApi.deleteSubscription(subscriptionId, data.orgToken);
-  success = check(response, {
+  let response = subscriptionsApi.deleteSubscription(subscriptionId, data.orgToken);
+  let success = check(response, {
     "06 - DELETE subscription. Status is 200.": (r) => r.status === 200,
   });
 
@@ -193,15 +183,13 @@ function TC06_DeleteSubscription(data, subscriptionId) {
 
 //  07 - POST subscription for external event source
 function TC07_PostSubscriptionExternalEventSource(data) {
-  var response, success;
-
-  response = subscriptionsApi.postSubscription(
+  let response = subscriptionsApi.postSubscription(
     data.genericSubscription,
     data.orgToken
   );
 
-  var subscription = JSON.parse(response.body);
-  success = check(response, {
+  let subscription = JSON.parse(response.body);
+  let success = check(response, {
     "07 - POST subscription for external event source. Status is 201": (r) =>
       r.status === 201,
     "07 - POST subscription for external event source. Subscription id is defined":
@@ -215,14 +203,12 @@ function TC07_PostSubscriptionExternalEventSource(data) {
 
 // 08 - POST subscription for external event source without required scope
 function TC08_PostSubscriptionForExternalEventSourceWithoutScope(data) {
-  var response, success;
-
-  response = subscriptionsApi.postSubscription(
+  let response = subscriptionsApi.postSubscription(
     data.genericSubscription,
     data.incorrectScopeToken
   );
 
-  success = check(response, {
+  let success = check(response, {
     "08 - POST subscription for external event source without required scope. Status is 403":
       (r) => r.status === 403,
   });
@@ -239,7 +225,7 @@ function TC08_PostSubscriptionForExternalEventSourceWithoutScope(data) {
  * 07 - POST subscription for external event source
  * 08 - POST subscription for external event source without required scope
  */
-export default function (data) {
+export default function runTests(data) {
   try {
     if (data.runFullTestSet) {
       const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);

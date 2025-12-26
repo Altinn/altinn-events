@@ -1,4 +1,3 @@
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -9,10 +8,13 @@ namespace Altinn.Platform.Events.Models
     /// </summary>
     public class Subscription
     {
+        private static readonly JsonSerializerOptions _serializeOptions = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+        private static readonly JsonSerializerOptions _deserializeOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
         /// <summary>
         /// Endpoint to receive matching events
         /// </summary>
-        public Uri EndPoint { get; set; }
+        public required Uri EndPoint { get; set; }
 
         /// <summary>
         /// Subscription Id
@@ -22,32 +24,32 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// Filter on source
         /// </summary>
-        public Uri SourceFilter { get; set; }
+        public Uri? SourceFilter { get; set; }
 
         /// <summary>
         /// Filter on subject
         /// </summary>
-        public string SubjectFilter { get; set; }
+        public string? SubjectFilter { get; set; }
 
         /// <summary>
         /// Filter on alternative subject
         /// </summary>
-        public string AlternativeSubjectFilter { get; set; }
+        public string? AlternativeSubjectFilter { get; set; }
 
         /// <summary>
         /// Filter for type. The different sources has different types. 
         /// </summary>
-        public string TypeFilter { get; set; }
+        public string? TypeFilter { get; set; }
 
         /// <summary>
         /// The events consumer
         /// </summary>
-        public string Consumer { get; set; }
+        public string? Consumer { get; set; }
 
         /// <summary>
         /// Who created this subscription
         /// </summary>
-        public string CreatedBy { get; set; }
+        public string? CreatedBy { get; set; }
 
         /// <summary>
         /// When subscription was created
@@ -60,7 +62,7 @@ namespace Altinn.Platform.Events.Models
         /// <returns>Serialized cloud event</returns>
         public string Serialize()
         {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
+            return JsonSerializer.Serialize(this, _serializeOptions);
         }
 
         /// <summary>
@@ -69,7 +71,8 @@ namespace Altinn.Platform.Events.Models
         /// <returns>Cloud event</returns>
         public static Subscription Deserialize(string jsonString)
         {
-            return JsonSerializer.Deserialize<Subscription>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize<Subscription>(jsonString, _deserializeOptions)
+                ?? throw new InvalidOperationException("Deserialization returned null.");
         }
     }
 }

@@ -17,7 +17,7 @@ namespace Altinn.Platform.Events.Functions.Models.Payloads
         /// Gets or sets the cloudevent as string.
         /// </summary>
         [JsonPropertyName("text")]
-        public CloudEvent CloudEvent { get; set; }
+        public CloudEvent? CloudEvent { get; set; }
 
         /// <summary>
         /// Serializes the SlackEnvelope to a JSON string.
@@ -25,8 +25,13 @@ namespace Altinn.Platform.Events.Functions.Models.Payloads
         /// <returns>Serialized slack envelope</returns>
         public string Serialize()
         {
+            if (CloudEvent == null)
+            {
+                return "{ }";
+            }
+
             string serializedCloudEvent = CloudEvent.Serialize().Replace("\"", "\\\"");
-            return CloudEvent == null ? "{ }" : string.Format("{{\"text\": \"{0}\"}}", serializedCloudEvent);
+            return string.Format("{{\"text\": \"{0}\"}}", serializedCloudEvent);
         }
     }
 }
