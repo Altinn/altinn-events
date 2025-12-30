@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Altinn.Platform.Events.Functions.Clients.Interfaces;
+﻿using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Extensions;
 using CloudNative.CloudEvents;
 using Microsoft.Azure.Functions.Worker;
@@ -23,7 +22,7 @@ public class EventsRegistration(IEventsClient eventsClient)
     /// and sends to events-inbound queue storage.
     /// </summary>
     [Function(nameof(EventsRegistration))]
-    public async Task Run([QueueTrigger("events-registration", Connection = "QueueStorage")] string item)
+    public async Task Run([ServiceBusTrigger("events-registration", Connection = "ServiceBusConnection")] string item)
     {
         CloudEvent cloudEvent = item.DeserializeToCloudEvent();
         EnsureCorrectResourceFormat(cloudEvent);

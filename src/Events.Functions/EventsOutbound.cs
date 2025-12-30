@@ -28,7 +28,7 @@ public class EventsOutbound(IWebhookService webhookService, IRetryBackoffService
     /// <param name="item">A base64 decoded string representation of the payload</param>
     /// <returns>An asynchronous task</returns>
     [Function(nameof(EventsOutbound))]
-    public async Task Run([QueueTrigger(_queueName, Connection = "QueueStorage")] string item)
+    public async Task Run([ServiceBusTrigger("events-outbound", Connection = "ServiceBusConnection")] string item)
     {
         RetryableEventWrapper? wrapperCandidate = null;
         try

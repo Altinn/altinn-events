@@ -14,11 +14,9 @@
     }
   },
   "extensions": {
-    "queues": {
-      "messageEncoding": "base64",
-      "maxPollingInterval": "00:00:02",
-      "visibilityTimeout": "00:00:30",
-      "maxDequeueCount": 5
+    "serviceBus": {
+      "maxMessageBatchSize": 10,
+      "autoCompleteMessages": true
     }
   }
 }

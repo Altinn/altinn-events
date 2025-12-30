@@ -1,8 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
-
 using Altinn.Platform.Events.Functions.Queues;
-
-using Azure.Storage.Queues;
+using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,30 +31,55 @@ public static class QueueRegistration
         this IServiceCollection services,
         IConfiguration config)
     {
-        string conn = config["QueueStorage"]
-            ?? throw new InvalidOperationException("Queue storage connection not configured.");
+        string conn = config["ServiceBusConnection"]
+            ?? throw new InvalidOperationException("Service Bus connection not configured.");
 
         var queueName = config["ExponentialRetryBackoff:QueueName"] ?? "events-outbound";
         string queueUsingExponentialBackoff = queueName;
         string poisonQueueUsingExponentialBackoff = queueUsingExponentialBackoff + "-poison";
 
-        QueueClientOptions options = new()
+        // Create Service Bus client
+        ServiceBusClient serviceBusClient = new ServiceBusClient(conn);
+
+        // Create senders for main and poison queues
+        ServiceBusSender mainSender = serviceBusClient.CreateSender(queueUsingExponentialBackoff);
+        ServiceBusSender poisonSender = serviceBusClient.CreateSender(poisonQueueUsingExponentialBackoff);
+
+        // Create delegates that match the signature expected by QueueSendDelegate and PoisonQueueSendDelegate
+        QueueSendDelegate mainDelegate = async (message, visibilityTimeout, timeToLive, cancellationToken) =>
         {
-            MessageEncoding = QueueMessageEncoding.Base64
+            ServiceBusMessage serviceBusMessage = new ServiceBusMessage(message)
+            {
+                TimeToLive = timeToLive ?? TimeSpan.FromDays(14)
+            };
+
+            if (visibilityTimeout.HasValue)
+            {
+                serviceBusMessage.ScheduledEnqueueTime = DateTimeOffset.UtcNow.Add(visibilityTimeout.Value);
+            }
+
+            await mainSender.SendMessageAsync(serviceBusMessage, cancellationToken);
         };
 
-        var mainClient = new QueueClient(conn, queueUsingExponentialBackoff, options);
-        mainClient.CreateIfNotExists();
-        var poisonClient = new QueueClient(conn, poisonQueueUsingExponentialBackoff, options);
-        poisonClient.CreateIfNotExists();
+        PoisonQueueSendDelegate poisonDelegate = async (message, visibilityTimeout, timeToLive, cancellationToken) =>
+        {
+            ServiceBusMessage serviceBusMessage = new ServiceBusMessage(message)
+            {
+                TimeToLive = timeToLive ?? TimeSpan.FromDays(14)
+            };
 
-        // both delegates will point to SendMessageAsync method of their respective clients
-        QueueSendDelegate mainDelegate = mainClient.SendMessageAsync;
-        PoisonQueueSendDelegate poisonDelegate = poisonClient.SendMessageAsync;
+            if (visibilityTimeout.HasValue)
+            {
+                serviceBusMessage.ScheduledEnqueueTime = DateTimeOffset.UtcNow.Add(visibilityTimeout.Value);
+            }
+
+            await poisonSender.SendMessageAsync(serviceBusMessage, cancellationToken);
+        };
 
         services.AddSingleton(mainDelegate);
         services.AddSingleton(poisonDelegate);
 
+        services.AddSingleton(serviceBusClient);
         return services;
     }
 }
