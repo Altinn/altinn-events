@@ -7,7 +7,7 @@
 		<ProjectGuid>{6599d6d0-228d-4057-87c3-31cd33068bbd}</ProjectGuid>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Altinn.Common.AccessTokenClient" Version="3.1.0" />
+		<PackageReference Include="Altinn.Common.AccessTokenClient" Version="3.2.0" />
 		<PackageReference Include="Altinn.Common.PEP" Version="4.2.2" />
 		<PackageReference Include="Altinn.Common.AccessToken" Version="5.1.0" />
 		<PackageReference Include="Altinn.Platform.Models" Version="1.6.1" />
@@ -15,8 +15,8 @@
 		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
 		<PackageReference Include="Azure.Storage.Queues" Version="12.24.0" />
 		<PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.5.0" />
-		<PackageReference Include="Npgsql.DependencyInjection" Version="10.0.0" />
-		<PackageReference Include="Npgsql.OpenTelemetry" Version="10.0.0" />
+		<PackageReference Include="Npgsql.DependencyInjection" Version="10.0.1" />
+		<PackageReference Include="Npgsql.OpenTelemetry" Version="10.0.1" />
 		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0" />
