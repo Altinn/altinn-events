@@ -33,7 +33,6 @@ In pgAdmin
 - Create the following users with password: _Password_ (see privileges in parentheses)
   - platform_events_admin (superuser, canlogin)
   - platform_events (canlogin)
-- Create schema _events_ in eventsdb with owner _platform_events_admin_
 
 A more detailed description of the database setup is available in [our developer handbook](https://docs.altinn.studio/community/contributing/handbook/postgres/)
 
