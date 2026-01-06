@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 
@@ -50,6 +51,43 @@ namespace Altinn.Platform.Events.Authorization
             return CreateDecisionRequest(new XacmlJsonCategory().AddSubjectAttribute(consumer), actionType, cloudEvent);
         }
 
+        /// <summary>
+        /// Creates an XACML JSON multi-decision request for multiple consumers and a single cloud event.
+        /// </summary>
+        /// <param name="consumers">A list of consumer identifiers to include as access subjects in the request.</param>
+        /// <param name="actionType">The action type to be performed (e.g., "subscribe", "publish").</param>
+        /// <param name="cloudEvent">The cloud event containing event metadata used to populate resource attributes.</param>
+        /// <returns>An XacmlJsonRequestRoot object representing the constructed multi-decision request.</returns>
+        internal static XacmlJsonRequestRoot CreateMultiDecisionRequest(List<string> consumers, string actionType, CloudEvent cloudEvent)
+        {
+            XacmlJsonRequest request = new()
+            {
+                Action = [],
+                Resource = [],
+                AccessSubject = [],
+            };
+
+            List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategory(consumers);
+            request.AccessSubject.AddRange(subjectCategories);
+
+            var actionCategory = CloudEventXacmlMapper.CreateActionCategory(actionType, true);
+            actionCategory.Id = $"{CloudEventXacmlMapper.ActionId}1";
+            request.Action.Add(actionCategory);
+
+            var resourceCategory = CreateResourceCategory(cloudEvent);
+            resourceCategory.Id = $"{CloudEventXacmlMapper.ResourceId}1";
+            request.Resource.Add(resourceCategory);
+
+            request.MultiRequests = CloudEventXacmlMapper.CreateMultiRequestsCategory(
+                request.AccessSubject,
+                request.Action,
+                request.Resource);
+
+            XacmlJsonRequestRoot jsonRequest = new() { Request = request };
+
+            return jsonRequest;
+        }
+
         private static XacmlJsonRequestRoot CreateDecisionRequest(XacmlJsonCategory subjectAttributes, string actionType, CloudEvent cloudEvent)
         {
             XacmlJsonRequest request = new()
@@ -86,6 +124,25 @@ namespace Altinn.Platform.Events.Authorization
             }
 
             return resourcesCategories;
+        }
+
+        /// <summary>
+        /// Creates multiple subject categories for the provided list of consumers.
+        /// </summary>
+        /// <param name="consumers">List of consumer identifiers.</param>
+        /// <returns>List of XacmlJsonCategory objects representing the subjects.</returns>
+        internal static List<XacmlJsonCategory> CreateMultipleSubjectCategory(List<string> consumers)
+        {
+            List<XacmlJsonCategory> subjectCategories = new(consumers.Count);
+
+            for (int i = 0; i < consumers.Count; i++)
+            {
+                var subjectCategory = new XacmlJsonCategory().AddSubjectAttribute(consumers[i]);
+                subjectCategory.Id = $"{CloudEventXacmlMapper.SubjectId}{i + 1}";
+                subjectCategories.Add(subjectCategory);
+            }
+
+            return subjectCategories;
         }
 
         /// <summary>

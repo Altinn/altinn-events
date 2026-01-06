@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
@@ -11,6 +13,7 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Telemetry;
+
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -78,10 +81,33 @@ public class OutboundService : IOutboundService
     private async Task AuthorizeAndPush(
         CloudEvent cloudEvent, List<Subscription> subscriptions, CancellationToken cancellationToken)
     {
+        var consumers = subscriptions.Select(x => x.Consumer).Distinct().ToList();
+
+        await Authorize(cloudEvent, consumers, cancellationToken);
+
         foreach (Subscription subscription in subscriptions)
         {
             await AuthorizeAndEnqueueOutbound(cloudEvent, subscription, cancellationToken);
         }
+    }
+
+    private async Task Authorize(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+    {
+        if (IsAppEvent(cloudEvent))
+        {
+            var allAuthorized = await AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers, cancellationToken);
+
+        }
+        else
+        {
+            var allAuthorized = await AuthorizeMultipleConsumersForGenericEvent(cloudEvent, consumers, cancellationToken);
+        }
+    }
+
+    private async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForGenericEvent(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+    {
+        var results = await _authorizationService.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, consumers, cancellationToken);
+        return results;
     }
 
     private async Task AuthorizeAndEnqueueOutbound(
@@ -133,6 +159,13 @@ public class OutboundService : IOutboundService
         }
 
         return isAuthorized;
+    }
+
+    private async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
+        CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+    {
+        var authorizationResults = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers, cancellationToken);
+        return authorizationResults;
     }
 
     private async Task<bool> AuthorizeConsumerForGenericEvent(

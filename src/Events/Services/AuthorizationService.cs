@@ -150,13 +150,57 @@ public class AuthorizationService : IAuthorization
     }
 
     /// <inheritdoc/>
+    public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForGenericEvent(
+        CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+    {
+        Dictionary<string, bool> results = new Dictionary<string, bool>();
+
+        if (UnsupportedSubject(cloudEvent))
+        {
+            IEnumerable<PartyIdentifiers> partyIdentifiersList =
+                await _registerService.PartyLookup([cloudEvent.Subject!], cancellationToken);
+
+            ReplaceSubject(cloudEvent, partyIdentifiersList);
+        }
+
+        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumers, "subscribe", cloudEvent);
+
+        RestoreSubject(cloudEvent);
+
+        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+
+        foreach (var r in response.Response)
+        {
+            results["test"] = r.Decision.Equals(XacmlContextDecision.Permit.ToString());
+        }
+
+        return results;
+    }
+
+    /// <inheritdoc/>
     public async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
     {
         XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
         return IsPermit(response);
     }
-   
+
+    /// <inheritdoc/>
+    public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
+        CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+    {
+        var results = new Dictionary<string, bool>();
+        XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequest(cloudEvent, consumers);
+        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+            
+        foreach (var r in response.Response)
+        {
+            results["test"] = r.Decision.Equals(XacmlContextDecision.Permit.ToString());
+        }
+
+        return results;
+    }
+
     /// <inheritdoc/>
     public async Task<bool> AuthorizeConsumerForEventsSubscription(Subscription subscription)
     {
