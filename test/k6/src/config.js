@@ -1,5 +1,5 @@
 // Baseurls for platform
-export var baseUrls = {
+export const baseUrls = {
   at22: "at22.altinn.cloud",
   at23: "at23.altinn.cloud",
   at24: "at24.altinn.cloud",
@@ -7,14 +7,14 @@ export var baseUrls = {
   prod: "altinn.no",
 };
 
-var maskinportenBaseUrls = {
+let maskinportenBaseUrls = {
   tt02: "https://test.maskinporten.no/",
   prod: "https://maskinporten.no/",
 };
 
 // Auth cookie names in the different environments. NB: Must be updated until changes
 // are rolled out to all environments
-export var authCookieNames = {
+export const authCookieNames = {
   at22: '.AspxAuthCloud',
   at23: '.AspxAuthCloud',
   at24: '.AspxAuthCloud',
@@ -25,13 +25,13 @@ export var authCookieNames = {
 
 //Get values from environment
 const environment = (__ENV.altinn_env || '').toLowerCase(); // Fallback value for when k6 inspect is run in script validation (env var evaluation yields 'undefined' in this phase)
-export let baseUrl = baseUrls[environment];
-export let authCookieName = authCookieNames[environment];
+export const baseUrl = baseUrls[environment];
+export const authCookieName = authCookieNames[environment];
 
 let maskinportenBaseUrl = maskinportenBaseUrls[environment];
 
 //AltinnTestTools
-export var tokenGenerator = {
+export const tokenGenerator = {
   getEnterpriseToken:
     "https://altinn-testtools-token-generator.azurewebsites.net/api/GetEnterpriseToken",
   getPersonalToken:
@@ -39,7 +39,7 @@ export var tokenGenerator = {
 };
 
 // Platform Events
-export var platformEvents = {
+export const platformEvents = {
   events:
     "https://platform." + baseUrl + "/events/api/v1/events/",
   app:
@@ -48,7 +48,7 @@ export var platformEvents = {
     "https://platform." + baseUrl + "/events/api/v1/subscriptions/",
 };
 
-export var platformAuthentication = {
+export const platformAuthentication = {
   exchange:
     "https://platform." + baseUrl + "/authentication/api/v1/exchange/maskinporten",
   refresh:
@@ -56,13 +56,13 @@ export var platformAuthentication = {
     "https://platform." + baseUrl + "/authentication/api/v1/refresh",
 };
 
-export var portalAuthentication = {
+export const portalAuthentication = {
   authenticateWithPwd:
     "https://" + baseUrl + "/api/authentication/authenticatewithpassword",
 };
 
 // Maskinporten
-export var maskinporten = {
+export const maskinporten = {
   audience: maskinportenBaseUrl,
   token: maskinportenBaseUrl + "token",
 };

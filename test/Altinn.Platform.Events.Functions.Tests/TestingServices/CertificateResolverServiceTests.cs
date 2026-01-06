@@ -15,7 +15,7 @@ public class CertificateResolverServiceTests
     public async Task GetCertificateAsync_ShouldRetrieveCertificateFromKeyVault()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<ICertificateResolverService>>();
+        var loggerMock = new Mock<ILogger<CertificateResolverService>>();
         var certificateResolverSettings = Options.Create(new CertificateResolverSettings { CacheCertLifetimeInSeconds = 3600 }); // 1 hour cache lifetime
         var keyVaultServiceMock = new Mock<IKeyVaultService>();
         var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://example.vault.azure.net", PlatformCertSecretId = "platform-cert" });
@@ -37,7 +37,7 @@ public class CertificateResolverServiceTests
     public async Task GetCertificateAsync_ShouldRetrieveCertificateFromCache()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<ICertificateResolverService>>();
+        var loggerMock = new Mock<ILogger<CertificateResolverService>>();
         var certificateResolverSettings = Options.Create(new CertificateResolverSettings { CacheCertLifetimeInSeconds = 3600 }); // 1 hour cache lifetime
         var keyVaultServiceMock = new Mock<IKeyVaultService>();
         var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://example.vault.azure.net", PlatformCertSecretId = "platform-cert" });
@@ -61,7 +61,7 @@ public class CertificateResolverServiceTests
     public async Task GetCertificateAsync_WhenCertificateIsNull_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<ICertificateResolverService>>();
+        var loggerMock = new Mock<ILogger<CertificateResolverService>>();
         var certificateResolverSettings = Options.Create(new CertificateResolverSettings { CacheCertLifetimeInSeconds = 3600 });
         var keyVaultServiceMock = new Mock<IKeyVaultService>();
         var keyVaultSettings = Options.Create(new KeyVaultSettings { KeyVaultURI = "https://example.vault.azure.net", PlatformCertSecretId = "platform-cert" });

@@ -12,11 +12,11 @@ const environment = (__ENV.altinn_env || '').toLowerCase(); // Fallback value fo
  */
 export function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "991825827") {
   if ((environment == "prod" || environment == "tt02") && org == "ttd") {
-    var accessToken = maskinporten.generateAccessToken(scopes);
+    let accessToken = maskinporten.generateAccessToken(scopes);
     return authentication.exchangeToAltinnToken(accessToken, true);
   }
 
-  var queryParams = {
+  let queryParams = {
     env: environment,
     scopes: scopes.replace(/ /gi, ","),
     org: org,
@@ -36,7 +36,7 @@ export function getAltinnTokenForUser() {
 
 export function getPartyIdFromTokenClaim(jwtToken) {
   const parts = jwtToken.split(".");
-  var claims = JSON.parse(b64decode(parts[1].toString(), "rawstd", "s"));
+  let claims = JSON.parse(b64decode(parts[1].toString(), "rawstd", "s"));
 
   return claims["urn:altinn:partyid"];
 }

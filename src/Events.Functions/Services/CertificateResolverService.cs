@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.Functions.Services
     /// </summary>
     public class CertificateResolverService : ICertificateResolverService
     {
-        private readonly ILogger<ICertificateResolverService> _logger;
+        private readonly ILogger<CertificateResolverService> _logger;
         private readonly CertificateResolverSettings _certificateResolverSettings;
         private readonly IKeyVaultService _keyVaultService;
         private readonly KeyVaultSettings _keyVaultSettings;
@@ -30,7 +30,7 @@ namespace Altinn.Platform.Events.Functions.Services
         /// <param name="keyVaultService">Key vault service</param>
         /// <param name="keyVaultSettings">Key vault settings</param>
         public CertificateResolverService(
-            ILogger<ICertificateResolverService> logger,
+            ILogger<CertificateResolverService> logger,
             IOptions<CertificateResolverSettings> certificateResolverSettings,
             IKeyVaultService keyVaultService,
             IOptions<KeyVaultSettings> keyVaultSettings)
@@ -48,6 +48,11 @@ namespace Altinn.Platform.Events.Functions.Services
         /// <returns></returns>
         public async Task<X509Certificate2> GetCertificateAsync()
         {
+            if (_keyVaultSettings.KeyVaultURI == null)
+            {
+                throw new InvalidOperationException("KeyVaultURI is not configured");
+            }
+
             if (DateTime.UtcNow > _reloadTime || _cachedX509Certificate == null)
             {
                 var certificate = await _keyVaultService.GetCertificateAsync(
