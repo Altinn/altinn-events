@@ -17,7 +17,6 @@ import * as setupToken from "../../setup.js";
 import * as eventsApi from "../../api/events.js";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 const eventJson = JSON.parse(open("../../data/events/01-event.json"));
-import { generateJUnitXML, reportPath } from "../../report.js";
 import { addErrorCount } from "../../errorhandler.js";
 const scopes = "altinn:events.publish altinn:serviceowner";
 
@@ -50,7 +49,7 @@ function createCloudEvent() {
 
 // 01 - POST valid cloud event with all parameters
 function TC01_POstValidCloudEventWithAllParameters(data) {
-    var response, success, cloudEvent;
+    let response, success, cloudEvent;
 
     cloudEvent = createCloudEvent();
 
@@ -69,11 +68,11 @@ function TC01_POstValidCloudEventWithAllParameters(data) {
 
 // 02 - POST valid cloud event without subject
 function TC02_PostValidCloudEventWithoutSubject(data) {
-    var response, success, cloudEvent;
+    let response, success, cloudEvent;
 
     cloudEvent = createCloudEvent();
 
-    var cloudEventWithoutSubject = removePropFromCloudEvent(
+    let cloudEventWithoutSubject = removePropFromCloudEvent(
         cloudEvent,
         "subject"
     );
@@ -93,11 +92,11 @@ function TC02_PostValidCloudEventWithoutSubject(data) {
 
 // 03 - POST valid cloud event without time
 function TC03_PostValidCloudEventWithoutTime(data) {
-    var response, success, cloudEvent;
+    let response, success, cloudEvent;
 
     cloudEvent = createCloudEvent();
 
-    var cloudEventWithoutTime = removePropFromCloudEvent(cloudEvent, "time");
+    let cloudEventWithoutTime = removePropFromCloudEvent(cloudEvent, "time");
 
     response = eventsApi.postCloudEvent(
         JSON.stringify(cloudEventWithoutTime),
@@ -114,7 +113,7 @@ function TC03_PostValidCloudEventWithoutTime(data) {
 
 // 04 - POST cloud event without bearer token
 function TC04_PostCloudEventWithoutBearerToken() {
-    var response, success, cloudEvent;
+    let response, success, cloudEvent;
 
     cloudEvent = createCloudEvent();
 
@@ -130,11 +129,11 @@ function TC04_PostCloudEventWithoutBearerToken() {
 
 // 05 - POST cloud event without required scope
 function TC05_PostCloudEventWithoutRequiredScopes() {
-    var response, success, cloudEvent;
+    let response, success, cloudEvent;
 
     cloudEvent = createCloudEvent();
 
-    var incorrectScopeToken = setupToken.getAltinnTokenForOrg('altinn:serviceowner');
+    let incorrectScopeToken = setupToken.getAltinnTokenForOrg('altinn:serviceowner');
 
     response = eventsApi.postCloudEvent(
         JSON.stringify(cloudEvent),
@@ -156,7 +155,7 @@ function TC05_PostCloudEventWithoutRequiredScopes() {
  * 04 - POST cloud event without bearer token
  * 05 - POST cloud event without required scope
  */
-export default function (data) {
+export default function runTests(data) {
     try {
         if (data.runFullTestSet) {
             TC01_POstValidCloudEventWithAllParameters(data);
@@ -181,7 +180,7 @@ export default function (data) {
 
 function removePropFromCloudEvent(cloudEvent, propertyname) {
     // parse and stringify to ensure a copy of the object by value not ref
-    var modifiedEvent = JSON.parse(JSON.stringify(cloudEvent));
+    let modifiedEvent = JSON.parse(JSON.stringify(cloudEvent));
     delete modifiedEvent[propertyname];
 
     return modifiedEvent;

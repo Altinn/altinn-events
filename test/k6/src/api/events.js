@@ -5,20 +5,20 @@ import * as config from "../config.js";
 import * as apiHelpers from "../apiHelpers.js";
 
 export function postCloudEvent(serializedCloudEvent, token) {
-  var endpoint = config.platformEvents.events;
+  let endpoint = config.platformEvents.events;
 
-  var params = apiHelpers.buildHeaderWithBearerAndContentType(
+  let params = apiHelpers.buildHeaderWithBearerAndContentType(
     token,
     "application/cloudevents+json"
   );
 
-  var response = http.post(endpoint, serializedCloudEvent, params);
+  let response = http.post(endpoint, serializedCloudEvent, params);
 
   return response;
 }
 
 export function getCloudEvents(queryParams, token) {
-  var endpoint = config.platformEvents.events;
+  let endpoint = config.platformEvents.events;
   return getEvents(endpoint, queryParams, token);
 }
 
@@ -28,16 +28,15 @@ export function getEventsFromNextLink(nextLink, token) {
 
 function getEvents(endpoint, queryParams, token) {
   endpoint +=
-   queryParams != null
-    ? apiHelpers.buildQueryParametersForEndpoint(queryParams)
-    : "";
+   queryParams == null
+    ? "" : apiHelpers.buildQueryParametersForEndpoint(queryParams);
 
-  var params = apiHelpers.buildHeaderWithBearerAndContentType(
+  let params = apiHelpers.buildHeaderWithBearerAndContentType(
     token,
     "application/cloudevents+json"
   );
 
-  var response = http.get(endpoint, params);
+  let response = http.get(endpoint, params);
 
   return response;
 }

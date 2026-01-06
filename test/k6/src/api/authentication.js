@@ -13,11 +13,11 @@ const userName = __ENV.userName;
 const userPassword = __ENV.userPassword;
 
 export function exchangeToAltinnToken(token, test) {
-  var endpoint = platformAuthentication.exchange + "?test=" + test;
-  var params = buildHeaderWithBearer(token);
+  const endpoint = platformAuthentication.exchange + "?test=" + test;
+  const params = buildHeaderWithBearer(token);
 
-  var res = http.get(endpoint, params);
-  var success = check(res, {
+  const res = http.get(endpoint, params);
+  const success = check(res, {
     "// Setup // Authentication towards Altinn 3 Success": (r) =>
       r.status === 200,
   });
@@ -46,18 +46,18 @@ export function authenticateUser() {
     );
   }
 
-  var endpoint = portalAuthentication.authenticateWithPwd;
+  const endpoint = portalAuthentication.authenticateWithPwd;
 
-  var requestBody = {
+  const requestBody = {
     UserName: userName,
     UserPassword: userPassword,
   };
 
-  var params = buildHeaderWithContentType("application/json");
+  let params = buildHeaderWithContentType("application/json");
 
-  var res = http.post(endpoint, JSON.stringify(requestBody), params);
+  let res = http.post(endpoint, JSON.stringify(requestBody), params);
 
-  var success = check(res, {
+  let success = check(res, {
     "// Setup // Authentication towards Altinn 2 Success": (r) =>
       r.status === 200,
   });
@@ -68,14 +68,14 @@ export function authenticateUser() {
     res
   );
 
-  var aspxAuthCookie = res.cookies[authCookieName][0].value;
+  const aspxAuthCookie = res.cookies[authCookieName][0].value;
 
-  var endpoint = platformAuthentication.refresh;
+  const refreshEndpoint = platformAuthentication.refresh;
 
-  var params = buildHeaderWithCookie(authCookieName, aspxAuthCookie);
+  params = buildHeaderWithCookie(authCookieName, aspxAuthCookie);
 
-  var res = http.get(endpoint, params);
-  var success = check(res, {
+  res = http.get(refreshEndpoint, params);
+  success = check(res, {
     "// Setup // Authentication towards Altinn 3 Success": (r) =>
       r.status === 200,
   });

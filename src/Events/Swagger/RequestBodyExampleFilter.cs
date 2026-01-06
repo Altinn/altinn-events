@@ -16,6 +16,8 @@ namespace Altinn.Platform.Events.Swagger
     [ExcludeFromCodeCoverage]
     public class RequestBodyExampleFilter : IRequestBodyFilter
     {
+        private const string _applicationJson = "application/json";
+
         /// <inheritdoc/>
         public void Apply(OpenApiRequestBody requestBody, RequestBodyFilterContext context)
         {
@@ -34,7 +36,7 @@ namespace Altinn.Platform.Events.Swagger
 
         private static void CreateCloudEventRequestModelExamples(OpenApiRequestBody requestBody)
         {
-            OpenApiMediaType appJson = requestBody.Content["application/json"];
+            OpenApiMediaType appJson = requestBody.Content[_applicationJson];
 
             List<(string Name, OpenApiObject Value)> examples = new()
             {
@@ -63,12 +65,12 @@ namespace Altinn.Platform.Events.Swagger
 
             examples.ForEach(entry => appJson.Examples.Add(entry.Name, new OpenApiExample { Value = entry.Value }));
 
-            requestBody.Content["application/json"] = appJson;
+            requestBody.Content[_applicationJson] = appJson;
         }
 
         private static void CreateSubscriptionRequestModelExamples(OpenApiRequestBody requestBody)
         {
-            OpenApiMediaType appJson = requestBody.Content["application/json"];
+            OpenApiMediaType appJson = requestBody.Content[_applicationJson];
 
             List<(string Name, OpenApiObject Value)> examples = new()
             {
@@ -106,7 +108,7 @@ namespace Altinn.Platform.Events.Swagger
 
             examples.ForEach(entry => appJson.Examples.Add(entry.Name, new OpenApiExample { Value = entry.Value }));
 
-            requestBody.Content["application/json"] = appJson;
+            requestBody.Content[_applicationJson] = appJson;
         }
 
         private static OpenApiObject CreateOpenApiObject(List<(string Name, string Value)> elements)
