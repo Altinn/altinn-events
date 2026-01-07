@@ -84,7 +84,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         public Task<bool> AuthorizeConsumerForEventsSubscription(Subscription subscription);
 
         /// <summary>
-        /// Determines whether each specified consumer is authorized to access the given generic cloud event.|
+        /// Determines whether each specified consumer is authorized to access the given generic cloud event.
         /// </summary>
         /// <param name="cloudEvent">The cloud event for which authorization is being checked. Cannot be null.</param>
         /// <param name="consumers">A list of consumer identifiers to evaluate for authorization. Cannot be null or contain null or empty
