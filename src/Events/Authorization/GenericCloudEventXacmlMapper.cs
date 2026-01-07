@@ -66,7 +66,7 @@ namespace Altinn.Platform.Events.Authorization
                 AccessSubject = [],
             };
 
-            List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategory(consumers);
+            List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategories(consumers);
             request.AccessSubject.AddRange(subjectCategories);
 
             var actionCategory = CloudEventXacmlMapper.CreateActionCategory(actionType, true);
@@ -130,13 +130,13 @@ namespace Altinn.Platform.Events.Authorization
         /// </summary>
         /// <param name="consumers">List of consumer identifiers.</param>
         /// <returns>List of XacmlJsonCategory objects representing the subjects.</returns>
-        internal static List<XacmlJsonCategory> CreateMultipleSubjectCategory(List<string> consumers)
+        internal static List<XacmlJsonCategory> CreateMultipleSubjectCategories(List<string> consumers)
         {
             List<XacmlJsonCategory> subjectCategories = new(consumers.Count);
 
             for (int i = 0; i < consumers.Count; i++)
             {
-                var subjectCategory = new XacmlJsonCategory().AddSubjectAttribute(consumers[i]);
+                var subjectCategory = new XacmlJsonCategory().AddSubjectAttribute(consumers[i], includeInResult: true);
                 subjectCategory.Id = $"{CloudEventXacmlMapper.SubjectId}{i + 1}";
                 subjectCategories.Add(subjectCategory);
             }
