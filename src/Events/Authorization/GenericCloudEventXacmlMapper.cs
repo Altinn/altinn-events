@@ -54,11 +54,11 @@ namespace Altinn.Platform.Events.Authorization
         /// <summary>
         /// Creates an XACML JSON multi-decision request for multiple consumers and a single cloud event.
         /// </summary>
+        /// <param name="cloudEvent">The cloud event containing event metadata used to populate resource attributes.</param>
         /// <param name="consumers">A list of consumer identifiers to include as access subjects in the request.</param>
         /// <param name="actionType">The action type to be performed (e.g., "subscribe", "publish").</param>
-        /// <param name="cloudEvent">The cloud event containing event metadata used to populate resource attributes.</param>
         /// <returns>An XacmlJsonRequestRoot object representing the constructed multi-decision request.</returns>
-        internal static XacmlJsonRequestRoot CreateMultiDecisionRequest(List<string> consumers, string actionType, CloudEvent cloudEvent)
+        internal static XacmlJsonRequestRoot CreateMultiDecisionRequestForMultipleConsumers(CloudEvent cloudEvent, List<string> consumers, string actionType)
         {
             XacmlJsonRequest request = new()
             {

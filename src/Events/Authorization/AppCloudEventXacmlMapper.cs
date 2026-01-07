@@ -63,11 +63,11 @@ public static class AppCloudEventXacmlMapper
     /// </summary>
     /// <param name="cloudEvent">The CloudEvent containing event metadata used to populate resource and action attributes in the request. Cannot
     /// be null.</param>
-    /// <param name="subjects">A list of subject identifiers to include as access subjects in the request. Each subject will be added as a
+    /// <param name="consumers">A list of subject identifiers to include as access subjects in the request. Each subject will be added as a
     /// separate access subject. Cannot be null or contain null values.</param>
     /// <returns>An XacmlJsonRequestRoot object representing the constructed multi-decision request with the specified subjects,
     /// action, and resource information.</returns>
-    public static XacmlJsonRequestRoot CreateMultiDecisionRequest(CloudEvent cloudEvent, List<string> subjects)
+    public static XacmlJsonRequestRoot CreateMultiDecisionRequestForMultipleConsumers(CloudEvent cloudEvent, List<string> consumers)
     {
         XacmlJsonRequest request = new()
         {
@@ -78,7 +78,7 @@ public static class AppCloudEventXacmlMapper
 
         (string applicationOwnerId, string appName, string instanceOwnerPartyId, string instanceGuid) = AppCloudEventExtensions.GetPropertiesFromAppSource(cloudEvent.Source);
         
-        List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategory(subjects);
+        List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategory(consumers);
         request.AccessSubject.AddRange(subjectCategories);
 
         var actionCategory = CloudEventXacmlMapper.CreateActionCategory(_read, true);

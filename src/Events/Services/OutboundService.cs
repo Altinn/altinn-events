@@ -96,7 +96,6 @@ public class OutboundService : IOutboundService
         if (IsAppEvent(cloudEvent))
         {
             var allAuthorized = await AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers, cancellationToken);
-
         }
         else
         {

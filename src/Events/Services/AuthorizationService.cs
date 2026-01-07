@@ -163,7 +163,7 @@ public class AuthorizationService : IAuthorization
             ReplaceSubject(cloudEvent, partyIdentifiersList);
         }
 
-        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumers, "subscribe", cloudEvent);
+        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers, "subscribe");
 
         RestoreSubject(cloudEvent);
 
@@ -190,7 +190,7 @@ public class AuthorizationService : IAuthorization
         CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
         var results = new Dictionary<string, bool>();
-        XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequest(cloudEvent, consumers);
+        XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers);
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
             
         foreach (var r in response.Response)
