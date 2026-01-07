@@ -1,11 +1,14 @@
 {
-    "IsEncrypted": false,
+  "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "QueueStorage": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1",
+    "AzureWebJobsStorage": "",
+    "ServiceBusConnection": "Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "ExponentialRetryBackoff:QueueName": "events-outbound",
-    "Platform:ApiEventsEndpoint": "http://localhost:5080/events/api/v1/",
-    "KeyVault:KeyVaultURI": "https://altinn-at22-kv.vault.azure.net/"
+    "RegistrationQueueName": "events-registration",
+    "InboundQueueName": "events-inbound",
+    "OutboundQueueName": "events-outbound",
+    "ValidationQueueName": "subscription-validation",
+    "Logging__LogLevel__Azure.Messaging.ServiceBus": "Warning",
+    "Logging__LogLevel__Azure.Core": "Warning"
   }
 }

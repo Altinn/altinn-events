@@ -17,7 +17,7 @@ public class EventsInbound(IEventsClient eventsClient)
     /// Retrieves messages from events-inbound queue and push events controller
     /// </summary>
     [Function(nameof(EventsInbound))]
-    public async Task Run([ServiceBusTrigger("events-inbound", Connection = "ServiceBusConnection")] string item)
+    public async Task Run([ServiceBusTrigger("%InboundQueueName%", Connection = "ServiceBusConnection")] string item)
     {
         CloudEvent cloudEvent = item.DeserializeToCloudEvent();
         await _eventsClient.PostOutbound(cloudEvent);

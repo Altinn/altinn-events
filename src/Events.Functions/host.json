@@ -9,8 +9,12 @@
     },
     "logLevel": {
       "default": "Information",
+      "Azure.Messaging.ServiceBus": "Warning",
+      "Azure.Core": "Warning",
+      "Host.Results": "Error",
       "Function": "Debug",
-      "Altinn.Platform.Events.Functions.Services.PushEventsService": "Information"
+      "Altinn.Platform.Events.Functions.Services.PushEventsService": "Information",
+      "Host.Aggregator": "Trace"
     }
   },
   "extensions": {
