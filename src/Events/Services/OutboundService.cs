@@ -102,10 +102,9 @@ public class OutboundService : IOutboundService
         {
             return await AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers);
         }
-        else // generic event
-        {
-            return await AuthorizeMultipleConsumersForGenericEvent(cloudEvent, consumers, cancellationToken);
-        }
+
+        // generic event
+        return await AuthorizeMultipleConsumersForGenericEvent(cloudEvent, consumers, cancellationToken);
     }
 
     private async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForGenericEvent(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
