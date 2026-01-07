@@ -6,7 +6,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 
 using Altinn.Common.PEP.Interfaces;
@@ -111,16 +111,44 @@ public class AuthorizationServiceTest
     public async Task AuthorizeConsumerForGenericEvent_PdpIsCalledWithXacmlRequestRoot()
     {
         // Arrange
-        Mock<IPDP> pdpMock = GetPDPMockWithRespose("Permit");
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .ReturnsAsync(new XacmlJsonResponse
+            {
+                Response =
+                [
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:org",
+                                        Value = "ttd"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
 
         // Act
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
 
-        bool actual = await sut.AuthorizeConsumerForGenericEvent(_cloudEvent, "/org/ttd/", CancellationToken.None);
+        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(_cloudEvent, ["/org/ttd"], CancellationToken.None);
 
         // Assert
         pdpMock.VerifyAll();
-        Assert.True(actual);
+        Assert.Single(result);
+        Assert.True(result["/org/ttd"]);
     }
 
     [Fact]
@@ -142,7 +170,44 @@ public class AuthorizationServiceTest
             })
             .ReturnsAsync([partiesRegisterQueryResponse.Data[0]]);
 
-        XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_subscribe_one");
+        // Create a mock XACML response that includes the subject category with org attribute
+        XacmlJsonResponse decisionResponse = new()
+        {
+            Response =
+            [
+                new XacmlJsonResult
+                {
+                    Decision = "Permit",
+                    Category = new List<XacmlJsonCategory>
+                    {
+                        new() 
+                        {
+                            CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                            Attribute = new List<XacmlJsonAttribute>
+                            {
+                                new XacmlJsonAttribute
+                                {
+                                    AttributeId = "urn:altinn:org",
+                                    Value = "ttd"
+                                }
+                            }
+                        },
+                        new() 
+                        {
+                            CategoryId = XacmlConstants.MatchAttributeCategory.Resource,
+                            Attribute = new List<XacmlJsonAttribute>
+                            {
+                                new XacmlJsonAttribute
+                                {
+                                    AttributeId = "urn:altinn:party:uuid",
+                                    Value = "4a80af94-14be-4af5-9f95-a6a0824c5b55"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        };
 
         Mock<IPDP> pdpMock = new();
         pdpMock.Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
@@ -160,10 +225,11 @@ public class AuthorizationServiceTest
         // Act
         AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
 
-        bool actual = await sut.AuthorizeConsumerForGenericEvent(cloudEvent, "/org/ttd/", CancellationToken.None);
+        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, ["/org/ttd"], CancellationToken.None);
 
         // Assert
-        Assert.True(actual);
+        Assert.Single(result);
+        Assert.True(result["/org/ttd"]);
 
         // Check that the cloud event is back to the original subject
         Assert.Equal("urn:altinn:person:identifier-no:18874198354", cloudEvent.Subject);

@@ -129,27 +129,6 @@ public class AuthorizationService : IAuthorization
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AuthorizeConsumerForGenericEvent(
-        CloudEvent cloudEvent, string consumer, CancellationToken cancellationToken)
-    {
-        if (UnsupportedSubject(cloudEvent))
-        {
-            IEnumerable<PartyIdentifiers> partyIdentifiersList =
-                await _registerService.PartyLookup([cloudEvent.Subject!], cancellationToken);
-
-            ReplaceSubject(cloudEvent, partyIdentifiersList);
-        }
-
-        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateDecisionRequest(consumer, "subscribe", cloudEvent);
-
-        RestoreSubject(cloudEvent);
-
-        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
-
-        return IsPermit(response);
-    }
-
-    /// <inheritdoc/>
     public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForGenericEvent(
         CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
@@ -303,7 +282,7 @@ public class AuthorizationService : IAuthorization
     private static string? ExtractConsumerFromResult(XacmlJsonResult result)
     {
         // Find the access subject category
-        var accessSubjectCategory = result.Category.FirstOrDefault(c => 
+        var accessSubjectCategory = result.Category?.FirstOrDefault(c => 
             c.CategoryId.Equals(XacmlConstants.MatchAttributeCategory.Subject));
 
         if (accessSubjectCategory == null)

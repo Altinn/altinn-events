@@ -125,9 +125,21 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(
-                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(), 
+                    It.IsAny<List<string>>(), 
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
+                {
+                    // Return true for all consumers
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = true;
+                    }
+
+                    return results;
+                });
 
             var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
@@ -160,9 +172,19 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(
-                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(false);
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
+                {
+                    // Return false for all consumers
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = false;
+                    }
+
+                    return results;
+                });
 
             var telemetryClient = new TelemetryClient();
             var counterMeasurements = new List<(string Name, long Value)>();
