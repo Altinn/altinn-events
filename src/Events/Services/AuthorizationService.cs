@@ -5,7 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 
@@ -310,27 +310,32 @@ public class AuthorizationService : IAuthorization
     /// <returns>The consumer identifier in its original format (e.g., "/party/123"), or null if not found.</returns>
     private static string? ExtractConsumerFromResult(XacmlJsonResult result)
     {
-        // Iterate through all categories in the result
-        foreach (var category in result.Category)
-        {
-            // Check all attributes in each category
-            foreach (var attribute in category.Attribute)
-            {
-                // Map known subject attribute IDs back to consumer format
-                string? consumer = attribute.AttributeId switch
-                {
-                    "urn:altinn:partyid" => $"/party/{attribute.Value}",
-                    "urn:altinn:org" => $"/org/{attribute.Value}",
-                    "urn:altinn:userid" => $"/user/{attribute.Value}",
-                    "urn:altinn:systemuser:uuid" => $"/systemuser/{attribute.Value}",
-                    "urn:altinn:organization:identifier-no" => $"/organisation/{attribute.Value}",
-                    _ => null
-                };
+        // Find the access subject category
+        var accessSubjectCategory = result.Category.FirstOrDefault(c => 
+            c.CategoryId.Equals(XacmlConstants.MatchAttributeCategory.Subject));
 
-                if (consumer != null)
-                {
-                    return consumer;
-                }
+        if (accessSubjectCategory == null)
+        {
+            return null;
+        }
+
+        // Check all attributes in the access subject category
+        foreach (var attribute in accessSubjectCategory.Attribute)
+        {
+            // Map known subject attribute IDs back to consumer format
+            string? consumer = attribute.AttributeId switch
+            {
+                "urn:altinn:partyid" => $"/party/{attribute.Value}",
+                "urn:altinn:org" => $"/org/{attribute.Value}",
+                "urn:altinn:userid" => $"/user/{attribute.Value}",
+                "urn:altinn:systemuser:uuid" => $"/systemuser/{attribute.Value}",
+                "urn:altinn:organization:identifier-no" => $"/organisation/{attribute.Value}",
+                _ => null
+            };
+
+            if (consumer != null)
+            {
+                return consumer;
             }
         }
 

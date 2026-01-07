@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,14 +84,10 @@ public class OutboundService : IOutboundService
 
         var authorizationResult = await Authorize(cloudEvent, consumers, cancellationToken);
 
-        foreach (Subscription subscription in subscriptions.Where(x => authorizationResult.Where(x => x.Value).Select(x => x.Key).ToList().Contains(x.Consumer)))
+        foreach (Subscription subscription in subscriptions)
         {
-            await EnqueueOutbound(cloudEvent, subscription, authorized: true);
-        }
-
-        foreach (Subscription subscription in subscriptions.Where(x => authorizationResult.Where(x => !x.Value).Select(x => x.Key).ToList().Contains(x.Consumer)))
-        {
-            await EnqueueOutbound(cloudEvent, subscription, authorized: false);
+            bool isAuthorized = authorizationResult.TryGetValue(subscription.Consumer, out bool authorized) && authorized;
+            await EnqueueOutbound(cloudEvent, subscription, authorized: isAuthorized);
         }
     }
 

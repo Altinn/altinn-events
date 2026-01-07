@@ -16,7 +16,7 @@ namespace Altinn.Platform.Events.Authorization;
 /// </summary>
 public static class AppCloudEventXacmlMapper
 {
-    private const string _read = "read";
+    private const string _readActionType = "read";
 
     /// <summary>
     /// Creates an XACML request for multiple events using the claims principal user as the subject.
@@ -26,7 +26,7 @@ public static class AppCloudEventXacmlMapper
     /// <returns>A <see cref="XacmlJsonRequestRoot"/> object representing the XACML request.</returns>
     public static XacmlJsonRequestRoot CreateMultiDecisionReadRequest(ClaimsPrincipal user, List<CloudEvent> events)
     {
-        List<string> actionTypes = ["read"];
+        List<string> actionTypes = [_readActionType];
         var resourceCategories = CreateMultipleResourceCategory(events);
         return CloudEventXacmlMapper.CreateMultiDecisionRequest(user, actionTypes, resourceCategories);
     }
@@ -49,7 +49,7 @@ public static class AppCloudEventXacmlMapper
         (string applicationOwnerId, string appName, string instanceOwnerPartyId, string instanceGuid) = AppCloudEventExtensions.GetPropertiesFromAppSource(cloudEvent.Source);
 
         request.AccessSubject.Add(new XacmlJsonCategory().AddSubjectAttribute(subject));
-        request.Action.Add(CloudEventXacmlMapper.CreateActionCategory(_read));
+        request.Action.Add(CloudEventXacmlMapper.CreateActionCategory(_readActionType));
         request.Resource.Add(CreateEventsResourceCategory(applicationOwnerId, appName, instanceOwnerPartyId, instanceGuid));
 
         XacmlJsonRequestRoot jsonRequest = new() { Request = request };
@@ -81,7 +81,7 @@ public static class AppCloudEventXacmlMapper
         List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategory(consumers);
         request.AccessSubject.AddRange(subjectCategories);
 
-        var actionCategory = CloudEventXacmlMapper.CreateActionCategory(_read, true);
+        var actionCategory = CloudEventXacmlMapper.CreateActionCategory(_readActionType, true);
         actionCategory.Id = $"{CloudEventXacmlMapper.ActionId}1";
         request.Action.Add(actionCategory);
 
@@ -204,7 +204,7 @@ public static class AppCloudEventXacmlMapper
 
         for (int i = 0; i < subjects.Count; i++)
         {
-            var subjectCategory = new XacmlJsonCategory().AddSubjectAttribute(subjects[i]);
+            var subjectCategory = new XacmlJsonCategory().AddSubjectAttribute(subjects[i], includeInResult: true);
             subjectCategory.Id = $"{CloudEventXacmlMapper.SubjectId}{i + 1}";
             subjectCategories.Add(subjectCategory);
         }
