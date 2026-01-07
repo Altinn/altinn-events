@@ -62,7 +62,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <returns>A dictionary mapping each consumer identifier to a Boolean value indicating whether the consumer is authorized
         /// (<see langword="true"/>) or not (<see langword="false"/>).</returns>
         public Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
-            CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken);
+            CloudEvent cloudEvent, List<string> consumers);
 
         /// <summary>
         /// Method to authorize access to a cloud event

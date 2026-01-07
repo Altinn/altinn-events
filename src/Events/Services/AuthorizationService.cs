@@ -153,7 +153,7 @@ public class AuthorizationService : IAuthorization
     public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForGenericEvent(
         CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
-        Dictionary<string, bool> results = new Dictionary<string, bool>();
+        Dictionary<string, bool> results = [];
 
         if (UnsupportedSubject(cloudEvent))
         {
@@ -171,7 +171,14 @@ public class AuthorizationService : IAuthorization
 
         foreach (var r in response.Response)
         {
-            results["test"] = r.Decision.Equals(XacmlContextDecision.Permit.ToString());
+            var consumer = ExtractConsumerFromResult(r);
+
+            if (string.IsNullOrEmpty(consumer))
+            {
+                continue;
+            }
+
+            results[consumer] = r.Decision.Equals(XacmlContextDecision.Permit.ToString());
         }
 
         return results;
@@ -187,7 +194,7 @@ public class AuthorizationService : IAuthorization
 
     /// <inheritdoc/>
     public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
-        CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+        CloudEvent cloudEvent, List<string> consumers)
     {
         var results = new Dictionary<string, bool>();
         XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers);
@@ -195,7 +202,14 @@ public class AuthorizationService : IAuthorization
             
         foreach (var r in response.Response)
         {
-            results["test"] = r.Decision.Equals(XacmlContextDecision.Permit.ToString());
+            var consumer = ExtractConsumerFromResult(r);
+
+            if (string.IsNullOrEmpty(consumer))
+            {
+                continue;
+            }
+
+            results[consumer] = r.Decision.Equals(XacmlContextDecision.Permit.ToString());
         }
 
         return results;
@@ -287,5 +301,39 @@ public class AuthorizationService : IAuthorization
             cloudEvent.Subject = cloudEvent[_originalSubjectKey]!.ToString();
             cloudEvent[_originalSubjectKey] = null;
         }
+    }
+
+    /// <summary>
+    /// Extracts the consumer identifier from XACML response attributes.
+    /// </summary>
+    /// <param name="result">The XACML JSON result containing the decision and attributes.</param>
+    /// <returns>The consumer identifier in its original format (e.g., "/party/123"), or null if not found.</returns>
+    private static string? ExtractConsumerFromResult(XacmlJsonResult result)
+    {
+        // Iterate through all categories in the result
+        foreach (var category in result.Category)
+        {
+            // Check all attributes in each category
+            foreach (var attribute in category.Attribute)
+            {
+                // Map known subject attribute IDs back to consumer format
+                string? consumer = attribute.AttributeId switch
+                {
+                    "urn:altinn:partyid" => $"/party/{attribute.Value}",
+                    "urn:altinn:org" => $"/org/{attribute.Value}",
+                    "urn:altinn:userid" => $"/user/{attribute.Value}",
+                    "urn:altinn:systemuser:uuid" => $"/systemuser/{attribute.Value}",
+                    "urn:altinn:organization:identifier-no" => $"/organisation/{attribute.Value}",
+                    _ => null
+                };
+
+                if (consumer != null)
+                {
+                    return consumer;
+                }
+            }
+        }
+
+        return null;
     }
 }

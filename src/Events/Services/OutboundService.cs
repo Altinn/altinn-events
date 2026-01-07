@@ -83,23 +83,28 @@ public class OutboundService : IOutboundService
     {
         var consumers = subscriptions.Select(x => x.Consumer).Distinct().ToList();
 
-        await Authorize(cloudEvent, consumers, cancellationToken);
+        var authorizationResult = await Authorize(cloudEvent, consumers, cancellationToken);
 
-        foreach (Subscription subscription in subscriptions)
+        foreach (Subscription subscription in subscriptions.Where(x => authorizationResult.Where(x => x.Value).Select(x => x.Key).ToList().Contains(x.Consumer)))
         {
-            await AuthorizeAndEnqueueOutbound(cloudEvent, subscription, cancellationToken);
+            await EnqueueOutbound(cloudEvent, subscription, authorized: true);
+        }
+
+        foreach (Subscription subscription in subscriptions.Where(x => authorizationResult.Where(x => !x.Value).Select(x => x.Key).ToList().Contains(x.Consumer)))
+        {
+            await EnqueueOutbound(cloudEvent, subscription, authorized: false);
         }
     }
 
-    private async Task Authorize(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+    private async Task<Dictionary<string, bool>> Authorize(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
         if (IsAppEvent(cloudEvent))
         {
-            var allAuthorized = await AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers, cancellationToken);
+            return await AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers);
         }
-        else
+        else // generic event
         {
-            var allAuthorized = await AuthorizeMultipleConsumersForGenericEvent(cloudEvent, consumers, cancellationToken);
+            return await AuthorizeMultipleConsumersForGenericEvent(cloudEvent, consumers, cancellationToken);
         }
     }
 
@@ -109,15 +114,9 @@ public class OutboundService : IOutboundService
         return results;
     }
 
-    private async Task AuthorizeAndEnqueueOutbound(
-        CloudEvent cloudEvent, Subscription subscription, CancellationToken cancellationToken)
+    private async Task EnqueueOutbound(
+        CloudEvent cloudEvent, Subscription subscription, bool authorized)
     {
-        var sw = Stopwatch.StartNew();
-        var authorized =
-            IsAppEvent(cloudEvent)
-            ? await AuthorizeConsumerForAltinnAppEvent(cloudEvent, subscription.Consumer)
-            : await AuthorizeConsumerForGenericEvent(cloudEvent, subscription.Consumer, cancellationToken);
-
         if (authorized)
         {
             CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
@@ -142,9 +141,6 @@ public class OutboundService : IOutboundService
             await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.Unauthorized);
             _telemetry?.SubscriptionAuthFailed();
         }
-
-        sw.Stop();
-        _telemetry?.RecordSubscriptionEventProcessingDuration(sw.ElapsedMilliseconds);
     }
 
     private async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
@@ -161,9 +157,9 @@ public class OutboundService : IOutboundService
     }
 
     private async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
-        CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+        CloudEvent cloudEvent, List<string> consumers)
     {
-        var authorizationResults = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers, cancellationToken);
+        var authorizationResults = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers);
         return authorizationResults;
     }
 
