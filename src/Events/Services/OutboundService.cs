@@ -137,39 +137,10 @@ public class OutboundService : IOutboundService
         }
     }
 
-    private async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
-    {
-        string cacheKey = GetAltinnAppAuthorizationCacheKey(GetSourceFilter(cloudEvent.Source).ToString(), consumer);
-
-        if (!_memoryCache.TryGetValue(cacheKey, out bool isAuthorized))
-        {
-            isAuthorized = await _authorizationService.AuthorizeConsumerForAltinnAppEvent(cloudEvent, consumer);
-            _memoryCache.Set(cacheKey, isAuthorized, _consumerAuthorizationEntryOptions);
-        }
-
-        return isAuthorized;
-    }
-
-    private async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
+    private Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
         CloudEvent cloudEvent, List<string> consumers)
     {
-        var authorizationResults = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers);
-        return authorizationResults;
-    }
-
-    private async Task<bool> AuthorizeConsumerForGenericEvent(
-        CloudEvent cloudEvent, string consumer, CancellationToken cancellationToken)
-    {
-        string cacheKey = GetAuthorizationCacheKey(cloudEvent.GetResource(), consumer);
-
-        if (!_memoryCache.TryGetValue(cacheKey, out bool isAuthorized))
-        {
-            isAuthorized = await _authorizationService.AuthorizeConsumerForGenericEvent(
-                cloudEvent, consumer, cancellationToken);
-            _memoryCache.Set(cacheKey, isAuthorized, _consumerAuthorizationEntryOptions);
-        }
-
-        return isAuthorized;
+        return _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers);
     }
 
     private static CloudEventEnvelope MapToEnvelope(CloudEvent cloudEvent, Subscription subscription)

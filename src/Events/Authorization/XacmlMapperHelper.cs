@@ -59,7 +59,7 @@ public static class XacmlMapperHelper
         else if (subject.StartsWith(OrganisationPrefix))
         {
             string value = subject.Replace(OrganisationPrefix, string.Empty);
-            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrganizationNumber, value, ClaimValueTypes.String, DefaultIssuer, includeInResult  ));
+            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrganizationNumber, value, ClaimValueTypes.String, DefaultIssuer, includeInResult));
         }
         else if (subject.StartsWith(SystemUserPrefix))
         {

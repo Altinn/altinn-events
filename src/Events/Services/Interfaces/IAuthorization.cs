@@ -42,14 +42,6 @@ namespace Altinn.Platform.Events.Services.Interfaces
         public Task<bool> AuthorizePublishEvent(CloudEvent cloudEvent, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Method to authorize access to an Altinn App event
-        /// </summary>
-        /// <param name="cloudEvent">The cloud event to authorize</param>
-        /// <param name="consumer">The consumer of the event</param>
-        /// <returns>A boolean indicating if the consumer is authorized or not</returns>
-        public Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer);
-
-        /// <summary>
         /// Authorizes multiple consumers for a specified Altinn application event and returns the authorization status for
         /// each consumer.
         /// </summary>

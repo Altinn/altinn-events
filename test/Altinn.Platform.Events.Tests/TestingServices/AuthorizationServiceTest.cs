@@ -60,10 +60,10 @@ public class AuthorizationServiceTest
             new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
 
         // Act
-        bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(_cloudEvent, "/user/1337");
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/1337"]);
 
         // Assert.
-        Assert.True(result);
+        Assert.True(result.ElementAt(0).Value);
     }
 
     /// <summary>
@@ -77,10 +77,10 @@ public class AuthorizationServiceTest
             new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
 
         // Act
-        bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(_cloudEvent, "/org/ttd");
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
 
         // Assert.
-        Assert.True(result);
+        Assert.True(result.ElementAt(0).Value);
     }
 
     /// <summary>
@@ -100,10 +100,11 @@ public class AuthorizationServiceTest
         };
 
         // Act
-        bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/org/nav");
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/org/nav"]);
 
         // Assert.
-        Assert.False(result);
+        Assert.Single(result);
+        Assert.False(result["/org/nav"]);
     }
 
     [Fact]

@@ -185,14 +185,6 @@ public class AuthorizationService : IAuthorization
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
-    {
-        XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
-        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
-        return IsPermit(response);
-    }
-
-    /// <inheritdoc/>
     public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
         CloudEvent cloudEvent, List<string> consumers)
     {

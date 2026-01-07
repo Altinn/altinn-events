@@ -86,8 +86,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
+                .ReturnsAsync([]);
             Mock<IEventsQueueClient> queueMock = new();
             queueMock
                 .Setup(q => q.EnqueueOutbound(It.IsAny<string>()));
@@ -99,7 +99,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             repositoryMock.VerifyAll();
-            authorizationMock.Verify(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Never);
+            authorizationMock.Verify(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()), Times.Never);
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
         }
 
@@ -203,30 +203,45 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                "/party/1337/",
+                "app.instance.process.completed",
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
                 .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Subscription>() { new Subscription { Consumer = "/org/nav" } });
+
             Mock<IEventsQueueClient> queueMock = new();
             queueMock
                 .Setup(q => q.EnqueueOutbound(It.IsAny<string>()));
 
             Mock<IAuthorization> authorizationMock = new();
+            
+            // Mock the new multi-consumer authorization method
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(
-                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(false);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()))
+                .ReturnsAsync(new Dictionary<string, bool> { { "/org/nav", false } });
 
-            var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object, authorizationMock: authorizationMock.Object);
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authorizationMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
-
+            authorizationMock.Verify(
+                a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.Is<List<string>>(list => list.Contains("/org/nav"))),
+                Times.Once);
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
         }
 
@@ -250,8 +265,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
+                .ReturnsAsync(new Dictionary<string, bool>
+                {
+                    { "/org/ttd", true },
+                    { "/org/nav", true },
+                    { "/user/1337", true }
+                });
 
             var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
@@ -282,8 +302,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
+                .ReturnsAsync(new Dictionary<string, bool> 
+                {
+                    { "/user/1337", true }
+                });
 
             var loggerMock = new Mock<ILogger<OutboundService>>();
             var telemetryClient = new TelemetryClient();
@@ -338,9 +361,23 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync(new QueuePostReceipt { Success = true });
 
             Mock<IAuthorization> authorizationMock = new();
+            
+            // Mock the multi-consumer authorization method - return authorization success for all consumers
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                {
+                    // Return true for all consumers
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = true;
+                    }
+
+                    return results;
+                });
 
             var sut = GetOutboundService(
                 queueMock: queueMock.Object,
