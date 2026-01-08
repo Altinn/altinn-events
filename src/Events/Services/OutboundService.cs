@@ -93,19 +93,99 @@ public class OutboundService : IOutboundService
 
     private async Task<Dictionary<string, bool>> Authorize(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
+        var unauthorizedConsumers = new List<string>();
+        var cachedConsumers = new Dictionary<string, bool>();
+
         if (IsAppEvent(cloudEvent))
         {
-            return await AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers);
-        }
+            var cacheKeys = GetAltinnAppAuthorizationCacheKeys(GetSourceFilter(cloudEvent.Source).ToString(), consumers);
 
-        // generic event
-        return await AuthorizeMultipleConsumersForGenericEvent(cloudEvent, consumers, cancellationToken);
+            foreach (var consumer in cacheKeys.Keys)
+            {
+                if (!_memoryCache.TryGetValue(cacheKeys[consumer], out bool isAuthorized))
+                {
+                    unauthorizedConsumers.Add(consumer);
+                }
+                else
+                {
+                    cachedConsumers.Add(consumer, isAuthorized);
+                }
+            }
+
+            Dictionary<string, bool> authorizationResult = await AuthorizeOrCacheMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers, cacheKeys);
+
+            return cachedConsumers
+                .Concat(authorizationResult)
+                .ToDictionary(x => x.Key, x => x.Value);
+        }
+        else
+        {
+            // generic event
+            var cacheKeysGeneric = GetAuthorizationCacheKeys(cloudEvent.GetResource(), consumers);
+            foreach (var consumer in cacheKeysGeneric.Keys)
+            {
+                if (!_memoryCache.TryGetValue(cacheKeysGeneric[consumer], out bool isAuthorized))
+                {
+                    unauthorizedConsumers.Add(consumer);
+                }
+                else
+                {
+                    cachedConsumers.Add(consumer, isAuthorized);
+                }
+            }
+
+            Dictionary<string, bool> authorizationResult = await AuthorizeOrCacheMultipleConsumersForGenericEvent(cloudEvent, unauthorizedConsumers, cacheKeysGeneric, cancellationToken);
+
+            return cachedConsumers
+                .Concat(authorizationResult)
+                .ToDictionary(x => x.Key, x => x.Value);
+        }
     }
 
-    private async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForGenericEvent(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
+    private async Task<Dictionary<string, bool>> AuthorizeOrCacheMultipleConsumersForGenericEvent(CloudEvent cloudEvent, List<string> unauthorizedConsumers, Dictionary<string, string> cacheKeysGeneric, CancellationToken cancellationToken)
     {
-        var results = await _authorizationService.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, consumers, cancellationToken);
-        return results;
+        if (unauthorizedConsumers.Count == 0)
+        {
+            return [];
+        }
+
+        var authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, unauthorizedConsumers, cancellationToken);
+        CacheGenericAuthorizationResults(authorizationResult, cacheKeysGeneric);
+        return authorizationResult;
+    }
+
+    private async Task<Dictionary<string, bool>> AuthorizeOrCacheMultipleConsumersForAltinnAppEvent(CloudEvent cloudEvent, List<string> unauthorizedConsumers, Dictionary<string, string> cacheKeys)
+    {
+        if (unauthorizedConsumers.Count == 0)
+        {
+            return [];
+        }
+
+        var authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers);
+        CacheAppEventAuthorizationResults(authorizationResult, cacheKeys);
+        return authorizationResult;
+    }
+
+    private void CacheGenericAuthorizationResults(Dictionary<string, bool> authorizationResult, Dictionary<string, string> cacheKeys)
+    {
+        foreach (var result in authorizationResult)
+        {
+            if (cacheKeys.TryGetValue(result.Key, out string cacheKey))
+            {
+                _memoryCache.Set(cacheKey, result.Value, _consumerAuthorizationEntryOptions);
+            }
+        }
+    }
+
+    private void CacheAppEventAuthorizationResults(Dictionary<string, bool> authorizationResult, Dictionary<string, string> cacheKeys)
+    {
+        foreach (var result in authorizationResult)
+        {
+            if (cacheKeys.TryGetValue(result.Key, out string cacheKey))
+            {
+                _memoryCache.Set(cacheKey, result.Value, _consumerAuthorizationEntryOptions);
+            }
+        }
     }
 
     private async Task EnqueueOutbound(
@@ -137,12 +217,6 @@ public class OutboundService : IOutboundService
         }
     }
 
-    private Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
-        CloudEvent cloudEvent, List<string> consumers)
-    {
-        return _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, consumers);
-    }
-
     private static CloudEventEnvelope MapToEnvelope(CloudEvent cloudEvent, Subscription subscription)
     {
         CloudEventEnvelope cloudEventEnvelope = new()
@@ -157,9 +231,44 @@ public class OutboundService : IOutboundService
         return cloudEventEnvelope;
     }
 
+    private static Dictionary<string, string> GetAuthorizationCacheKeys(string resource, List<string> consumers)
+    {
+        var cacheKeys = new Dictionary<string, string>();
+
+        if (string.IsNullOrEmpty(resource))
+        {
+            return [];
+        }
+
+        foreach (var consumer in consumers)
+        {
+            cacheKeys.Add(consumer, GetAuthorizationCacheKey(resource, consumer));
+        }
+
+        return cacheKeys;
+    }
+
+    private static Dictionary<string, string> GetAltinnAppAuthorizationCacheKeys(string sourceFilter, List<string> consumers)
+    {
+        var cacheKeys = new Dictionary<string, string>();
+
+        if (sourceFilter == null)
+        {
+            return [];
+        }
+
+        foreach (var consumer in consumers)
+        {
+            cacheKeys.Add(consumer, GetAltinnAppAuthorizationCacheKey(sourceFilter, consumer));
+        }
+
+        return cacheKeys;
+    }
+
     private static string GetAuthorizationCacheKey(string resource, string consumer)
     {
-        return "authorizationdecision:re:" + resource + "co:" + consumer;
+        // Generic events always use "subscribe" action
+        return $"authorizationdecision:re:{resource}:co:{consumer}:ac:subscribe";
     }
 
     private static string GetAltinnAppAuthorizationCacheKey(string sourceFilter, string consumer)
@@ -169,7 +278,8 @@ public class OutboundService : IOutboundService
             return null;
         }
 
-        return "authorizationdecision:so:" + sourceFilter + "co:" + consumer;
+        // App events always use "read" action
+        return $"authorizationdecision:so:{sourceFilter}:co:{consumer}:ac:read";
     }
 
     /// <summary>
