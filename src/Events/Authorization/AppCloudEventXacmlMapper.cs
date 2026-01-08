@@ -78,7 +78,7 @@ public static class AppCloudEventXacmlMapper
 
         (string applicationOwnerId, string appName, string instanceOwnerPartyId, string instanceGuid) = AppCloudEventExtensions.GetPropertiesFromAppSource(cloudEvent.Source);
         
-        List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategory(consumers);
+        List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategories(consumers);
         request.AccessSubject.AddRange(subjectCategories);
 
         var actionCategory = CloudEventXacmlMapper.CreateActionCategory(_readActionType, true);
@@ -198,7 +198,7 @@ public static class AppCloudEventXacmlMapper
     /// </summary>
     /// <param name="subjects">List of subject identifiers.</param>
     /// <returns>List of XacmlJsonCategory objects representing the subjects.</returns>
-    private static List<XacmlJsonCategory> CreateMultipleSubjectCategory(List<string> subjects)
+    private static List<XacmlJsonCategory> CreateMultipleSubjectCategories(List<string> subjects)
     {
         List<XacmlJsonCategory> subjectCategories = new(subjects.Count);
 
