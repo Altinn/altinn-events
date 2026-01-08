@@ -351,7 +351,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task Push_QueueReportsFailure_ErrorIsLogged()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1", "urn:altinn:resource:app_ttd_endring-av_navn_v2");
+            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.movedTo.task_1", "urn:altinn:resource:app_ttd_endring-av-navn-v2");
 
             Mock<IEventsQueueClient> queueMock = new();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
@@ -360,7 +360,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
-                .ReturnsAsync(new Dictionary<string, bool> 
+                .ReturnsAsync(new Dictionary<string, bool>
                 {
                     { "/user/1337", true }
                 });
@@ -401,7 +401,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Arrange
             var expectedSubject = "uniqueSubject";
             var expectedType = "app.instance.process.completed";
-            var expectedResource = "urn:altinn:resource:app_ttd_endring-av_navn_v2";
+            var expectedResource = "urn:altinn:resource:app_ttd_endring-av-navn-v2";
 
             CloudEvent cloudEvent = GetCloudEvent(
                 new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
@@ -418,7 +418,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync(new QueuePostReceipt { Success = true });
 
             Mock<IAuthorization> authorizationMock = new();
-            
+
             // Mock the multi-consumer authorization method - return authorization success for all consumers
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
