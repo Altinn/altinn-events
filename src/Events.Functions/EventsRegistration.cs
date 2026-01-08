@@ -22,7 +22,7 @@ public class EventsRegistration(IEventsClient eventsClient)
     /// and sends to events-inbound queue storage.
     /// </summary>
     [Function(nameof(EventsRegistration))]
-    public async Task Run([ServiceBusTrigger("%RegistrationQueueName%", Connection = "ServiceBusConnection")] string item)
+    public async Task Run([ServiceBusTrigger("events-registration", Connection = "ServiceBusConnection")] string item)
     {
         CloudEvent cloudEvent = item.DeserializeToCloudEvent();
         EnsureCorrectResourceFormat(cloudEvent);
