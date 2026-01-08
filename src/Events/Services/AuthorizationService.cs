@@ -29,7 +29,7 @@ namespace Altinn.Platform.Events.Services;
 public class AuthorizationService : IAuthorization
 {
     private const string _originalSubjectKey = "originalsubjectreplacedforauthorization";
-
+    private const string _subcribeActionType = "subscribe";
     private readonly IPDP _pdp;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IRegisterService _registerService;
@@ -89,7 +89,7 @@ public class AuthorizationService : IAuthorization
         }
 
         XacmlJsonRequestRoot xacmlJsonRequest = 
-            GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, "subscribe", cloudEvents.ToList());
+            GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, _subcribeActionType, cloudEvents.ToList());
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
         List<CloudEvent> authorizedEvents = FilterAuthorizedRequests(cloudEvents.ToList(), consumer, response);
@@ -142,7 +142,7 @@ public class AuthorizationService : IAuthorization
             ReplaceSubject(cloudEvent, partyIdentifiersList);
         }
 
-        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers, "subscribe");
+        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers, _subcribeActionType);
 
         RestoreSubject(cloudEvent);
 
