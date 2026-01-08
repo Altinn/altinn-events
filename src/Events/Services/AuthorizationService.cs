@@ -20,6 +20,7 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
+using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -33,6 +34,7 @@ public class AuthorizationService : IAuthorization
     private readonly IPDP _pdp;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IRegisterService _registerService;
+    private readonly ILogger<AuthorizationService> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthorizationService"/> class with provided dependencies.
@@ -40,14 +42,17 @@ public class AuthorizationService : IAuthorization
     /// <param name="pdp">A client implementation for policy decision point.</param>
     /// <param name="claimsPrincipalProvider">A service that can provide the ClaimsPrincipal for active user.</param>
     /// <param name="registerService">A service that can perform obtain more party details.</param>
+    /// <param name="logger">The logger associated with the current implementation</param>
     public AuthorizationService(
         IPDP pdp,
         IClaimsPrincipalProvider claimsPrincipalProvider,
-        IRegisterService registerService)
+        IRegisterService registerService,
+        ILogger<AuthorizationService> logger)
     {
         _pdp = pdp;
         _claimsPrincipalProvider = claimsPrincipalProvider;
         _registerService = registerService;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -279,7 +284,7 @@ public class AuthorizationService : IAuthorization
     /// </summary>
     /// <param name="result">The XACML JSON result containing the decision and attributes.</param>
     /// <returns>The consumer identifier in its original format (e.g., "/party/123"), or null if not found.</returns>
-    private static string? ExtractConsumerFromResult(XacmlJsonResult result)
+    private string? ExtractConsumerFromResult(XacmlJsonResult result)
     {
         // Find the access subject category
         var accessSubjectCategory = result.Category?.FirstOrDefault(c => 
@@ -310,6 +315,7 @@ public class AuthorizationService : IAuthorization
             }
         }
 
+        _logger.LogError("No known subject attribute found in XACML result to extract consumer.");
         return null;
     }
 }

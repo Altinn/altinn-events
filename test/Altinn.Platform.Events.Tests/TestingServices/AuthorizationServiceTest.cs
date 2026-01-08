@@ -17,7 +17,7 @@ using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
 using CloudNative.CloudEvents;
-
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 using Xunit;
@@ -27,13 +27,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices;
 /// <summary>
 /// Tests to verify authorization helper
 /// </summary>
-public class AuthorizationServiceTests
+public class AuthorizationServiceTest
 {
     private readonly CloudEvent _cloudEvent;
     private readonly Mock<IClaimsPrincipalProvider> _principalMock = new();
     private readonly Mock<IRegisterService> _registerServiceMock = new();
 
-    public AuthorizationServiceTests()
+    public AuthorizationServiceTest()
     {
         _cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
         {
@@ -57,7 +57,7 @@ public class AuthorizationServiceTests
     {
         PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
         AuthorizationService authzHelper = 
-            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
+            new(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/1337"]);
@@ -75,7 +75,7 @@ public class AuthorizationServiceTests
     {
         PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
         AuthorizationService authzHelper = 
-            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
+            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
@@ -93,7 +93,7 @@ public class AuthorizationServiceTests
     {
         PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
         AuthorizationService authzHelper = 
-            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
+            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         CloudEvent cloudEvent = new()
         {
@@ -143,7 +143,7 @@ public class AuthorizationServiceTests
             });
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         var result = await sut.AuthorizeMultipleConsumersForGenericEvent(_cloudEvent, ["/org/ttd"], CancellationToken.None);
 
@@ -225,7 +225,7 @@ public class AuthorizationServiceTests
             .ReturnsAsync(decisionResponse);
 
         // Act
-        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
+        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
         var result = await sut.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, ["/org/ttd"], CancellationToken.None);
 
@@ -291,7 +291,7 @@ public class AuthorizationServiceTests
         Mock<IPDP> pdpMock = GetPDPMockWithRespose("Permit");
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -307,7 +307,7 @@ public class AuthorizationServiceTests
         Mock<IPDP> pdpMock = GetPDPMockWithRespose("Deny");
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -323,7 +323,7 @@ public class AuthorizationServiceTests
         Mock<IPDP> pdpMock = GetPDPMockWithRespose("Indeterminate");
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -366,7 +366,7 @@ public class AuthorizationServiceTests
             .ReturnsAsync(decisionResponse);
 
         // Act
-        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
+        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(cloudEvent, CancellationToken.None);
 
@@ -388,7 +388,7 @@ public class AuthorizationServiceTests
             .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678", "altinn:events.publish.admin", "AuthenticationTypes.Federation"));
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -407,7 +407,7 @@ public class AuthorizationServiceTests
             .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678", "somerandomprefix:altinn:events.publish.admin", "AuthenticationTypes.Federation"));
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -469,7 +469,7 @@ public class AuthorizationServiceTests
             })
             .ReturnsAsync(decisionResponse);
 
-        AuthorizationService target = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
+        AuthorizationService target = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, CancellationToken.None);
@@ -535,7 +535,7 @@ public class AuthorizationServiceTests
                 ]
             });
 
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(appEvent, ["/party/50001234"]);
@@ -579,7 +579,7 @@ public class AuthorizationServiceTests
                 ]
             });
 
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
@@ -623,7 +623,7 @@ public class AuthorizationServiceTests
                 ]
             });
 
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/12345"]);
@@ -668,7 +668,7 @@ public class AuthorizationServiceTests
                 ]
             });
 
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, [$"/systemuser/{systemUserUuid}"]);
@@ -721,7 +721,7 @@ public class AuthorizationServiceTests
                 ]
             });
 
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         var result = await sut.AuthorizeMultipleConsumersForGenericEvent(genericEvent, ["/organisation/312345678"], CancellationToken.None);
@@ -803,7 +803,7 @@ public class AuthorizationServiceTests
                 ]
             });
 
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd", "/org/nav", "/party/50001234"]);

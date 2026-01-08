@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
@@ -18,12 +19,15 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Telemetry;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
+
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -516,7 +520,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
                 Mock<IRegisterService> registerServiceMock = new();
 
-                authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object, registerServiceMock.Object);
+                authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object, registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
             }
 
             if (memoryCache == null)
