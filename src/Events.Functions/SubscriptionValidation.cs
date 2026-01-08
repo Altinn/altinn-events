@@ -27,7 +27,7 @@ public class SubscriptionValidation(
     /// it will call subscription service
     /// </summary>
     [Function(nameof(SubscriptionValidation))]
-    public async Task Run([ServiceBusTrigger("subscription-validation", Connection = "ServiceBusConnection")] string item)
+    public async Task Run([ServiceBusTrigger("%ValidationQueueName%", Connection = "ServiceBusConnection")] string item)
     {
         Subscription subscription = Subscription.Deserialize(item);
         CloudEventEnvelope cloudEventEnvelope = CreateValidateEvent(subscription);

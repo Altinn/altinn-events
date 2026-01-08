@@ -9,12 +9,15 @@
     },
     "logLevel": {
       "default": "Information",
-      "Azure.Messaging.ServiceBus": "Warning",
-      "Azure.Core": "Warning",
-      "Host.Results": "Error",
-      "Function": "Debug",
+      "Azure.Messaging.ServiceBus": "Information",
+      "Azure.Core": "Information",
+      "Host.Results": "Information",
+      "Function": "Information",
+      "Altinn.Platform.Events.Functions": "Information",
       "Altinn.Platform.Events.Functions.Services.PushEventsService": "Information",
-      "Host.Aggregator": "Trace"
+      "Host.Aggregator": "Trace",
+      "Worker.Extensions.ServiceBus": "Debug",
+      "Microsoft.Azure.WebJobs.ServiceBus": "Debug"
     }
   },
   "extensions": {
