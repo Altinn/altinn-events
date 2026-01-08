@@ -63,7 +63,7 @@ public static class AppCloudEventXacmlMapper
     /// </summary>
     /// <param name="cloudEvent">The CloudEvent containing event metadata used to populate resource and action attributes in the request. Cannot
     /// be null.</param>
-    /// <param name="consumers">A list of subject identifiers to include as access subjects in the request. Each subject will be added as a
+    /// <param name="consumers">A list of consumer identifiers to include as access subjects in the request. Each subject will be added as a
     /// separate access subject. Cannot be null or contain null values.</param>
     /// <returns>An XacmlJsonRequestRoot object representing the constructed multi-decision request with the specified subjects,
     /// action, and resource information.</returns>
