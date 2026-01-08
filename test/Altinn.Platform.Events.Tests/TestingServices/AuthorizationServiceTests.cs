@@ -62,8 +62,9 @@ public class AuthorizationServiceTests
         // Act
         var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/1337"]);
 
-        // Assert.
-        Assert.True(result.ElementAt(0).Value);
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/user/1337"]);
     }
 
     /// <summary>
@@ -79,8 +80,9 @@ public class AuthorizationServiceTests
         // Act
         var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
 
-        // Assert.
-        Assert.True(result.ElementAt(0).Value);
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/org/ttd"]);
     }
 
     /// <summary>
