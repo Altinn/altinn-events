@@ -150,11 +150,11 @@ public class OutboundService : IOutboundService
         }
 
         var authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, unauthorizedConsumers, cancellationToken);
-        CacheGenericAuthorizationResults(authorizationResult, cacheKeysGeneric);
+        CacheResults(authorizationResult, cacheKeysGeneric);
         return authorizationResult;
     }
 
-    private async Task<Dictionary<string, bool>> AuthorizeOrCacheMultipleConsumersForAltinnAppEvent(CloudEvent cloudEvent, List<string> unauthorizedConsumers, Dictionary<string, string> cacheKeys)
+    private async Task<Dictionary<string, bool>> AuthorizeOrCacheMultipleConsumersForAltinnAppEvent(CloudEvent cloudEvent, List<string> unauthorizedConsumers, Dictionary<string, string> cacheKeysAppEvent)
     {
         if (unauthorizedConsumers.Count == 0)
         {
@@ -162,22 +162,11 @@ public class OutboundService : IOutboundService
         }
 
         var authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers);
-        CacheAppEventAuthorizationResults(authorizationResult, cacheKeys);
+        CacheResults(authorizationResult, cacheKeysAppEvent);
         return authorizationResult;
     }
 
-    private void CacheGenericAuthorizationResults(Dictionary<string, bool> authorizationResult, Dictionary<string, string> cacheKeys)
-    {
-        foreach (var result in authorizationResult)
-        {
-            if (cacheKeys.TryGetValue(result.Key, out string cacheKey))
-            {
-                _memoryCache.Set(cacheKey, result.Value, _consumerAuthorizationEntryOptions);
-            }
-        }
-    }
-
-    private void CacheAppEventAuthorizationResults(Dictionary<string, bool> authorizationResult, Dictionary<string, string> cacheKeys)
+    private void CacheResults(Dictionary<string, bool> authorizationResult, Dictionary<string, string> cacheKeys)
     {
         foreach (var result in authorizationResult)
         {
@@ -235,7 +224,7 @@ public class OutboundService : IOutboundService
     {
         var cacheKeys = new Dictionary<string, string>();
 
-        if (string.IsNullOrEmpty(resource))
+        if (string.IsNullOrWhiteSpace(resource))
         {
             return [];
         }
@@ -252,7 +241,7 @@ public class OutboundService : IOutboundService
     {
         var cacheKeys = new Dictionary<string, string>();
 
-        if (sourceFilter == null)
+        if (string.IsNullOrWhiteSpace(sourceFilter))
         {
             return [];
         }
