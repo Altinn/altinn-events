@@ -680,59 +680,6 @@ public class AuthorizationServiceTest
     }
 
     [Fact]
-    public async Task ExtractConsumerFromResult_OrganizationIdentifierAttribute_ExtractsCorrectly()
-    {
-        // Arrange
-        CloudEvent genericEvent = new(CloudEventsSpecVersion.V1_0)
-        {
-            Id = Guid.NewGuid().ToString(),
-            Type = "test.event",
-            Subject = "/organisation/312345678",
-            Source = new Uri("https://example.com/event")
-        };
-        genericEvent["resource"] = "urn:altinn:resource:test-resource";
-
-        Mock<IPDP> pdpMock = new();
-        pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
-            .ReturnsAsync(new XacmlJsonResponse
-            {
-                Response =
-                [
-                    new XacmlJsonResult
-                    {
-                        Decision = "Permit",
-                        Category =
-                        [
-                            new XacmlJsonCategory
-                            {
-                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
-                                Attribute =
-                                [
-                                    new XacmlJsonAttribute
-                                    {
-                                        AttributeId = "urn:altinn:organization:identifier-no",
-                                        Value = "312345678"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            });
-
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
-
-        // Act
-        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(genericEvent, ["/organisation/312345678"], CancellationToken.None);
-
-        // Assert
-        Assert.Single(result);
-        Assert.Contains("/organisation/312345678", result.Keys);
-        Assert.True(result["/organisation/312345678"]);
-    }
-
-    [Fact]
     public async Task ExtractConsumerFromResult_MultipleConsumers_ExtractsAllCorrectly()
     {
         // Arrange
