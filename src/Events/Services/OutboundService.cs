@@ -224,11 +224,6 @@ public class OutboundService : IOutboundService
     {
         var cacheKeys = new Dictionary<string, string>();
 
-        if (string.IsNullOrWhiteSpace(resource))
-        {
-            return [];
-        }
-
         foreach (var consumer in consumers)
         {
             cacheKeys.Add(consumer, GetAuthorizationCacheKey(resource, consumer));
@@ -240,11 +235,6 @@ public class OutboundService : IOutboundService
     private static Dictionary<string, string> GetAltinnAppAuthorizationCacheKeys(string sourceFilter, List<string> consumers)
     {
         var cacheKeys = new Dictionary<string, string>();
-
-        if (string.IsNullOrWhiteSpace(sourceFilter))
-        {
-            return [];
-        }
 
         foreach (var consumer in consumers)
         {
