@@ -32,7 +32,7 @@ public static class XacmlMapperHelper
     /// <summary>
     /// Adds attribute to the XacmlJsonCateogry from the provided subject string
     /// </summary>
-    public static XacmlJsonCategory AddSubjectAttribute(this XacmlJsonCategory xacmlCategory, string subject)
+    public static XacmlJsonCategory AddSubjectAttribute(this XacmlJsonCategory xacmlCategory, string subject, bool includeInResult = false)
     {
         if (string.IsNullOrEmpty(subject))
         {
@@ -44,27 +44,27 @@ public static class XacmlMapperHelper
         if (subject.StartsWith(UserPrefix))
         {
             string value = subject.Replace(UserPrefix, string.Empty);
-            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimUserId, value, ClaimValueTypes.String, DefaultIssuer));
+            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimUserId, value, ClaimValueTypes.String, DefaultIssuer, includeInResult));
         }
         else if (subject.StartsWith(OrgPrefix))
         {
             string value = subject.Replace(OrgPrefix, string.Empty);
-            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrg, value, ClaimValueTypes.String, DefaultIssuer));
+            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrg, value, ClaimValueTypes.String, DefaultIssuer, includeInResult));
         }
         else if (subject.StartsWith(PartyPrefix))
         {
             string value = subject.Replace(PartyPrefix, string.Empty);
-            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer));
+            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimPartyID, value, ClaimValueTypes.Integer, DefaultIssuer, includeInResult));
         }
         else if (subject.StartsWith(OrganisationPrefix))
         {
             string value = subject.Replace(OrganisationPrefix, string.Empty);
-            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrganizationNumber, value, ClaimValueTypes.String, DefaultIssuer));
+            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimOrganizationNumber, value, ClaimValueTypes.String, DefaultIssuer, includeInResult));
         }
         else if (subject.StartsWith(SystemUserPrefix))
         {
             string value = subject.Replace(SystemUserPrefix, string.Empty);
-            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimSystemUserId, value, ClaimValueTypes.String, DefaultIssuer));
+            xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimSystemUserId, value, ClaimValueTypes.String, DefaultIssuer, includeInResult));
         }
         else if (UriExtensions.IsValidUrn(subject))
         {

@@ -79,7 +79,7 @@ namespace Altinn.Platform.Events.Functions.Services
             }
             else
             {
-                return envelope.CloudEvent.Serialize();
+                return envelope.CloudEvent == null ? string.Empty : envelope.CloudEvent.Serialize();
             }
         }
     }
