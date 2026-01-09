@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Altinn.Platform.Events.Clients.Interfaces;
+﻿using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
@@ -12,11 +6,15 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Telemetry;
-
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -114,9 +112,7 @@ public class OutboundService : IOutboundService
 
             Dictionary<string, bool> authorizationResult = await AuthorizeOrCacheMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers, cacheKeys);
 
-            return cachedConsumers
-                .Concat(authorizationResult)
-                .ToDictionary(x => x.Key, x => x.Value);
+            return MergeDictionaries(cachedConsumers, authorizationResult);
         }
         else
         {
@@ -136,10 +132,23 @@ public class OutboundService : IOutboundService
 
             Dictionary<string, bool> authorizationResult = await AuthorizeOrCacheMultipleConsumersForGenericEvent(cloudEvent, unauthorizedConsumers, cacheKeysGeneric, cancellationToken);
 
-            return cachedConsumers
-                .Concat(authorizationResult)
-                .ToDictionary(x => x.Key, x => x.Value);
+            return MergeDictionaries(cachedConsumers, authorizationResult);
         }
+    }
+
+    /// <summary>
+    /// Merges two dictionaries of authorization results manually to avoid potential duplicate keys exception.
+    /// </summary>
+    /// <returns>Merged dictionary</returns>
+    private static Dictionary<string, bool> MergeDictionaries(Dictionary<string, bool> cachedConsumers, Dictionary<string, bool> authorizationResult)
+    {
+        var merged = new Dictionary<string, bool>(cachedConsumers);
+        foreach (var kvp in authorizationResult)
+        {
+            merged[kvp.Key] = kvp.Value;
+        }
+
+        return merged;
     }
 
     private async Task<Dictionary<string, bool>> AuthorizeOrCacheMultipleConsumersForGenericEvent(CloudEvent cloudEvent, List<string> unauthorizedConsumers, Dictionary<string, string> cacheKeysGeneric, CancellationToken cancellationToken)
@@ -198,7 +207,7 @@ public class OutboundService : IOutboundService
 
             await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.OutboundQueue); // log that entry was added to outbound queue
         }
-        else 
+        else
         {
             // add unauthorized trace log entry
             await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.Unauthorized);
