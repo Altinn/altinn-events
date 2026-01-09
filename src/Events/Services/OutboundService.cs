@@ -1,4 +1,10 @@
-﻿using Altinn.Platform.Events.Clients.Interfaces;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
@@ -6,15 +12,11 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Telemetry;
+
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -80,11 +82,17 @@ public class OutboundService : IOutboundService
     {
         var consumers = subscriptions.Select(x => x.Consumer).Distinct().ToList();
 
-        var authorizationResult = await Authorize(cloudEvent, consumers, cancellationToken);
+        var authorizationMultiResult = await Authorize(cloudEvent, consumers, cancellationToken);
 
         foreach (Subscription subscription in subscriptions)
         {
-            bool isAuthorized = authorizationResult.TryGetValue(subscription.Consumer, out bool authorized) && authorized;
+            bool isAuthorized = authorizationMultiResult.TryGetValue(subscription.Consumer, out bool authorizedValue) && authorizedValue;
+
+            if (!authorizationMultiResult.ContainsKey(subscription.Consumer))
+            {
+                _logger.LogWarning("No authorization result found for consumer {Consumer} on event {EventId}", subscription.Consumer, cloudEvent.Id);
+            }
+
             await EnqueueOutbound(cloudEvent, subscription, authorized: isAuthorized);
         }
     }
@@ -221,7 +229,7 @@ public class OutboundService : IOutboundService
         {
             CloudEvent = cloudEvent,
             Consumer = subscription.Consumer,
-            Pushed = DateTime.Now,
+            Pushed = DateTime.UtcNow,
             SubscriptionId = subscription.Id,
             Endpoint = subscription.EndPoint
         };
