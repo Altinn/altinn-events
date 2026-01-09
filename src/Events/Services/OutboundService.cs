@@ -252,11 +252,6 @@ public class OutboundService : IOutboundService
 
     private static string GetAltinnAppAuthorizationCacheKey(string sourceFilter, string consumer)
     {
-        if (sourceFilter == null)
-        {
-            return null;
-        }
-
         // App events always use "read" action
         return $"authorizationdecision:so:{sourceFilter}:co:{consumer}:ac:read";
     }
