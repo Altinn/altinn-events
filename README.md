@@ -13,7 +13,7 @@ These instructions will get you a copy of the events component up and running on
 
 ### Prerequisites
 
-1. [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+1. [.NET 10.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 2. Newest [Git](https://git-scm.com/downloads)
 3. A code editor - we like [Visual Studio Code](https://code.visualstudio.com/download)
    - Install [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions). You can also install the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), which is recommended for working with Azure resources.
