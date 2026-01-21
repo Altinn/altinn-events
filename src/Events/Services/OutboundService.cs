@@ -77,13 +77,23 @@ public class OutboundService : IOutboundService
         await AuthorizeAndPush(cloudEvent, subscriptions, cancellationToken);
     }
 
+    /// <summary>
+    /// Authorizes all distinct consumers for the cloud event and enqueues the event for each authorized subscription.
+    /// Uses multi-decision authorization to check all consumers in a single request, then applies results to individual subscriptions.
+    /// </summary>
+    /// <param name="cloudEvent">The cloud event to be pushed.</param>
+    /// <param name="subscriptions">List of subscriptions matching the event.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     private async Task AuthorizeAndPush(
         CloudEvent cloudEvent, List<Subscription> subscriptions, CancellationToken cancellationToken)
     {
+        // Get distinct consumers to minimize authorization requests
         var consumers = subscriptions.Select(x => x.Consumer).Distinct().ToList();
 
+        // Authorize all consumers in a single multi-decision request (with caching)
         var authorizationMultiResult = await Authorize(cloudEvent, consumers, cancellationToken);
 
+        // Apply authorization results to each subscription
         foreach (Subscription subscription in subscriptions)
         {
             bool isAuthorized = authorizationMultiResult.TryGetValue(subscription.Consumer, out bool authorizedValue) && authorizedValue;
@@ -97,39 +107,54 @@ public class OutboundService : IOutboundService
         }
     }
 
+    /// <summary>
+    /// Authorizes multiple consumers for a cloud event by checking cache first, then calling authorization service for uncached consumers.
+    /// Handles both Altinn App events and generic events.
+    /// </summary>
+    /// <param name="cloudEvent">The cloud event being authorized.</param>
+    /// <param name="consumers">List of distinct consumer identifiers to authorize.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dictionary mapping each consumer to their authorization status (true if authorized).</returns>
     private async Task<Dictionary<string, bool>> Authorize(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
         var unauthorizedConsumers = new List<string>();
         var cachedConsumers = new Dictionary<string, bool>();
 
+        // Determine event type and get appropriate cache key mappings
         bool isAppEvent = IsAppEvent(cloudEvent);
         var mappedItems = isAppEvent
             ? GetAltinnAppAuthorizationCacheKeys(GetSourceFilter(cloudEvent.Source).ToString(), consumers)
             : GetAuthorizationCacheKeys(cloudEvent.GetResource(), consumers);
 
+        // Check cache for each consumer
         foreach (var consumerCacheMappedItem in mappedItems)
         {
             if (!_memoryCache.TryGetValue(consumerCacheMappedItem.CacheKey, out bool isAuthorized))
             {
+                // Cache miss - add to list for authorization
                 unauthorizedConsumers.Add(consumerCacheMappedItem.Consumer);
             }
             else
             {
+                // Cache hit - use cached result
                 cachedConsumers.Add(consumerCacheMappedItem.Consumer, isAuthorized);
             }
         }
 
-        Dictionary<string, bool> authorizationResult = isAppEvent
-            ? await AuthorizeOrCacheMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers, mappedItems)
-            : await AuthorizeOrCacheMultipleConsumersForGenericEvent(cloudEvent, unauthorizedConsumers, mappedItems, cancellationToken);
+        // Authorize uncached consumers and cache the results
+        Dictionary<string, bool> authorizationResult = await AuthorizeOrCacheMultipleConsumersForCloudEvent(cloudEvent, unauthorizedConsumers, mappedItems, isAppEvent, cancellationToken);
 
+        // Merge cached and newly authorized results
         return MergeDictionaries(cachedConsumers, authorizationResult);
     }
 
     /// <summary>
-    /// Merges two dictionaries of authorization results manually to avoid potential duplicate keys exception.
+    /// Merges cached authorization results with newly obtained authorization results.
+    /// If a key exists in both dictionaries, the value from authorizationResult takes precedence.
     /// </summary>
-    /// <returns>Merged dictionary</returns>
+    /// <param name="cachedConsumers">Authorization results retrieved from cache.</param>
+    /// <param name="authorizationResult">Newly obtained authorization results.</param>
+    /// <returns>Merged dictionary containing all authorization results.</returns>
     private static Dictionary<string, bool> MergeDictionaries(Dictionary<string, bool> cachedConsumers, Dictionary<string, bool> authorizationResult)
     {
         var merged = new Dictionary<string, bool>(cachedConsumers);
@@ -141,37 +166,51 @@ public class OutboundService : IOutboundService
         return merged;
     }
 
-    private async Task<Dictionary<string, bool>> AuthorizeOrCacheMultipleConsumersForGenericEvent(
+    /// <summary>
+    /// Authorizes multiple consumers for a cloud event and caches the results.
+    /// Routes to the appropriate authorization method based on event type (App event vs Generic event).
+    /// Returns empty dictionary if no consumers need authorization.
+    /// </summary>
+    /// <param name="cloudEvent">The cloud event being authorized.</param>
+    /// <param name="unauthorizedConsumers">List of consumers that were not found in cache.</param>
+    /// <param name="cacheKeys">Mapping of consumers to their cache keys for storing results.</param>
+    /// <param name="isAppEvent">True if this is an Altinn App event, false for generic events.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Dictionary mapping consumers to their authorization status.</returns>
+    private async Task<Dictionary<string, bool>> AuthorizeOrCacheMultipleConsumersForCloudEvent(
         CloudEvent cloudEvent, 
         List<string> unauthorizedConsumers, 
-        List<ConsumerCacheMap> cacheKeysGeneric, 
+        List<ConsumerCacheMap> cacheKeys,
+        bool isAppEvent,
         CancellationToken cancellationToken)
     {
+        Dictionary<string, bool> authorizationResult = [];
+
         if (unauthorizedConsumers.Count == 0)
         {
-            return [];
+            return authorizationResult;
         }
 
-        var authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, unauthorizedConsumers, cancellationToken);
-        CacheResults(authorizationResult, cacheKeysGeneric);
+        if (isAppEvent)
+        {
+            authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers);
+        }
+        else
+        {
+            // Generic events use "subscribe" action for authorization
+            authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, unauthorizedConsumers, cancellationToken);
+        }
+            
+        CacheResults(authorizationResult, cacheKeys);
         return authorizationResult;
     }
 
-    private async Task<Dictionary<string, bool>> AuthorizeOrCacheMultipleConsumersForAltinnAppEvent(
-        CloudEvent cloudEvent, 
-        List<string> unauthorizedConsumers, 
-        List<ConsumerCacheMap> cacheKeysAppEvent)
-    {
-        if (unauthorizedConsumers.Count == 0)
-        {
-            return [];
-        }
-
-        var authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers);
-        CacheResults(authorizationResult, cacheKeysAppEvent);
-        return authorizationResult;
-    }
-
+    /// <summary>
+    /// Stores authorization results in memory cache using the appropriate cache keys for each consumer.
+    /// Logs a warning if a consumer's cache key cannot be found.
+    /// </summary>
+    /// <param name="authorizationResult">Dictionary of authorization results keyed by consumer identifier.</param>
+    /// <param name="cacheKeys">List of consumer-to-cache-key mappings.</param>
     private void CacheResults(Dictionary<string, bool> authorizationResult, List<ConsumerCacheMap> cacheKeys)
     {
         foreach (var result in authorizationResult)
@@ -187,6 +226,13 @@ public class OutboundService : IOutboundService
         }
     }
 
+    /// <summary>
+    /// Enqueues a cloud event for outbound delivery if the consumer is authorized.
+    /// For unauthorized consumers, logs the unauthorized attempt and records telemetry.
+    /// </summary>
+    /// <param name="cloudEvent">The cloud event to enqueue.</param>
+    /// <param name="subscription">The subscription containing consumer and endpoint information.</param>
+    /// <param name="authorized">Whether the consumer is authorized to receive this event.</param>
     private async Task EnqueueOutbound(
         CloudEvent cloudEvent, Subscription subscription, bool authorized)
     {
@@ -206,11 +252,11 @@ public class OutboundService : IOutboundService
                 _logger.LogError(receipt.Exception, "OutboundService EnqueueOutbound Failed to send event envelope {EventId} to consumer with {SubscriptionId}.", cloudEvent.Id, subscription.Id);
             }
 
-            await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.OutboundQueue); // log that entry was added to outbound queue
+            await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.OutboundQueue);
         }
         else
         {
-            // add unauthorized trace log entry
+            // Log unauthorized attempt and record telemetry
             await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.Unauthorized);
             _telemetry?.SubscriptionAuthFailed();
         }
