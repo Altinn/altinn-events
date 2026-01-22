@@ -102,7 +102,7 @@ public class AppCloudEventXacmlMapperTests
     public void CreateMultiDecisionRequest_ShouldReturnValidXACMLRequest_ForMultipleConsumers()
     {
         // Arrange
-        List<string> consumers = new() { "/party/1", "/party/2", "/party/3" };
+        List<string> consumers = ["/org/a", "/org/b", "/org/c"];
         CloudEvent cloudEvent = new()
         {
             Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
