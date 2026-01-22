@@ -19,6 +19,7 @@ namespace Altinn.Platform.Events.Swagger
     public class SchemaExampleFilter : ISchemaFilter
     {
         private const string _testUserPrefix = "/user/12345";
+        private const string _consumerKey = "consumer";
 
         /// <inheritdoc/>
         public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
@@ -29,7 +30,7 @@ namespace Altinn.Platform.Events.Swagger
             }
         }
 
-        private static JsonNode GetExampleOrNullFor(Type type)
+        private static JsonObject GetExampleOrNullFor(Type type)
         {
             return type.Name switch
             {
@@ -50,7 +51,7 @@ namespace Altinn.Platform.Events.Swagger
                     ["cloudEventType"] = "app.instance.created",
                     ["cloudEventResource"] = "urn:altinn:resource:app_ttd_apps-test",
                     ["subscriptionId"] = 1,
-                    ["consumer"] = _testUserPrefix,
+                    [_consumerKey] = _testUserPrefix,
                     ["endpoint"] = "https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY",
                     ["statusCode"] = 200
                 },
@@ -61,7 +62,7 @@ namespace Altinn.Platform.Events.Swagger
                     ["sourceFilter"] = "https://skd.apps.altinn.cloud/skd/mva-melding",
                     ["subjectFilter"] = "/party/512345",
                     ["typeFilter"] = "app.instance.process.completed",
-                    ["consumer"] = _testUserPrefix,
+                    [_consumerKey] = _testUserPrefix,
                     ["createdBy"] = _testUserPrefix,
                     ["created"] = "2022-07-27T13:14:14.395226Z"
                 },
@@ -77,7 +78,7 @@ namespace Altinn.Platform.Events.Swagger
                                 ["sourceFilter"] = "https://skd.apps.altinn.cloud/skd/mva-melding",
                                 ["subjectFilter"] = "/party/512345",
                                 ["typeFilter"] = "app.instance.process.completed",
-                                ["consumer"] = _testUserPrefix,
+                                [_consumerKey] = _testUserPrefix,
                                 ["createdBy"] = _testUserPrefix,
                                 ["created"] = "2022-07-27T13:14:14.395226Z"
                             },
@@ -86,7 +87,7 @@ namespace Altinn.Platform.Events.Swagger
                                 ["endPoint"] = "https://hooks.slack.com/services/ID/CODE",
                                 ["id"] = 2,
                                 ["sourceFilter"] = "https://ttd.apps.altinn.cloud/ttd/apps-test",
-                                ["consumer"] = "/org/ttd",
+                                [_consumerKey] = "/org/ttd",
                                 ["createdBy"] = "/org/ttd5",
                                 ["created"] = "2022-08-02T08:49:07.269958Z"
                             }
