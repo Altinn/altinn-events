@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
@@ -319,15 +318,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             Scheme = "bearer"
         });
 
-        c.AddSecurityRequirement(document =>
+        c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
         {
-            return new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecuritySchemeReference("Bearer", document),
-                    new List<string>()
-                }
-            };
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
         });
     });
 }
