@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Nodes;
 
 using Altinn.Platform.Events.Models;
 
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -19,7 +19,7 @@ namespace Altinn.Platform.Events.Swagger
         private const string _applicationJson = "application/json";
 
         /// <inheritdoc/>
-        public void Apply(OpenApiRequestBody requestBody, RequestBodyFilterContext context)
+        public void Apply(IOpenApiRequestBody requestBody, RequestBodyFilterContext context)
         {
             switch (context.BodyParameterDescription.Type.Name)
             {
@@ -34,11 +34,11 @@ namespace Altinn.Platform.Events.Swagger
             }
         }
 
-        private static void CreateCloudEventRequestModelExamples(OpenApiRequestBody requestBody)
+        private static void CreateCloudEventRequestModelExamples(IOpenApiRequestBody requestBody)
         {
             OpenApiMediaType appJson = requestBody.Content[_applicationJson];
 
-            List<(string Name, OpenApiObject Value)> examples = new()
+            List<(string Name, JsonObject Value)> examples = new()
             {
                 ("Instance created event with alternative subject",
                 CreateOpenApiObject(new List<(string Name, string Value)>()
@@ -68,11 +68,11 @@ namespace Altinn.Platform.Events.Swagger
             requestBody.Content[_applicationJson] = appJson;
         }
 
-        private static void CreateSubscriptionRequestModelExamples(OpenApiRequestBody requestBody)
+        private static void CreateSubscriptionRequestModelExamples(IOpenApiRequestBody requestBody)
         {
             OpenApiMediaType appJson = requestBody.Content[_applicationJson];
 
-            List<(string Name, OpenApiObject Value)> examples = new()
+            List<(string Name, JsonObject Value)> examples = new()
             {
                  ("End user (system) subscribing to events regarding themselves",
                  CreateOpenApiObject(new List<(string Name, string Value)>()
@@ -111,10 +111,10 @@ namespace Altinn.Platform.Events.Swagger
             requestBody.Content[_applicationJson] = appJson;
         }
 
-        private static OpenApiObject CreateOpenApiObject(List<(string Name, string Value)> elements)
+        private static JsonObject CreateOpenApiObject(List<(string Name, string Value)> elements)
         {
-            var obj = new OpenApiObject();
-            elements.ForEach(e => obj.Add(e.Name, new OpenApiString(e.Value)));
+            var obj = new JsonObject();
+            elements.ForEach(e => obj.Add(e.Name, JsonValue.Create(e.Value)));
 
             return obj;
         }

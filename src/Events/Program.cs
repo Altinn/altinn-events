@@ -46,7 +46,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Npgsql;
 
@@ -319,19 +319,15 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             Scheme = "bearer"
         });
 
-        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        c.AddSecurityRequirement(document =>
         {
+            return new OpenApiSecurityRequirement
             {
-                new OpenApiSecurityScheme
                 {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                Array.Empty<string>()
-            }
+                    new OpenApiSecuritySchemeReference("Bearer", document),
+                    new List<string>()
+                }
+            };
         });
     });
 }
