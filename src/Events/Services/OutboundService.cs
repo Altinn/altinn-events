@@ -117,8 +117,8 @@ public class OutboundService : IOutboundService
     /// <returns>Dictionary mapping each consumer to their authorization status (true if authorized).</returns>
     private async Task<Dictionary<string, bool>> Authorize(CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
-        var unauthorizedConsumers = new List<string>();
-        var cachedConsumers = new Dictionary<string, bool>();
+        var consumersWithoutAuthorizationResult = new List<string>();
+        var consumersWithCachedAuthorizationResult = new Dictionary<string, bool>();
 
         // Determine event type and get appropriate cache key mappings
         bool isAppEvent = IsAppEvent(cloudEvent);
@@ -132,20 +132,20 @@ public class OutboundService : IOutboundService
             if (!_memoryCache.TryGetValue(consumerCacheMappedItem.CacheKey, out bool isAuthorized))
             {
                 // Cache miss - add to list for authorization
-                unauthorizedConsumers.Add(consumerCacheMappedItem.Consumer);
+                consumersWithoutAuthorizationResult.Add(consumerCacheMappedItem.Consumer);
             }
             else
             {
                 // Cache hit - use cached result
-                cachedConsumers.Add(consumerCacheMappedItem.Consumer, isAuthorized);
+                consumersWithCachedAuthorizationResult.Add(consumerCacheMappedItem.Consumer, isAuthorized);
             }
         }
 
         // Authorize uncached consumers and cache the results
-        Dictionary<string, bool> authorizationResult = await AuthorizeOrCacheMultipleConsumersForCloudEvent(cloudEvent, unauthorizedConsumers, mappedItems, isAppEvent, cancellationToken);
+        Dictionary<string, bool> authorizationResult = await AuthorizeOrCacheMultipleConsumersForCloudEvent(cloudEvent, consumersWithoutAuthorizationResult, mappedItems, isAppEvent, cancellationToken);
 
         // Merge cached and newly authorized results
-        return MergeDictionaries(cachedConsumers, authorizationResult);
+        return MergeDictionaries(consumersWithCachedAuthorizationResult, authorizationResult);
     }
 
     /// <summary>
