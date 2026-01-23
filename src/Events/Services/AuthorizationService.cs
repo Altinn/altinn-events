@@ -283,7 +283,7 @@ public class AuthorizationService : IAuthorization
     /// Extracts the consumer identifier from XACML response attributes.
     /// </summary>
     /// <param name="result">The XACML JSON result containing the decision and attributes.</param>
-    /// <returns>The consumer identifier in its original format (e.g., "/party/123"), or null if not found.</returns>
+    /// <returns>The consumer identifier in its original format (e.g., "/org/abc"), or null if not found.</returns>
     private string? ExtractConsumerFromResult(XacmlJsonResult result)
     {
         // Find the access subject category
@@ -301,7 +301,6 @@ public class AuthorizationService : IAuthorization
             // Map known subject attribute IDs back to consumer format
             string? consumer = attribute.AttributeId switch
             {
-                "urn:altinn:partyid" => $"/party/{attribute.Value}",
                 "urn:altinn:org" => $"/org/{attribute.Value}",
                 "urn:altinn:userid" => $"/user/{attribute.Value}",
                 "urn:altinn:systemuser:uuid" => $"/systemuser/{attribute.Value}",

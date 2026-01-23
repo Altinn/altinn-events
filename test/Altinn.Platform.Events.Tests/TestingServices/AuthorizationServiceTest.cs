@@ -494,59 +494,6 @@ public class AuthorizationServiceTest
     }
 
     [Fact]
-    public async Task ExtractConsumerFromResult_PartyIdAttribute_ExtractsCorrectly()
-    {
-        // Arrange
-        CloudEvent appEvent = new(CloudEventsSpecVersion.V1_0)
-        {
-            Id = Guid.NewGuid().ToString(),
-            Type = "test.event",
-            Subject = "/party/50001234",
-            Source = new Uri("https://ttd.apps.altinn.no/ttd/test-app/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd")
-        };
-        appEvent["resource"] = "urn:altinn:resource:app_ttd_test-app";
-
-        Mock<IPDP> pdpMock = new();
-        pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
-            .ReturnsAsync(new XacmlJsonResponse
-            {
-                Response =
-                [
-                    new XacmlJsonResult
-                    {
-                        Decision = "Permit",
-                        Category =
-                        [
-                            new XacmlJsonCategory
-                            {
-                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
-                                Attribute =
-                                [
-                                    new XacmlJsonAttribute
-                                    {
-                                        AttributeId = "urn:altinn:partyid",
-                                        Value = "50001234"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            });
-
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
-
-        // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(appEvent, ["/party/50001234"]);
-
-        // Assert
-        Assert.Single(result);
-        Assert.Contains("/party/50001234", result.Keys);
-        Assert.True(result["/party/50001234"]);
-    }
-
-    [Fact]
     public async Task ExtractConsumerFromResult_OrgAttribute_ExtractsCorrectly()
     {
         // Arrange
@@ -740,8 +687,8 @@ public class AuthorizationServiceTest
                                 [
                                     new XacmlJsonAttribute
                                     {
-                                        AttributeId = "urn:altinn:partyid",
-                                        Value = "50001234"
+                                        AttributeId = "urn:altinn:userid",
+                                        Value = "12345678"
                                     }
                                 ]
                             }
@@ -753,13 +700,13 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd", "/org/nav", "/party/50001234"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd", "/org/nav", "/user/12345678"]);
 
         // Assert
         Assert.Equal(3, result.Count);
         Assert.True(result["/org/ttd"]);
+        Assert.True(result["/user/12345678"]);
         Assert.False(result["/org/nav"]);
-        Assert.True(result["/party/50001234"]);
     }
 
     private static CloudEvent GetCloudEvent(string eventId, string? subject)
