@@ -193,6 +193,7 @@ public class OutboundService : IOutboundService
 
         if (isAppEvent)
         {
+            // App events are authorized for action "read" on app resource "events"
             authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers);
         }
         else
