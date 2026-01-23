@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-
 using Altinn.Common.PEP.Constants;
 
 using Altinn.Platform.Events.Authorization;
@@ -18,6 +17,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 {
     public class GenericCloudEventXacmlMapperTests
     {
+        private const string _subscribeActionType = "subscribe";
         private readonly CloudEvent _cloudEvent;
         private readonly CloudEvent _cloudEventWithResourceInstance;
         private readonly CloudEvent _cloudEventWithOrgNoSubject;
@@ -59,6 +59,37 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             _cloudEventWithResourceInstance["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
             _cloudEventWithResourceInstance["resourceinstance"] = "resourceInstanceId";
+        }
+
+        [Fact]
+        public void CreateMultiDecisionRequest_ShouldReturnValidXACMLRequest_ForMultipleConsumers()
+        {
+            // Arrange
+            List<string> consumers = ["/org/ttd", "/org/skd", "/person/16069412345"];
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(_cloudEvent, consumers, _subscribeActionType);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.NotNull(actual.Request);
+            Assert.NotEmpty(actual.Request.Action);
+            Assert.NotEmpty(actual.Request.AccessSubject);
+            Assert.Equal(3, actual.Request.AccessSubject.Count);
+            Assert.NotEmpty(actual.Request.Resource);
+            Assert.NotNull(actual.Request.MultiRequests);
+            Assert.Equal(3, actual.Request.MultiRequests.RequestReference.Count);
+            
+            // Verify subject IDs are sequential
+            var subjectIds = actual.Request.AccessSubject.Select(s => s.Id).ToList();
+            Assert.Contains("s1", subjectIds);
+            Assert.Contains("s2", subjectIds);
+            Assert.Contains("s3", subjectIds);
+            
+            // Verify multi-request references include all subjects
+            Assert.Contains(actual.Request.MultiRequests.RequestReference, r => !r.ReferenceId.Except(["a1", "s1", "r1"]).Any());
+            Assert.Contains(actual.Request.MultiRequests.RequestReference, r => !r.ReferenceId.Except(["a1", "s2", "r1"]).Any());
+            Assert.Contains(actual.Request.MultiRequests.RequestReference, r => !r.ReferenceId.Except(["a1", "s3", "r1"]).Any());
         }
 
         [Fact]

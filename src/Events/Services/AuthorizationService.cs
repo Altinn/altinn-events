@@ -5,7 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 
@@ -20,6 +20,7 @@ using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 
 using CloudNative.CloudEvents;
+using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -29,10 +30,11 @@ namespace Altinn.Platform.Events.Services;
 public class AuthorizationService : IAuthorization
 {
     private const string _originalSubjectKey = "originalsubjectreplacedforauthorization";
-
+    private const string _subscribeActionType = "subscribe";
     private readonly IPDP _pdp;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IRegisterService _registerService;
+    private readonly ILogger<AuthorizationService> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthorizationService"/> class with provided dependencies.
@@ -40,14 +42,17 @@ public class AuthorizationService : IAuthorization
     /// <param name="pdp">A client implementation for policy decision point.</param>
     /// <param name="claimsPrincipalProvider">A service that can provide the ClaimsPrincipal for active user.</param>
     /// <param name="registerService">A service that can perform obtain more party details.</param>
+    /// <param name="logger">The logger associated with the current implementation</param>
     public AuthorizationService(
         IPDP pdp,
         IClaimsPrincipalProvider claimsPrincipalProvider,
-        IRegisterService registerService)
+        IRegisterService registerService,
+        ILogger<AuthorizationService> logger)
     {
         _pdp = pdp;
         _claimsPrincipalProvider = claimsPrincipalProvider;
         _registerService = registerService;
+        _logger = logger;
     }
 
     /// <inheritdoc/>
@@ -89,7 +94,7 @@ public class AuthorizationService : IAuthorization
         }
 
         XacmlJsonRequestRoot xacmlJsonRequest = 
-            GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, "subscribe", cloudEvents.ToList());
+            GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, _subscribeActionType, cloudEvents.ToList());
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
         List<CloudEvent> authorizedEvents = FilterAuthorizedRequests(cloudEvents.ToList(), consumer, response);
@@ -129,9 +134,11 @@ public class AuthorizationService : IAuthorization
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AuthorizeConsumerForGenericEvent(
-        CloudEvent cloudEvent, string consumer, CancellationToken cancellationToken)
+    public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForGenericEvent(
+        CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
+        Dictionary<string, bool> results = [];
+
         if (UnsupportedSubject(cloudEvent))
         {
             IEnumerable<PartyIdentifiers> partyIdentifiersList =
@@ -140,23 +147,50 @@ public class AuthorizationService : IAuthorization
             ReplaceSubject(cloudEvent, partyIdentifiersList);
         }
 
-        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateDecisionRequest(consumer, "subscribe", cloudEvent);
+        XacmlJsonRequestRoot xacmlJsonRequest = GenericCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers, _subscribeActionType);
 
         RestoreSubject(cloudEvent);
 
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
-        return IsPermit(response);
+        foreach (var r in response.Response)
+        {
+            var consumer = ExtractConsumerFromResult(r);
+
+            if (string.IsNullOrEmpty(consumer))
+            {
+                continue;
+            }
+
+            results[consumer] = r.Decision.Equals(XacmlContextDecision.Permit.ToString());
+        }
+
+        return results;
     }
 
     /// <inheritdoc/>
-    public async Task<bool> AuthorizeConsumerForAltinnAppEvent(CloudEvent cloudEvent, string consumer)
+    public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
+        CloudEvent cloudEvent, List<string> consumers)
     {
-        XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateDecisionRequest(cloudEvent, consumer);
+        var results = new Dictionary<string, bool>();
+        XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers);
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
-        return IsPermit(response);
+            
+        foreach (var r in response.Response)
+        {
+            var consumer = ExtractConsumerFromResult(r);
+
+            if (string.IsNullOrEmpty(consumer))
+            {
+                continue;
+            }
+
+            results[consumer] = r.Decision.Equals(XacmlContextDecision.Permit.ToString());
+        }
+
+        return results;
     }
-   
+
     /// <inheritdoc/>
     public async Task<bool> AuthorizeConsumerForEventsSubscription(Subscription subscription)
     {
@@ -243,5 +277,44 @@ public class AuthorizationService : IAuthorization
             cloudEvent.Subject = cloudEvent[_originalSubjectKey]!.ToString();
             cloudEvent[_originalSubjectKey] = null;
         }
+    }
+
+    /// <summary>
+    /// Extracts the consumer identifier from XACML response attributes.
+    /// </summary>
+    /// <param name="result">The XACML JSON result containing the decision and attributes.</param>
+    /// <returns>The consumer identifier in its original format (e.g., "/org/abc"), or null if not found.</returns>
+    private string? ExtractConsumerFromResult(XacmlJsonResult result)
+    {
+        // Find the access subject category
+        var accessSubjectCategory = result.Category?.FirstOrDefault(c => 
+            c.CategoryId.Equals(XacmlConstants.MatchAttributeCategory.Subject));
+
+        if (accessSubjectCategory == null)
+        {
+            return null;
+        }
+
+        // Check all attributes in the access subject category
+        foreach (var attribute in accessSubjectCategory.Attribute)
+        {
+            // Map known subject attribute IDs back to consumer format
+            string? consumer = attribute.AttributeId switch
+            {
+                "urn:altinn:org" => $"/org/{attribute.Value}",
+                "urn:altinn:userid" => $"/user/{attribute.Value}",
+                "urn:altinn:systemuser:uuid" => $"/systemuser/{attribute.Value}",
+                "urn:altinn:organization:identifier-no" => $"/organisation/{attribute.Value}",
+                _ => null
+            };
+
+            if (consumer != null)
+            {
+                return consumer;
+            }
+        }
+
+        _logger.LogError("No known subject attribute found in XACML result to extract consumer.");
+        return null;
     }
 }

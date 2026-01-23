@@ -6,7 +6,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 
 using Altinn.Common.PEP.Interfaces;
@@ -17,7 +17,7 @@ using Altinn.Platform.Events.Tests.Utils;
 using Altinn.Platform.Events.UnitTest.Mocks;
 
 using CloudNative.CloudEvents;
-
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 using Xunit;
@@ -57,13 +57,14 @@ public class AuthorizationServiceTest
     {
         PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
         AuthorizationService authzHelper = 
-            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
+            new(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(_cloudEvent, "/user/1337");
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/1337"]);
 
-        // Assert.
-        Assert.True(result);
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/user/1337"]);
     }
 
     /// <summary>
@@ -74,13 +75,14 @@ public class AuthorizationServiceTest
     {
         PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
         AuthorizationService authzHelper = 
-            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
+            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(_cloudEvent, "/org/ttd");
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
 
-        // Assert.
-        Assert.True(result);
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/org/ttd"]);
     }
 
     /// <summary>
@@ -91,7 +93,7 @@ public class AuthorizationServiceTest
     {
         PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
         AuthorizationService authzHelper = 
-            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object);
+            new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         CloudEvent cloudEvent = new()
         {
@@ -100,26 +102,55 @@ public class AuthorizationServiceTest
         };
 
         // Act
-        bool result = await authzHelper.AuthorizeConsumerForAltinnAppEvent(cloudEvent, "/org/nav");
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/org/nav"]);
 
         // Assert.
-        Assert.False(result);
+        Assert.Single(result);
+        Assert.False(result["/org/nav"]);
     }
 
     [Fact]
     public async Task AuthorizeConsumerForGenericEvent_PdpIsCalledWithXacmlRequestRoot()
     {
         // Arrange
-        Mock<IPDP> pdpMock = GetPDPMockWithRespose("Permit");
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .ReturnsAsync(new XacmlJsonResponse
+            {
+                Response =
+                [
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:org",
+                                        Value = "ttd"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        bool actual = await sut.AuthorizeConsumerForGenericEvent(_cloudEvent, "/org/ttd/", CancellationToken.None);
+        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(_cloudEvent, ["/org/ttd"], CancellationToken.None);
 
         // Assert
         pdpMock.VerifyAll();
-        Assert.True(actual);
+        Assert.Single(result);
+        Assert.True(result["/org/ttd"]);
     }
 
     [Fact]
@@ -141,7 +172,44 @@ public class AuthorizationServiceTest
             })
             .ReturnsAsync([partiesRegisterQueryResponse.Data[0]]);
 
-        XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_subscribe_one");
+        // Create a mock XACML response that includes the subject category with org attribute
+        XacmlJsonResponse decisionResponse = new()
+        {
+            Response =
+            [
+                new XacmlJsonResult
+                {
+                    Decision = "Permit",
+                    Category = new List<XacmlJsonCategory>
+                    {
+                        new() 
+                        {
+                            CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                            Attribute = new List<XacmlJsonAttribute>
+                            {
+                                new XacmlJsonAttribute
+                                {
+                                    AttributeId = "urn:altinn:org",
+                                    Value = "ttd"
+                                }
+                            }
+                        },
+                        new() 
+                        {
+                            CategoryId = XacmlConstants.MatchAttributeCategory.Resource,
+                            Attribute = new List<XacmlJsonAttribute>
+                            {
+                                new XacmlJsonAttribute
+                                {
+                                    AttributeId = "urn:altinn:party:uuid",
+                                    Value = "4a80af94-14be-4af5-9f95-a6a0824c5b55"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        };
 
         Mock<IPDP> pdpMock = new();
         pdpMock.Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
@@ -157,12 +225,13 @@ public class AuthorizationServiceTest
             .ReturnsAsync(decisionResponse);
 
         // Act
-        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
+        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        bool actual = await sut.AuthorizeConsumerForGenericEvent(cloudEvent, "/org/ttd/", CancellationToken.None);
+        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, ["/org/ttd"], CancellationToken.None);
 
         // Assert
-        Assert.True(actual);
+        Assert.Single(result);
+        Assert.True(result["/org/ttd"]);
 
         // Check that the cloud event is back to the original subject
         Assert.Equal("urn:altinn:person:identifier-no:18874198354", cloudEvent.Subject);
@@ -222,7 +291,7 @@ public class AuthorizationServiceTest
         Mock<IPDP> pdpMock = GetPDPMockWithRespose("Permit");
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -238,7 +307,7 @@ public class AuthorizationServiceTest
         Mock<IPDP> pdpMock = GetPDPMockWithRespose("Deny");
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -254,7 +323,7 @@ public class AuthorizationServiceTest
         Mock<IPDP> pdpMock = GetPDPMockWithRespose("Indeterminate");
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -297,7 +366,7 @@ public class AuthorizationServiceTest
             .ReturnsAsync(decisionResponse);
 
         // Act
-        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
+        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(cloudEvent, CancellationToken.None);
 
@@ -319,7 +388,7 @@ public class AuthorizationServiceTest
             .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678", "altinn:events.publish.admin", "AuthenticationTypes.Federation"));
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -338,7 +407,7 @@ public class AuthorizationServiceTest
             .Returns(PrincipalUtil.GetClaimsPrincipal("digdir", "912345678", "somerandomprefix:altinn:events.publish.admin", "AuthenticationTypes.Federation"));
 
         // Act
-        var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object);
+        var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
 
@@ -400,7 +469,7 @@ public class AuthorizationServiceTest
             })
             .ReturnsAsync(decisionResponse);
 
-        AuthorizationService target = new(pdpMock.Object, _principalMock.Object, registerMock.Object);
+        AuthorizationService target = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
         List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, CancellationToken.None);
@@ -422,6 +491,222 @@ public class AuthorizationServiceTest
 
         Assert.Equal("urn:altinn:person:identifier-no:notfound", finalCloudEvents[4].Subject);
         Assert.Null(finalCloudEvents[4]["originalsubjectreplacedforauthorization"]);
+    }
+
+    [Fact]
+    public async Task ExtractConsumerFromResult_OrgAttribute_ExtractsCorrectly()
+    {
+        // Arrange
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .ReturnsAsync(new XacmlJsonResponse
+            {
+                Response =
+                [
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:org",
+                                        Value = "ttd"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Contains("/org/ttd", result.Keys);
+        Assert.True(result["/org/ttd"]);
+    }
+
+    [Fact]
+    public async Task ExtractConsumerFromResult_UserIdAttribute_ExtractsCorrectly()
+    {
+        // Arrange
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .ReturnsAsync(new XacmlJsonResponse
+            {
+                Response =
+                [
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:userid",
+                                        Value = "12345"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/12345"]);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Contains("/user/12345", result.Keys);
+        Assert.True(result["/user/12345"]);
+    }
+
+    [Fact]
+    public async Task ExtractConsumerFromResult_SystemUserAttribute_ExtractsCorrectly()
+    {
+        // Arrange
+        var systemUserUuid = Guid.NewGuid().ToString();
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .ReturnsAsync(new XacmlJsonResponse
+            {
+                Response =
+                [
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:systemuser:uuid",
+                                        Value = systemUserUuid
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, [$"/systemuser/{systemUserUuid}"]);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Contains($"/systemuser/{systemUserUuid}", result.Keys);
+        Assert.True(result[$"/systemuser/{systemUserUuid}"]);
+    }
+
+    [Fact]
+    public async Task ExtractConsumerFromResult_MultipleConsumers_ExtractsAllCorrectly()
+    {
+        // Arrange
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .ReturnsAsync(new XacmlJsonResponse
+            {
+                Response =
+                [
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:org",
+                                        Value = "ttd"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    new XacmlJsonResult
+                    {
+                        Decision = "Deny",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:org",
+                                        Value = "nav"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:userid",
+                                        Value = "12345678"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd", "/org/nav", "/user/12345678"]);
+
+        // Assert
+        Assert.Equal(3, result.Count);
+        Assert.True(result["/org/ttd"]);
+        Assert.True(result["/user/12345678"]);
+        Assert.False(result["/org/nav"]);
     }
 
     private static CloudEvent GetCloudEvent(string eventId, string? subject)

@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
@@ -18,10 +19,12 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Telemetry;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
+
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -86,8 +89,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
+                .ReturnsAsync([]);
             Mock<IEventsQueueClient> queueMock = new();
             queueMock
                 .Setup(q => q.EnqueueOutbound(It.IsAny<string>()));
@@ -99,7 +102,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             repositoryMock.VerifyAll();
-            authorizationMock.Verify(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Never);
+            authorizationMock.Verify(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()), Times.Never);
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
         }
 
@@ -125,9 +128,21 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(
-                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(), 
+                    It.IsAny<List<string>>(), 
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
+                {
+                    // Return true for all consumers
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = true;
+                    }
+
+                    return results;
+                });
 
             var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
@@ -160,9 +175,19 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(
-                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(false);
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
+                {
+                    // Return false for all consumers
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = false;
+                    }
+
+                    return results;
+                });
 
             var telemetryClient = new TelemetryClient();
             var counterMeasurements = new List<(string Name, long Value)>();
@@ -203,30 +228,45 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task PostOutbound_ConsumerNotAuthorized_QueueClientNeverCalled()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                "/party/1337/",
+                "app.instance.process.completed",
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
                 .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Subscription>() { new Subscription { Consumer = "/org/nav" } });
+
             Mock<IEventsQueueClient> queueMock = new();
             queueMock
                 .Setup(q => q.EnqueueOutbound(It.IsAny<string>()));
 
             Mock<IAuthorization> authorizationMock = new();
+            
+            // Mock the new multi-consumer authorization method
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForGenericEvent(
-                    It.IsAny<CloudEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(false);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()))
+                .ReturnsAsync(new Dictionary<string, bool> { { "/org/nav", false } });
 
-            var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object, authorizationMock: authorizationMock.Object);
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authorizationMock.Object);
 
             // Act
             await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
-
+            authorizationMock.Verify(
+                a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.Is<List<string>>(list => list.Contains("/org/nav"))),
+                Times.Once);
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
         }
 
@@ -242,16 +282,40 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task Push_TwoMatchingAndValidSubscriptions_AddedToQueue()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), 
+                "/party/1337/", 
+                "app.instance.process.completed", 
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
 
             Mock<IEventsQueueClient> queueMock = new();
             queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
                 .ReturnsAsync(new QueuePostReceipt { Success = true });
 
             Mock<IAuthorization> authorizationMock = new();
+            
+            // Set up to capture what consumers are actually being passed
+            List<string> capturedConsumers = null;
+            
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(), 
+                    It.IsAny<List<string>>()))
+                .Callback<CloudEvent, List<string>>((ce, consumers) => 
+                {
+                    capturedConsumers = consumers;
+                })
+                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                {
+                    // Return true for all consumers that were passed in
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = true;
+                    }
+
+                    return results;
+                });
 
             var service = GetOutboundService(queueMock.Object, authorizationMock: authorizationMock.Object);
 
@@ -259,7 +323,23 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await service.PostOutbound(cloudEvent, CancellationToken.None);
 
             // Assert
-            queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(4));
+            authorizationMock.Verify(
+                a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(), 
+                    It.IsAny<List<string>>()), 
+                Times.Once,
+                "Authorization should be called once with distinct consumers");
+            
+            Assert.NotNull(capturedConsumers);
+            Assert.Equal(3, capturedConsumers.Count); // 3 distinct consumers
+            Assert.Contains("/org/ttd", capturedConsumers);
+            Assert.Contains("/org/nav", capturedConsumers);
+            Assert.Contains("/user/1337", capturedConsumers);
+            
+            queueMock.Verify(
+                r => r.EnqueueOutbound(It.IsAny<string>()), 
+                Times.Exactly(4),
+                "Should enqueue 4 times - one for each subscription");
         }
 
         /// <summary>
@@ -282,8 +362,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
+                .ReturnsAsync(new Dictionary<string, bool>
+                {
+                    { "/user/1337", true }
+                });
 
             var loggerMock = new Mock<ILogger<OutboundService>>();
             var telemetryClient = new TelemetryClient();
@@ -338,9 +421,23 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync(new QueuePostReceipt { Success = true });
 
             Mock<IAuthorization> authorizationMock = new();
+
+            // Mock the multi-consumer authorization method - return authorization success for all consumers
             authorizationMock
-                .Setup(a => a.AuthorizeConsumerForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<string>()))
-                .ReturnsAsync(true);
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                {
+                    // Return true for all consumers
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = true;
+                    }
+
+                    return results;
+                });
 
             var sut = GetOutboundService(
                 queueMock: queueMock.Object,
@@ -422,7 +519,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
                 Mock<IRegisterService> registerServiceMock = new();
 
-                authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object, registerServiceMock.Object);
+                authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object, registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
             }
 
             if (memoryCache == null)
@@ -541,6 +638,276 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Scenario: First authorization request for app event - cache is empty
+        /// Expected result: Authorization service is called and result is cached
+        /// Success criteria: Authorization called once, cache contains the result with correct key
+        /// </summary>
+        [Fact]
+        public async Task Authorize_AppEvent_CacheEmpty_AuthorizationCalledAndResultCached()
+        {
+            // Arrange
+            var consumer = "/org/ttd";
+            var cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                "/party/1337/",
+                "app.instance.process.completed",
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+
+            var sourceFilter = "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2";
+            var expectedCacheKey = $"authorizationdecision:so:{sourceFilter}:co:{consumer}:ac:read";
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Subscription> { new Subscription { Id = 1, Consumer = consumer } });
+
+            Mock<IAuthorization> authMock = new();
+            authMock
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.Is<List<string>>(list => list.Contains(consumer))))
+                .ReturnsAsync(new Dictionary<string, bool> { { consumer, true } });
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var cache = new MemoryCache(new MemoryCacheOptions());
+            var sut = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authMock.Object,
+                memoryCache: cache);
+
+            // Act
+            await sut.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            authMock.Verify(
+                a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()),
+                Times.Once);
+
+            Assert.True(cache.TryGetValue(expectedCacheKey, out bool cachedValue));
+            Assert.True(cachedValue);
+        }
+
+        /// <summary>
+        /// Scenario: Second authorization request for same app event consumer - cache is populated
+        /// Expected result: Authorization service is NOT called, result returned from cache
+        /// Success criteria: Authorization never called
+        /// </summary>
+        [Fact]
+        public async Task Authorize_AppEvent_CachePopulated_AuthorizationNotCalled()
+        {
+            // Arrange
+            var consumer = "/org/ttd";
+            var cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                "/party/1337/",
+                "app.instance.process.completed",
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+
+            var sourceFilter = "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2";
+            var cacheKey = $"authorizationdecision:so:{sourceFilter}:co:{consumer}:ac:read";
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Subscription> { new Subscription { Id = 1, Consumer = consumer } });
+
+            Mock<IAuthorization> authMock = new();
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var cache = new MemoryCache(new MemoryCacheOptions());
+            cache.Set(cacheKey, true, TimeSpan.FromMinutes(10));
+
+            var sut = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authMock.Object,
+                memoryCache: cache);
+
+            // Act
+            await sut.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            authMock.Verify(
+                a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()),
+                Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario: Authorization request for generic event - cache is empty
+        /// Expected result: Authorization service is called and result is cached
+        /// Success criteria: Authorization called once, cache contains the result with correct key
+        /// </summary>
+        [Fact]
+        public async Task Authorize_GenericEvent_CacheEmpty_AuthorizationCalledAndResultCached()
+        {
+            // Arrange
+            var consumer = "/org/skd";
+            var resource = "urn:altinn:resource:test-resource";
+            var cloudEvent = GetCloudEvent(new Uri("urn:test:source"), "/party/1337", "generic.event.type", resource);
+            var expectedCacheKey = $"authorizationdecision:re:{resource}:co:{consumer}:ac:subscribe";
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Subscription> { new Subscription { Id = 2, Consumer = consumer, ResourceFilter = resource } });
+
+            Mock<IAuthorization> authMock = new();
+            authMock
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.Is<List<string>>(list => list.Contains(consumer)),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, bool> { { consumer, true } });
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var cache = new MemoryCache(new MemoryCacheOptions());
+            var sut = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authMock.Object,
+                memoryCache: cache);
+
+            // Act
+            await sut.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            authMock.Verify(
+                a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+
+            Assert.True(cache.TryGetValue(expectedCacheKey, out bool cachedValue));
+            Assert.True(cachedValue);
+        }
+
+        /// <summary>
+        /// Scenario: Second authorization request for same generic event consumer - cache is populated
+        /// Expected result: Authorization service is NOT called, result returned from cache
+        /// Success criteria: Authorization never called
+        /// </summary>
+        [Fact]
+        public async Task Authorize_GenericEvent_CachePopulated_AuthorizationNotCalled()
+        {
+            // Arrange
+            var consumer = "/org/skd";
+            var resource = "urn:altinn:resource:test-resource";
+            var cloudEvent = GetCloudEvent(new Uri("urn:test:source"), "/party/1337", "generic.event.type", resource);
+            var cacheKey = $"authorizationdecision:re:{resource}:co:{consumer}:ac:subscribe";
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Subscription> { new Subscription { Id = 2, Consumer = consumer, ResourceFilter = resource } });
+
+            Mock<IAuthorization> authMock = new();
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var cache = new MemoryCache(new MemoryCacheOptions());
+            cache.Set(cacheKey, true, TimeSpan.FromMinutes(10));
+
+            var sut = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authMock.Object,
+                memoryCache: cache);
+
+            // Act
+            await sut.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            authMock.Verify(
+                a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario: Multiple consumers, some cached and some not
+        /// Expected result: Only uncached consumers are sent to authorization service
+        /// Success criteria: Authorization called only for uncached consumers
+        /// </summary>
+        [Fact]
+        public async Task Authorize_MultipleConsumers_PartialCache_OnlyUncachedAuthorized()
+        {
+            // Arrange
+            var cachedConsumer = "/org/ttd";
+            var uncachedConsumer = "/org/nav";
+            var resource = "urn:altinn:resource:test-resource";
+            var cloudEvent = GetCloudEvent(new Uri("urn:test:source"), "/party/1337", "generic.event.type", resource);
+
+            var cachedKey = $"authorizationdecision:re:{resource}:co:{cachedConsumer}:ac:subscribe";
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Subscription>
+                {
+                    new Subscription { Id = 1, Consumer = cachedConsumer, ResourceFilter = resource },
+                    new Subscription { Id = 2, Consumer = uncachedConsumer, ResourceFilter = resource }
+                });
+
+            Mock<IAuthorization> authMock = new();
+            authMock
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.Is<List<string>>(list => list.Count == 1 && list.Contains(uncachedConsumer)),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, bool> { { uncachedConsumer, true } });
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var cache = new MemoryCache(new MemoryCacheOptions());
+            cache.Set(cachedKey, true, TimeSpan.FromMinutes(10));
+
+            var sut = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authMock.Object,
+                memoryCache: cache);
+
+            // Act
+            await sut.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            authMock.Verify(
+                a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.Is<List<string>>(list => list.Count == 1 && list.Contains(uncachedConsumer)),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+
+            queueMock.Verify(q => q.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(2));
         }
     }
 }
