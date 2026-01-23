@@ -654,7 +654,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
                 "/party/1337/",
                 "app.instance.process.completed",
-                "urn:altinn:resource:app_ttd_endring-av_navn_v2");
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
 
             var sourceFilter = "https://ttd.apps.altinn.no/ttd/endring-av-navn-v2";
             var expectedCacheKey = $"authorizationdecision:so:{sourceFilter}:co:{consumer}:ac:read";
