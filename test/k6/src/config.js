@@ -25,8 +25,19 @@ export const authCookieNames = {
 
 //Get values from environment
 const environment = (__ENV.altinn_env || '').toLowerCase(); // Fallback value for when k6 inspect is run in script validation (env var evaluation yields 'undefined' in this phase)
+
+console.log(`[CONFIG] Raw altinn_env: "${__ENV.altinn_env}"`);
+console.log(`[CONFIG] Processed environment: "${environment}"`);
+console.log(`[CONFIG] Available environments:`, Object.keys(baseUrls));
+
 export const baseUrl = baseUrls[environment];
 export const authCookieName = authCookieNames[environment];
+
+console.log(`[CONFIG] Selected baseUrl: "${baseUrl}"`);
+
+if (!baseUrl) {
+    console.error(`[CONFIG ERROR] No baseUrl found for environment "${environment}". Check that altinn_env is set correctly!`);
+}
 
 let maskinportenBaseUrl = maskinportenBaseUrls[environment];
 
@@ -48,6 +59,8 @@ export const platformEvents = {
     "https://platform." + baseUrl + "/events/api/v1/subscriptions/",
 };
 
+console.log(`[CONFIG] Events endpoint: "${platformEvents.events}"`);
+
 export const platformAuthentication = {
   exchange:
     "https://platform." + baseUrl + "/authentication/api/v1/exchange/maskinporten",
@@ -66,3 +79,18 @@ export const maskinporten = {
   audience: maskinportenBaseUrl,
   token: maskinportenBaseUrl + "token",
 };
+
+export const testDefaults = {
+  vus: 10,
+  duration: "1m",
+};
+
+export const getCommonOptions = (overrides = {}) => ({
+  thresholds: {
+    error_rate: ["count<1"],
+    ...overrides.thresholds,
+  },
+  vus: overrides.vus || testDefaults.vus,
+  duration: overrides.duration || testDefaults.duration,
+  ...overrides,
+});
