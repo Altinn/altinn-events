@@ -105,11 +105,11 @@ function TC03_GetAppEventsForParty(data) {
   let nextUrl = response.headers["Next"];
 
   let success = check(response, {
-    "03 - GET app events for party. Query parameters: partyId, after. Status is 200":
+    "03 - GET app events for party. Query parameters: partyId, from. Status is 200":
       (r) => r.status === 200,
-    "03 - GET app events for party. Query parameters: partyId, after. List contains minimum one element":
+    "03 - GET app events for party. Query parameters: partyId, from. List contains minimum one element":
       (r) => JSON.parse(r.body).length >= 1,
-    "03 - GET app events for party. Query parameters: partyId, after. Next url provided":
+    "03 - GET app events for party. Query parameters: partyId, from. Next url provided":
       nextUrl,
   });
 
