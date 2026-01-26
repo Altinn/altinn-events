@@ -95,10 +95,10 @@ function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
   addErrorCount(success);
 }
 
-// 03 -  GET app events for party. Query parameters: partyId, after.
+// 03 -  GET app events for party. Query parameters: partyId, from.
 function TC03_GetAppEventsForParty(data) {
   let response = appEventsApi.getEventsForParty(
-    { after: 1, party: data.userPartyId },
+    { party: data.userPartyId, from: '2023-12-31T23:00:00Z' },
     data.userToken
   );
 
