@@ -14,7 +14,7 @@
       -e useCSVData=false
 
     For single line version of the above command, use the following command:
-    docker-compose run k6 run /src/tests/subscriptions.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e altinn_env=at22 -e runFullTestSet=true -e useCSVData=true -e webhookEndpoint=*** -e runFullTestSet=true --vus 10 --duration 30s -e app=apps-test
+    docker-compose run k6 run /src/tests/subscriptions.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e altinn_env=at22 -e runFullTestSet=true -e useCSVData=true -e webhookEndpoint=*** --vus 10 --duration 30s -e app=apps-test
 
     For use case tests omit environment variable runFullTestSet or set value to false
     Set useCSVData=true to load test data from CSV file instead of JSON
@@ -87,6 +87,8 @@ function createSubscription(subscriptionType = 'app') {
         if (subscriptionType === 'app') {
             // Override sourceFilter for app subscriptions with actual app name
             subscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${app}`;
+            delete subscription.resourceFilter;
+            delete subscription.consumer;
         } else if (subscriptionType === 'generic') {
             // For generic subscriptions, use a valid URN for resourceFilter
             subscription.resourceFilter = "urn:altinn:resource:ttd-altinn-events-automated-tests";
