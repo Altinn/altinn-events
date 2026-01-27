@@ -14,7 +14,7 @@ services:
     volumes:
       - sqledge-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" || exit 1"]
+      test: ["CMD-SHELL", "test -f /var/opt/mssql/data/master.mdf && pgrep -x sqlservr > /dev/null"]
       interval: 10s
       timeout: 5s
       retries: 20
