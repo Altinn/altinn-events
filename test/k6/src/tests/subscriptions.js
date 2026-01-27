@@ -57,8 +57,13 @@ function createSubscription(subscriptionType = 'app') {
     let subscriptionData;
     
     if (useCSVData) {
-        // Filter CSV rows by type, then select with round-robin
-        const filteredRows = subscriptionVariations.filter(row => row.type === subscriptionType);
+        // SharedArray doesn't support filter - manually iterate
+        const filteredRows = [];
+        for (let i = 0; i < subscriptionVariations.length; i++) {
+            if (subscriptionVariations[i].type === subscriptionType) {
+                filteredRows.push(subscriptionVariations[i]);
+            }
+        }
         if (filteredRows.length === 0) {
             console.error(`[ERROR] No ${subscriptionType} subscriptions found in CSV data`);
             throw new Error(`No ${subscriptionType} subscriptions in CSV`);

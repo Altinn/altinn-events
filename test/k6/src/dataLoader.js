@@ -156,9 +156,11 @@ export function loadJSONDirectory(name, baseDir, fileNames) {
  * const event = getRandomItem(events);
  */
 export function getRandomItem(array) {
+if (!array || array.length === 0) {
+    throw new Error('getRandomItem: array is empty');
+}
     return array[Math.floor(Math.random() * array.length)];
 }
-
 /**
  * Get an item from array based on VU number (round-robin)
  * Ensures even distribution across VUs
@@ -171,22 +173,18 @@ export function getRandomItem(array) {
  * const event = getItemByVU(events, __VU);
  */
 export function getItemByVU(array, vuId) {
-    return array[vuId % array.length];
+if (!array || array.length === 0) {
+    throw new Error('getItemByVU: array is empty');
+}
+return array[(vuId - 1) % array.length];
 }
 
-/**
- * Get an item from array based on iteration number
- * 
- * @param {Array} array - Array to select from
- * @param {number} iteration - Iteration number (typically __ITER)
- * @returns {*} Item from array
- * 
- * @example
- * const event = getItemByIteration(events, __ITER);
- */
-export function getItemByIteration(array, iteration) {
-    return array[iteration % array.length];
-}
+ export function getItemByIteration(array, iteration) {
+    if (!array || array.length === 0) {
+        throw new Error('getItemByIteration: array is empty');
+    }
+     return array[iteration % array.length];
+ }
 
 /**
  * Create a cloud event from CSV row data

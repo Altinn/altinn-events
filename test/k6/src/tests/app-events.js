@@ -118,7 +118,7 @@ function TC01_GetAppEventsForOrg(data) {
 // 02 - GET events for org from next url
 function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
   if (!nextUrl) {
-    console.warn("02 - Skipping test: nextUrl is undefined");
+    // console.warn("02 - Skipping test: nextUrl is undefined");
     return;
   }
 
@@ -140,22 +140,21 @@ function TC03_GetAppEventsForParty(data) {
   );
 
   let nextUrl = response.headers["Next"] || response.headers["next"];
-  let responseBody = JSON.parse(response.body);
-
+  let responseBody;
+  if (response.status === 200) {
+    try {
+      responseBody = JSON.parse(response.body);
+    } catch (e) {
+      console.warn("03 - Response body was not valid JSON");
+    }
+  }
   let success = check(response, {
     "03 - GET app events for party. Query parameters: partyId, after. Status is 200":
       (r) => r.status === 200,
   });
-
   // Only check for minimum one element if the response is successful
-  if (response.status === 200 && responseBody.length === 0) {
+  if (response.status === 200 && Array.isArray(responseBody) && responseBody.length === 0) {
     console.log(`TC03: No events found for party ${data.userPartyId} - this may be expected`);
-  }
-
-  if (nextUrl) {
-    check(nextUrl, {
-      "03 - GET app events for party. Query parameters: partyId, after. Next url provided": (url) => url !== undefined,
-    });
   }
 
   addErrorCount(success);

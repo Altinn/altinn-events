@@ -1,4 +1,3 @@
-ps
 $params = @{
  Uri = "https://webhook.site/token"
  Method = "Post"

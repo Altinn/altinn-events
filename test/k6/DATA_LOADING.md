@@ -39,16 +39,18 @@ Contains 7 different event variations in CSV format with columns:
 The `get.js` test now supports both CSV and JSON data loading:
 
 ```bash
-# Use JSON files (default)
-docker-compose run k6 run /src/tests/events/get.js \
-  -e tokenGeneratorUserName=autotest \
-  -e runFullTestSet=true
+# Use JSON files (default)  
+ docker-compose run k6 run /src/tests/events/get.js \  
+   -e altinn_env=*** \  
+   -e tokenGeneratorUserName=autotest \  
+   -e runFullTestSet=true  
 
-# Use CSV file
-docker-compose run k6 run /src/tests/events/get.js \
-  -e tokenGeneratorUserName=autotest \
-  -e runFullTestSet=true \
-  -e useCSVData=true
+ # Use CSV file  
+ docker-compose run k6 run /src/tests/events/get.js \  
+   -e altinn_env=*** \  
+   -e tokenGeneratorUserName=autotest \  
+   -e runFullTestSet=true \  
+   -e useCSVData=true  
 ```
 
 ### Loading CSV Data

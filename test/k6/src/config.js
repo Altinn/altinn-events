@@ -85,12 +85,15 @@ export const testDefaults = {
   duration: "1m",
 };
 
-export const getCommonOptions = (overrides = {}) => ({
-  thresholds: {
-    error_rate: ["count<1"],
-    ...overrides.thresholds,
-  },
-  vus: overrides.vus || testDefaults.vus,
-  duration: overrides.duration || testDefaults.duration,
-  ...overrides,
-});
+export const getCommonOptions = (overrides = {}) => {
+  const { thresholds: thresholdOverrides, vus, duration, ...rest } = overrides;
+  return {
+    thresholds: {
+      error_rate: ["count<1"],
+      ...thresholdOverrides,
+    },
+    vus: vus ?? testDefaults.vus,
+    duration: duration ?? testDefaults.duration,
+    ...rest,
+  };
+};
