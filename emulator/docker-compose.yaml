@@ -1,0 +1,52 @@
+name: microsoft-azure-servicebus-emulator
+
+services:
+  sqledge:
+    container_name: sqledge
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    networks:
+      sb-emulator:
+        aliases:
+          - sqledge
+    volumes:
+      - sqledge-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  emulator:
+    container_name: servicebus-emulator
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    depends_on:
+      sqledge:
+        condition: service_healthy
+    environment:
+      SQL_SERVER: sqledge
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      ACCEPT_EULA: ${ACCEPT_EULA}
+    volumes:
+      # Monter configfilen inn i containeren (path må stemme med CONFIG_PATH i .env)
+      - "${CONFIG_PATH}:/ServiceBus_Emulator/ConfigFiles/Config.json:ro"
+      # Valgfritt: få emulator-logger ut på hosten
+      - emulator-logs:/home/app/EmulatorLogs
+    ports:
+      # AMQP (dataplane)
+      - "5672:5672"
+      # Management/administrasjon (port 5300 brukes av emulatoren som standard)
+      - "5300:5300"
+    networks:
+      sb-emulator:
+        aliases:
+          - sb-emulator
+
+networks:
+  sb-emulator:
+
+volumes:
+  sqledge-data:
+  emulator-logs:
