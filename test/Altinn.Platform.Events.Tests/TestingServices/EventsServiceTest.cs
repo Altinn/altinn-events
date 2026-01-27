@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -16,7 +17,7 @@ using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging;
 
 using Moq;
-
+using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -31,6 +32,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly Mock<ITraceLogService> _traceLogServiceMock;
         private readonly Mock<IRegisterService> _registerMock;
         private readonly Mock<IAuthorization> _authorizationMock;
+        private readonly Mock<IMessageBus> _messageBusMock;
         private readonly Mock<ILogger<EventsService>> _loggerMock;
 
         public EventsServiceTest()
@@ -40,6 +42,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _traceLogServiceMock = new();
             _registerMock = new();
             _authorizationMock = new();
+            _messageBusMock = new();
             _loggerMock = new();
         }
 
@@ -76,11 +79,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task RegisterNewEvent_PushEventFails_ErrorIsLogged()
         {
             // Arrange
-            Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("The push failed due to something") });
+            Mock<IMessageBus> messageBus = new();
+            messageBus.Setup(m => m.PublishAsync(It.IsAny<RegisterEventCommand>(), null)).ThrowsAsync(new Exception("The bus failed due to something"));
 
             Mock<ILogger<EventsService>> logger = new Mock<ILogger<EventsService>>();
-            EventsService eventsService = GetEventsService(loggerMock: logger, queueMock: queueMock.Object);
+            EventsService eventsService = GetEventsService(loggerMock: logger, messageBusMock: messageBus);
 
             // Act
             await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEventFromApp()));
@@ -470,12 +473,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<ITraceLogService> traceLogServiceMock = null,
             Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
+            Mock<IMessageBus> messageBusMock = null,
             Mock<ILogger<EventsService>> loggerMock = null)
         {
             repositoryMock ??= _repositoryMock;
             traceLogServiceMock ??= _traceLogServiceMock;
             registerMock ??= _registerMock;
             queueMock ??= _queueMock;
+            messageBusMock ??= _messageBusMock;
             loggerMock ??= _loggerMock;
 
             // default mocked authorization logic. All elements are returned
@@ -498,6 +503,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 queueMock,
                 registerMock.Object,
                 authorizationMock.Object,
+                messageBusMock.Object,
                 loggerMock.Object);
         }
 
