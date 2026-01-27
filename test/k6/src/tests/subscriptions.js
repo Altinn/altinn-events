@@ -17,7 +17,7 @@
     docker-compose run k6 run /src/tests/subscriptions.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e altinn_env=at22 -e runFullTestSet=true -e useCSVData=true -e webhookEndpoint=*** -e runFullTestSet=true --vus 10 --duration 30s -e app=apps-test
 
     For use case tests omit environment variable runFullTestSet or set value to false
-    Set useCSVData=true to load test data from CSV file instead of JSON9
+    Set useCSVData=true to load test data from CSV file instead of JSON
     Update the variables --vus and --duration as needed for performance testing
 */
 
