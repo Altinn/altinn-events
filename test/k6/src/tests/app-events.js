@@ -133,7 +133,7 @@ function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
 /*
  * 01 - GET app events for org. Query parameter 'after'
  * 02 - GET app  events for org from 'next' url
- * 03 -  GET app events for party. Query parameters: partyId, after
+ * 03 -  GET app events for party. Query parameters: partyId, from
  * 04 - GET app events for party from 'next'
  */
 export default function runTests(data) {
