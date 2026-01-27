@@ -181,7 +181,7 @@ function TC02_GetExistingSubscriptionsForOrg(data, expectedEndpoint) {
     "02 - GET existing subscriptions for org. Count is at least 1":
       subscriptionList.count >= 1,
     "02 - GET existing subscriptions for org. Auto test subscription in list":
-      subscriptions.some((s) => s.endPoint === endpointToCheck || s.endPoint.startsWith(data.webhookEndpoint)),
+      subscriptions.some((s) => s.endPoint === endpointToCheck),
   });
 
   addErrorCount(success);
@@ -249,8 +249,9 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     // Note: Webhook validation may fail if webhook.site is down or slow during load tests
     // Log validation status for informational purposes only
     if (!subscription.validated) {
-      console.log(`[TC05] Subscription ${subscriptionId} not yet validated - this is expected with webhook.site under load`);
-    }
+      console.warn(`[TC05] Subscription ${subscriptionId} not validated`);
+    // Track as a trend metric instead of hard failure
+   }
   }
 }
 
