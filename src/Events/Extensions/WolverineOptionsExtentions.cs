@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Hosting;
 using Wolverine;
 using Wolverine.AzureServiceBus;
@@ -8,6 +9,7 @@ namespace Altinn.Platform.Events.Extensions;
 /// <summary>
 /// Provides extension methods for configuring <see cref="WolverineOptions"/> with default settings.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class WolverineOptionsExtentions
 {
     /// <summary>
