@@ -71,16 +71,48 @@ export function setup() {
         ? __ENV.runFullTestSet.toLowerCase().includes("true")
         : false;
 
-    console.log(`5.Run full test set: ${runFullTestSet}`);
+    console.log(`5. Run full test set: ${runFullTestSet}`);
+    
+    // Seed events from CSV data to ensure they exist before GET tests
+    console.log(`6. Seeding events for GET tests...`);
+    let seededEvents = [];
+    
+    for (let i = 0; i < eventVariations.length; i++) {
+        const eventData = eventVariations[i];
+        let seedEvent;
+        
+        if (useCSVData) {
+            seedEvent = createCloudEventFromCSV(eventData, { 
+                id: uuidv4(),
+                time: new Date().toISOString()
+            });
+        } else {
+            seedEvent = { ...eventData };
+            seedEvent.id = uuidv4();
+            seedEvent.time = new Date().toISOString();
+        }
+        
+        // Post the event to ensure it exists
+        const response = eventsApi.postCloudEvent(JSON.stringify(seedEvent), token);
+        if (response.status === 200 || response.status === 201) {
+            seededEvents.push(seedEvent);
+            console.log(`   Seeded event ${i + 1}: ${seedEvent.type} for ${seedEvent.subject}`);
+        } else {
+            console.log(`   Failed to seed event ${i + 1}: status ${response.status}`);
+        }
+    }
+    
+    console.log(`7. Seeded ${seededEvents.length} events`);
     
     let data = {
         runFullTestSet: runFullTestSet,
         token: token,
         cloudEvent: cloudEvent,
         useCSVData: useCSVData,
+        seededEvents: seededEvents,
     };
 
-    console.log(`6. Setup data:`, JSON.stringify(data.cloudEvent));
+    console.log(`8. Setup data:`, JSON.stringify(data.cloudEvent));
 
     return data;
 }
@@ -111,6 +143,7 @@ function TC01_GetAllEvents(data) {
     success = check(response, {
         "GET all cloud events: at least 1 cloud event returned": (r) => {
             let responseBody = JSON.parse(r.body);
+            console.log(`Console logging inside success response body: ${r.body}`);
             return Array.isArray(responseBody) && responseBody.length >= 1;
         },
     });
@@ -149,6 +182,15 @@ function TC02_GetEventsAndFollowNextLink(data) {
 }
 
 function getEventForIteration(data) {
+    // Use seeded events if available to ensure we query for events that actually exist
+    if (data.seededEvents && data.seededEvents.length > 0) {
+        const index = (__VU - 1) % data.seededEvents.length;
+        const seededEvent = data.seededEvents[index];
+        console.log(`VU ${__VU}: Using seeded event ${index + 1}:`, JSON.stringify(seededEvent));
+        return seededEvent;
+    }
+    
+    // Fallback to creating new events if no seeded events available
     const eventData = getItemByVU(eventVariations, __VU);
     
     console.log(`VU ${__VU}: Event data:`, JSON.stringify(eventData));
