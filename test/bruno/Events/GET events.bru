@@ -1,0 +1,20 @@
+meta {
+  name: GET events
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{PlatformHostUrl}}/events/api/v1/app/party?from=2022-11-17T11:00:53.3917Z&party=50002108
+  body: none
+  auth: inherit
+}
+
+params:query {
+  from: 2022-11-17T11:00:53.3917Z
+  party: 50002108
+}
+
+settings {
+  encodeUrl: true
+}

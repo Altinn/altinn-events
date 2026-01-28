@@ -1,0 +1,40 @@
+meta {
+  name: GET Platform Token
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://altinn-testtools-token-generator.azurewebsites.net/api/GetEnterpriseToken?env=at22&scopes=altinn:serviceowner/instances.read&org=ttd&orgNo=991825827
+  body: none
+  auth: basic
+}
+
+params:query {
+  env: at22
+  scopes: altinn:serviceowner/instances.read
+  org: ttd
+  orgNo: 991825827
+}
+
+headers {
+  ~subjectFilter: /party/1337
+}
+
+auth:basic {
+  username: 
+  password: {{TestToolsUserPassword}}
+}
+
+script:post-response {
+  const rtext = JSON.stringify(res.getBody());
+  
+  //console.log(rtext);
+  
+  bru.setEnvVar("PlatformToken", rtext);
+  
+}
+
+settings {
+  encodeUrl: true
+}

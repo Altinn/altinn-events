@@ -1,0 +1,15 @@
+meta {
+  name: Events
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{PlatformToken}}
+}
+
+vars:pre-request {
+  PlatformHostUrl: http://localhost:5080
+}

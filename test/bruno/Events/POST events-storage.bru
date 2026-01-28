@@ -1,0 +1,26 @@
+meta {
+  name: POST events/storage
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{PlatformHostUrl}}/events/api/v1/
+  body: json
+  auth: inherit
+}
+
+headers {
+  ~subjectFilter: /party/1337
+}
+
+body:json {
+  {
+    "sourceFilter": "https://ttd.apps.at22.altinn.cloud/ttd/apps-test",
+      "endpoint": "{{AltinnSlackWebHook}}"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
