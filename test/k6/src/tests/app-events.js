@@ -20,7 +20,7 @@
     --duration 30s
 
     // Single line command to run the test using the script with example environment variables:
-    docker-compose run k6 run /src/tests/app-events.js -e altinn_env=*** -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e app=apps-test -e userId=*** -e partyId=*** -e personNumber=*** -e userName=*** -e userPassword=*** -e runFullTestSet=true -e useCSVData=true --vus 10 --duration 30s
+    docker-compose run k6 run /src/tests/app-events.js -e altinn_env=*** -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e app=apps-test -e userId=*** -e partyId=*** -e personNumber=*** -e userName=*** -e userPassword=*** -e runFullTestSet=true -e useCSVData=true --vus 1 --duration 30s
 
     Update the variables --vus and --duration as needed for performance testing
     For use case tests omit environment variable runFullTestSet or set value to false

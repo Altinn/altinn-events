@@ -14,7 +14,7 @@
       -e useCSVData=false
 
     For single line version of the above command, use the following command:
-    docker-compose run k6 run /src/tests/subscriptions.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e altinn_env=at22 -e runFullTestSet=true -e useCSVData=true -e webhookEndpoint=*** --vus 10 --duration 30s -e app=apps-test
+    docker-compose run k6 run /src/tests/subscriptions.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e altinn_env=at22 -e runFullTestSet=true -e useCSVData=true -e webhookEndpoint=*** --vus 1 --duration 30s -e app=apps-test
 
     For use case tests omit environment variable runFullTestSet or set value to false
     Set useCSVData=true to load test data from CSV file instead of JSON

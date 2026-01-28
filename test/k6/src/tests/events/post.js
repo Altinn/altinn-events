@@ -12,7 +12,7 @@
     -e useCSVData=false
 
     For running this as a single line command, the following can be used:
-    docker-compose run k6 run /src/tests/events/post.js -e altinn_env=*** -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e useCSVData=true --vus 10 --duration 30s
+    docker-compose run k6 run /src/tests/events/post.js -e altinn_env=*** -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e useCSVData=true --vus 1 --duration 30s
 
     For use case tests omit environment variable runFullTestSet or set value to false
     Set useCSVData=true to load test data from CSV file instead of JSON
