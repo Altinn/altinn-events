@@ -214,17 +214,20 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                     .EnableFirstResponseEvent(false)));
     }
 
+    WolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<WolverineSettings>() ?? new WolverineSettings();
     services.AddWolverine(opts =>
     {
+        if (wolverineSettings.EnableServiceBus)
+        {
         opts.ConfigureEventsDefaults(
             builder.Environment, 
-            config.GetValue<string>("WolverineSettings:ServiceBusConnectionString"));
+            wolverineSettings.ServiceBusConnectionString);
+        opts.PublishMessage<RegisterEventCommand>()
+            .ToAzureServiceBusQueue("altinn.events.register");
+        }
 
         opts.Policies.AllListeners(x => x.ProcessInline());
         opts.Policies.AllSenders(x => x.SendInline());
-
-        opts.PublishMessage<RegisterEventCommand>()
-            .ToAzureServiceBusQueue("altinn.events.register");
     });
 
     services.AddSingleton(config);
