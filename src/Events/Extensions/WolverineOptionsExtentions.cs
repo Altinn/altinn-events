@@ -38,11 +38,18 @@ public static class WolverineOptionsExtentions
 
         if (env.IsDevelopment())
         {
+            // Disable system queues (dead-letter, error, retries, response queues) for Azure Service Bus Emulator
+            // The emulator doesn't support auto-provisioning of dynamic queues
+            // Note: This means failed messages won't be moved to error/dead-letter queues in local development
             azureBusConfig.SystemQueuesAreEnabled(false);
+
+            // Auto-purge application queues on startup for clean development sessions
             azureBusConfig.AutoPurgeOnStartup();
         }
         else
         {
+            // In production, enable auto-provisioning which creates all necessary queues automatically
+            // This includes system queues for error handling, dead-lettering, retries, and responses
             azureBusConfig.AutoProvision();
         }
 
