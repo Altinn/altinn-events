@@ -220,7 +220,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         if (wolverineSettings.EnableServiceBus)
         {
         opts.ConfigureEventsDefaults(
-            builder.Environment, 
+            builder.Environment,
             wolverineSettings.ServiceBusConnectionString);
         opts.PublishMessage<RegisterEventCommand>()
             .ToAzureServiceBusQueue("altinn.events.register");
