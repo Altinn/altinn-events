@@ -252,7 +252,6 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     // Log validation status for informational purposes only
     if (!subscription.validated) {
       console.warn(`[TC05] Subscription ${subscriptionId} not validated`);
-    // Track as a trend metric instead of hard failure
    }
   }
 }

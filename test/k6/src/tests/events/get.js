@@ -211,6 +211,12 @@ function getEventForIteration(data) {
         cloudEvent.time = new Date().toISOString();
     }
     
+    // POST the event so GET tests can find it
+    const response = eventsApi.postCloudEvent(JSON.stringify(cloudEvent), data.token);
+    if (response.status !== 200 && response.status !== 201) {
+        console.warn(`VU ${__VU}: Failed to create fallback event: ${response.status}`);
+    }
+    
     console.log(`VU ${__VU}: Cloud event:`, JSON.stringify(cloudEvent));
     
     return cloudEvent;
