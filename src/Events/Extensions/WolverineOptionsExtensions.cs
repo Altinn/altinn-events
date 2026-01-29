@@ -10,7 +10,7 @@ namespace Altinn.Platform.Events.Extensions;
 /// Provides extension methods for configuring <see cref="WolverineOptions"/> with default settings.
 /// </summary>
 [ExcludeFromCodeCoverage]
-public static class WolverineOptionsExtentions
+public static class WolverineOptionsExtensions
 {
     /// <summary>
     /// Configures the <see cref="WolverineOptions"/> instance with default settings,
