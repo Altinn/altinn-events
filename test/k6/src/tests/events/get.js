@@ -11,7 +11,7 @@
     -e runFullTestSet=true `
     -e useCSVData=false
     --vus 10 `
-    --duration 30s    
+    --duration 30s
 
     For running this as a single line command, the following can be used:
     "docker-compose run k6 run /src/tests/events/get.js -e altinn_env=*** -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e useCSVData=true --vus 1 --duration 30s"
@@ -103,6 +103,10 @@ export function setup() {
     }
     
     console.log(`7. Seeded ${seededEvents.length} events`);
+
+    if (seededEvents.length === 0) {
+        throw new Error("Seeding failed: no events created; aborting GET tests.");
+    }
     
     let data = {
         runFullTestSet: runFullTestSet,

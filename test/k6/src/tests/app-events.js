@@ -31,19 +31,11 @@ import { check } from "k6";
 import * as setupToken from "../setup.js";
 import * as appEventsApi from "../api/app-events.js";
 import { addErrorCount } from "../errorhandler.js";
-import { loadCSV, loadJSONDirectory, getItemByVU } from "../dataLoader.js";
+import { loadCSV, loadJSONDirectory } from "../dataLoader.js";
 
 const useCSVData = __ENV.useCSVData ? __ENV.useCSVData.toLowerCase().includes("true") : false;
 
-const eventVariations = useCSVData 
-  ? loadCSV('app-event-variations', '../data/app-events/event-variations.csv') 
-  : loadJSONDirectory('app-event-variations', '../data/app-events/', 
-    [
-      '01-app-event.json'
-    ]);
-
 console.log(`[APP-EVENTS] Using CSV data: ${useCSVData}`);
-console.log(`[APP-EVENTS] Event variations loaded: ${eventVariations.length}`);
 
 export const options = {
   thresholds: {
