@@ -223,7 +223,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             builder.Environment,
             wolverineSettings.ServiceBusConnectionString);
         opts.PublishMessage<RegisterEventCommand>()
-            .ToAzureServiceBusQueue("altinn.events.register");
+            .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
         }
 
         opts.Policies.AllListeners(x => x.ProcessInline());

@@ -86,7 +86,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(loggerMock: logger, messageBusMock: messageBus);
 
             // Act
-            await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEventFromApp()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => eventsService.RegisterNew(GetCloudEventFromApp()));
 
             // Assert
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
@@ -463,7 +463,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(loggerMock: logger, repositoryMock: repoMock.Object);
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => eventsService.Save(GetCloudEvent()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => eventsService.Save(GetCloudEvent()));
 
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
