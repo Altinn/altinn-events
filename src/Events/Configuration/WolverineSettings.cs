@@ -8,7 +8,7 @@ public class WolverineSettings
     /// <summary>
     /// Indicates whether Azure Service Bus should be configured.
     /// </summary>
-    public bool EnableServiceBus { get; set; } = true;
+    public bool EnableServiceBus { get; set; } = false;
 
     /// <summary>
     /// Connection string for Azure Service Bus.
