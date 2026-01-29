@@ -18,17 +18,13 @@ params:query {
 }
 
 auth:basic {
-  username: 
-  password: {{TestToolsUserPassword}}
+  username: {{TokenGeneratorUsername}}
+  password: {{TokenGeneratorPassword}}
 }
 
 script:post-response {
-  const rtext = JSON.stringify(res.getBody());
-  
-  //console.log(rtext);
-  
-  bru.setEnvVar("PlatformToken", rtext);
-  
+  const token = res.getBody();
+  bru.setVar("PlatformToken", token);
 }
 
 settings {
