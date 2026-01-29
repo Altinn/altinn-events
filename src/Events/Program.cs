@@ -14,11 +14,12 @@ using Altinn.Common.PEP.Authorization;
 using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
-
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Contracts;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
 using Altinn.Platform.Events.Middleware;
@@ -27,15 +28,11 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Swagger;
 using Altinn.Platform.Events.Telemetry;
-
 using AltinnCore.Authentication.JwtCookie;
-
 using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Security.KeyVault.Secrets;
-
 using CloudNative.CloudEvents.SystemTextJson;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -46,16 +43,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-
 using Npgsql;
-
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-
 using Swashbuckle.AspNetCore.SwaggerGen;
-
+using Wolverine;
+using Wolverine.AzureServiceBus;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -219,11 +214,28 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                     .EnableFirstResponseEvent(false)));
     }
 
+    WolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<WolverineSettings>() ?? new WolverineSettings();
+    services.AddWolverine(opts =>
+    {
+        if (wolverineSettings.EnableServiceBus)
+        {
+        opts.ConfigureEventsDefaults(
+            builder.Environment,
+            wolverineSettings.ServiceBusConnectionString);
+        opts.PublishMessage<RegisterEventCommand>()
+            .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+        }
+
+        opts.Policies.AllListeners(x => x.ProcessInline());
+        opts.Policies.AllSenders(x => x.SendInline());
+    });
+
     services.AddSingleton(config);
     services.Configure<PostgreSqlSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
+    services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
     services.Configure<Altinn.Common.AccessToken.Configuration.KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
@@ -279,7 +291,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
-    services.AddSingleton<IEventsService, EventsService>();
+    services.AddTransient<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
