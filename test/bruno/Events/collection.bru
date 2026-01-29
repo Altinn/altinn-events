@@ -11,8 +11,8 @@ auth:bearer {
 }
 
 vars:pre-request {
-  PlatformHostUrl: https://platform.at22.altinn.cloud
-  TokenGeneratorUsername: autotest
-  TokenGeneratorPassword: altinn8900bnn
-  AltinnSlackWebHook: https://something.com
+  TokenGeneratorUserName: {{process.env.TOKEN_BASIC_AUTH_USER}}
+  TokenGeneratorPassword: {{process.env.TOKEN_BASIC_AUTH_PW}}
+  TokenGeneratorBaseUrl: {{process.env.TOKEN_URL}}
+  AltinnSlackWebHook: {{process.env.ALTINN_SLACK_WEBHOOK}}
 }

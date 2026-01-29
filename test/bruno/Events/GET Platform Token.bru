@@ -5,20 +5,20 @@ meta {
 }
 
 get {
-  url: https://altinn-testtools-token-generator.azurewebsites.net/api/GetEnterpriseToken?env=at22&scopes=altinn:serviceowner/instances.read&org=ttd&orgNo=991825827
+  url: {{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken?env={{Environment}}&scopes=altinn:serviceowner/instances.read&org=ttd&orgNo=991825827
   body: none
   auth: basic
 }
 
 params:query {
-  env: at22
+  env: {{Environment}}
   scopes: altinn:serviceowner/instances.read
   org: ttd
   orgNo: 991825827
 }
 
 auth:basic {
-  username: {{TokenGeneratorUsername}}
+  username: {{TokenGeneratorUserName}}
   password: {{TokenGeneratorPassword}}
 }
 
