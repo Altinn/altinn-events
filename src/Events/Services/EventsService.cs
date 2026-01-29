@@ -63,7 +63,7 @@ namespace Altinn.Platform.Events.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "// EventsService // Save // Failed to save eventId {EventId} to storage.", cloudEvent.Id);
-                throw;
+                throw new InvalidOperationException($"Failed to save event with ID {cloudEvent.Id} to storage.", ex);
             }
 
             return cloudEvent.Id;
@@ -79,7 +79,7 @@ namespace Altinn.Platform.Events.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "// EventsService // RegisterNew // Failed to publish RegisterEventCommand for eventId {EventId}.", cloudEvent.Id);
-                throw;
+                throw new InvalidOperationException($"Failed to publish RegisterEventCommand for event with ID {cloudEvent.Id}.", ex);
             }
 
             await _traceLogService.CreateRegisteredEntry(cloudEvent); // log entry for registering a new event
