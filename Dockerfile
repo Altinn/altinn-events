@@ -3,7 +3,6 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0.102-alpine3.23@sha256:48b443d87fe7426ce6a
 COPY src/Events ./Events
 COPY src/DbTools ./DbTools
 COPY src/Events.Common ./Events.Common
-COPY src/Events/Migration ./Migration
 
 WORKDIR /DbTools
 RUN dotnet build ./DbTools.csproj -c Release -o /app_tools
