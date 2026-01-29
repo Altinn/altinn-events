@@ -80,7 +80,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             Mock<IMessageBus> messageBus = new();
-            messageBus.Setup(m => m.PublishAsync(It.IsAny<RegisterEventCommand>(), null)).ThrowsAsync(new Exception("The bus failed due to something"));
+            messageBus.Setup(m => m.PublishAsync(It.IsAny<RegisterEventCommand>())).ThrowsAsync(new Exception("The bus failed due to something"));
 
             Mock<ILogger<EventsService>> logger = new Mock<ILogger<EventsService>>();
             EventsService eventsService = GetEventsService(loggerMock: logger, messageBusMock: messageBus);
@@ -105,7 +105,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<RegisterEventCommand>(), null)).Returns(ValueTask.CompletedTask);
+            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<RegisterEventCommand>())).Returns(ValueTask.CompletedTask);
 
             Mock<ILogger<EventsService>> logger = new();
             Mock<ITraceLogService> traceLogServiceMock = new();
@@ -118,7 +118,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
             traceLogServiceMock.Verify(t => t.CreateRegisteredEntry(It.IsAny<CloudEvent>()), Times.Once);
-            messageBusMock.Verify(m => m.PublishAsync(It.IsAny<RegisterEventCommand>(), null), Times.Once);
+            messageBusMock.Verify(m => m.PublishAsync(It.IsAny<RegisterEventCommand>()), Times.Once);
         }
 
         /// <summary>
