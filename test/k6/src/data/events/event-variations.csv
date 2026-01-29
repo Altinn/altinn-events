@@ -1,0 +1,8 @@
+source,specversion,type,subject,resource,alternativeSubject
+https://github.com/Altinn/altinn-events/tree/main/test/k6,1.0,automatedtest.triggered,/autotest/k6,urn:altinn:resource:ttd-altinn-events-automated-tests,
+https://example.com/service-a,1.0,order.created,/party/1337,urn:altinn:resource:service-a,/organization/999888777
+https://example.com/service-b,1.0,payment.completed,/party/2468,urn:altinn:resource:service-b,/person/01015512345
+https://example.com/service-c,1.0,notification.sent,/autotest/k6/batch,urn:altinn:resource:service-c,
+https://github.com/Altinn/altinn-events,1.0,test.event.large,/party/5000,urn:altinn:resource:performance-test,/organization/123456789
+https://integration.test/api,1.0,data.sync.completed,/autotest/integration,urn:altinn:resource:integration-test,
+https://load.test/generator,1.0,load.test.event,/party/9999,urn:altinn:resource:load-test,/party/8888

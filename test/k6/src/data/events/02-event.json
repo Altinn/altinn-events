@@ -1,0 +1,9 @@
+{
+    "source":"https://example.com/service-a",
+    "specversion":"1.0",
+    "type":"order.created",
+    "subject":"/party/1337",
+    "resource":"urn:altinn:resource:service-a",
+    "alternativeSubject":"/organization/999888777",
+    "time": "2022-05-12T10:15:30.541482Z"
+}

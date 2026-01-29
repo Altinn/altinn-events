@@ -53,6 +53,7 @@ You are free to provide whichever endpoint, but make sure it ends with `/`.
 We would suggest to use webhook.site.
 The following PowerShell script will generate a dedicated webhook to provide as the environment variable `webhookEndpoint`
 
+You can run the PowerShell script provided at `src/data/subscriptions/scriptToGenerateWebhookEndpoint.ps1` inside a PowerShell terminal
 
 ```ps
 $params = @{
@@ -64,3 +65,10 @@ $webhookToken =((Invoke-Webrequest @params).Content  | ConvertFrom-Json).uuid
 
 $webhookEndpoint= "https://webhook.site/" + $webhookToken + "/"
 ```
+
+### Known issues while running the tests
+
+- We have realised the following points when running the tests under
+     When we run the scripts to run against one or two users VUS, the tests are executed successfully
+     Increasing the number og VUS to more than 2 is resulting in empty test results and more number of failed responses for the events
+     This has to be investigated for all the test files based on the need
