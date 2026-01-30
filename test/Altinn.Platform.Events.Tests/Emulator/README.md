@@ -10,7 +10,7 @@ This fixture uses Testcontainers to automatically start and stop the Azure Servi
 using Altinn.Platform.Events.Tests.Emulator;
 using Xunit;
 
-namespace Altinn.Platform.Events.Tests.Integration;
+namespace Altinn.Platform.Events.Tests.IntegrationTests;
 
 [Collection(nameof(AzureServiceBusEmulatorCollection))]
 public class WolverineIntegrationTests

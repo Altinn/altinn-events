@@ -61,7 +61,7 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
             await _mssqlContainer.StartAsync();
 
             // Get the path to the emulator config file (copied from emulator/config.json at build time)
-            string configPath = Path.Combine(Directory.GetCurrentDirectory(), "Emulator", "config.json");
+            string configPath = Path.Combine(AppContext.BaseDirectory, "Emulator", "config.json");
 
             if (!File.Exists(configPath))
             {
@@ -88,6 +88,9 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
                 .Build();
 
             await _serviceBusEmulatorContainer.StartAsync();
+
+            // Note: No additional wait strategy needed. The emulator is ready after StartAsync() completes
+            // due to SQL_WAIT_INTERVAL handling the internal initialization timing.
 
             // Get the dynamically assigned host port
             int hostPort = _serviceBusEmulatorContainer.GetMappedPublicPort(5672);
@@ -134,6 +137,8 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
         }
         finally
         {
+            // Restore Resource Reaper to default (enabled) to avoid affecting other tests
+            TestcontainersSettings.ResourceReaperEnabled = true;
             IsRunning = false;
         }
     }
