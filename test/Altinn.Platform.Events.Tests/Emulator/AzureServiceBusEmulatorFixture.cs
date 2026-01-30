@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -15,9 +16,9 @@ namespace Altinn.Platform.Events.Tests.Emulator;
 /// </summary>
 public class AzureServiceBusEmulatorFixture : IAsyncLifetime
 {
-    private INetwork _network;
-    private IContainer _mssqlContainer;
-    private IContainer _serviceBusEmulatorContainer;
+    private INetwork? _network;
+    private IContainer? _mssqlContainer;
+    private IContainer? _serviceBusEmulatorContainer;
 
     /// <summary>
     /// Gets the Azure Service Bus connection string for the emulator.
@@ -36,10 +37,6 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
     {
         try
         {
-            // Configure Testcontainers to not use the Resource Reaper (cleanup helper)
-            // This avoids timeout issues with the Ryuk container in some Docker environments
-            TestcontainersSettings.ResourceReaperEnabled = false;
-
             // Create a dedicated network for the containers
             _network = new NetworkBuilder()
                 .WithName($"asb-test-network-{Guid.NewGuid():N}")
@@ -48,13 +45,11 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
             await _network.CreateAsync();
 
             // Start MSSQL 2022 container first (dependency for Service Bus Emulator)
-            _mssqlContainer = new ContainerBuilder()
-                .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            _mssqlContainer = new ContainerBuilder("mcr.microsoft.com/mssql/server:2022-latest")
                 .WithNetwork(_network)
                 .WithNetworkAliases("mssql")
                 .WithEnvironment("ACCEPT_EULA", "Y")
                 .WithEnvironment("MSSQL_SA_PASSWORD", "YourStrong!Passw0rd")
-                .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(1433))
                 .WithAutoRemove(true) // Automatically remove container when stopped
                 .Build();
 
@@ -69,8 +64,7 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
             }
 
             // Start Service Bus Emulator container
-            _serviceBusEmulatorContainer = new ContainerBuilder()
-                .WithImage("mcr.microsoft.com/azure-messaging/servicebus-emulator:latest")
+            _serviceBusEmulatorContainer = new ContainerBuilder("mcr.microsoft.com/azure-messaging/servicebus-emulator:latest")
                 .WithNetwork(_network)
                 .WithEnvironment("SQL_SERVER", "mssql")
                 .WithEnvironment("MSSQL_SA_PASSWORD", "YourStrong!Passw0rd")
@@ -137,8 +131,6 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
         }
         finally
         {
-            // Restore Resource Reaper to default (enabled) to avoid affecting other tests
-            TestcontainersSettings.ResourceReaperEnabled = true;
             IsRunning = false;
         }
     }
