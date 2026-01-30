@@ -23,7 +23,7 @@ public class WolverineIntegrationTests
     }
 
     [Fact]
-    public async Task CanPublishMessageToEmulator()
+    public void CanPublishMessageToEmulator()
     {
         // Arrange
         var connectionString = _fixture.ConnectionString;
