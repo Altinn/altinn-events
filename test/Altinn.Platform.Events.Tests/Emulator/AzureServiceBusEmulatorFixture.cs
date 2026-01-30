@@ -60,8 +60,8 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
 
             await _mssqlContainer.StartAsync();
 
-            // Get the path to the emulator config file (in the same Emulator directory)
-            string configPath = Path.Combine(Directory.GetCurrentDirectory(), "Emulator", "asb-emulator-config.json");
+            // Get the path to the emulator config file (copied from emulator/config.json at build time)
+            string configPath = Path.Combine(Directory.GetCurrentDirectory(), "Emulator", "config.json");
 
             if (!File.Exists(configPath))
             {
