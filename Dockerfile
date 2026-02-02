@@ -1,9 +1,8 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0.102-alpine3.23@sha256:13f5203944a41bb0a2aad63fa016e718033f8abaa29b1275e1aea531659d1252 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.102-alpine3.23@sha256:48b443d87fe7426ce6a20554e87fdd6189143dc4aa5f43b501acf5fef6d42740 AS build
 
 COPY src/Events ./Events
 COPY src/DbTools ./DbTools
 COPY src/Events.Common ./Events.Common
-COPY src/Events/Migration ./Migration
 
 WORKDIR /DbTools
 RUN dotnet build ./DbTools.csproj -c Release -o /app_tools
@@ -13,7 +12,7 @@ WORKDIR /Events
 RUN dotnet build ./Altinn.Platform.Events.csproj -c Release -o /app_output
 RUN dotnet publish ./Altinn.Platform.Events.csproj -c Release -o /app_output
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.2-alpine3.23@sha256:88736d2d6800fd160d711e852ce53dae1ba8df4e84fee032cdbedd92bf13c1fb AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.2-alpine3.23@sha256:55fa85c0075d8b48b4854af502ffbb305470564e9125c227da28b52cfec6dc92 AS final
 
 EXPOSE 5080
 WORKDIR /app
