@@ -30,9 +30,11 @@ using Altinn.Platform.Events.Swagger;
 using Altinn.Platform.Events.Telemetry;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
+using Azure.Messaging.ServiceBus;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Security.KeyVault.Secrets;
 using CloudNative.CloudEvents.SystemTextJson;
+using JasperFx.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -51,6 +53,7 @@ using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Wolverine;
 using Wolverine.AzureServiceBus;
+using Wolverine.ErrorHandling;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -219,15 +222,32 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         if (wolverineSettings.EnableServiceBus)
         {
-        opts.ConfigureEventsDefaults(
-            builder.Environment,
-            wolverineSettings.ServiceBusConnectionString);
-        opts.PublishMessage<RegisterEventCommand>()
-            .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+            opts.ConfigureEventsDefaults(
+                builder.Environment,
+                wolverineSettings.ServiceBusConnectionString);
+
+            opts.PublishMessage<RegisterEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+            opts.PublishMessage<InboundEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
+
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
+
         }
 
         opts.Policies.AllListeners(x => x.ProcessInline());
         opts.Policies.AllSenders(x => x.SendInline());
+
+        // ServiceBusException happens when problem sending to Azure Service Bus, InvalidOperationException when problem to save to database
+        opts.Policies.OnException<ServiceBusException>()
+            .Or<InvalidOperationException>()
+            .Or<TimeoutException>()
+            .Or<TaskCanceledException>()
+            .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds())
+            .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes())
+            .Then.MoveToErrorQueue();
     });
 
     services.AddSingleton(config);
