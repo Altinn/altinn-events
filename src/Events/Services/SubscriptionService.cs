@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using Wolverine;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -16,7 +17,7 @@ namespace Altinn.Platform.Events.Services;
 public class SubscriptionService : ISubscriptionService
 {
     private readonly ISubscriptionRepository _repository;
-    private readonly IEventsQueueClient _queue;
+    private readonly IMessageBus _bus;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IAuthorization _authorization;
 
@@ -31,12 +32,12 @@ public class SubscriptionService : ISubscriptionService
     public SubscriptionService(
         ISubscriptionRepository repository,
         IAuthorization authorization,
-        IEventsQueueClient queue,
+        IMessageBus bus,
         IClaimsPrincipalProvider claimsPrincipalProvider)
     {
         _repository = repository;
         _authorization = authorization;
-        _queue = queue;
+        _bus = bus;
         _claimsPrincipalProvider = claimsPrincipalProvider;
     }
 
@@ -55,7 +56,7 @@ public class SubscriptionService : ISubscriptionService
 
         subscription ??= await _repository.CreateSubscription(eventsSubscription);
 
-        await _queue.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
+        await _bus.PublishAsync(new ValidateSubscriptionCommand(subscription));
 
         return (subscription, null);
     }

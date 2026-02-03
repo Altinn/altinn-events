@@ -224,6 +224,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             wolverineSettings.ServiceBusConnectionString);
         opts.PublishMessage<RegisterEventCommand>()
             .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+        opts.PublishMessage<ValidateSubscriptionCommand>()
+            .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
         }
 
         opts.Policies.AllListeners(x => x.ProcessInline());
@@ -294,10 +296,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddTransient<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IOutboundService, OutboundService>();
-    services.AddSingleton<ISubscriptionService, SubscriptionService>();
+    services.AddScoped<ISubscriptionService, SubscriptionService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
-    services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
-    services.AddSingleton<IGenericSubscriptionService, GenericSubscriptionService>();
+    services.AddScoped<IAppSubscriptionService, AppSubscriptionService>();
+    services.AddScoped<IGenericSubscriptionService, GenericSubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.AddSingleton<ITraceLogRepository, TraceLogRepository>();
