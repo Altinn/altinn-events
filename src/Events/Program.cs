@@ -245,9 +245,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             .Or<InvalidOperationException>()
             .Or<TimeoutException>()
             .Or<TaskCanceledException>()
-            .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds())
-            .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes())
-            .Then.MoveToErrorQueue();
+            .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds()) // within the same message lock
+            .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes()) // new lock for each retry
+            .Then.MoveToErrorQueue(); // dead-letter queue ("queuename/$deadletterqueue")
     });
 
     services.AddSingleton(config);
