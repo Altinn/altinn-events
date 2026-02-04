@@ -41,7 +41,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
     private Mock<ICloudEventRepository> _cloudEventRepositoryMock = new();
     private Action<WolverineOptions>? _customWolverineConfig;
     private bool _useShortRetryPolicy;
-    private bool _purgeQueuesOnStart;
+    private bool _purgeQueuesOnTeardown;
 
     public string RegisterQueueName => _settings?.RegistrationQueueName
         ?? throw new InvalidOperationException("Host not started. Call StartAsync() first.");
@@ -68,7 +68,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
 
     public WolverineIntegrationTestHost WithCleanQueues()
     {
-        _purgeQueuesOnStart = true;
+        _purgeQueuesOnTeardown = true;
         return this;
     }
 
@@ -90,11 +90,6 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         ConfigureAppSettings(builder.Configuration);
         ConfigureServices(builder.Services, builder.Configuration);
 
-        if (_purgeQueuesOnStart)
-        {
-            await PurgeQueuesAsync();
-        }
-
         _app = builder.Build();
 
         _ = _app.RunAsync();
@@ -110,6 +105,12 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         {
             await _app.StopAsync();
             await _app.DisposeAsync();
+        }
+
+        // Purge queues on teardown to ensure clean state for next test
+        if (_purgeQueuesOnTeardown)
+        {
+            await PurgeQueuesAsync();
         }
 
         await _serviceBusClient.DisposeAsync();
@@ -232,15 +233,15 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
 
     private void ConfigureMockedDependencies(IServiceCollection services)
     {
-        services.AddSingleton<ICloudEventRepository>(_cloudEventRepositoryMock.Object);
-        services.AddSingleton<ITraceLogService>(new Mock<ITraceLogService>().Object);
-        services.AddSingleton<IAuthorization>(new Mock<IAuthorization>().Object);
+        services.AddSingleton(_cloudEventRepositoryMock.Object);
+        services.AddSingleton(new Mock<ITraceLogService>().Object);
+        services.AddSingleton(new Mock<IAuthorization>().Object);
 
-        services.AddSingleton<IEventsQueueClient>(CreateEventsQueueClientMock());
-        services.AddSingleton<IRegisterService>(new Mock<IRegisterService>().Object);
-        services.AddSingleton<IPDP>(new Mock<IPDP>().Object);
-        services.AddSingleton<IPublicSigningKeyProvider>(new Mock<IPublicSigningKeyProvider>().Object);
-        services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>>(new Mock<IPostConfigureOptions<JwtCookieOptions>>().Object);
+        services.AddSingleton(CreateEventsQueueClientMock());
+        services.AddSingleton(new Mock<IRegisterService>().Object);
+        services.AddSingleton(new Mock<IPDP>().Object);
+        services.AddSingleton(new Mock<IPublicSigningKeyProvider>().Object);
+        services.AddSingleton(new Mock<IPostConfigureOptions<JwtCookieOptions>>().Object);
     }
 
     private static IEventsQueueClient CreateEventsQueueClientMock()
@@ -279,9 +280,11 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
             return;
         }
 
+        // Disable AutoPurgeOnStartup - tests purge on teardown instead to avoid race conditions
         opts.ConfigureEventsDefaults(
             new HostEnvironmentStub(Environments.Development),
-            settings.ServiceBusConnectionString);
+            settings.ServiceBusConnectionString,
+            autoPurgeOnStartup: false);
 
         opts.PublishMessage<RegisterEventCommand>()
             .ToAzureServiceBusQueue(settings.RegistrationQueueName);
