@@ -401,6 +401,6 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
 
         public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
 
-        public IFileProvider ContentRootFileProvider { get; set; } = null!;
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }
