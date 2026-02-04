@@ -3,7 +3,6 @@ using System;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using Azure.Messaging.ServiceBus;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
@@ -100,32 +99,23 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
     {
         const int maxRetries = 30;
         const int delayMs = 1000;
+        int hostPort = _serviceBusEmulatorContainer!.GetMappedPublicPort(5672);
 
         for (int i = 0; i < maxRetries; i++)
         {
             try
             {
-                await using var client = new ServiceBusClient(ConnectionString);
-                await using var receiver = client.CreateReceiver("altinn.events.register");
-
-                // Try to peek - this will establish the AMQP connection
-                await receiver.PeekMessageAsync();
+                // Simple TCP socket check - verify the AMQP port is accepting connections
+                using var client = new TcpClient();
+                await client.ConnectAsync("127.0.0.1", hostPort);
 
                 Console.WriteLine($"Emulator ready after {i + 1} attempt(s)");
                 return;
             }
-            catch (ServiceBusException ex) when (
-                ex.Reason == ServiceBusFailureReason.ServiceCommunicationProblem ||
-                ex.InnerException is SocketException)
+            catch (SocketException)
             {
                 Console.WriteLine($"Waiting for emulator to be ready... attempt {i + 1}/{maxRetries}");
                 await Task.Delay(delayMs);
-            }
-            catch (ServiceBusException ex) when (ex.Reason == ServiceBusFailureReason.MessagingEntityNotFound)
-            {
-                // Queue exists check passed - emulator is ready even if queue doesn't exist yet
-                Console.WriteLine($"Emulator ready (queue not found is OK) after {i + 1} attempt(s)");
-                return;
             }
         }
 
