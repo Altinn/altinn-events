@@ -150,6 +150,37 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
     public Task<ServiceBusReceivedMessage?> WaitForDeadLetterMessageAsync(string queueName, TimeSpan? timeout = null)
         => WaitForMessageAsync($"{queueName}/$deadletterqueue", timeout);
 
+    /// <summary>
+    /// Waits until the specified queue is empty (no messages waiting).
+    /// Polls until empty or timeout is reached.
+    /// </summary>
+    public async Task<bool> WaitForEmptyAsync(string queueName, TimeSpan? timeout = null)
+    {
+        var actualTimeout = timeout ?? TimeSpan.FromSeconds(10);
+        await using var receiver = _serviceBusClient.CreateReceiver(queueName);
+        using var cts = new CancellationTokenSource(actualTimeout);
+
+        try
+        {
+            while (await receiver.PeekMessageAsync(cancellationToken: cts.Token) != null)
+            {
+                await Task.Delay(100, cts.Token);
+            }
+
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Waits until the dead letter queue for the specified queue is empty.
+    /// </summary>
+    public Task<bool> WaitForDeadLetterEmptyAsync(string queueName, TimeSpan? timeout = null)
+        => WaitForEmptyAsync($"{queueName}/$deadletterqueue", timeout);
+
     public static CloudEvent CreateTestCloudEvent(string? id = null)
     {
         var cloudEvent = new CloudEvent
@@ -201,15 +232,15 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
 
     private void ConfigureMockedDependencies(IServiceCollection services)
     {
-        services.AddSingleton(_cloudEventRepositoryMock.Object);
-        services.AddSingleton(new Mock<ITraceLogService>().Object);
-        services.AddSingleton(new Mock<IAuthorization>().Object);
+        services.AddSingleton<ICloudEventRepository>(_cloudEventRepositoryMock.Object);
+        services.AddSingleton<ITraceLogService>(new Mock<ITraceLogService>().Object);
+        services.AddSingleton<IAuthorization>(new Mock<IAuthorization>().Object);
 
-        services.AddSingleton(CreateEventsQueueClientMock());
-        services.AddSingleton(new Mock<IRegisterService>().Object);
-        services.AddSingleton(new Mock<IPDP>().Object);
-        services.AddSingleton(new Mock<IPublicSigningKeyProvider>().Object);
-        services.AddSingleton(new Mock<IPostConfigureOptions<JwtCookieOptions>>().Object);
+        services.AddSingleton<IEventsQueueClient>(CreateEventsQueueClientMock());
+        services.AddSingleton<IRegisterService>(new Mock<IRegisterService>().Object);
+        services.AddSingleton<IPDP>(new Mock<IPDP>().Object);
+        services.AddSingleton<IPublicSigningKeyProvider>(new Mock<IPublicSigningKeyProvider>().Object);
+        services.AddSingleton<IPostConfigureOptions<JwtCookieOptions>>(new Mock<IPostConfigureOptions<JwtCookieOptions>>().Object);
     }
 
     private static IEventsQueueClient CreateEventsQueueClientMock()

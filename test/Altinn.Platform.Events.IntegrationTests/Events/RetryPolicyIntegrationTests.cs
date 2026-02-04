@@ -19,7 +19,11 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
 
     /// <summary>
     /// Tests the normal flow where the database is available.
-    /// Message should flow: RegisterQueue -> SaveEventHandler -> Save to DB -> InboundQueue
+    /// Message should flow: RegisterQueue -> SaveEventHandler -> Save to DB -> InboundQueue -> ...
+    /// Verifies:
+    /// - Register queue is empty (message was processed)
+    /// - Register DLQ is empty (no failures)
+    /// - Database save was called exactly once
     /// </summary>
     [Fact]
     public async Task RegisterEventCommand_WhenDatabaseAvailable_MessageFlowsToInboundQueue()
@@ -39,10 +43,15 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
         // Act
         await host.PublishAsync(new RegisterEventCommand(cloudEvent));
 
-        // Assert
-        var receivedMessage = await host.WaitForMessageAsync(host.InboundQueueName);
+        // Assert - Register queue should be empty (message was processed)
+        var registerQueueEmpty = await host.WaitForEmptyAsync(host.RegisterQueueName);
+        Assert.True(registerQueueEmpty, "Register queue should be empty after successful processing");
 
-        Assert.NotNull(receivedMessage);
+        // Assert - Register DLQ should be empty (no failures)
+        var registerDlqEmpty = await host.WaitForDeadLetterEmptyAsync(host.RegisterQueueName);
+        Assert.True(registerDlqEmpty, "Register dead letter queue should be empty (no failures)");
+
+        // Assert - Database save should be called exactly once
         host.CloudEventRepositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
     }
 
@@ -79,14 +88,14 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
         // Short policy: 3 immediate retries (100ms each) + 3 scheduled retries (500ms each) ≈ 2-3s
         var deadLetterMessage = await host.WaitForDeadLetterMessageAsync(
             host.RegisterQueueName,
-            TimeSpan.FromSeconds(15));
+            TimeSpan.FromSeconds(5));
 
         Assert.NotNull(deadLetterMessage);
 
-        // Verify retries happened:
+        // Verify exact retry count:
         // RetryWithCooldown(100ms, 100ms, 100ms) = 3 retries within same lock
         // ScheduleRetry(500ms, 500ms, 500ms) = 3 more retries with new locks
         // Total: 1 initial + 3 cooldown retries + 3 scheduled retries = 7 attempts
-        Assert.True(attemptCount >= 4, $"Expected at least 4 attempts (initial + 3 immediate retries), but got {attemptCount}");
+        Assert.Equal(7, attemptCount);
     }
 }
