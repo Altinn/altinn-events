@@ -219,13 +219,15 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     {
         if (wolverineSettings.EnableServiceBus)
         {
-        opts.ConfigureEventsDefaults(
-            builder.Environment,
-            wolverineSettings.ServiceBusConnectionString);
-        opts.PublishMessage<RegisterEventCommand>()
-            .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
-        opts.PublishMessage<ValidateSubscriptionCommand>()
-            .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
+            opts.ConfigureEventsDefaults(
+                builder.Environment,
+                wolverineSettings.ServiceBusConnectionString);
+            opts.PublishMessage<RegisterEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+            opts.PublishMessage<ValidateSubscriptionCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
+
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
         }
 
         opts.Policies.AllListeners(x => x.ProcessInline());
@@ -293,6 +295,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
+    services.AddHttpClient<IWebhookService, WebhookService>();
     services.AddTransient<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IOutboundService, OutboundService>();

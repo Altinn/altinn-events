@@ -1,4 +1,5 @@
-# name: microsoft-azure-servicebus-emulator
+name: microsoft-azure-servicebus-emulator
+
 services:
   emulator:
     container_name: "servicebus-emulator"
