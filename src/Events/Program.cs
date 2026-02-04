@@ -235,7 +235,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
-
         }
 
         opts.Policies.AllListeners(x => x.ProcessInline());

@@ -12,7 +12,7 @@
               "DuplicateDetectionHistoryTimeWindow": "PT20S",
               "ForwardDeadLetteredMessagesTo": "",
               "ForwardTo": "",
-              "LockDuration": "PT5S",
+              "LockDuration": "PT1M",
               "MaxDeliveryCount": 10,
               "RequiresDuplicateDetection": false,
               "RequiresSession": false
@@ -26,7 +26,7 @@
               "DuplicateDetectionHistoryTimeWindow": "PT20S",
               "ForwardDeadLetteredMessagesTo": "",
               "ForwardTo": "",
-              "LockDuration": "PT5S",
+              "LockDuration": "PT1M",
               "MaxDeliveryCount": 10,
               "RequiresDuplicateDetection": false,
               "RequiresSession": false
@@ -40,7 +40,7 @@
               "DuplicateDetectionHistoryTimeWindow": "PT20S",
               "ForwardDeadLetteredMessagesTo": "",
               "ForwardTo": "",
-              "LockDuration": "PT5S",
+              "LockDuration": "PT1M",
               "MaxDeliveryCount": 10,
               "RequiresDuplicateDetection": false,
               "RequiresSession": false
