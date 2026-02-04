@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.IntegrationTests.Emulator;
@@ -42,17 +43,20 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
 
         // Act
         await host.PublishAsync(new RegisterEventCommand(cloudEvent));
-        await Task.Delay(500);
 
         // Assert - Register queue should be empty (message was processed)
         var registerQueueEmpty = await host.WaitForEmptyAsync(host.RegisterQueueName);
         Assert.True(registerQueueEmpty, "Register queue should be empty after successful processing");
 
+        // Assert - Database save should have been called
+        var repositoryInvoked = await host.WaitForRepositoryInvocationAsync();
+        Assert.True(repositoryInvoked, "Database save should have been called within timeout");
+
         // Assert - Register DLQ should be empty (no failures)
         var registerDlqEmpty = await host.WaitForDeadLetterEmptyAsync(host.RegisterQueueName);
         Assert.True(registerDlqEmpty, "Register dead letter queue should be empty (no failures)");
 
-        // Assert - Database save should be called exactly once
+        // Assert - Database save should not be called more than once
         host.CloudEventRepositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
     }
 
@@ -64,7 +68,7 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
     public async Task RegisterEventCommand_WhenDatabaseThrowsTaskCanceledException_RetriesAndMovesToDeadLetterQueue()
     {
         // Arrange
-        var attemptCount = 0;
+        int attemptCount = 0;
 
         await using var host = await new WolverineIntegrationTestHost(_fixture)
             .WithCleanQueues()
@@ -73,7 +77,7 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
                 mock.Setup(r => r.CreateEvent(It.IsAny<string>()))
                     .Callback<string>(_ =>
                     {
-                        attemptCount++;
+                        Interlocked.Increment(ref attemptCount);
                         throw new TaskCanceledException("Simulated database timeout");
                     });
             })

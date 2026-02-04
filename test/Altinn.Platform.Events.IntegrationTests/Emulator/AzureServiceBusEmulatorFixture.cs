@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
@@ -99,6 +100,7 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
     {
         const int maxRetries = 30;
         const int delayMs = 1000;
+        const int connectTimeoutMs = 1000;
         int hostPort = _serviceBusEmulatorContainer!.GetMappedPublicPort(5672);
 
         for (int i = 0; i < maxRetries; i++)
@@ -107,12 +109,13 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
             {
                 // Simple TCP socket check - verify the AMQP port is accepting connections
                 using var client = new TcpClient();
-                await client.ConnectAsync("127.0.0.1", hostPort);
+                using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(connectTimeoutMs));
+                await client.ConnectAsync("127.0.0.1", hostPort, cts.Token);
 
                 Console.WriteLine($"Emulator ready after {i + 1} attempt(s)");
                 return;
             }
-            catch (SocketException)
+            catch (Exception ex) when (ex is SocketException or OperationCanceledException)
             {
                 Console.WriteLine($"Waiting for emulator to be ready... attempt {i + 1}/{maxRetries}");
                 await Task.Delay(delayMs);

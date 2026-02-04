@@ -37,6 +37,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
     private readonly ServiceBusClient _serviceBusClient = new(fixture.ConnectionString);
 
     private WebApplication? _app;
+    private Task? _runTask;
     private Configuration.WolverineSettings? _settings;
     private Mock<ICloudEventRepository> _cloudEventRepositoryMock = new();
     private Action<WolverineOptions>? _customWolverineConfig;
@@ -97,7 +98,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
 
         _app = builder.Build();
 
-        _ = _app.RunAsync();
+        _runTask = _app.RunAsync();
 
         await WaitForWolverineReadyAsync();
 
@@ -109,6 +110,13 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         if (_app != null)
         {
             await _app.StopAsync();
+
+            // Check if the run task faulted
+            if (_runTask is { IsFaulted: true })
+            {
+                await _runTask; // Observe the exception
+            }
+
             await _app.DisposeAsync();
         }
 
@@ -157,6 +165,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
     public async Task<bool> WaitForEmptyAsync(string queueName, TimeSpan? timeout = null)
     {
         var actualTimeout = timeout ?? TimeSpan.FromSeconds(10);
+        var pollInterval = TimeSpan.FromMilliseconds(100);
         await using var receiver = _serviceBusClient.CreateReceiver(queueName);
         using var cts = new CancellationTokenSource(actualTimeout);
 
@@ -164,7 +173,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         {
             while (await receiver.PeekMessageAsync(cancellationToken: cts.Token) != null)
             {
-                await Task.Delay(100, cts.Token);
+                await Task.Delay(pollInterval, cts.Token);
             }
 
             return true;
@@ -180,6 +189,32 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
     /// </summary>
     public Task<bool> WaitForDeadLetterEmptyAsync(string queueName, TimeSpan? timeout = null)
         => WaitForEmptyAsync($"{queueName}/$deadletterqueue", timeout);
+
+    /// <summary>
+    /// Waits until the CloudEventRepository mock has been invoked at least once.
+    /// </summary>
+    /// <param name="timeout">Maximum time to wait. Defaults to 5 seconds.</param>
+    /// <returns>True if the mock was invoked, false if timeout was reached.</returns>
+    public async Task<bool> WaitForRepositoryInvocationAsync(TimeSpan? timeout = null)
+    {
+        var actualTimeout = timeout ?? TimeSpan.FromSeconds(5);
+        var pollInterval = TimeSpan.FromMilliseconds(100);
+        using var cts = new CancellationTokenSource(actualTimeout);
+
+        try
+        {
+            while (_cloudEventRepositoryMock.Invocations.Count == 0)
+            {
+                await Task.Delay(pollInterval, cts.Token);
+            }
+
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+    }
 
     public static CloudEvent CreateTestCloudEvent(string? id = null)
     {
@@ -332,6 +367,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         catch (ServiceBusException)
         {
             // Queue may not exist yet - acceptable for test setup
+            Console.WriteLine($"Queue '{queueName}' does not exist yet or is not accessible - skipping purge");
         }
     }
 
