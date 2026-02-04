@@ -5,20 +5,6 @@
         "Name": "sbemulatorns",
         "Queues": [
           {
-            "Name": "queue.1",
-            "Properties": {
-              "DeadLetteringOnMessageExpiration": false,
-              "DefaultMessageTimeToLive": "PT1H",
-              "DuplicateDetectionHistoryTimeWindow": "PT20S",
-              "ForwardDeadLetteredMessagesTo": "",
-              "ForwardTo": "",
-              "LockDuration": "PT1M",
-              "MaxDeliveryCount": 10,
-              "RequiresDuplicateDetection": false,
-              "RequiresSession": false
-            }
-          },
-          {
             "Name": "altinn.events.register",
             "Properties": {
               "DeadLetteringOnMessageExpiration": false,
@@ -33,21 +19,21 @@
             }
           },
           {
-            "Name": "wolverine-dead-letter-queue",
+            "Name": "altinn.events.inbound",
             "Properties": {
               "DeadLetteringOnMessageExpiration": false,
               "DefaultMessageTimeToLive": "PT1H",
               "DuplicateDetectionHistoryTimeWindow": "PT20S",
               "ForwardDeadLetteredMessagesTo": "",
               "ForwardTo": "",
-              "LockDuration": "PT5M",
+              "LockDuration": "PT1M",
               "MaxDeliveryCount": 10,
               "RequiresDuplicateDetection": false,
               "RequiresSession": false
             }
-          },
+          },          
           {
-            "Name": "wolverine-error-queue",
+            "Name": "wolverine-dead-letter-queue",
             "Properties": {
               "DeadLetteringOnMessageExpiration": false,
               "DefaultMessageTimeToLive": "PT1H",

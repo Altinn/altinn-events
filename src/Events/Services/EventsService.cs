@@ -145,5 +145,41 @@ namespace Altinn.Platform.Events.Services
 
             return await _authorizationService.AuthorizeEvents(events, cancellationToken);
         }
+
+        /// <inheritdoc/>
+        public async Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken)
+        {
+            EnsureCorrectResourceFormat(cloudEvent);
+            await Save(cloudEvent);
+            await _bus.PublishAsync(new InboundEventCommand(cloudEvent));
+        }
+
+        /// <summary>
+        /// Changes . notation in resource for Altinn App events to use _.
+        /// </summary>
+        private static void EnsureCorrectResourceFormat(CloudEvent cloudEvent)
+        {
+            var resource = cloudEvent["resource"];
+
+            if (resource is not null)
+            {
+                string? resourceValue = resource.ToString();
+                if (resourceValue != null && resourceValue.StartsWith("urn:altinn:resource:altinnapp."))
+                {
+                    string? org = null;
+                    string? app = null;
+
+                    string[] pathParams = cloudEvent.Source?.AbsolutePath.Split("/") ?? Array.Empty<string>();
+
+                    if (pathParams.Length > 5)
+                    {
+                        org = pathParams[1];
+                        app = pathParams[2];
+                    }
+
+                    cloudEvent.SetAttributeFromString("resource", $"urn:altinn:resource:app_{org}_{app}");
+                }
+            }
+        }
     }
 }
