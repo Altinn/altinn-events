@@ -42,6 +42,7 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
 
         // Act
         await host.PublishAsync(new RegisterEventCommand(cloudEvent));
+        await Task.Delay(500);
 
         // Assert - Register queue should be empty (message was processed)
         var registerQueueEmpty = await host.WaitForEmptyAsync(host.RegisterQueueName);

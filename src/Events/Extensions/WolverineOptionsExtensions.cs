@@ -19,15 +19,13 @@ public static class WolverineOptionsExtensions
     /// <param name="opts">The <see cref="WolverineOptions"/> to configure.</param>
     /// <param name="env">The host environment.</param>
     /// <param name="azureServiceBusConnectionString">The Azure Service Bus connection string.</param>
-    /// <param name="autoPurgeOnStartup">Whether to auto-purge queues on startup in development mode.</param>
     /// <returns>The configured <see cref="WolverineOptions"/> instance.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="opts"/> or <paramref name="env"/> is null.</exception>
     /// <exception cref="ArgumentException">Thrown if <paramref name="azureServiceBusConnectionString"/> is null or whitespace.</exception>
     public static WolverineOptions ConfigureEventsDefaults(
         this WolverineOptions opts,
         IHostEnvironment env,
-        string azureServiceBusConnectionString,
-        bool autoPurgeOnStartup = true)
+        string azureServiceBusConnectionString)
     {
         ArgumentNullException.ThrowIfNull(opts);
         ArgumentNullException.ThrowIfNull(env);
@@ -49,10 +47,7 @@ public static class WolverineOptionsExtensions
             azureBusConfig.SystemQueuesAreEnabled(false);
 
             // Auto-purge application queues on startup for clean development sessions
-            if (autoPurgeOnStartup)
-            {
-                azureBusConfig.AutoPurgeOnStartup();
-            }
+            azureBusConfig.AutoPurgeOnStartup();
         }
         else
         {

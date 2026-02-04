@@ -41,7 +41,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
     private Mock<ICloudEventRepository> _cloudEventRepositoryMock = new();
     private Action<WolverineOptions>? _customWolverineConfig;
     private bool _useShortRetryPolicy;
-    private bool _purgeQueuesOnTeardown;
+    private bool _purgeQueuesOnStart;
 
     public string RegisterQueueName => _settings?.RegistrationQueueName
         ?? throw new InvalidOperationException("Host not started. Call StartAsync() first.");
@@ -68,7 +68,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
 
     public WolverineIntegrationTestHost WithCleanQueues()
     {
-        _purgeQueuesOnTeardown = true;
+        _purgeQueuesOnStart = true;
         return this;
     }
 
@@ -90,6 +90,11 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         ConfigureAppSettings(builder.Configuration);
         ConfigureServices(builder.Services, builder.Configuration);
 
+        if (_purgeQueuesOnStart)
+        {
+            await PurgeQueuesAsync();
+        }
+
         _app = builder.Build();
 
         _ = _app.RunAsync();
@@ -105,12 +110,6 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         {
             await _app.StopAsync();
             await _app.DisposeAsync();
-        }
-
-        // Purge queues on teardown to ensure clean state for next test
-        if (_purgeQueuesOnTeardown)
-        {
-            await PurgeQueuesAsync();
         }
 
         await _serviceBusClient.DisposeAsync();
@@ -280,11 +279,9 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
             return;
         }
 
-        // Disable AutoPurgeOnStartup - tests purge on teardown instead to avoid race conditions
         opts.ConfigureEventsDefaults(
             new HostEnvironmentStub(Environments.Development),
-            settings.ServiceBusConnectionString,
-            autoPurgeOnStartup: false);
+            settings.ServiceBusConnectionString);
 
         opts.PublishMessage<RegisterEventCommand>()
             .ToAzureServiceBusQueue(settings.RegistrationQueueName);
