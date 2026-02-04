@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -244,6 +245,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         opts.Policies.OnException<ServiceBusException>()
             .Or<InvalidOperationException>()
             .Or<TimeoutException>()
+            .Or<SocketException>()
             .Or<TaskCanceledException>()
             .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds()) // within the same message lock
             .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes()) // new lock for each retry
