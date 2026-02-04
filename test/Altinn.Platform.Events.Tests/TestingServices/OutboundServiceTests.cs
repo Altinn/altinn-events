@@ -42,6 +42,41 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         };
 
         [Fact]
+        public async Task PostOutbound_AppEvent_DialogportenEvent()
+        {
+            // Arrange
+            var source = "https://platform.altinn.no/dialogporten/api/v1/enduser/dialogs/019c23f9-9486-7152-b6a9-9a14f0eaf1ab";
+            var subject = "urn:altinn:person:identifier-no:04022634567";
+            var type = "dialogporten.dialog.updated.v1";
+            var resource = "urn:altinn:resource:app_brg_signeringsoppgave-sorm";
+            CloudEvent cloudEvent = GetCloudEvent(new Uri(source), subject, type, resource);
+
+            var sub = new Subscription()
+            {
+                Id = 20,
+                SourceFilter = new Uri("https://brg.apps.altinn.no/brg/signeringsoppgave-sorm"),
+                Consumer = "/org/brg",
+                CreatedBy = "/org/brg"
+            };
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([sub]);
+
+            var service = GetOutboundService(queueMock: queueMock.Object, repositoryMock: repositoryMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+        }
+
+        [Fact]
         public async Task PostOutbound_AppEvent_SourceFilterIsSimplified()
         {
             // Arrange
