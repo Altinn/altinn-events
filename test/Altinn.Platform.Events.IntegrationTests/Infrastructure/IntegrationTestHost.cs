@@ -1,11 +1,14 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Commands;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Repository;
@@ -21,9 +24,12 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Moq;
+using Npgsql;
 using Wolverine;
 using Wolverine.AzureServiceBus;
 using Wolverine.ErrorHandling;
+using Yuniql.AspNetCore;
+using Yuniql.PostgreSql;
 
 namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
 
@@ -43,6 +49,7 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
     private Action<WolverineOptions>? _customWolverineConfig;
     private bool _useShortRetryPolicy;
     private bool _purgeQueuesOnStart;
+    private bool _useRealDatabase;
 
     public string RegisterQueueName => _settings?.RegistrationQueueName
         ?? throw new InvalidOperationException("Host not started. Call StartAsync() first.");
@@ -79,6 +86,12 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
         return this;
     }
 
+    public IntegrationTestHost WithRealDatabase()
+    {
+        _useRealDatabase = true;
+        return this;
+    }
+
     #endregion
 
     #region Public API
@@ -97,6 +110,13 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
         }
 
         _app = builder.Build();
+
+        // Run database migrations if using real database (similar to Program.cs)
+        if (_useRealDatabase)
+        {
+            await CreatePlatformEventsRoleAsync();
+            RunDatabaseMigrations();
+        }
 
         _runTask = _app.RunAsync();
 
@@ -250,6 +270,87 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
         }
     }
 
+    private async Task CreatePlatformEventsRoleAsync()
+    {
+        try
+        {
+            Console.WriteLine("Creating platform_events database role...");
+
+            await using var dataSource = NpgsqlDataSource.Create(_fixture.PostgresConnectionString);
+            await using var command = dataSource.CreateCommand(
+                "CREATE ROLE platform_events WITH LOGIN PASSWORD 'Password';");
+            await command.ExecuteNonQueryAsync();
+
+            Console.WriteLine("Created platform_events database role");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Note: Could not create platform_events role: {ex.Message}");
+
+            // Don't throw - the role might already exist from a previous test run
+        }
+    }
+
+    private void RunDatabaseMigrations()
+    {
+        try
+        {
+            Console.WriteLine("Running database migrations using Yuniql...");
+
+            var traceService = new ConsoleTraceService { IsDebugEnabled = true };
+
+            // Use the PostgreSQL connection string that was configured for the container
+            string connectionString = _fixture.PostgresConnectionString;
+
+            // Find the Migration directory
+            string migrationPath = FindMigrationPath();
+
+            // Use the same approach as Program.cs
+            _app!.UseYuniql(
+                new PostgreSqlDataService(traceService),
+                new PostgreSqlBulkImportService(traceService),
+                traceService,
+                new Yuniql.AspNetCore.Configuration
+                {
+                    Workspace = migrationPath,
+                    ConnectionString = connectionString,
+                    IsAutoCreateDatabase = false,
+                    IsDebug = true
+                });
+
+            Console.WriteLine("Database migrations completed successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to run migrations: {ex.Message}");
+            throw;
+        }
+    }
+
+    private static string FindMigrationPath()
+    {
+        // Navigate up from the test bin directory to find the src/Events/Migration folder
+        string? currentDir = AppContext.BaseDirectory;
+
+        for (int i = 0; i < 10; i++)
+        {
+            currentDir = Directory.GetParent(currentDir)?.FullName;
+            if (currentDir == null)
+            {
+                break;
+            }
+
+            string migrationPath = Path.Combine(currentDir, "src", "Events", "Migration");
+            if (Directory.Exists(migrationPath))
+            {
+                return migrationPath;
+            }
+        }
+
+        throw new DirectoryNotFoundException(
+            "Could not find Migration directory. Searched up to 10 parent directories from: " + AppContext.BaseDirectory);
+    }
+
     private void ConfigureAppSettings(ConfigurationManager configuration)
     {
         configuration.Sources.Clear();
@@ -257,9 +358,17 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
         configuration.SetBasePath(AppContext.BaseDirectory);
         configuration.AddJsonFile("appsettings.integrationtest.json", optional: false);
 
-        configuration.AddInMemoryCollection([
+        var inMemorySettings = new List<KeyValuePair<string, string?>>
+        {
             new("WolverineSettings:ServiceBusConnectionString", _fixture.ServiceBusConnectionString)
-        ]);
+        };
+
+        if (_useRealDatabase)
+        {
+            inMemorySettings.Add(new("PostgreSQLSettings:ConnectionString", _fixture.PostgresConnectionString));
+        }
+
+        configuration.AddInMemoryCollection(inMemorySettings);
     }
 
     private void ConfigureServices(IServiceCollection services, IConfiguration configuration)
@@ -272,7 +381,21 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
 
     private void ConfigureMockedDependencies(IServiceCollection services)
     {
-        services.AddSingleton(_cloudEventRepositoryMock.Object);
+        if (_useRealDatabase)
+        {
+            // Register real database dependencies
+            var connectionString = _fixture.PostgresConnectionString;
+            services.AddNpgsqlDataSource(connectionString, builder => builder
+                .EnableParameterLogging(true)
+                .EnableDynamicJson());
+            services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
+        }
+        else
+        {
+            // Register mocked repository
+            services.AddSingleton(_cloudEventRepositoryMock.Object);
+        }
+
         services.AddSingleton(new Mock<ITraceLogService>().Object);
         services.AddSingleton(new Mock<IAuthorization>().Object);
 
