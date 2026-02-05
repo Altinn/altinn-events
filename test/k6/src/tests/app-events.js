@@ -97,22 +97,22 @@ function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
 
 // 03 -  GET app events for party. Query parameters: partyId, from.
 function TC03_GetAppEventsForParty(data) {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const today = new Date();
+  const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
 
   let response = appEventsApi.getEventsForParty(
-    { from: thirtyDaysAgo.toISOString(), party: data.userPartyId },
+    { from: sevenDaysAgo.toISOString(), party: data.userPartyId },
     data.userToken
   );
 
   let nextUrl = response.headers["Next"];
 
   let success = check(response, {
-    "03a - GET app events for party. Query parameters: partyId, from. Status is 200":
+    "03 - GET app events for party. Query parameters: partyId, from. Status is 200":
       (r) => r.status === 200,
-    "03a - GET app events for party. Query parameters: partyId, from. List contains minimum one element":
+    "03 - GET app events for party. Query parameters: partyId, from. List contains minimum one element":
       (r) => JSON.parse(r.body).length >= 1,
-    "03a - GET app events for party. Query parameters: partyId, from. Next url provided":
+    "03 - GET app events for party. Query parameters: partyId, from. Next url provided":
       nextUrl,
   });
 
