@@ -97,8 +97,11 @@ function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
 
 // 03 -  GET app events for party. Query parameters: partyId, from.
 function TC03_GetAppEventsForParty(data) {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
   let response = appEventsApi.getEventsForParty(
-    { from: '2025-12-31T23:00:00Z', party: data.userPartyId },
+    { from: thirtyDaysAgo.toISOString(), party: data.userPartyId },
     data.userToken
   );
 
