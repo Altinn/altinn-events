@@ -26,6 +26,11 @@ public class WolverineSettings
     public string RegistrationQueueName { get; set; }
 
     /// <summary>
+    /// Azure Service Bus queue name for event Validation.
+    /// </summary>
+    public string ValidationQueueName { get; set; }
+  
+    /// <summary>
     /// Azure Service Bus queue name for event inbound.
     /// </summary>
     public string InboundQueueName { get; set; }
