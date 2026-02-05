@@ -1,6 +1,8 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
@@ -8,7 +10,7 @@ using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using Xunit;
 
-namespace Altinn.Platform.Events.Tests.Emulator;
+namespace Altinn.Platform.Events.IntegrationTests.Emulator;
 
 /// <summary>
 /// xUnit fixture that starts Azure Service Bus Emulator with MSSQL 2022 using Testcontainers.
@@ -37,25 +39,22 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
     {
         try
         {
-            // Create a dedicated network for the containers
             _network = new NetworkBuilder()
                 .WithName($"asb-test-network-{Guid.NewGuid():N}")
                 .Build();
 
             await _network.CreateAsync();
 
-            // Start MSSQL 2022 container first (dependency for Service Bus Emulator)
             _mssqlContainer = new ContainerBuilder("mcr.microsoft.com/mssql/server:2022-latest")
                 .WithNetwork(_network)
                 .WithNetworkAliases("mssql")
                 .WithEnvironment("ACCEPT_EULA", "Y")
                 .WithEnvironment("MSSQL_SA_PASSWORD", "YourStrong!Passw0rd")
-                .WithAutoRemove(true) // Automatically remove container when stopped
+                .WithAutoRemove(true)
                 .Build();
 
             await _mssqlContainer.StartAsync();
 
-            // Get the path to the emulator config file (copied from emulator/config.json at build time)
             string configPath = Path.Combine(AppContext.BaseDirectory, "Emulator", "config.json");
 
             if (!File.Exists(configPath))
@@ -63,34 +62,26 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
                 throw new FileNotFoundException($"Emulator config file not found at: {configPath}");
             }
 
-            // Start Service Bus Emulator container
             _serviceBusEmulatorContainer = new ContainerBuilder("mcr.microsoft.com/azure-messaging/servicebus-emulator:latest")
                 .WithNetwork(_network)
                 .WithEnvironment("SQL_SERVER", "mssql")
                 .WithEnvironment("MSSQL_SA_PASSWORD", "YourStrong!Passw0rd")
                 .WithEnvironment("ACCEPT_EULA", "Y")
-                .WithEnvironment("SQL_WAIT_INTERVAL", "5") // Reduce SQL wait time from default 15s to 5s
+                .WithEnvironment("SQL_WAIT_INTERVAL", "5")
                 .WithBindMount(configPath, "/ServiceBus_Emulator/ConfigFiles/Config.json", AccessMode.ReadOnly)
-                .WithPortBinding(5672, true) // Bind to a random host port to avoid conflicts
-                .WithAutoRemove(true) // Automatically remove container when stopped
-                .WithStartupCallback((container, ct) =>
-                {
-                    // Log that emulator is starting
-                    Console.WriteLine("Azure Service Bus Emulator container started, waiting for initialization...");
-                    return Task.CompletedTask;
-                })
+                .WithPortBinding(5672, true)
+                .WithAutoRemove(true)
                 .Build();
 
             await _serviceBusEmulatorContainer.StartAsync();
 
-            // Note: No additional wait strategy needed. The emulator is ready after StartAsync() completes
-            // due to SQL_WAIT_INTERVAL handling the internal initialization timing.
-
-            // Get the dynamically assigned host port
             int hostPort = _serviceBusEmulatorContainer.GetMappedPublicPort(5672);
 
-            // Connection string for the emulator
             ConnectionString = $"Endpoint=sb://127.0.0.1:{hostPort};SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+
+            // Wait for the emulator to be fully ready to accept connections
+            await WaitUntilReadyAsync();
+
             IsRunning = true;
         }
         catch (Exception ex)
@@ -102,7 +93,40 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
     }
 
     /// <summary>
-    /// Disposes the fixture by stopping and removing the Azure Service Bus Emulator containers.
+    /// Waits for the emulator to be fully ready by attempting to connect with retries.
+    /// The container being "started" doesn't mean the AMQP listener is ready.
+    /// </summary>
+    private async Task WaitUntilReadyAsync()
+    {
+        const int maxRetries = 30;
+        const int delayMs = 1000;
+        const int connectTimeoutMs = 1000;
+        int hostPort = _serviceBusEmulatorContainer!.GetMappedPublicPort(5672);
+
+        for (int i = 0; i < maxRetries; i++)
+        {
+            try
+            {
+                // Simple TCP socket check - verify the AMQP port is accepting connections
+                using var client = new TcpClient();
+                using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(connectTimeoutMs));
+                await client.ConnectAsync("127.0.0.1", hostPort, cts.Token);
+
+                Console.WriteLine($"Emulator ready after {i + 1} attempt(s)");
+                return;
+            }
+            catch (Exception ex) when (ex is SocketException or OperationCanceledException)
+            {
+                Console.WriteLine($"Waiting for emulator to be ready... attempt {i + 1}/{maxRetries}");
+                await Task.Delay(delayMs);
+            }
+        }
+
+        throw new TimeoutException($"Emulator did not become ready after {maxRetries} attempts");
+    }
+
+    /// <summary>
+    /// Disposes the fixture by stopping and removing the containers.
     /// </summary>
     public async Task DisposeAsync()
     {
@@ -143,7 +167,4 @@ public class AzureServiceBusEmulatorFixture : IAsyncLifetime
 [CollectionDefinition(nameof(AzureServiceBusEmulatorCollection))]
 public class AzureServiceBusEmulatorCollection : ICollectionFixture<AzureServiceBusEmulatorFixture>
 {
-    // This class has no code, and is never created. Its purpose is simply
-    // to be the place to apply [CollectionDefinition] and all the
-    // ICollectionFixture<> interfaces.
 }
