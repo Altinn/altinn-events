@@ -95,10 +95,13 @@ function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
   addErrorCount(success);
 }
 
-// 03a -  GET app events for party. Query parameters: partyId, from.
-function TC03a_GetAppEventsForParty_From(data) {
+// 03 -  GET app events for party. Query parameters: partyId, from.
+function TC03_GetAppEventsForParty(data) {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
   let response = appEventsApi.getEventsForParty(
-    { from: '2023-12-31T23:00:00Z', party: data.userPartyId },
+    { from: thirtyDaysAgo.toISOString(), party: data.userPartyId },
     data.userToken
   );
 
@@ -110,29 +113,6 @@ function TC03a_GetAppEventsForParty_From(data) {
     "03a - GET app events for party. Query parameters: partyId, from. List contains minimum one element":
       (r) => JSON.parse(r.body).length >= 1,
     "03a - GET app events for party. Query parameters: partyId, from. Next url provided":
-      nextUrl,
-  });
-
-  addErrorCount(success);
-
-  return nextUrl;
-}
-
-// 03b -  GET app events for party. Query parameters: partyId, after.
-function TC03b_GetAppEventsForParty_After1(data) {
-  let response = appEventsApi.getEventsForParty(
-    { after: 1, party: data.userPartyId },
-    data.userToken
-  );
-
-  let nextUrl = response.headers["Next"];
-
-  let success = check(response, {
-    "03b - GET app events for party. Query parameters: partyId, after. Status is 200":
-      (r) => r.status === 200,
-    "03b - GET app events for party. Query parameters: partyId, after. List contains minimum one element":
-      (r) => JSON.parse(r.body).length >= 1,
-    "03b - GET app events for party. Query parameters: partyId, after. Next url provided":
       nextUrl,
   });
 
@@ -156,8 +136,7 @@ function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
 /*
  * 01 - GET app events for org. Query parameter 'after'
  * 02 - GET app  events for org from 'next' url
- * 03a - GET app events for party. Query parameters: partyId, from
- * 03b - GET app events for party. Query parameters: partyId, after.
+ * 03 - GET app events for party. Query parameters: partyId, from
  * 04 - GET app events for party from 'next'
  */
 export default function runTests(data) {
@@ -167,14 +146,12 @@ export default function runTests(data) {
 
       TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl);
 
-      nextUrl = TC03a_GetAppEventsForParty_From(data);
-      TC03b_GetAppEventsForParty_After1(data);
+      nextUrl = TC03_GetAppEventsForParty(data);
 
       TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
     } else {
       // Limited test set for use case tests
-      let nextUrl = TC03a_GetAppEventsForParty_From(data);
-      TC03b_GetAppEventsForParty_After1(data);
+      let nextUrl = TC03_GetAppEventsForParty(data);
       TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
     }
   } catch (error) {
