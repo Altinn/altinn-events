@@ -1,24 +1,19 @@
-using System.Threading.Tasks;
-
-using Altinn.Platform.Events.Tests.Emulator;
-
+using Altinn.Platform.Events.IntegrationTests.Emulator;
 using Xunit;
 
-namespace Altinn.Platform.Events.Tests.IntegrationTests;
+namespace Altinn.Platform.Events.IntegrationTests.Events;
 
 /// <summary>
-/// Integration tests for Wolverine with Azure Service Bus Emulator.
-/// These tests verify that Wolverine can connect to and communicate with the emulator.
+/// Tests that verify the Azure Service Bus Emulator is running and accessible.
 /// </summary>
 [Collection(nameof(AzureServiceBusEmulatorCollection))]
-public class WolverineIntegrationTests(AzureServiceBusEmulatorFixture fixture)
+public class AzureServiceBusEmulatorStatusTests(AzureServiceBusEmulatorFixture fixture)
 {
     private readonly AzureServiceBusEmulatorFixture _fixture = fixture;
 
     [Fact]
     public void EmulatorIsRunning()
     {
-        // Assert
         Assert.True(_fixture.IsRunning, "Azure Service Bus Emulator should be running");
         Assert.NotEmpty(_fixture.ConnectionString);
         Assert.Contains("Endpoint=sb://127.0.0.1", _fixture.ConnectionString);
