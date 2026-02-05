@@ -229,13 +229,17 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.PublishMessage<RegisterEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
             opts.PublishMessage<ValidateSubscriptionCommand>()
-                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
+                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);            
+            
             opts.PublishMessage<InboundEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
 
             opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);                       
 
             opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
         }
