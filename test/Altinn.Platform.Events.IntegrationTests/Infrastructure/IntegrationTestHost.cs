@@ -25,16 +25,16 @@ using Wolverine;
 using Wolverine.AzureServiceBus;
 using Wolverine.ErrorHandling;
 
-namespace Altinn.Platform.Events.IntegrationTests.Emulator;
+namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// A test host for Wolverine integration tests.
-/// Manages the WebApplication lifecycle and provides helpers for queue operations.
+/// A test host for integration tests.
+/// Manages the WebApplication lifecycle and provides helpers for queue and database operations.
 /// </summary>
-public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture) : IAsyncDisposable
+public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAsyncDisposable
 {
-    private readonly AzureServiceBusEmulatorFixture _fixture = fixture;
-    private readonly ServiceBusClient _serviceBusClient = new(fixture.ConnectionString);
+    private readonly IntegrationTestContainersFixture _fixture = fixture;
+    private readonly ServiceBusClient _serviceBusClient = new(fixture.ServiceBusConnectionString);
 
     private WebApplication? _app;
     private Task? _runTask;
@@ -54,26 +54,26 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
 
     #region Builder Methods
 
-    public WolverineIntegrationTestHost WithCloudEventRepository(Action<Mock<ICloudEventRepository>> configure)
+    public IntegrationTestHost WithCloudEventRepository(Action<Mock<ICloudEventRepository>> configure)
     {
         _cloudEventRepositoryMock = new Mock<ICloudEventRepository>();
         configure(_cloudEventRepositoryMock);
         return this;
     }
 
-    public WolverineIntegrationTestHost WithShortRetryPolicy()
+    public IntegrationTestHost WithShortRetryPolicy()
     {
         _useShortRetryPolicy = true;
         return this;
     }
 
-    public WolverineIntegrationTestHost WithCleanQueues()
+    public IntegrationTestHost WithCleanQueues()
     {
         _purgeQueuesOnStart = true;
         return this;
     }
 
-    public WolverineIntegrationTestHost WithWolverineConfig(Action<WolverineOptions> configure)
+    public IntegrationTestHost WithWolverineConfig(Action<WolverineOptions> configure)
     {
         _customWolverineConfig = configure;
         return this;
@@ -83,7 +83,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
 
     #region Public API
 
-    public async Task<WolverineIntegrationTestHost> StartAsync()
+    public async Task<IntegrationTestHost> StartAsync()
     {
         var builder = WebApplication.CreateBuilder();
         builder.Environment.EnvironmentName = Environments.Development;
@@ -216,6 +216,11 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         }
     }
 
+    /// <summary>
+    /// Gets the PostgreSQL connection string from the fixture.
+    /// </summary>
+    public string PostgresConnectionString => _fixture.PostgresConnectionString;
+
     public static CloudEvent CreateTestCloudEvent(string? id = null)
     {
         var cloudEvent = new CloudEvent
@@ -253,7 +258,7 @@ public class WolverineIntegrationTestHost(AzureServiceBusEmulatorFixture fixture
         configuration.AddJsonFile("appsettings.integrationtest.json", optional: false);
 
         configuration.AddInMemoryCollection([
-            new("WolverineSettings:ServiceBusConnectionString", _fixture.ConnectionString)
+            new("WolverineSettings:ServiceBusConnectionString", _fixture.ServiceBusConnectionString)
         ]);
     }
 

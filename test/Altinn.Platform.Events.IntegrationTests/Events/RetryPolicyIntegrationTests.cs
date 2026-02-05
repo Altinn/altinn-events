@@ -3,20 +3,20 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Contracts;
-using Altinn.Platform.Events.IntegrationTests.Emulator;
+using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Moq;
 using Xunit;
 
 namespace Altinn.Platform.Events.IntegrationTests.Events;
 
 /// <summary>
-/// Integration tests for Wolverine retry policies with Azure Service Bus Emulator.
+/// Integration tests for Wolverine retry policies with integration test containers.
 /// These tests verify that the retry policy correctly handles exceptions and moves messages to the error queue.
 /// </summary>
-[Collection(nameof(AzureServiceBusEmulatorCollection))]
-public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
+[Collection(nameof(IntegrationTestContainersCollection))]
+public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixture)
 {
-    private readonly AzureServiceBusEmulatorFixture _fixture = fixture;
+    private readonly IntegrationTestContainersFixture _fixture = fixture;
 
     /// <summary>
     /// Tests the normal flow where the database is available.
@@ -30,7 +30,7 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
     public async Task RegisterEventCommand_WhenDatabaseAvailable_MessageFlowsToInboundQueue()
     {
         // Arrange
-        await using var host = await new WolverineIntegrationTestHost(_fixture)
+        await using var host = await new IntegrationTestHost(_fixture)
             .WithCleanQueues()
             .WithCloudEventRepository(mock =>
             {
@@ -39,7 +39,7 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
             })
             .StartAsync();
 
-        var cloudEvent = WolverineIntegrationTestHost.CreateTestCloudEvent();
+        var cloudEvent = IntegrationTestHost.CreateTestCloudEvent();
 
         // Act
         await host.PublishAsync(new RegisterEventCommand(cloudEvent));
@@ -70,7 +70,7 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
         // Arrange
         int attemptCount = 0;
 
-        await using var host = await new WolverineIntegrationTestHost(_fixture)
+        await using var host = await new IntegrationTestHost(_fixture)
             .WithCleanQueues()
             .WithCloudEventRepository(mock =>
             {
@@ -84,7 +84,7 @@ public class RetryPolicyIntegrationTests(AzureServiceBusEmulatorFixture fixture)
             .WithShortRetryPolicy()
             .StartAsync();
 
-        var cloudEvent = WolverineIntegrationTestHost.CreateTestCloudEvent();
+        var cloudEvent = IntegrationTestHost.CreateTestCloudEvent();
 
         // Act
         await host.PublishAsync(new RegisterEventCommand(cloudEvent));
