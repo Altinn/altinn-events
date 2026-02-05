@@ -13,6 +13,10 @@ namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
 public static class ContainerImageConfig
 {
     private static readonly Lazy<Dictionary<string, string>> _images = new(() => LoadImages());
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     /// <summary>
     /// Gets the configured image string for a specific container.
@@ -42,10 +46,7 @@ public static class ContainerImageConfig
         }
 
         string json = File.ReadAllText(configPath);
-        var config = JsonSerializer.Deserialize<ContainerImagesConfig>(json, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        var config = JsonSerializer.Deserialize<ContainerImagesConfig>(json, _jsonOptions);
 
         if (config?.Images == null || config.Images.Count == 0)
         {
