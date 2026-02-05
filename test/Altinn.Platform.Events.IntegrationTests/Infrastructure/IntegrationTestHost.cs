@@ -59,6 +59,8 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
 
     public Mock<ICloudEventRepository> CloudEventRepositoryMock => _cloudEventRepositoryMock;
 
+    public string PostgresConnectionString => _fixture.PostgresConnectionString;
+
     #region Builder Methods
 
     public IntegrationTestHost WithCloudEventRepository(Action<Mock<ICloudEventRepository>> configure)
@@ -235,11 +237,6 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
             return false;
         }
     }
-
-    /// <summary>
-    /// Gets the PostgreSQL connection string from the fixture.
-    /// </summary>
-    public string PostgresConnectionString => _fixture.PostgresConnectionString;
 
     public static CloudEvent CreateTestCloudEvent(string? id = null)
     {
