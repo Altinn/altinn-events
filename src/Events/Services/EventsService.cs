@@ -163,7 +163,7 @@ namespace Altinn.Platform.Events.Services
 
             if (resource is not null)
             {
-                string resourceValue = resource.ToString();
+                string? resourceValue = resource.ToString();              
                 if (resourceValue != null && resourceValue.StartsWith("urn:altinn:resource:altinnapp."))
                 {
                     string org = null;
