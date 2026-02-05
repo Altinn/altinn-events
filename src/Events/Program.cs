@@ -233,8 +233,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.PublishMessage<InboundEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
 
-            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
-            
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);                       
+
             opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();

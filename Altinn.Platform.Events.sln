@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbTools", "src\DbTools\DbTo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Platform.Events.Common", "src\Events.Common\Altinn.Platform.Events.Common.csproj", "{328E00A8-FD75-890B-89B1-6E7DF927A7ED}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Altinn.Platform.Events.IntegrationTests", "test\Altinn.Platform.Events.IntegrationTests\Altinn.Platform.Events.IntegrationTests.csproj", "{89F88D18-3EAD-4E12-82D0-043D412D209E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{328E00A8-FD75-890B-89B1-6E7DF927A7ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{328E00A8-FD75-890B-89B1-6E7DF927A7ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{328E00A8-FD75-890B-89B1-6E7DF927A7ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89F88D18-3EAD-4E12-82D0-043D412D209E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89F88D18-3EAD-4E12-82D0-043D412D209E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89F88D18-3EAD-4E12-82D0-043D412D209E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89F88D18-3EAD-4E12-82D0-043D412D209E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
