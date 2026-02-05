@@ -235,6 +235,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.InboundQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();                
         }
 
         opts.Policies.AllListeners(x => x.ProcessInline());
@@ -314,7 +317,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddHttpClient<IRegisterService, RegisterService>();
     services.AddTransient<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
-    services.AddSingleton<IOutboundService, OutboundService>();
+    services.AddScoped<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
