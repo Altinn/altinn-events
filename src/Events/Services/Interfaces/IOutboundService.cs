@@ -18,6 +18,7 @@ public interface IOutboundService
     /// <param name="cancellationToken">
     /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
     /// </param>
+    /// <param name="useAzureServiceBus">Indicates whether to use Azure Service Bus for event delivery.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task PostOutbound(CloudEvent cloudEvent, CancellationToken cancellationToken);
+    Task PostOutbound(CloudEvent cloudEvent, CancellationToken cancellationToken, bool useAzureServiceBus = false);
 }
