@@ -10,7 +10,7 @@ using Moq;
 using Npgsql;
 using Xunit;
 
-namespace Altinn.Platform.Events.IntegrationTests.Events;
+namespace Altinn.Platform.Events.IntegrationTests.TestingServiceBus;
 
 /// <summary>
 /// Integration tests for Wolverine retry policies with integration test containers.
