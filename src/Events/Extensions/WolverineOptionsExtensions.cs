@@ -1,8 +1,14 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Sockets;
+using System.Threading.Tasks;
+using Azure.Messaging.ServiceBus;
+using JasperFx.Core;
 using Microsoft.Extensions.Hosting;
 using Wolverine;
 using Wolverine.AzureServiceBus;
+using Wolverine.ErrorHandling;
 
 namespace Altinn.Platform.Events.Extensions;
 
@@ -48,12 +54,32 @@ public static class WolverineOptionsExtensions
 
             // Auto-purge application queues on startup for clean development sessions
             azureBusConfig.AutoPurgeOnStartup();
+
+            // Development retry policy - shorter delays for faster execution during development and testing
+            opts.Policies.OnException<ServiceBusException>()
+                .Or<InvalidOperationException>()
+                .Or<TimeoutException>()
+                .Or<SocketException>()
+                .Or<TaskCanceledException>()
+                .RetryWithCooldown(100.Milliseconds(), 100.Milliseconds(), 100.Milliseconds())
+                .Then.ScheduleRetry(500.Milliseconds(), 500.Milliseconds(), 500.Milliseconds())
+                .Then.MoveToErrorQueue();
         }
         else
         {
             // In production, enable auto-provisioning which creates all necessary queues automatically
             // This includes Wolverine's internal system queues for coordination, error handling, retries, and responses
             azureBusConfig.AutoProvision();
+      
+            // Production retry policy - longer delays to allow transient issues to resolve, and to avoid overwhelming the system during outages
+            opts.Policies.OnException<ServiceBusException>()
+                .Or<InvalidOperationException>()
+                .Or<TimeoutException>()
+                .Or<SocketException>()
+                .Or<TaskCanceledException>()
+                .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds())
+                .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes())
+                .Then.MoveToErrorQueue();
         }
 
         return opts;

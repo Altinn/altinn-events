@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -31,11 +30,9 @@ using Altinn.Platform.Events.Swagger;
 using Altinn.Platform.Events.Telemetry;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
-using Azure.Messaging.ServiceBus;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Security.KeyVault.Secrets;
 using CloudNative.CloudEvents.SystemTextJson;
-using JasperFx.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -54,7 +51,6 @@ using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Wolverine;
 using Wolverine.AzureServiceBus;
-using Wolverine.ErrorHandling;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -249,16 +245,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
         opts.Policies.AllListeners(x => x.ProcessInline());
         opts.Policies.AllSenders(x => x.SendInline());
-
-        // ServiceBusException happens when problem sending to Azure Service Bus, InvalidOperationException when problem to save to database
-        opts.Policies.OnException<ServiceBusException>()
-            .Or<InvalidOperationException>()
-            .Or<TimeoutException>()
-            .Or<SocketException>()
-            .Or<TaskCanceledException>()
-            .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds()) // within the same message lock
-            .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes()) // new lock for each retry
-            .Then.MoveToErrorQueue(); // dead-letter queue ("queuename/$deadletterqueue")
     });
 
     services.AddSingleton(config);
@@ -267,7 +253,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
-    services.Configure<Altinn.Common.AccessToken.Configuration.KeyVaultSettings>(config.GetSection("kvSetting"));
+    services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
     services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
