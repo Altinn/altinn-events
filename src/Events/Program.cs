@@ -322,7 +322,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
-    services.AddTransient<IEventsService, EventsService>();
+    services.AddScoped<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddScoped<IOutboundService, OutboundService>();
     services.AddScoped<ISubscriptionService, SubscriptionService>();
