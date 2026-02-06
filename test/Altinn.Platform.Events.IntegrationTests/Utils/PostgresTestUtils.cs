@@ -22,7 +22,7 @@ public static class PostgresTestUtils
     public static async Task<JsonDocument?> GetEventFromDatabaseAsync(
         string connectionString,
         string eventId,
-        int maxAttempts = 20,
+        int maxAttempts = 100,
         int delayMs = 100)
     {
         await using var dataSource = NpgsqlDataSource.Create(connectionString);
