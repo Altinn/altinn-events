@@ -226,9 +226,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.ConfigureEventsDefaults(
                 builder.Environment,
                 wolverineSettings.ServiceBusConnectionString);
-
             opts.PublishMessage<RegisterEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+            opts.PublishMessage<ValidateSubscriptionCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);            
+            
             opts.PublishMessage<InboundEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
 
@@ -238,6 +240,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.ListenToAzureServiceBusQueue(wolverineSettings.InboundQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();                
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
         }
 
         opts.Policies.AllListeners(x => x.ProcessInline());
@@ -319,9 +324,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddScoped<IOutboundService, OutboundService>();
     services.AddSingleton<ISubscriptionService, SubscriptionService>();
+    services.AddScoped<IOutboundService, OutboundService>();
+    services.AddScoped<ISubscriptionService, SubscriptionService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
-    services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
-    services.AddSingleton<IGenericSubscriptionService, GenericSubscriptionService>();
+    services.AddScoped<IAppSubscriptionService, AppSubscriptionService>();
+    services.AddScoped<IGenericSubscriptionService, GenericSubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.AddSingleton<ITraceLogRepository, TraceLogRepository>();
