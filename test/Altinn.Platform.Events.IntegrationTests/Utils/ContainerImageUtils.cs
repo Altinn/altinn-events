@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
+namespace Altinn.Platform.Events.IntegrationTests.Utils;
 
 /// <summary>
 /// Helper class to load container image configurations from container-images.json.
 /// This file is managed by Renovate for automatic version updates.
 /// </summary>
-public static class ContainerImageConfig
+public static class ContainerImageUtils
 {
     private static readonly Lazy<Dictionary<string, string>> _images = new(LoadImages);
     private static readonly JsonSerializerOptions _jsonOptions = new()

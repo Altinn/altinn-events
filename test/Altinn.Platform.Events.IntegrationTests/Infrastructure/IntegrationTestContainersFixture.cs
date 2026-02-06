@@ -70,7 +70,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
             var postgresSettings = LoadPostgreSqlSettings();
 
             // Start PostgreSQL with credentials from appsettings
-            _postgresContainer = new ContainerBuilder(ContainerImageConfig.GetImage("postgres"))
+            _postgresContainer = new ContainerBuilder(ContainerImageUtils.GetImage("postgres"))
                 .WithNetwork(_network)
                 .WithNetworkAliases("postgres")
                 .WithEnvironment("POSTGRES_USER", postgresSettings.Username)
@@ -92,7 +92,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
             Console.WriteLine($"PostgreSQL started on port {PostgresPort}");
 
             // Start MSSQL (required by Service Bus Emulator)
-            _mssqlContainer = new ContainerBuilder(ContainerImageConfig.GetImage("mssql"))
+            _mssqlContainer = new ContainerBuilder(ContainerImageUtils.GetImage("mssql"))
                 .WithNetwork(_network)
                 .WithNetworkAliases("mssql")
                 .WithEnvironment("ACCEPT_EULA", "Y")
@@ -109,7 +109,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
                 throw new FileNotFoundException($"Emulator config file not found at: {configPath}");
             }
 
-            _serviceBusEmulatorContainer = new ContainerBuilder(ContainerImageConfig.GetImage("serviceBusEmulator"))
+            _serviceBusEmulatorContainer = new ContainerBuilder(ContainerImageUtils.GetImage("serviceBusEmulator"))
                 .WithNetwork(_network)
                 .WithEnvironment("SQL_SERVER", "mssql")
                 .WithEnvironment("MSSQL_SA_PASSWORD", "YourStrong!Passw0rd")
