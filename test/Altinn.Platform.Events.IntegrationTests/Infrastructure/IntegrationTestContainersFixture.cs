@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Altinn.Platform.Events.IntegrationTests.Utils;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
@@ -255,25 +256,33 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
         const int delayMs = 1000;
         const int connectTimeoutMs = 1000;
 
-        for (int i = 0; i < maxRetries; i++)
+        int attemptNumber = 0;
+        bool ready = await WaitForUtils.WaitForAsync(
+            async () =>
+            {
+                attemptNumber++;
+                try
+                {
+                    using var client = new TcpClient();
+                    using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(connectTimeoutMs));
+                    await client.ConnectAsync(host, port, cts.Token);
+
+                    Console.WriteLine($"{serviceName} ready after {attemptNumber} attempt(s)");
+                    return true;
+                }
+                catch (Exception ex) when (ex is SocketException or OperationCanceledException)
+                {
+                    Console.WriteLine($"Waiting for {serviceName}... attempt {attemptNumber}/{maxRetries}");
+                    return false;
+                }
+            },
+            maxRetries,
+            delayMs);
+
+        if (!ready)
         {
-            try
-            {
-                using var client = new TcpClient();
-                using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(connectTimeoutMs));
-                await client.ConnectAsync(host, port, cts.Token);
-
-                Console.WriteLine($"{serviceName} ready after {i + 1} attempt(s)");
-                return;
-            }
-            catch (Exception ex) when (ex is SocketException or OperationCanceledException)
-            {
-                Console.WriteLine($"Waiting for {serviceName}... attempt {i + 1}/{maxRetries}");
-                await Task.Delay(delayMs);
-            }
+            throw new TimeoutException($"{serviceName} did not become ready after {maxRetries} attempts");
         }
-
-        throw new TimeoutException($"{serviceName} did not become ready after {maxRetries} attempts");
     }
 
     #endregion

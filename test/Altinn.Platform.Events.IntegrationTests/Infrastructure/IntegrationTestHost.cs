@@ -11,6 +11,7 @@ using Altinn.Platform.Events.Commands;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
+using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
@@ -188,22 +189,14 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
     {
         var actualTimeout = timeout ?? TimeSpan.FromSeconds(10);
         var pollInterval = TimeSpan.FromMilliseconds(100);
+        var maxAttempts = (int)(actualTimeout.TotalMilliseconds / pollInterval.TotalMilliseconds);
+
         await using var receiver = _serviceBusClient.CreateReceiver(queueName);
-        using var cts = new CancellationTokenSource(actualTimeout);
 
-        try
-        {
-            while (await receiver.PeekMessageAsync(cancellationToken: cts.Token) != null)
-            {
-                await Task.Delay(pollInterval, cts.Token);
-            }
-
-            return true;
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
+        return await WaitForUtils.WaitForAsync(
+            async () => await receiver.PeekMessageAsync() == null,
+            maxAttempts,
+            (int)pollInterval.TotalMilliseconds);
     }
 
     /// <summary>
@@ -221,21 +214,12 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
     {
         var actualTimeout = timeout ?? TimeSpan.FromSeconds(5);
         var pollInterval = TimeSpan.FromMilliseconds(100);
-        using var cts = new CancellationTokenSource(actualTimeout);
+        var maxAttempts = (int)(actualTimeout.TotalMilliseconds / pollInterval.TotalMilliseconds);
 
-        try
-        {
-            while (_cloudEventRepositoryMock.Invocations.Count == 0)
-            {
-                await Task.Delay(pollInterval, cts.Token);
-            }
-
-            return true;
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
+        return await WaitForUtils.WaitForAsync(
+            () => _cloudEventRepositoryMock.Invocations.Count > 0,
+            maxAttempts,
+            (int)pollInterval.TotalMilliseconds);
     }
 
     public static CloudEvent CreateTestCloudEvent(string? id = null)

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
+using Altinn.Platform.Events.IntegrationTests.Utils;
 using Moq;
 using Npgsql;
 using Xunit;
@@ -110,26 +111,23 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
 
         await using var dataSource = NpgsqlDataSource.Create(connectionString);
 
-        for (int attempt = 0; attempt < maxAttempts; attempt++)
-        {
-            await using var command = dataSource.CreateCommand(
-                "SELECT cloudevent FROM events.events WHERE cloudevent->>'id' = $1");
-            command.Parameters.AddWithValue(eventId);
-
-            await using var reader = await command.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
+        return await WaitForUtils.WaitForAsync(
+            async () =>
             {
-                var json = reader.GetString(0);
-                return JsonDocument.Parse(json);
-            }
+                await using var command = dataSource.CreateCommand(
+                    "SELECT cloudevent FROM events.events WHERE cloudevent->>'id' = $1");
+                command.Parameters.AddWithValue(eventId);
 
-            // If not found and not the last attempt, wait before retrying
-            if (attempt < maxAttempts - 1)
-            {
-                await Task.Delay(delayMs);
-            }
-        }
+                await using var reader = await command.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    var json = reader.GetString(0);
+                    return JsonDocument.Parse(json);
+                }
 
-        return null;
+                return null;
+            },
+            maxAttempts,
+            delayMs);
     }
 }
