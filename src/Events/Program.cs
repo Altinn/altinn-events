@@ -226,11 +226,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.ConfigureEventsDefaults(
                 builder.Environment,
                 wolverineSettings.ServiceBusConnectionString);
-                
+
             opts.PublishMessage<RegisterEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
             opts.PublishMessage<InboundEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
+            opts.PublishMessage<OutboundEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.OutboundQueueName);                
             opts.PublishMessage<ValidateSubscriptionCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
 

@@ -965,7 +965,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             messageBusMock.Verify(
                 m => m.PublishAsync(
                     It.IsAny<OutboundEventCommand>(),
-                    It.IsAny<DeliveryOptions>()),
+                    null),
                 Times.AtLeastOnce,
                 "MessageBus should be called to publish OutboundEventCommand");
 
