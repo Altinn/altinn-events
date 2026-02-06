@@ -134,6 +134,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
         {
             Console.WriteLine($"Failed to start Azure Service Bus Emulator: {ex.Message}");
             IsRunning = false;
+            await DisposeAsync();
             throw;
         }
     }

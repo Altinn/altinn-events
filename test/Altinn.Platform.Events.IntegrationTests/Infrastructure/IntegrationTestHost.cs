@@ -280,11 +280,14 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
 
             Console.WriteLine("Created platform_events database role");
         }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.DuplicateObject)
+        {
+            Console.WriteLine("platform_events role already exists");
+        }
         catch (Exception ex)
         {
-            Console.WriteLine($"Note: Could not create platform_events role: {ex.Message}");
-
-            // Don't throw - the role might already exist from a previous test run
+            Console.WriteLine($"Failed to create platform_events role: {ex.Message}");
+            throw;
         }
     }
 
@@ -390,7 +393,7 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
         else
         {
             // Register mocked repository
-            services.AddSingleton(_cloudEventRepositoryMock.Object);
+            services.AddSingleton<ICloudEventRepository>(_cloudEventRepositoryMock.Object);
         }
 
         services.AddSingleton(new Mock<ITraceLogService>().Object);

@@ -108,9 +108,10 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
         const int maxAttempts = 10;
         const int delayMs = 100;
 
+        await using var dataSource = NpgsqlDataSource.Create(connectionString);
+
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            await using var dataSource = NpgsqlDataSource.Create(connectionString);
             await using var command = dataSource.CreateCommand(
                 "SELECT cloudevent FROM events.events WHERE cloudevent->>'id' = $1");
             command.Parameters.AddWithValue(eventId);
