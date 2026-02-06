@@ -106,7 +106,7 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
     private static async Task<JsonDocument?> GetEventFromDatabaseAsync(string connectionString, string eventId)
     {
         // Retry a few times to allow for transaction commit and visibility
-        const int maxAttempts = 10;
+        const int maxAttempts = 20;
         const int delayMs = 100;
 
         await using var dataSource = NpgsqlDataSource.Create(connectionString);
