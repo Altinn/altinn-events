@@ -45,7 +45,7 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
 
     private WebApplication? _app;
     private Task? _runTask;
-    private Configuration.WolverineSettings? _settings;
+    private WolverineSettings? _settings;
     private Mock<ICloudEventRepository> _cloudEventRepositoryMock = new();
     private Action<WolverineOptions>? _customWolverineConfig;
     private bool _useShortRetryPolicy;
