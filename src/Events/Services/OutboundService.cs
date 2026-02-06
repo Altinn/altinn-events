@@ -109,7 +109,7 @@ public class OutboundService : IOutboundService
                 _logger.LogWarning("No authorization result found for consumer {Consumer} on event {EventId}", subscription.Consumer, cloudEvent.Id);
             }
 
-            await EnqueueOutbound(cloudEvent, subscription, authorized: isAuthorized, cancellationToken, useAzureServiceBus);
+            await EnqueueOutbound(cloudEvent, subscription, authorized: isAuthorized, useAzureServiceBus);
         }
     }
 
@@ -240,10 +240,9 @@ public class OutboundService : IOutboundService
     /// <param name="cloudEvent">The cloud event to enqueue.</param>
     /// <param name="subscription">The subscription containing consumer and endpoint information.</param>
     /// <param name="authorized">Whether the consumer is authorized to receive this event.</param>
-    /// /// <param name="cancellationToken">Cancellation token.</param>
     /// <param name="useAzureServiceBus">Indicates whether to use Azure Service Bus for event delivery.</param>
     private async Task EnqueueOutbound(
-        CloudEvent cloudEvent, Subscription subscription, bool authorized, CancellationToken cancellationToken, bool useAzureServiceBus)
+        CloudEvent cloudEvent, Subscription subscription, bool authorized, bool useAzureServiceBus)
     {
         if (authorized)
         {
