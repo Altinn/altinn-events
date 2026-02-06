@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -14,11 +15,12 @@ using Altinn.Common.PEP.Authorization;
 using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
-
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Contracts;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
 using Altinn.Platform.Events.Middleware;
@@ -27,15 +29,13 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Swagger;
 using Altinn.Platform.Events.Telemetry;
-
 using AltinnCore.Authentication.JwtCookie;
-
 using Azure.Identity;
+using Azure.Messaging.ServiceBus;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Security.KeyVault.Secrets;
-
 using CloudNative.CloudEvents.SystemTextJson;
-
+using JasperFx.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -46,16 +46,15 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-
 using Npgsql;
-
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-
 using Swashbuckle.AspNetCore.SwaggerGen;
-
+using Wolverine;
+using Wolverine.AzureServiceBus;
+using Wolverine.ErrorHandling;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -219,11 +218,55 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                     .EnableFirstResponseEvent(false)));
     }
 
+    WolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<WolverineSettings>() ?? new WolverineSettings();
+    services.AddWolverine(opts =>
+    {
+        if (wolverineSettings.EnableServiceBus)
+        {
+            opts.ConfigureEventsDefaults(
+                builder.Environment,
+                wolverineSettings.ServiceBusConnectionString);
+
+            opts.PublishMessage<RegisterEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+            opts.PublishMessage<InboundEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
+            opts.PublishMessage<OutboundEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.OutboundQueueName);                
+            opts.PublishMessage<ValidateSubscriptionCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
+
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.InboundQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();                
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
+        }
+
+        opts.Policies.AllListeners(x => x.ProcessInline());
+        opts.Policies.AllSenders(x => x.SendInline());
+
+        // ServiceBusException happens when problem sending to Azure Service Bus, InvalidOperationException when problem to save to database
+        opts.Policies.OnException<ServiceBusException>()
+            .Or<InvalidOperationException>()
+            .Or<TimeoutException>()
+            .Or<SocketException>()
+            .Or<TaskCanceledException>()
+            .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds()) // within the same message lock
+            .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes()) // new lock for each retry
+            .Then.MoveToErrorQueue(); // dead-letter queue ("queuename/$deadletterqueue")
+    });
+
     services.AddSingleton(config);
     services.Configure<PostgreSqlSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
+    services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
     services.Configure<Altinn.Common.AccessToken.Configuration.KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
@@ -279,13 +322,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
-    services.AddSingleton<IEventsService, EventsService>();
+    services.AddScoped<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
-    services.AddSingleton<IOutboundService, OutboundService>();
-    services.AddSingleton<ISubscriptionService, SubscriptionService>();
-    services.AddSingleton<ITraceLogService, TraceLogService>();
-    services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
-    services.AddSingleton<IGenericSubscriptionService, GenericSubscriptionService>();
+    services.AddScoped<IOutboundService, OutboundService>();
+    services.AddScoped<ISubscriptionService, SubscriptionService>();
+    services.AddScoped<IAppSubscriptionService, AppSubscriptionService>();
+    services.AddScoped<IGenericSubscriptionService, GenericSubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.AddSingleton<ITraceLogRepository, TraceLogRepository>();

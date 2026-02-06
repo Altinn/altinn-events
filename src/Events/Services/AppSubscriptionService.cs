@@ -1,12 +1,12 @@
 using System;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using Wolverine;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -27,9 +27,9 @@ namespace Altinn.Platform.Events.Services
             ISubscriptionRepository repository,
             IAuthorization authorization,
             IRegisterService register,
-            IEventsQueueClient queue,
+            IMessageBus bus,
             IClaimsPrincipalProvider claimsPrincipalProvider)
-            : base(repository, authorization, queue, claimsPrincipalProvider)
+            : base(repository, authorization, bus, claimsPrincipalProvider)
         {
             _register = register;
             _claimsPrincipalProvider = claimsPrincipalProvider;

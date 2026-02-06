@@ -1,0 +1,15 @@
+meta {
+  name: GET list subscription
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{PlatformHostUrl}}/events/api/v1/subscriptions/
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
