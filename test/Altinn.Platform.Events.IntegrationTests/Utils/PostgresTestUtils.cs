@@ -16,14 +16,14 @@ public static class PostgresTestUtils
     /// </summary>
     /// <param name="connectionString">The PostgreSQL connection string.</param>
     /// <param name="eventId">The ID of the event to retrieve.</param>
-    /// <param name="maxAttempts">Maximum number of attempts before giving up. Defaults to 20.</param>
-    /// <param name="delayMs">Delay in milliseconds between attempts. Defaults to 100ms.</param>
+    /// <param name="maxAttempts">Maximum number of attempts before giving up. Defaults to 30.</param>
+    /// <param name="delayMs">Delay in milliseconds between attempts. Defaults to 500ms.</param>
     /// <returns>The event as a JsonDocument, or null if not found.</returns>
     public static async Task<JsonDocument?> GetEventFromDatabaseAsync(
         string connectionString,
         string eventId,
-        int maxAttempts = 100,
-        int delayMs = 100)
+        int maxAttempts = 30,
+        int delayMs = 500)
     {
         await using var dataSource = NpgsqlDataSource.Create(connectionString);
 
