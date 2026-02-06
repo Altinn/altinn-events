@@ -10,6 +10,7 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
+using Npgsql;
 using Xunit;
 
 namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
@@ -90,6 +91,9 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
             await WaitForPostgresAsync();
 
             Console.WriteLine($"PostgreSQL started on port {PostgresPort}");
+
+            // Create platform_events role for migrations
+            await CreatePlatformEventsRoleAsync();
 
             // Start MSSQL (required by Service Bus Emulator)
             _mssqlContainer = new ContainerBuilder(ContainerImageUtils.GetImage("mssql"))
@@ -246,6 +250,38 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
         }
 
         throw new InvalidOperationException($"{key} not found in connection string");
+    }
+
+    /// <summary>
+    /// Creates the platform_events database role required for migrations.
+    /// Uses DO block to skip if the role already exists.
+    /// </summary>
+    private async Task CreatePlatformEventsRoleAsync()
+    {
+        try
+        {
+            Console.WriteLine("Creating platform_events database role...");
+
+            await using var dataSource = NpgsqlDataSource.Create(PostgresConnectionString);
+            await using var command = dataSource.CreateCommand(@"
+                DO $$
+                BEGIN
+                    CREATE ROLE platform_events WITH LOGIN PASSWORD 'Password';
+                    RAISE NOTICE 'Role platform_events created successfully';
+                EXCEPTION
+                    WHEN duplicate_object THEN
+                        RAISE NOTICE 'Role platform_events already exists, skipping';
+                END
+                $$;");
+            await command.ExecuteNonQueryAsync();
+
+            Console.WriteLine("Created platform_events database role");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to create platform_events role: {ex.Message}");
+            throw;
+        }
     }
 
     /// <summary>

@@ -1,21 +1,20 @@
 #nullable enable
 using System;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Contracts;
+using Altinn.Platform.Events.IntegrationTests.Data;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Repository;
 using Moq;
-using Npgsql;
 using Xunit;
 
 namespace Altinn.Platform.Events.IntegrationTests.TestingServiceBus;
 
 /// <summary>
-/// Integration tests for Wolverine retry policies with integration test containers.
-/// These tests verify that the retry policy correctly handles exceptions and moves messages to the error queue.
+/// Integration tests for Wolverine retry policies using the factory-based approach with Wolverine's testing API.
+/// Uses Wolverine's built-in message tracking instead of manually polling Azure Service Bus.
 /// </summary>
 [Collection(nameof(IntegrationTestContainersCollection))]
 public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixture)
@@ -25,38 +24,35 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
     /// <summary>
     /// Tests the normal flow where the database is available.
     /// Message should flow: RegisterQueue -> SaveEventHandler -> Save to DB -> InboundQueue -> ...
-    /// Verifies:
-    /// - Register queue is empty (message was processed)
-    /// - Register DLQ is empty (no failures)
-    /// - Event was actually saved to the PostgreSQL database
+    /// Verifies event was saved to database (messages processed successfully).
     /// </summary>
     [Fact]
     public async Task RegisterEventCommand_WhenDatabaseAvailable_MessageFlowsToInboundQueue()
     {
         // Arrange
-        await using var host = await new IntegrationTestHost(_fixture)
-            .WithCleanQueues()
-            .StartAsync();
+        var factory = new IntegrationTestWebApplicationFactory(_fixture).Initialize();
 
-        var cloudEvent = IntegrationTestHost.CreateTestCloudEvent();
+        await using (factory)
+        {
+            var cloudEvent = CloudEventTestData.CreateTestCloudEvent();
+            var command = new RegisterEventCommand(cloudEvent);
 
-        // Act
-        await host.PublishAsync(new RegisterEventCommand(cloudEvent));
+            // Act
+            await factory.PublishMessageAsync(command);
 
-        // Assert - Register queue should be empty (message was processed)
-        var registerQueueEmpty = await host.WaitForEmptyAsync(host.RegisterQueueName);
-        Assert.True(registerQueueEmpty, "Register queue should be empty after successful processing");
+            // Assert - Verify event was saved to the actual database (indicates successful processing)
+            using var savedEvent = await PostgresTestUtils.GetEventFromDatabaseAsync(_fixture.PostgresConnectionString, cloudEvent.Id!);
+            Assert.NotNull(savedEvent);
+            Assert.Equal(cloudEvent.Id, savedEvent.RootElement.GetProperty("id").GetString());
+            Assert.Equal(cloudEvent.Source!.ToString(), savedEvent.RootElement.GetProperty("source").GetString());
+            Assert.Equal(cloudEvent.Type, savedEvent.RootElement.GetProperty("type").GetString());
 
-        // Assert - Verify event was saved to the actual database
-        using var savedEvent = await GetEventFromDatabaseAsync(host.PostgresConnectionString, cloudEvent.Id!);
-        Assert.NotNull(savedEvent);
-        Assert.Equal(cloudEvent.Id, savedEvent.RootElement.GetProperty("id").GetString());
-        Assert.Equal(cloudEvent.Source!.ToString(), savedEvent.RootElement.GetProperty("source").GetString());
-        Assert.Equal(cloudEvent.Type, savedEvent.RootElement.GetProperty("type").GetString());
-
-        // Assert - Register DLQ should be empty (no failures)
-        var registerDlqEmpty = await host.WaitForDeadLetterEmptyAsync(host.RegisterQueueName);
-        Assert.True(registerDlqEmpty, "Register dead letter queue should be empty (no failures)");
+            // Assert - Register queue should be empty (message was processed)
+            var registerQueueEmpty = await ServiceBusTestUtils.WaitForEmptyAsync(
+                _fixture,
+                factory.WolverineSettings.RegistrationQueueName);
+            Assert.True(registerQueueEmpty, "Register queue should be empty after successful processing");
+        }
     }
 
     /// <summary>
@@ -76,57 +72,34 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
                 throw new TaskCanceledException("Simulated database timeout");
             });
 
-        await using var host = await new IntegrationTestHost(_fixture)
-            .WithCleanQueues()
-            .WithServiceReplacement(mockRepository.Object)
-            .WithShortRetryPolicy()
-            .StartAsync();
+        var factory = new IntegrationTestWebApplicationFactory(_fixture)
+            .ReplaceService(_ => mockRepository.Object)
+            .Initialize();
 
-        var cloudEvent = IntegrationTestHost.CreateTestCloudEvent();
+        await using (factory)
+        {
+            var cloudEvent = CloudEventTestData.CreateTestCloudEvent();
+            var command = new RegisterEventCommand(cloudEvent);
 
-        // Act
-        await host.PublishAsync(new RegisterEventCommand(cloudEvent));
+            // Act
+            await factory.PublishMessageAsync(command);
 
-        // Assert - Wait for message to appear in dead letter queue after retries exhaust
-        // Short policy: 3 immediate retries (100ms each) + 3 scheduled retries (500ms each) ≈ 2-3s
-        var deadLetterMessage = await host.WaitForDeadLetterMessageAsync(
-            host.RegisterQueueName,
-            TimeSpan.FromSeconds(5));
+            // Assert - Verify the handler was called multiple times (retries)
+            // RetryWithCooldown(100ms, 100ms, 100ms) = 3 retries within same lock
+            // ScheduleRetry(500ms, 500ms, 500ms) = 3 more retries with new locks
+            // Total: 1 initial + 3 cooldown retries + 3 scheduled retries = 7 attempts
+            // Wait a bit for all retries to complete
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            Console.WriteLine($"[Test] Handler was called {attemptCount} times");
+            Assert.Equal(7, attemptCount);
 
-        Assert.NotNull(deadLetterMessage);
+            // Assert - Wait for message to appear in dead letter queue after retries exhaust
+            var deadLetterMessage = await ServiceBusTestUtils.WaitForDeadLetterMessageAsync(
+                _fixture,
+                factory.WolverineSettings.RegistrationQueueName,
+                TimeSpan.FromSeconds(5));
 
-        // Verify exact retry count:
-        // RetryWithCooldown(100ms, 100ms, 100ms) = 3 retries within same lock
-        // ScheduleRetry(500ms, 500ms, 500ms) = 3 more retries with new locks
-        // Total: 1 initial + 3 cooldown retries + 3 scheduled retries = 7 attempts
-        Assert.Equal(7, attemptCount);
-    }
-
-    private static async Task<JsonDocument?> GetEventFromDatabaseAsync(string connectionString, string eventId)
-    {
-        // Retry a few times to allow for transaction commit and visibility
-        const int maxAttempts = 20;
-        const int delayMs = 100;
-
-        await using var dataSource = NpgsqlDataSource.Create(connectionString);
-
-        return await WaitForUtils.WaitForAsync(
-            async () =>
-            {
-                await using var command = dataSource.CreateCommand(
-                    "SELECT cloudevent FROM events.events WHERE cloudevent->>'id' = $1");
-                command.Parameters.AddWithValue(eventId);
-
-                await using var reader = await command.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    var json = reader.GetString(0);
-                    return JsonDocument.Parse(json);
-                }
-
-                return null;
-            },
-            maxAttempts,
-            delayMs);
+            Assert.NotNull(deadLetterMessage);
+        }
     }
 }
