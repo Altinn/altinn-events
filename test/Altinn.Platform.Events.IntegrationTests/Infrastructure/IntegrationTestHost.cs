@@ -13,7 +13,9 @@ using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Repository;
+using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Telemetry;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Messaging.ServiceBus;
 using CloudNative.CloudEvents;
@@ -46,11 +48,12 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
     private WebApplication? _app;
     private Task? _runTask;
     private WolverineSettings? _settings;
-    private Mock<ICloudEventRepository> _cloudEventRepositoryMock = new();
     private Action<WolverineOptions>? _customWolverineConfig;
     private bool _useShortRetryPolicy;
     private bool _purgeQueuesOnStart;
-    private bool _useRealDatabase;
+
+    // Service replacements - allows tests to inject their own implementations
+    private readonly Dictionary<Type, object> _serviceReplacements = [];
 
     public string RegisterQueueName => _settings?.RegistrationQueueName
         ?? throw new InvalidOperationException("Host not started. Call StartAsync() first.");
@@ -58,16 +61,28 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
     public string InboundQueueName => _settings?.InboundQueueName
         ?? throw new InvalidOperationException("Host not started. Call StartAsync() first.");
 
-    public Mock<ICloudEventRepository> CloudEventRepositoryMock => _cloudEventRepositoryMock;
+    public string OutboundQueueName => _settings?.OutboundQueueName
+        ?? throw new InvalidOperationException("Host not started. Call StartAsync() first.");
+
+    public string ValidationQueueName => _settings?.ValidationQueueName
+        ?? throw new InvalidOperationException("Host not started. Call StartAsync() first.");
 
     public string PostgresConnectionString => _fixture.PostgresConnectionString;
 
     #region Builder Methods
 
-    public IntegrationTestHost WithCloudEventRepository(Action<Mock<ICloudEventRepository>> configure)
+    /// <summary>
+    /// Replaces a service registration with a custom implementation.
+    /// Useful for injecting mocks in specific tests.
+    /// </summary>
+    /// <example>
+    /// var mockRepo = new Mock&lt;ICloudEventRepository&gt;();
+    /// host.WithServiceReplacement(mockRepo.Object);
+    /// </example>
+    public IntegrationTestHost WithServiceReplacement<TService>(TService implementation)
+        where TService : class
     {
-        _cloudEventRepositoryMock = new Mock<ICloudEventRepository>();
-        configure(_cloudEventRepositoryMock);
+        _serviceReplacements[typeof(TService)] = implementation;
         return this;
     }
 
@@ -86,12 +101,6 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
     public IntegrationTestHost WithWolverineConfig(Action<WolverineOptions> configure)
     {
         _customWolverineConfig = configure;
-        return this;
-    }
-
-    public IntegrationTestHost WithRealDatabase()
-    {
-        _useRealDatabase = true;
         return this;
     }
 
@@ -114,12 +123,9 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
 
         _app = builder.Build();
 
-        // Run database migrations if using real database (similar to Program.cs)
-        if (_useRealDatabase)
-        {
-            await CreatePlatformEventsRoleAsync();
-            RunDatabaseMigrations();
-        }
+        // Run database migrations (always use real database unless service was replaced)
+        await CreatePlatformEventsRoleAsync();
+        RunDatabaseMigrations();
 
         _runTask = _app.RunAsync();
 
@@ -204,23 +210,6 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
     /// </summary>
     public Task<bool> WaitForDeadLetterEmptyAsync(string queueName, TimeSpan? timeout = null)
         => WaitForEmptyAsync($"{queueName}/$deadletterqueue", timeout);
-
-    /// <summary>
-    /// Waits until the CloudEventRepository mock has been invoked at least once.
-    /// </summary>
-    /// <param name="timeout">Maximum time to wait. Defaults to 5 seconds.</param>
-    /// <returns>True if the mock was invoked, false if timeout was reached.</returns>
-    public async Task<bool> WaitForRepositoryInvocationAsync(TimeSpan? timeout = null)
-    {
-        var actualTimeout = timeout ?? TimeSpan.FromSeconds(5);
-        var pollInterval = TimeSpan.FromMilliseconds(100);
-        var maxAttempts = (int)(actualTimeout.TotalMilliseconds / pollInterval.TotalMilliseconds);
-
-        return await WaitForUtils.WaitForAsync(
-            () => _cloudEventRepositoryMock.Invocations.Count > 0,
-            maxAttempts,
-            (int)pollInterval.TotalMilliseconds);
-    }
 
     public static CloudEvent CreateTestCloudEvent(string? id = null)
     {
@@ -345,51 +334,74 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
 
         var inMemorySettings = new List<KeyValuePair<string, string?>>
         {
-            new("WolverineSettings:ServiceBusConnectionString", _fixture.ServiceBusConnectionString)
+            new("WolverineSettings:ServiceBusConnectionString", _fixture.ServiceBusConnectionString),
+            new("PostgreSQLSettings:ConnectionString", _fixture.PostgresConnectionString),
+            new("PostgreSQLSettings:AdminConnectionString", _fixture.PostgresConnectionString)
         };
-
-        if (_useRealDatabase)
-        {
-            inMemorySettings.Add(new("PostgreSQLSettings:ConnectionString", _fixture.PostgresConnectionString));
-            inMemorySettings.Add(new("PostgreSQLSettings:AdminConnectionString", _fixture.PostgresConnectionString));
-        }
 
         configuration.AddInMemoryCollection(inMemorySettings);
     }
 
-    private void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    private void ConfigureServices(IServiceCollection services, ConfigurationManager configuration)
     {
-        ConfigureMockedDependencies(services);
+        ConfigureDependencies(services);
         ConfigureWolverine(services, configuration);
 
-        services.AddSingleton<IEventsService, Services.EventsService>();
+        services.AddMemoryCache();
+        services.Configure<PlatformSettings>(configuration.GetSection("PlatformSettings"));
+
+        services.AddScoped<IEventsService, EventsService>();
+        services.AddScoped<IOutboundService, OutboundService>();
+        services.AddScoped<ISubscriptionService, SubscriptionService>();
+        services.AddScoped<IAppSubscriptionService, AppSubscriptionService>();
+        services.AddScoped<IGenericSubscriptionService, GenericSubscriptionService>();
     }
 
-    private void ConfigureMockedDependencies(IServiceCollection services)
+    private void ConfigureDependencies(IServiceCollection services)
     {
-        if (_useRealDatabase)
+        // Always register database connection
+        var connectionString = _fixture.PostgresConnectionString;
+        services.AddNpgsqlDataSource(connectionString, builder => builder
+            .EnableParameterLogging(true)
+            .EnableDynamicJson());
+
+        // Register repositories - use replacements if provided, otherwise use real implementations
+        RegisterServiceOrReplacement<ICloudEventRepository, CloudEventRepository>(services);
+        RegisterServiceOrReplacement<ISubscriptionRepository, SubscriptionRepository>(services);
+        RegisterServiceOrReplacement<ITraceLogRepository, TraceLogRepository>(services);
+
+        // Decorate subscription repository with caching (if real implementation is used)
+        if (!_serviceReplacements.ContainsKey(typeof(ISubscriptionRepository)))
         {
-            // Register real database dependencies
-            var connectionString = _fixture.PostgresConnectionString;
-            services.AddNpgsqlDataSource(connectionString, builder => builder
-                .EnableParameterLogging(true)
-                .EnableDynamicJson());
-            services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
-        }
-        else
-        {
-            // Register mocked repository
-            services.AddSingleton<ICloudEventRepository>(_cloudEventRepositoryMock.Object);
+            services.Decorate<ISubscriptionRepository, SubscriptionRepositoryCachingDecorator>();
         }
 
+        // Mock non-critical services that tests don't typically need to verify
         services.AddSingleton(new Mock<ITraceLogService>().Object);
         services.AddSingleton(new Mock<IAuthorization>().Object);
+
+        // TelemetryClient is a sealed class, so we use a real instance instead of mocking
+        services.AddSingleton(new TelemetryClient());
 
         services.AddSingleton(CreateEventsQueueClientMock());
         services.AddSingleton(new Mock<IRegisterService>().Object);
         services.AddSingleton(new Mock<IPDP>().Object);
         services.AddSingleton(new Mock<IPublicSigningKeyProvider>().Object);
         services.AddSingleton(new Mock<IPostConfigureOptions<JwtCookieOptions>>().Object);
+    }
+
+    private void RegisterServiceOrReplacement<TService, TImplementation>(IServiceCollection services)
+        where TService : class
+        where TImplementation : class, TService
+    {
+        if (_serviceReplacements.TryGetValue(typeof(TService), out var replacement))
+        {
+            services.AddSingleton(typeof(TService), replacement);
+        }
+        else
+        {
+            services.AddSingleton<TService, TImplementation>();
+        }
     }
 
     private static IEventsQueueClient CreateEventsQueueClientMock()
@@ -436,8 +448,18 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
             .ToAzureServiceBusQueue(settings.RegistrationQueueName);
         opts.PublishMessage<InboundEventCommand>()
             .ToAzureServiceBusQueue(settings.InboundQueueName);
+        opts.PublishMessage<OutboundEventCommand>()
+            .ToAzureServiceBusQueue(settings.OutboundQueueName);
+        opts.PublishMessage<ValidateSubscriptionCommand>()
+            .ToAzureServiceBusQueue(settings.ValidationQueueName);
 
         opts.ListenToAzureServiceBusQueue(settings.RegistrationQueueName)
+            .ListenerCount(settings.ListenerCount)
+            .ProcessInline();
+        opts.ListenToAzureServiceBusQueue(settings.InboundQueueName)
+            .ListenerCount(settings.ListenerCount)
+            .ProcessInline();
+        opts.ListenToAzureServiceBusQueue(settings.ValidationQueueName)
             .ListenerCount(settings.ListenerCount)
             .ProcessInline();
 
@@ -463,6 +485,8 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
     {
         await PurgeQueueAsync(RegisterQueueName);
         await PurgeQueueAsync(InboundQueueName);
+        await PurgeQueueAsync(OutboundQueueName);
+        await PurgeQueueAsync(ValidationQueueName);
     }
 
     private async Task PurgeQueueAsync(string queueName)

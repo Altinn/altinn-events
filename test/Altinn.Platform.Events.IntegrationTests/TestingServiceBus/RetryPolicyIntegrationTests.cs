@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
+using Altinn.Platform.Events.Repository;
 using Moq;
 using Npgsql;
 using Xunit;
@@ -35,7 +36,6 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
         // Arrange
         await using var host = await new IntegrationTestHost(_fixture)
             .WithCleanQueues()
-            .WithRealDatabase()
             .StartAsync();
 
         var cloudEvent = IntegrationTestHost.CreateTestCloudEvent();
@@ -66,20 +66,19 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
     [Fact]
     public async Task RegisterEventCommand_WhenDatabaseThrowsTaskCanceledException_RetriesAndMovesToDeadLetterQueue()
     {
-        // Arrange
+        // Arrange - Create mock repository that simulates database timeouts
         int attemptCount = 0;
+        var mockRepository = new Mock<ICloudEventRepository>();
+        mockRepository.Setup(r => r.CreateEvent(It.IsAny<string>()))
+            .Callback<string>(_ =>
+            {
+                Interlocked.Increment(ref attemptCount);
+                throw new TaskCanceledException("Simulated database timeout");
+            });
 
         await using var host = await new IntegrationTestHost(_fixture)
             .WithCleanQueues()
-            .WithCloudEventRepository(mock =>
-            {
-                mock.Setup(r => r.CreateEvent(It.IsAny<string>()))
-                    .Callback<string>(_ =>
-                    {
-                        Interlocked.Increment(ref attemptCount);
-                        throw new TaskCanceledException("Simulated database timeout");
-                    });
-            })
+            .WithServiceReplacement(mockRepository.Object)
             .WithShortRetryPolicy()
             .StartAsync();
 
