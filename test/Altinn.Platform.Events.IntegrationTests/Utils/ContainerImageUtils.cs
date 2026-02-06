@@ -21,7 +21,8 @@ public static class ContainerImageUtils
     /// <summary>
     /// Gets the configured image string for a specific container.
     /// </summary>
-    /// <param name="imageName">The image name key (e.g., "postgres", "mssql", "serviceBusEmulator").</param>
+    /// <param name="imageName">The image name key (e.g., "postgres", "mssql", "serviceBusEmulator").
+    /// Note: Key lookup is case-sensitive and must match the exact casing in container-images.json.</param>
     /// <returns>The full image string including registry, name, tag, and optional digest.</returns>
     /// <exception cref="KeyNotFoundException">Thrown when the image name is not found in configuration.</exception>
     public static string GetImage(string imageName)

@@ -56,14 +56,10 @@ public static class WolverineOptionsExtensions
             azureBusConfig.AutoPurgeOnStartup();
 
             // Development retry policy - shorter delays for faster execution during development and testing
-            opts.Policies.OnException<ServiceBusException>()
-                .Or<InvalidOperationException>()
-                .Or<TimeoutException>()
-                .Or<SocketException>()
-                .Or<TaskCanceledException>()
-                .RetryWithCooldown(100.Milliseconds(), 100.Milliseconds(), 100.Milliseconds())
-                .Then.ScheduleRetry(500.Milliseconds(), 500.Milliseconds(), 500.Milliseconds())
-                .Then.MoveToErrorQueue();
+            ConfigureRetryPolicy(
+                opts.Policies, 
+                cooldownDelays: [100.Milliseconds(), 100.Milliseconds(), 100.Milliseconds()],
+                scheduleDelays: [500.Milliseconds(), 500.Milliseconds(), 500.Milliseconds()]);
         }
         else
         {
@@ -72,16 +68,45 @@ public static class WolverineOptionsExtensions
             azureBusConfig.AutoProvision();
       
             // Production retry policy - longer delays to allow transient issues to resolve, and to avoid overwhelming the system during outages
-            opts.Policies.OnException<ServiceBusException>()
-                .Or<InvalidOperationException>()
-                .Or<TimeoutException>()
-                .Or<SocketException>()
-                .Or<TaskCanceledException>()
-                .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds())
-                .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes())
-                .Then.MoveToErrorQueue();
+            ConfigureRetryPolicy(
+                opts.Policies,
+                cooldownDelays: [1.Seconds(), 5.Seconds(), 10.Seconds()],
+                scheduleDelays: [30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes()]);
         }
 
         return opts;
+    }
+
+    /// <summary>
+    /// Configures a retry policy with the standard set of retriable exceptions.
+    /// Applies the same exception types to both development and production configurations,
+    /// ensuring consistent retry behavior across environments while allowing different timing.
+    /// </summary>
+    /// <param name="policies">The policies configuration.</param>
+    /// <param name="cooldownDelays">Delays for cooldown retries (retried within same lock).</param>
+    /// <param name="scheduleDelays">Delays for scheduled retries (retried with new locks).</param>
+    /// <remarks>
+    /// The retry policy handles the following exception types:
+    /// <list type="bullet">
+    /// <item><description><see cref="ServiceBusException"/>: Azure Service Bus specific errors</description></item>
+    /// <item><description><see cref="InvalidOperationException"/>: General Service Bus client errors. 
+    /// Note: This is a broad exception type that may also retry non-transient programming errors.</description></item>
+    /// <item><description><see cref="TimeoutException"/>: Operation timeouts</description></item>
+    /// <item><description><see cref="SocketException"/>: Network connectivity issues</description></item>
+    /// <item><description><see cref="TaskCanceledException"/>: Operation cancellations. 
+    /// Note: This may delay shutdown when the host CancellationToken is triggered during graceful shutdown.</description></item>
+    /// </list>
+    /// </remarks>
+    private static void ConfigureRetryPolicy(IPolicies policies, TimeSpan[] cooldownDelays, TimeSpan[] scheduleDelays)
+    {
+        policies
+            .OnException<ServiceBusException>()
+            .Or<InvalidOperationException>()
+            .Or<TimeoutException>()
+            .Or<SocketException>()
+            .Or<TaskCanceledException>()
+            .RetryWithCooldown(cooldownDelays)
+            .Then.ScheduleRetry(scheduleDelays)
+            .Then.MoveToErrorQueue();
     }
 }

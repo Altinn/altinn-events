@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// WebApplicationFactory for integration tests that uses the real Program.cs setup
-/// with test-specific overrides via environment variables and configuration.
+/// with test-specific overrides via in-memory configuration.
 /// </summary>
 public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixture fixture) : WebApplicationFactory<Program>
 {
@@ -49,21 +49,22 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        // Set environment variables BEFORE host is built using .NET configuration naming convention
-        // Double underscores (__) represent the hierarchy separator for configuration keys
-        Environment.SetEnvironmentVariable("WolverineSettings__ServiceBusConnectionString", _fixture.ServiceBusConnectionString);
-        Environment.SetEnvironmentVariable("PostgreSQLSettings__ConnectionString", _fixture.PostgresConnectionString);
-        Environment.SetEnvironmentVariable("PostgreSQLSettings__AdminConnectionString", _fixture.PostgresConnectionString);
-        Environment.SetEnvironmentVariable("PostgreSQLSettings__WorkspacePath", FindMigrationPath());
-
         builder.ConfigureHostConfiguration(config =>
         {
             // Load base test settings
             config.SetBasePath(AppContext.BaseDirectory);
             config.AddJsonFile("appsettings.integrationtest.json", optional: false, reloadOnChange: false);
 
-            // Environment variables override JSON settings (takes highest precedence)
-            config.AddEnvironmentVariables();
+            // Use in-memory configuration overrides instead of process-wide environment variables
+            // This allows safe parallel test execution without race conditions
+            var testConfigOverrides = new Dictionary<string, string?>
+            {
+                ["WolverineSettings:ServiceBusConnectionString"] = _fixture.ServiceBusConnectionString,
+                ["PostgreSQLSettings:ConnectionString"] = _fixture.PostgresConnectionString,
+                ["PostgreSQLSettings:AdminConnectionString"] = _fixture.PostgresConnectionString,
+                ["PostgreSQLSettings:WorkspacePath"] = FindMigrationPath()
+            };
+            config.AddInMemoryCollection(testConfigOverrides);
         });
 
         builder.ConfigureServices((context, services) =>

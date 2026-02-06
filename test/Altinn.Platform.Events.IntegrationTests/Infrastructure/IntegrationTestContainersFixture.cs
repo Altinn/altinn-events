@@ -233,27 +233,17 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
         string adminConnString = postgresSection.GetProperty("AdminConnectionString").GetString()
             ?? throw new InvalidOperationException("AdminConnectionString not found");
 
-        string database = ExtractConnectionStringPart(adminConnString, "Database");
-        string username = ExtractConnectionStringPart(adminConnString, "Username");
         string password = postgresSection.GetProperty("EventsDbAdminPwd").GetString()
             ?? throw new InvalidOperationException("EventsDbAdminPwd not found");
 
+        // Use NpgsqlConnectionStringBuilder for robust parsing
+        var builder = new NpgsqlConnectionStringBuilder(adminConnString);
+        string database = builder.Database
+            ?? throw new InvalidOperationException("Database not found in AdminConnectionString");
+        string username = builder.Username
+            ?? throw new InvalidOperationException("Username not found in AdminConnectionString");
+
         return new PostgreSqlSettings(database, username, password);
-    }
-
-    private static string ExtractConnectionStringPart(string connectionString, string key)
-    {
-        var parts = connectionString.Split(';');
-        foreach (var part in parts)
-        {
-            var keyValue = part.Split('=', 2);
-            if (keyValue.Length == 2 && keyValue[0].Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
-            {
-                return keyValue[1].Trim();
-            }
-        }
-
-        throw new InvalidOperationException($"{key} not found in connection string");
     }
 
     /// <summary>

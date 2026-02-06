@@ -84,15 +84,6 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
             // Act
             await factory.PublishMessageAsync(command);
 
-            // Assert - Verify the handler was called multiple times (retries)
-            // RetryWithCooldown(100ms, 100ms, 100ms) = 3 retries within same lock
-            // ScheduleRetry(500ms, 500ms, 500ms) = 3 more retries with new locks
-            // Total: 1 initial + 3 cooldown retries + 3 scheduled retries = 7 attempts
-            // Wait a bit for all retries to complete
-            await Task.Delay(TimeSpan.FromSeconds(5));
-            Console.WriteLine($"[Test] Handler was called {attemptCount} times");
-            Assert.Equal(7, attemptCount);
-
             // Assert - Wait for message to appear in dead letter queue after retries exhaust
             var deadLetterMessage = await ServiceBusTestUtils.WaitForDeadLetterMessageAsync(
                 _fixture,
@@ -100,6 +91,13 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
                 TimeSpan.FromSeconds(5));
 
             Assert.NotNull(deadLetterMessage);
+
+            // Assert - Verify the handler was called the expected number of times
+            // RetryWithCooldown(100ms, 100ms, 100ms) = 3 retries within same lock
+            // ScheduleRetry(500ms, 500ms, 500ms) = 3 more retries with new locks
+            // Total: 1 initial + 3 cooldown retries + 3 scheduled retries = 7 attempts
+            Console.WriteLine($"[Test] Handler was called {attemptCount} times");
+            Assert.Equal(7, attemptCount);
         }
     }
 }

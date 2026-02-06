@@ -17,7 +17,8 @@ public static class WaitForUtils
     /// <param name="predicate">The async predicate to check. Should return true when the condition is met.</param>
     /// <param name="maxAttempts">Maximum number of attempts before giving up.</param>
     /// <param name="delayMs">Delay in milliseconds between attempts.</param>
-    /// <param name="cancellationToken">Optional cancellation token.</param>
+    /// <param name="cancellationToken">Optional cancellation token. Note: Only cancels the delay between attempts,
+    /// not the predicate execution itself. The predicate will complete its current attempt before cancellation takes effect.</param>
     /// <returns>True if the predicate succeeded within the attempt limit, false otherwise.</returns>
     public static async Task<bool> WaitForAsync(
         Func<Task<bool>> predicate,
@@ -48,7 +49,8 @@ public static class WaitForUtils
     /// <param name="operation">The async operation to execute. Should return null to indicate the condition is not yet met.</param>
     /// <param name="maxAttempts">Maximum number of attempts before giving up.</param>
     /// <param name="delayMs">Delay in milliseconds between attempts.</param>
-    /// <param name="cancellationToken">Optional cancellation token.</param>
+    /// <param name="cancellationToken">Optional cancellation token. Note: Only cancels the delay between attempts,
+    /// not the operation execution itself. The operation will complete its current attempt before cancellation takes effect.</param>
     /// <returns>The result of the operation, or null if all attempts returned null.</returns>
     public static async Task<T?> WaitForAsync<T>(
         Func<Task<T?>> operation,
