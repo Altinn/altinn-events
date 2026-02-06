@@ -1,9 +1,8 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Docker container images used in integration tests. Versions are automatically updated by Renovate.",
   "images": {
-    "mssql": "mcr.microsoft.com/mssql/server:2022-latest",
-    "serviceBusEmulator": "mcr.microsoft.com/azure-messaging/servicebus-emulator:latest",
+    "mssql": "mcr.microsoft.com/mssql/server:2022-CU23-ubuntu-22.04@sha256:0ec7739e1c5ec2f57861facbe1f2b74f1d3e147c7c97edf91eeea920c5944d9c",
+    "serviceBusEmulator": "mcr.microsoft.com/azure-messaging/servicebus-emulator:latest@sha256:8e1c388f96b309429d2dce8213b30e6ce51b17559d2eafdb82363bb48cbae42c",
     "postgres": "postgres:17@sha256:7352e0c4d62bbac8aa69d95e40220a60967c4a19f9c4f65b4d118175f7ce9e3b"
   }
 }
