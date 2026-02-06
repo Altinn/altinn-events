@@ -48,7 +48,7 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
         Assert.True(registerQueueEmpty, "Register queue should be empty after successful processing");
 
         // Assert - Verify event was saved to the actual database
-        var savedEvent = await GetEventFromDatabaseAsync(host.PostgresConnectionString, cloudEvent.Id!);
+        using var savedEvent = await GetEventFromDatabaseAsync(host.PostgresConnectionString, cloudEvent.Id!);
         Assert.NotNull(savedEvent);
         Assert.Equal(cloudEvent.Id, savedEvent.RootElement.GetProperty("id").GetString());
         Assert.Equal(cloudEvent.Source!.ToString(), savedEvent.RootElement.GetProperty("source").GetString());

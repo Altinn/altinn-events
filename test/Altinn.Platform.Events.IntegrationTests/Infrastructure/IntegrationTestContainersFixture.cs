@@ -77,6 +77,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
                 .WithEnvironment("POSTGRES_PASSWORD", postgresSettings.Password)
                 .WithEnvironment("POSTGRES_DB", postgresSettings.Database)
                 .WithPortBinding(5432, true)
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilCommandIsCompleted("pg_isready"))
                 .WithAutoRemove(true)
                 .Build();
 
@@ -133,7 +134,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to start Azure Service Bus Emulator: {ex.Message}");
+            Console.WriteLine($"Failed to start integration test containers: {ex.Message}");
             IsRunning = false;
             await DisposeAsync();
             throw;
@@ -237,7 +238,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
         var parts = connectionString.Split(';');
         foreach (var part in parts)
         {
-            var keyValue = part.Split('=');
+            var keyValue = part.Split('=', 2);
             if (keyValue.Length == 2 && keyValue[0].Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
             {
                 return keyValue[1].Trim();

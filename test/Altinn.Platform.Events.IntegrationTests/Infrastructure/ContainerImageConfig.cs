@@ -12,7 +12,7 @@ namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
 /// </summary>
 public static class ContainerImageConfig
 {
-    private static readonly Lazy<Dictionary<string, string>> _images = new(() => LoadImages());
+    private static readonly Lazy<Dictionary<string, string>> _images = new(LoadImages);
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true

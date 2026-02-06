@@ -25,7 +25,7 @@
     {
       "customType": "regex",
       "description": "Manage Docker container images in test configuration files",
-      "fileMatch": ["^test/.+/container-images\\.json$"],
+      "managerFilePatterns": ["^test/.+/container-images\\.json$"],
       "matchStrings": [
         "\"(?<depName>[^:\"]+):(?<currentValue>[^@\"]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?\""
       ],

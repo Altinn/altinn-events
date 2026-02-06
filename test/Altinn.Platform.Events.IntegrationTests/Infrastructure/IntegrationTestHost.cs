@@ -332,7 +332,8 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
         }
 
         throw new DirectoryNotFoundException(
-            "Could not find Migration directory. Searched up to 10 parent directories from: " + AppContext.BaseDirectory);
+            $"Could not find Migration directory. Expected structure: <repo-root>/src/Events/Migration. " +
+            $"Searched up to 10 parent directories from: {AppContext.BaseDirectory}");
     }
 
     private void ConfigureAppSettings(ConfigurationManager configuration)
@@ -350,6 +351,7 @@ public class IntegrationTestHost(IntegrationTestContainersFixture fixture) : IAs
         if (_useRealDatabase)
         {
             inMemorySettings.Add(new("PostgreSQLSettings:ConnectionString", _fixture.PostgresConnectionString));
+            inMemorySettings.Add(new("PostgreSQLSettings:AdminConnectionString", _fixture.PostgresConnectionString));
         }
 
         configuration.AddInMemoryCollection(inMemorySettings);
