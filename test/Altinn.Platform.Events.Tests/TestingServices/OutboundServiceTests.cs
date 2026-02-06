@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -27,6 +28,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -487,6 +489,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         private static IOutboundService GetOutboundService(
             IEventsQueueClient queueMock = null,
+            Mock<IMessageBus> messageBusMock = null,
             Mock<ITraceLogService> traceLogServiceMock = null,
             ISubscriptionRepository repositoryMock = null,
             IAuthorization authorizationMock = null,
@@ -502,6 +505,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             if (queueMock == null)
             {
                 queueMock = new EventsQueueClientMock();
+            }
+
+            if (messageBusMock == null)
+            {
+                messageBusMock = new Mock<IMessageBus>();
             }
 
             if (traceLogServiceMock == null)
@@ -529,6 +537,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             var service = new OutboundService(
                 queueMock,
+                messageBusMock.Object,
                 traceLogServiceMock.Object,
                 repositoryMock,
                 authorizationMock,
@@ -908,6 +917,291 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Times.Once);
 
             queueMock.Verify(q => q.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(2));
+        }
+
+        /// <summary>
+        /// Scenario: PostOutbound with useAzureServiceBus=true and authorized consumer
+        /// Expected result: IMessageBus.PublishAsync is called with OutboundEventCommand
+        /// Success criteria: MessageBus is called once, queue client is never called
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_WithAzureServiceBus_AuthorizedConsumer_PublishesToMessageBus()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                "/party/1337/",
+                "app.instance.process.completed",
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+
+            Mock<IEventsQueueClient> queueMock = new();
+            Mock<IMessageBus> messageBusMock = new();
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                {
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = true;
+                    }
+
+                    return results;
+                });
+
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                messageBusMock: messageBusMock,
+                authorizationMock: authorizationMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None, useAzureServiceBus: true);
+
+            // Assert
+            messageBusMock.Verify(
+                m => m.PublishAsync(
+                    It.IsAny<OutboundEventCommand>(),
+                    null),
+                Times.AtLeastOnce,
+                "MessageBus should be called to publish OutboundEventCommand");
+
+            queueMock.Verify(
+                q => q.EnqueueOutbound(It.IsAny<string>()),
+                Times.Never,
+                "Queue client should not be called when using Azure Service Bus");
+        }
+
+        /// <summary>
+        /// Scenario: PostOutbound with useAzureServiceBus=true but consumer is not authorized
+        /// Expected result: IMessageBus.PublishAsync is never called
+        /// Success criteria: MessageBus and queue client are never called
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_WithAzureServiceBus_UnauthorizedConsumer_DoesNotPublish()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                "/party/1337/",
+                "app.instance.process.completed",
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+
+            Mock<IEventsQueueClient> queueMock = new();
+            Mock<IMessageBus> messageBusMock = new();
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                {
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = false;
+                    }
+
+                    return results;
+                });
+
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                messageBusMock: messageBusMock,
+                authorizationMock: authorizationMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None, useAzureServiceBus: true);
+
+            // Assert
+            messageBusMock.Verify(
+                m => m.PublishAsync(
+                    It.IsAny<OutboundEventCommand>(),
+                    It.IsAny<DeliveryOptions>()),
+                Times.Never,
+                "MessageBus should not be called for unauthorized consumers");
+
+            queueMock.Verify(
+                q => q.EnqueueOutbound(It.IsAny<string>()),
+                Times.Never,
+                "Queue client should not be called for unauthorized consumers");
+        }
+
+        /// <summary>
+        /// Scenario: PostOutbound with useAzureServiceBus=true and multiple subscriptions with mixed authorization
+        /// Expected result: IMessageBus.PublishAsync is called only for authorized consumers
+        /// Success criteria: MessageBus called correct number of times based on authorization results
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_WithAzureServiceBus_MixedAuthorization_PublishesOnlyAuthorized()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                "/party/1337/",
+                "app.instance.process.completed",
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+
+            Mock<IEventsQueueClient> queueMock = new();
+            Mock<IMessageBus> messageBusMock = new();
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                {
+                    // Authorize only /org/ttd and /user/1337, not /org/nav
+                    var results = new Dictionary<string, bool>
+                    {
+                        { "/org/ttd", true },
+                        { "/org/nav", false },
+                        { "/user/1337", true }
+                    };
+                    return results;
+                });
+
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                messageBusMock: messageBusMock,
+                authorizationMock: authorizationMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None, useAzureServiceBus: true);
+
+            // Assert
+            messageBusMock.Verify(
+                m => m.PublishAsync(
+                    It.IsAny<Contracts.OutboundEventCommand>(),
+                    It.IsAny<DeliveryOptions>()),
+                Times.Exactly(3),
+                "MessageBus should be called 3 times - for authorized subscriptions (2 for /org/ttd, 1 for /user/1337)");
+
+            queueMock.Verify(
+                q => q.EnqueueOutbound(It.IsAny<string>()),
+                Times.Never,
+                "Queue client should not be called when using Azure Service Bus");
+        }
+
+        /// <summary>
+        /// Scenario: PostOutbound with useAzureServiceBus=false (default)
+        /// Expected result: Queue client is used, MessageBus is not called
+        /// Success criteria: QueueClient called, MessageBus never called
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_WithoutAzureServiceBus_UsesQueueClient()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"),
+                "/party/1337/",
+                "app.instance.process.completed",
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock.Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            Mock<IMessageBus> messageBusMock = new();
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                {
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = true;
+                    }
+
+                    return results;
+                });
+
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                messageBusMock: messageBusMock,
+                authorizationMock: authorizationMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None, useAzureServiceBus: false);
+
+            // Assert
+            queueMock.Verify(
+                q => q.EnqueueOutbound(It.IsAny<string>()),
+                Times.AtLeastOnce,
+                "Queue client should be called when not using Azure Service Bus");
+
+            messageBusMock.Verify(
+                m => m.PublishAsync(
+                    It.IsAny<Contracts.OutboundEventCommand>(),
+                    It.IsAny<DeliveryOptions>()),
+                Times.Never,
+                "MessageBus should not be called when using queue client");
+        }
+
+        /// <summary>
+        /// Scenario: PostOutbound with useAzureServiceBus=true and generic event (no subject)
+        /// Expected result: IMessageBus.PublishAsync is called for authorized consumers
+        /// Success criteria: MessageBus called for generic event authorization
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_WithAzureServiceBus_GenericEvent_PublishesToMessageBus()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("urn:testing-events:test-source"),
+                null,
+                "generic.event.type",
+                "urn:altinn:resource:test-source");
+
+            Mock<IEventsQueueClient> queueMock = new();
+            Mock<IMessageBus> messageBusMock = new();
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(
+                    It.IsAny<CloudEvent>(),
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
+                {
+                    var results = new Dictionary<string, bool>();
+                    foreach (var consumer in consumers)
+                    {
+                        results[consumer] = true;
+                    }
+                    
+                    return results;
+                });
+
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                messageBusMock: messageBusMock,
+                authorizationMock: authorizationMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None, useAzureServiceBus: true);
+
+            // Assert
+            messageBusMock.Verify(
+                m => m.PublishAsync(
+                    It.IsAny<Contracts.OutboundEventCommand>(),
+                    It.IsAny<DeliveryOptions>()),
+                Times.Once,
+                "MessageBus should be called for authorized generic event");
+
+            queueMock.Verify(
+                q => q.EnqueueOutbound(It.IsAny<string>()),
+                Times.Never,
+                "Queue client should not be called when using Azure Service Bus");
         }
     }
 }
