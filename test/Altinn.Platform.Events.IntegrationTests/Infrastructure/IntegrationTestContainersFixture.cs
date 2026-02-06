@@ -150,25 +150,29 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
     /// </summary>
     public async Task DisposeAsync()
     {
+        static async Task SafeDisposeContainerAsync(IContainer? container)
+        {
+            if (container == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await container.StopAsync();
+                await container.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error disposing container: {ex.Message}");
+            }
+        }
+
         try
         {
-            if (_serviceBusEmulatorContainer != null)
-            {
-                await _serviceBusEmulatorContainer.StopAsync();
-                await _serviceBusEmulatorContainer.DisposeAsync();
-            }
-
-            if (_mssqlContainer != null)
-            {
-                await _mssqlContainer.StopAsync();
-                await _mssqlContainer.DisposeAsync();
-            }
-
-            if (_postgresContainer != null)
-            {
-                await _postgresContainer.StopAsync();
-                await _postgresContainer.DisposeAsync();
-            }
+            await SafeDisposeContainerAsync(_serviceBusEmulatorContainer);
+            await SafeDisposeContainerAsync(_mssqlContainer);
+            await SafeDisposeContainerAsync(_postgresContainer);
 
             if (_network != null)
             {

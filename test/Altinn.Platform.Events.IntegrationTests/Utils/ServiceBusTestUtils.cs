@@ -21,8 +21,7 @@ public static class ServiceBusTestUtils
         TimeSpan? timeout = null)
     {
         var actualTimeout = timeout ?? TimeSpan.FromSeconds(10);
-        var client = new ServiceBusClient(fixture.ServiceBusConnectionString);
-
+        await using var client = new ServiceBusClient(fixture.ServiceBusConnectionString);
         await using var receiver = client.CreateReceiver(queueName);
         using var cts = new CancellationTokenSource(actualTimeout);
 
@@ -40,10 +39,6 @@ public static class ServiceBusTestUtils
         catch (OperationCanceledException)
         {
             return null;
-        }
-        finally
-        {
-            await client.DisposeAsync();
         }
     }
 
@@ -68,20 +63,13 @@ public static class ServiceBusTestUtils
         var pollInterval = TimeSpan.FromMilliseconds(100);
         var maxAttempts = (int)(actualTimeout.TotalMilliseconds / pollInterval.TotalMilliseconds);
 
-        var client = new ServiceBusClient(fixture.ServiceBusConnectionString);
+        await using var client = new ServiceBusClient(fixture.ServiceBusConnectionString);
         await using var receiver = client.CreateReceiver(queueName);
 
-        try
-        {
-            return await WaitForUtils.WaitForAsync(
-                async () => await receiver.PeekMessageAsync() == null,
-                maxAttempts,
-                (int)pollInterval.TotalMilliseconds);
-        }
-        finally
-        {
-            await client.DisposeAsync();
-        }
+        return await WaitForUtils.WaitForAsync(
+            async () => await receiver.PeekMessageAsync() == null,
+            maxAttempts,
+            (int)pollInterval.TotalMilliseconds);
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
@@ -26,7 +27,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
 {
     private readonly IntegrationTestContainersFixture _fixture = fixture;
     private IHost _host = null!;
-    private Action<IServiceCollection>? _configureTestServices;
+    private readonly List<Action<IServiceCollection>> _configureTestServices = [];
 
     public WolverineSettings WolverineSettings { get; private set; } = null!;
 
@@ -42,7 +43,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
     /// </summary>
     public IntegrationTestWebApplicationFactory ConfigureTestServices(Action<IServiceCollection> configure)
     {
-        _configureTestServices = configure;
+        _configureTestServices.Add(configure);
         return this;
     }
 
@@ -92,7 +93,10 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
             services.Replace(ServiceDescriptor.Singleton(CreateEventsQueueClientMock()));
 
             // Apply any additional test service configuration
-            _configureTestServices?.Invoke(services);
+            foreach (var configure in _configureTestServices)
+            {
+                configure(services);
+            }
         });
 
         builder.UseEnvironment("Development");
