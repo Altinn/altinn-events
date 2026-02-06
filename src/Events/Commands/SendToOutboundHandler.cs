@@ -8,7 +8,7 @@ namespace Altinn.Platform.Events.Commands;
 /// <summary>
 /// Handles inbound event commands by forwarding inbound events to the outbound service.
 /// </summary>
-public class SendToOutboundHandler
+public static class SendToOutboundHandler
 {
     /// <summary>
     /// Handles the processing of an event command by checking subscriptions and posting the inbound event to the outbound service if authorized.

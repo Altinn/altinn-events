@@ -226,13 +226,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.ConfigureEventsDefaults(
                 builder.Environment,
                 wolverineSettings.ServiceBusConnectionString);
+                
             opts.PublishMessage<RegisterEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
-            opts.PublishMessage<ValidateSubscriptionCommand>()
-                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);            
-            
             opts.PublishMessage<InboundEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
+            opts.PublishMessage<ValidateSubscriptionCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
 
             opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
@@ -322,8 +322,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddHttpClient<IRegisterService, RegisterService>();
     services.AddTransient<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
-    services.AddScoped<IOutboundService, OutboundService>();
-    services.AddSingleton<ISubscriptionService, SubscriptionService>();
     services.AddScoped<IOutboundService, OutboundService>();
     services.AddScoped<ISubscriptionService, SubscriptionService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
