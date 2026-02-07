@@ -66,7 +66,7 @@ public static class WolverineOptionsExtensions
             // In production, enable auto-provisioning which creates all necessary queues automatically
             // This includes Wolverine's internal system queues for coordination, error handling, retries, and responses
             azureBusConfig.AutoProvision();
-      
+
             // Production retry policy - longer delays to allow transient issues to resolve, and to avoid overwhelming the system during outages
             ConfigureRetryPolicy(
                 opts.Policies,

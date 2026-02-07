@@ -74,8 +74,8 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
                 ?? throw new InvalidOperationException("WolverineSettings not found in configuration");
 
             Console.WriteLine($"[Factory] Loaded WolverineSettings - EnableServiceBus: {WolverineSettings.EnableServiceBus}");
-            Console.WriteLine($"[Factory] ServiceBus connection: {WolverineSettings.ServiceBusConnectionString?[..50]}...");
-            Console.WriteLine($"[Factory] Postgres connection: {_fixture.PostgresConnectionString[..50]}...");
+            Console.WriteLine($"[Factory] ServiceBus connection: {Truncate(WolverineSettings.ServiceBusConnectionString, 50)}...");
+            Console.WriteLine($"[Factory] Postgres connection: {Truncate(_fixture.PostgresConnectionString, 50)}...");
 
             // Replace NpgsqlDataSource with test connection
             services.Replace(ServiceDescriptor.Singleton(sp =>
@@ -118,6 +118,9 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
 
         return mock.Object;
     }
+
+    private static string Truncate(string? value, int maxLength) =>
+        value is null ? "(null)" : value[..Math.Min(value.Length, maxLength)];
 
     private static string FindMigrationPath()
     {

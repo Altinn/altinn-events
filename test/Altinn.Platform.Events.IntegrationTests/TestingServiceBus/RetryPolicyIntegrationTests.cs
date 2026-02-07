@@ -66,11 +66,8 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
         int attemptCount = 0;
         var mockRepository = new Mock<ICloudEventRepository>();
         mockRepository.Setup(r => r.CreateEvent(It.IsAny<string>()))
-            .Callback<string>(_ =>
-            {
-                Interlocked.Increment(ref attemptCount);
-                throw new TaskCanceledException("Simulated database timeout");
-            });
+            .Callback<string>(_ => Interlocked.Increment(ref attemptCount))
+            .ThrowsAsync(new TaskCanceledException("Simulated database timeout"));
 
         var factory = new IntegrationTestWebApplicationFactory(_fixture)
             .ReplaceService(_ => mockRepository.Object)
