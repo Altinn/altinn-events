@@ -94,7 +94,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
             Console.WriteLine($"PostgreSQL started on port {PostgresPort}");
 
             // Create platform_events role for migrations
-            await CreatePlatformEventsRoleAsync();
+            await CreatePlatformEventsRoleAsync(postgresSettings.EventsRolePwd);
 
             // Start MSSQL (required by Service Bus Emulator)
             _mssqlContainer = new ContainerBuilder(ContainerImageUtils.GetImage("mssql"))
@@ -237,6 +237,9 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
         string password = postgresSection.GetProperty("EventsDbAdminPwd").GetString()
             ?? throw new InvalidOperationException("EventsDbAdminPwd not found");
 
+        string eventsRolePwd = postgresSection.GetProperty("EventsDbPwd").GetString()
+            ?? throw new InvalidOperationException("EventsDbPwd not found");
+
         // Use NpgsqlConnectionStringBuilder for robust parsing
         var builder = new NpgsqlConnectionStringBuilder(adminConnString);
         string database = builder.Database
@@ -244,24 +247,25 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
         string username = builder.Username
             ?? throw new InvalidOperationException("Username not found in AdminConnectionString");
 
-        return new PostgreSqlSettings(database, username, password);
+        return new PostgreSqlSettings(database, username, password, eventsRolePwd);
     }
 
     /// <summary>
     /// Creates the platform_events database role required for migrations.
     /// Uses DO block to skip if the role already exists.
     /// </summary>
-    private async Task CreatePlatformEventsRoleAsync()
+    /// <param name="password">The password for the platform_events role from configuration.</param>
+    private async Task CreatePlatformEventsRoleAsync(string password)
     {
         try
         {
             Console.WriteLine("Creating platform_events database role...");
 
             await using var dataSource = NpgsqlDataSource.Create(PostgresConnectionString);
-            await using var command = dataSource.CreateCommand(@"
+            await using var command = dataSource.CreateCommand($@"
                 DO $$
                 BEGIN
-                    CREATE ROLE platform_events WITH LOGIN PASSWORD 'Password';
+                    CREATE ROLE platform_events WITH LOGIN PASSWORD '{password}';
                     RAISE NOTICE 'Role platform_events created successfully';
                 EXCEPTION
                     WHEN duplicate_object THEN
@@ -323,7 +327,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
 /// <summary>
 /// PostgreSQL settings loaded from appsettings.
 /// </summary>
-internal record PostgreSqlSettings(string Database, string Username, string Password);
+internal record PostgreSqlSettings(string Database, string Username, string Password, string EventsRolePwd);
 
 /// <summary>
 /// xUnit collection definition for integration tests that require infrastructure containers.
