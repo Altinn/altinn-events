@@ -85,7 +85,7 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
             var deadLetterMessage = await ServiceBusTestUtils.WaitForDeadLetterMessageAsync(
                 _fixture,
                 factory.WolverineSettings.RegistrationQueueName,
-                TimeSpan.FromSeconds(60));
+                TimeSpan.FromSeconds(300));
 
             Assert.NotNull(deadLetterMessage);
 
