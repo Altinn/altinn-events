@@ -27,7 +27,8 @@ public static class SaveEventHandler
         var policy = settings.Value.RegistrationQueuePolicy;
 
         chain
-            .OnException<NpgsqlException>() // PostgreSQL database errors
+            .OnException<InvalidOperationException>() // PostgreSQL database errors when saving events
+            .Or<TaskCanceledException>() // Database timeout or cancellation
             .Or<TimeoutException>() // Database timeout
             .Or<SocketException>() // Network connectivity issues
             .Or<ServiceBusException>() // Azure Service Bus errors when publishing

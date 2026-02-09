@@ -28,10 +28,11 @@ public static class SendToOutboundHandler
         var policy = settings.Value.InboundQueuePolicy;
 
         chain
-            .OnException<HttpRequestException>() // HTTP communication errors with subscribers
+            .OnException<HttpRequestException>() // Authorization service errors when validating event against subscriptions
             .Or<TimeoutException>() // HTTP or database timeout
             .Or<SocketException>() // Network connectivity issues
-            .Or<NpgsqlException>() // PostgreSQL database errors when querying subscriptions
+            .Or<InvalidOperationException>() // PostgreSQL database errors when querying subscriptions
+            .Or<TaskCanceledException>() // Database timeout or cancellation
             .Or<ServiceBusException>() // Azure Service Bus errors when publishing to outbound queue
             .RetryWithCooldown(policy.GetCooldownDelays())
             .Then.ScheduleRetry(policy.GetScheduleDelays())
