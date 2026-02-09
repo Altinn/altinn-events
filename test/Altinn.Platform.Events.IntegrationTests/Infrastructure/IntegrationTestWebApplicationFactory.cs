@@ -73,10 +73,6 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
             WolverineSettings = context.Configuration.GetSection("WolverineSettings").Get<WolverineSettings>()
                 ?? throw new InvalidOperationException("WolverineSettings not found in configuration");
 
-            // Set static settings for handlers before Wolverine discovers them (must match Program.cs pattern)
-            Commands.SaveEventHandler.Settings = WolverineSettings;
-            Commands.SendToOutboundHandler.Settings = WolverineSettings;
-
             Console.WriteLine($"[Factory] Loaded WolverineSettings - EnableServiceBus: {WolverineSettings.EnableServiceBus}");
             Console.WriteLine($"[Factory] ServiceBus connection: {Truncate(WolverineSettings.ServiceBusConnectionString, 50)}...");
             Console.WriteLine($"[Factory] Postgres connection: {Truncate(_fixture.PostgresConnectionString, 50)}...");
