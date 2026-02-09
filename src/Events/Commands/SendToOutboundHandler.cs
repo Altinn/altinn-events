@@ -1,7 +1,16 @@
-﻿using System.Threading;
+﻿using System;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Services.Interfaces;
+using Azure.Messaging.ServiceBus;
+using Microsoft.Extensions.Options;
+using Npgsql;
+using Wolverine.ErrorHandling;
+using Wolverine.Runtime.Handlers;
 
 namespace Altinn.Platform.Events.Commands;
 
@@ -10,6 +19,25 @@ namespace Altinn.Platform.Events.Commands;
 /// </summary>
 public static class SendToOutboundHandler
 {
+    /// <summary>
+    /// Configures error handling for the inbound queue handler.
+    /// Retries on HTTP, database, and Service Bus exceptions.
+    /// </summary>
+    public static void Configure(HandlerChain chain, IOptions<WolverineSettings> settings)
+    {
+        var policy = settings.Value.InboundQueuePolicy;
+
+        chain
+            .OnException<HttpRequestException>() // HTTP communication errors with subscribers
+            .Or<TimeoutException>() // HTTP or database timeout
+            .Or<SocketException>() // Network connectivity issues
+            .Or<NpgsqlException>() // PostgreSQL database errors when querying subscriptions
+            .Or<ServiceBusException>() // Azure Service Bus errors when publishing to outbound queue
+            .RetryWithCooldown(policy.GetCooldownDelays())
+            .Then.ScheduleRetry(policy.GetScheduleDelays())
+            .Then.MoveToErrorQueue();
+    }
+
     /// <summary>
     /// Handles the processing of an event command by checking subscriptions and posting the inbound event to the outbound service if authorized.
     /// </summary>
