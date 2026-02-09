@@ -92,10 +92,10 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
 
             // Assert - Verify the handler was called the expected number of times
             // RetryWithCooldown(100ms, 100ms, 100ms) = 3 retries within same lock
-            // ScheduleRetry(500ms, 500ms, 500ms) = 3 more retries with new locks
-            // Total: 1 initial + 3 cooldown retries + 3 scheduled retries = 7 attempts
+            // ScheduleRetry(500ms, 500ms, 500ms, 500ms, 500ms) = 5 more retries with new locks
+            // Total: 1 initial + 3 cooldown retries + 5 scheduled retries = 9 attempts
             Console.WriteLine($"[Test] Handler was called {attemptCount} times");
-            Assert.Equal(7, attemptCount);
+            Assert.Equal(9, attemptCount);
         }
     }
 }
