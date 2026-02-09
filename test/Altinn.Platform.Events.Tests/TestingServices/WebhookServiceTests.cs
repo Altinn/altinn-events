@@ -269,6 +269,7 @@ public class WebhookServiceTests
         
         // Should NOT contain Slack wrapper
         Assert.DoesNotContain("\"text\":", content);
+
         // Should contain CloudEvent properties
         Assert.Contains("\"id\":", content);
         Assert.Contains("\"type\":", content);
