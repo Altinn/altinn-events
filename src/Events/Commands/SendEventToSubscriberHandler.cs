@@ -1,7 +1,13 @@
-﻿using System.Threading;
+﻿using System;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Services.Interfaces;
+using Wolverine.ErrorHandling;
+using Wolverine.Runtime.Handlers;
 
 namespace Altinn.Platform.Events.Commands;
 
@@ -10,6 +16,34 @@ namespace Altinn.Platform.Events.Commands;
 /// </summary>
 public class SendEventToSubscriberHandler
 {
+    /// <summary>
+    /// Gets or sets the Wolverine settings used for configuring error handling policies.
+    /// </summary>
+    internal static WolverineSettings Settings { get; set; }
+
+    /// <summary>
+    /// Configures error handling for the inbound queue handler.
+    /// </summary>
+    public static void Configure(HandlerChain chain)
+    {
+        if (Settings == null)
+        {
+            throw new InvalidOperationException("WolverineSettings must be set before handler configuration");
+        }
+
+        var policy = Settings.InboundQueuePolicy;
+
+        chain
+            .OnException<HttpRequestException>() // Errors when posting to subscriber webhook
+            .Or<HttpIOException>() // Errors when posting to subscriber webhook
+            .Or<TimeoutException>() // HTTP timeout
+            .Or<SocketException>() // Network connectivity issues
+            .Or<TaskCanceledException>() // Database timeout or cancellation            
+            .RetryWithCooldown(policy.GetCooldownDelays()) // 10s
+            .Then.ScheduleRetry(policy.GetScheduleDelays()) // 30s, 1m, 5m, 10m, 30m, 1h, 3h, 6h, 12h, 12h
+            .Then.MoveToErrorQueue();
+    }
+    
     /// <summary>
     /// Handles the processing of an event command by checking subscriptions and posting the inbound event to the outbound service if authorized.
     /// </summary>
