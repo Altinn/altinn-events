@@ -324,12 +324,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
-<<<<<<< feature/898-wolverine-handler-for-subsc-validation-queue
     services.AddHttpClient<IWebhookService, WebhookService>();
     services.AddTransient<IEventsService, EventsService>();
-=======
-    services.AddScoped<IEventsService, EventsService>();
->>>>>>> feature/core-azure-service-bus
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddScoped<IOutboundService, OutboundService>();
     services.AddScoped<ISubscriptionService, SubscriptionService>();
