@@ -18,6 +18,7 @@ using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Commands;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
@@ -219,6 +220,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     }
 
     WolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<WolverineSettings>() ?? new WolverineSettings();
+
+    // Set static settings for handlers before Wolverine discovers them
+    SaveEventHandler.Settings = wolverineSettings;
+    SendToOutboundHandler.Settings = wolverineSettings;
+
     services.AddWolverine(opts =>
     {
         if (wolverineSettings.EnableServiceBus)
@@ -249,16 +255,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
         opts.Policies.AllListeners(x => x.ProcessInline());
         opts.Policies.AllSenders(x => x.SendInline());
-
-        // ServiceBusException happens when problem sending to Azure Service Bus, InvalidOperationException when problem to save to database
-        opts.Policies.OnException<ServiceBusException>()
-            .Or<InvalidOperationException>()
-            .Or<TimeoutException>()
-            .Or<SocketException>()
-            .Or<TaskCanceledException>()
-            .RetryWithCooldown(1.Seconds(), 5.Seconds(), 10.Seconds()) // within the same message lock
-            .Then.ScheduleRetry(30.Seconds(), 60.Seconds(), 2.Minutes(), 2.Minutes(), 2.Minutes()) // new lock for each retry
-            .Then.MoveToErrorQueue(); // dead-letter queue ("queuename/$deadletterqueue")
     });
 
     services.AddSingleton(config);
