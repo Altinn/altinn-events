@@ -234,6 +234,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.PublishMessage<InboundEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
 
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);                       
+
             opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
@@ -317,6 +319,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
+    services.AddHttpClient<IWebhookService, WebhookService>();
     services.AddTransient<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddSingleton<IOutboundService, OutboundService>();
