@@ -22,7 +22,7 @@ public class SendEventToSubscriberHandler
     internal static WolverineSettings Settings { get; set; }
 
     /// <summary>
-    /// Configures error handling for the inbound queue handler.
+    /// Configures error handling for the outbound queue handler.
     /// </summary>
     public static void Configure(HandlerChain chain)
     {
@@ -31,7 +31,7 @@ public class SendEventToSubscriberHandler
             throw new InvalidOperationException("WolverineSettings must be set before handler configuration");
         }
 
-        var policy = Settings.InboundQueuePolicy;
+        var policy = Settings.OutboundQueuePolicy;
 
         chain
             .OnException<HttpRequestException>() // Errors when posting to subscriber webhook
