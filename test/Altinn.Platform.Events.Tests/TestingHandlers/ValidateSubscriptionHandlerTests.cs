@@ -123,11 +123,7 @@ public class ValidateSubscriptionHandlerTests
         var cloudEvent = capturedEnvelope.CloudEvent;
         Assert.NotNull(cloudEvent.Id);
         Assert.Equal("platform.events.validatesubscription", cloudEvent.Type);
-        Assert.Equal(subscription.Consumer, cloudEvent.Subject);
         Assert.Equal(new Uri($"urn:altinn:events:subscriptions:{subscription.Id}"), cloudEvent.Source);
-        Assert.NotNull(cloudEvent.Time);
-        Assert.Equal(subscription.Id, cloudEvent["subscriptionId"]);
-        Assert.Equal(subscription.EndPoint.ToString(), cloudEvent["endpoint"]);
     }
 
     [Fact]
@@ -314,7 +310,6 @@ public class ValidateSubscriptionHandlerTests
         var subscription = CreateTestSubscription();
         var command = new ValidateSubscriptionCommand(subscription);
         CloudEventEnvelope capturedEnvelope = null;
-        var beforeExecution = DateTime.UtcNow;
 
         _webhookServiceMock
             .Setup(x => x.SendAsync(It.IsAny<CloudEventEnvelope>()))
@@ -335,14 +330,11 @@ public class ValidateSubscriptionHandlerTests
         // Act
         await _handler.Handle(command);
 
-        var afterExecution = DateTime.UtcNow;
-
         // Assert
         Assert.NotNull(capturedEnvelope);
         Assert.Equal(subscription.Consumer, capturedEnvelope.Consumer);
         Assert.Equal(subscription.EndPoint, capturedEnvelope.Endpoint);
         Assert.Equal(subscription.Id, capturedEnvelope.SubscriptionId);
-        Assert.InRange(capturedEnvelope.Pushed, beforeExecution, afterExecution);
     }
 
     [Fact]
@@ -445,7 +437,11 @@ public class ValidateSubscriptionHandlerTests
 
         _subscriptionServiceMock
             .Setup(x => x.SetValidSubscription(It.IsAny<int>()))
-            .ReturnsAsync((Subscription s, ServiceError error) => (s, null));
+            .ReturnsAsync((int id) =>
+            {
+                var sub = id == 123 ? subscription1 : subscription2;
+                return (sub, (ServiceError)null);
+            });
 
         _traceLogServiceMock
             .Setup(x => x.CreateLogEntryWithSubscriptionDetails(

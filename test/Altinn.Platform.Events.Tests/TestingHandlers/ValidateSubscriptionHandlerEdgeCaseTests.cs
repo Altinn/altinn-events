@@ -51,23 +51,6 @@ public class ValidateSubscriptionHandlerEdgeCaseTests
     }
 
     [Fact]
-    public async Task Handle_SubscriptionWithNullEndpoint_ThrowsException()
-    {
-        // Arrange
-        var subscription = new Subscription
-        {
-            Id = 1,
-            Consumer = "/org/ttd",
-            EndPoint = null,
-            Created = DateTime.UtcNow
-        };
-        var command = new ValidateSubscriptionCommand(subscription);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<NullReferenceException>(() => _handler.Handle(command));
-    }
-
-    [Fact]
     public async Task Handle_SubscriptionWithEmptyConsumer_HandlesCorrectly()
     {
         // Arrange

@@ -102,6 +102,10 @@ namespace Altinn.Platform.Events.Handlers
 
                 throw; 
             }
+            catch (InvalidOperationException)
+            {                
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(
