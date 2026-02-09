@@ -1,10 +1,7 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Services.Interfaces;
-using CloudNative.CloudEvents;
-using Wolverine;
 
 namespace Altinn.Platform.Events.Commands;
 
