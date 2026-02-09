@@ -18,6 +18,7 @@ using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Commands;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
@@ -219,6 +220,11 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     }
 
     WolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<WolverineSettings>() ?? new WolverineSettings();
+
+    // Set static settings for handlers before Wolverine discovers them
+    SaveEventHandler.Settings = wolverineSettings;
+    SendToOutboundHandler.Settings = wolverineSettings;
+
     services.AddWolverine(opts =>
     {
         if (wolverineSettings.EnableServiceBus)

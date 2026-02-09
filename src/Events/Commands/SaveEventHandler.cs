@@ -19,12 +19,22 @@ namespace Altinn.Platform.Events.Commands;
 public static class SaveEventHandler
 {
     /// <summary>
+    /// Gets or sets the Wolverine settings used for configuring error handling policies.
+    /// </summary>
+    internal static WolverineSettings Settings { get; set; }
+
+    /// <summary>
     /// Configures error handling for the registration queue handler.
     /// Retries on database and Service Bus exceptions.
     /// </summary>
-    public static void Configure(HandlerChain chain, IOptions<WolverineSettings> settings)
+    public static void Configure(HandlerChain chain)
     {
-        var policy = settings.Value.RegistrationQueuePolicy;
+        if (Settings == null)
+        {
+            throw new InvalidOperationException("WolverineSettings must be set before handler configuration");
+        }
+
+        var policy = Settings.RegistrationQueuePolicy;
 
         chain
             .OnException<InvalidOperationException>() // PostgreSQL database errors when saving events

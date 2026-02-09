@@ -20,12 +20,22 @@ namespace Altinn.Platform.Events.Commands;
 public static class SendToOutboundHandler
 {
     /// <summary>
+    /// Gets or sets the Wolverine settings used for configuring error handling policies.
+    /// </summary>
+    internal static WolverineSettings Settings { get; set; }
+
+    /// <summary>
     /// Configures error handling for the inbound queue handler.
     /// Retries on HTTP, database, and Service Bus exceptions.
     /// </summary>
-    public static void Configure(HandlerChain chain, IOptions<WolverineSettings> settings)
+    public static void Configure(HandlerChain chain)
     {
-        var policy = settings.Value.InboundQueuePolicy;
+        if (Settings == null)
+        {
+            throw new InvalidOperationException("WolverineSettings must be set before handler configuration");
+        }
+
+        var policy = Settings.InboundQueuePolicy;
 
         chain
             .OnException<HttpRequestException>() // Authorization service errors when validating event against subscriptions
