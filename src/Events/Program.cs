@@ -241,7 +241,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 .ProcessInline();
             opts.ListenToAzureServiceBusQueue(wolverineSettings.InboundQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
-                .ProcessInline();                
+                .ProcessInline();
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.OutboundQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
             opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
@@ -267,6 +270,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
+    services.Configure<EventsOutboundSettings>(config.GetSection("EventsOutboundSettings"));
     services.Configure<Altinn.Common.AccessToken.Configuration.KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
