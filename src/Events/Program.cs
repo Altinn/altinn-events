@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,11 +31,9 @@ using Altinn.Platform.Events.Swagger;
 using Altinn.Platform.Events.Telemetry;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
-using Azure.Messaging.ServiceBus;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Security.KeyVault.Secrets;
 using CloudNative.CloudEvents.SystemTextJson;
-using JasperFx.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -55,7 +52,6 @@ using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Wolverine;
 using Wolverine.AzureServiceBus;
-using Wolverine.ErrorHandling;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -268,7 +264,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
     services.Configure<EventsOutboundSettings>(config.GetSection("EventsOutboundSettings"));
-    services.Configure<Altinn.Common.AccessToken.Configuration.KeyVaultSettings>(config.GetSection("kvSetting"));
+    services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
     services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
@@ -323,8 +319,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
-    services.AddScoped<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
+    services.AddScoped<IEventsService, EventsService>();
     services.AddScoped<IOutboundService, OutboundService>();
     services.AddScoped<ISubscriptionService, SubscriptionService>();
     services.AddScoped<IAppSubscriptionService, AppSubscriptionService>();

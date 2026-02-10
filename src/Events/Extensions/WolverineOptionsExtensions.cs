@@ -35,8 +35,8 @@ public static class WolverineOptionsExtensions
         opts.EnableAutomaticFailureAcks = false;
         opts.EnableRemoteInvocation = false;
         opts.MultipleHandlerBehavior = MultipleHandlerBehavior.Separated;
-
-        var azureBusConfig = opts.UseAzureServiceBus(azureServiceBusConnectionString);
+        var azureBusConfig = opts
+            .UseAzureServiceBus(azureServiceBusConnectionString);
 
         if (env.IsDevelopment())
         {
