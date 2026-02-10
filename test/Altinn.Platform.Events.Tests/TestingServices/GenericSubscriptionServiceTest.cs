@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -9,8 +10,10 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
-
+using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -115,7 +118,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
-        private static GenericSubscriptionService GetGenericSubscriptionService(Mock<ISubscriptionRepository> repoMock = null, bool isAuthorized = true)
+        private static GenericSubscriptionService GetGenericSubscriptionService(
+            Mock<ISubscriptionRepository> repoMock = null,
+            IMessageBus messageBus = null,
+            bool isAuthorized = true,
+            IWebhookService webhookService = null,
+            ITraceLogService traceLogService = null,
+            IOptions<PlatformSettings> platformSettings = null,
+            ILogger<SubscriptionService> logger = null)
         {
             var claimsProviderMock = new Mock<IClaimsPrincipalProvider>();
             claimsProviderMock.Setup(
@@ -142,8 +152,67 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                             return s;
                         });
 
+            // Create mock for IMessageBus if not provided
+            if (messageBus == null)
+            {
+                var messageBusMock = new Mock<IMessageBus>();
+                messageBusMock
+                    .Setup(m => m.PublishAsync(It.IsAny<object>(), It.IsAny<DeliveryOptions>()))
+                    .Returns(ValueTask.CompletedTask);
+                messageBus = messageBusMock.Object;
+            }
+
+            if (webhookService == null)
+            {
+                var mock = new Mock<IWebhookService>();
+                mock.Setup(w => w.SendAsync(It.IsAny<CloudEventEnvelope>()))
+                    .Returns(Task.CompletedTask);
+
+                webhookService = mock.Object;
+            }
+
+            if (traceLogService == null)
+            {
+                var mock = new Mock<ITraceLogService>();
+                mock.Setup(t => t.CreateLogEntryWithSubscriptionDetails(
+                        It.IsAny<CloudNative.CloudEvents.CloudEvent>(),
+                        It.IsAny<Subscription>(),
+                        It.IsAny<TraceLogActivity>()))
+                    .Returns(Task.FromResult(string.Empty));
+
+                traceLogService = mock.Object;
+            }
+
+            if (platformSettings == null)
+            {
+                var settings = new PlatformSettings
+                {
+                    ApiEventsEndpoint = "https://platform.altinn.no/events/api/v1/",
+                    RegisterApiBaseAddress = "https://platform.altinn.no/register/api/v1/",
+                    ApiProfileEndpoint = "https://platform.altinn.no/profile/api/v1/",
+                    AppsDomain = "altinn.cloud"
+                };
+
+                var mock = new Mock<IOptions<PlatformSettings>>();
+                mock.Setup(p => p.Value).Returns(settings);
+
+                platformSettings = mock.Object;
+            }
+
+            if (logger == null)
+            {
+                logger = new Mock<ILogger<SubscriptionService>>().Object;
+            }
+
             return new GenericSubscriptionService(
-                repoMock.Object, authorizationMock.Object, new EventsQueueClientMock(), claimsProviderMock.Object);
+                repoMock.Object,
+                authorizationMock.Object,
+                messageBus,
+                claimsProviderMock.Object,
+                webhookService,
+                traceLogService,
+                platformSettings,
+                logger);
         }
     }
 }

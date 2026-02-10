@@ -36,6 +36,14 @@ In pgAdmin
 
 A more detailed description of the database setup is available in [our developer handbook](https://docs.altinn.studio/community/contributing/handbook/postgres/)
 
+### Setting up Azure Service Bus Emulator
+Ensure Podman is installed and running. From the repository root, navigate to the emulator directory and run:
+
+```bash
+cd emulator
+podman compose up -d
+```
+
 ### Cloning the application
 
 Clone [Altinn Events repo](https://github.com/Altinn/altinn-events) and navigate to the folder.

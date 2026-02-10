@@ -12,7 +12,7 @@ using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
 
 using Moq;
-
+using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -276,7 +276,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             IRegisterService register = null,
             IAuthorization authorization = null,
             ISubscriptionRepository repository = null,
-            IClaimsPrincipalProvider claimsPrincipalProvider = null)
+            IClaimsPrincipalProvider claimsPrincipalProvider = null,
+            IMessageBus messageBus = null,
+            IWebhookService webhookService = null,
+            ITraceLogService traceLogService = null)
         {
             register ??= new RegisterServiceMock();
 
@@ -291,11 +294,41 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 claimsPrincipalProvider = mock.Object;
             }
 
+            if (messageBus == null)
+            {
+                var mock = new Mock<IMessageBus>();
+                mock.Setup(m => m.PublishAsync(It.IsAny<object>(), It.IsAny<DeliveryOptions>()))
+                    .Returns(ValueTask.CompletedTask);
+
+                messageBus = mock.Object;
+            }
+
+            if (webhookService == null)
+            {
+                var mock = new Mock<IWebhookService>();
+                mock.Setup(w => w.SendAsync(It.IsAny<CloudEventEnvelope>()))
+                    .Returns(Task.CompletedTask);
+
+                webhookService = mock.Object;
+            }
+
+            if (traceLogService == null)
+            {
+                var mock = new Mock<ITraceLogService>();
+                mock.Setup(t => t.CreateLogEntryWithSubscriptionDetails(
+                        It.IsAny<CloudNative.CloudEvents.CloudEvent>(),
+                        It.IsAny<Subscription>(),
+                        It.IsAny<TraceLogActivity>()))
+                    .Returns(Task.FromResult(string.Empty));
+
+                traceLogService = mock.Object;
+            }           
+
             return new AppSubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
                 authorization,
                 register,
-                new EventsQueueClientMock(),
+                messageBus,
                 claimsPrincipalProvider);
         }
     }

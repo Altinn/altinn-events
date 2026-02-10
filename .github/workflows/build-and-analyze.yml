@@ -5,10 +5,10 @@ on:
     paths:
     - 'src/**'
   pull_request:
-    branches: [ main ]
     types: [opened, synchronize, reopened]
     paths:
       - 'src/**'
+      - 'test/Altinn.Platform.Events.IntegrationTests/**'
       - 'test/Altinn.Platform.Events.Tests/**'
       - .github/workflows/build-and-analyze.yml
   workflow_dispatch:

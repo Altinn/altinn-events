@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.AccessManagement.Core.Models;
-using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -14,9 +14,8 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
-
 using Moq;
-
+using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -67,22 +66,30 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IClaimsPrincipalProvider> claimsPrincipalProviderMock = new();
             claimsPrincipalProviderMock.Setup(s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
 
-            _repositoryMock.Setup(s => s.FindSubscription(It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None)).ReturnsAsync((Subscription)null);
+            _repositoryMock.Setup(s => s.FindSubscription(It.Is<Subscription>(p => p.Id == subscriptionId), CancellationToken.None))
+                .ReturnsAsync((Subscription)null);
 
-            _repositoryMock.Setup(s => s.CreateSubscription(It.Is<Subscription>(p => p.Id == subscriptionId))).ReturnsAsync(subscription);
+            _repositoryMock.Setup(s => s.CreateSubscription(It.Is<Subscription>(p => p.Id == subscriptionId)))
+                .ReturnsAsync(subscription);
 
-            Mock<IEventsQueueClient> queueMock = new();
-
-            queueMock.Setup(q => q.EnqueueSubscriptionValidation(It.Is<string>(s => CheckSubscriptionId(s, 645187))));
+            Mock<IMessageBus> messageBusMock = new();
+            messageBusMock.Setup(m => m.PublishAsync(
+                It.Is<ValidateSubscriptionCommand>(cmd => cmd.Subscription.Id == subscriptionId), 
+                It.IsAny<DeliveryOptions>()))
+                .Returns(ValueTask.CompletedTask)
+                .Verifiable();
 
             // Act
-            SubscriptionService subscriptionService = GetSubscriptionService(_repositoryMock.Object, queueMock: queueMock.Object, claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
+            SubscriptionService subscriptionService = GetSubscriptionService(
+                _repositoryMock.Object,
+                messageBus: messageBusMock.Object,
+                claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
             await subscriptionService.CompleteSubscriptionCreation(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
-            queueMock.VerifyAll();
+            messageBusMock.VerifyAll();
         }
 
         [Fact]
@@ -257,7 +264,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private static SubscriptionService GetSubscriptionService(
             ISubscriptionRepository repository = null,
             bool authorizationDecision = true,
-            IEventsQueueClient queueMock = null,
+            IMessageBus messageBus = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null)
         {
             var authoriationMock = new Mock<IAuthorization>();
@@ -268,7 +275,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
                 authoriationMock.Object,
-                queueMock ?? new Mock<IEventsQueueClient>().Object,
+                messageBus ?? new Mock<IMessageBus>().Object,
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
         }
 

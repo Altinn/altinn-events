@@ -1,14 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using CloudNative.CloudEvents;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Wolverine;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -16,9 +22,13 @@ namespace Altinn.Platform.Events.Services;
 public class SubscriptionService : ISubscriptionService
 {
     private readonly ISubscriptionRepository _repository;
-    private readonly IEventsQueueClient _queue;
+    private readonly IMessageBus _bus;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IAuthorization _authorization;
+    private readonly IWebhookService _webhookService;
+    private readonly ITraceLogService _traceLogService;
+    private readonly PlatformSettings _platformSettings;
+    private readonly ILogger<SubscriptionService> _logger;
 
     private const string _organisationPrefix = "/organisation/";
     private const string _orgPrefix = "/org/";
@@ -31,14 +41,22 @@ public class SubscriptionService : ISubscriptionService
     public SubscriptionService(
         ISubscriptionRepository repository,
         IAuthorization authorization,
-        IEventsQueueClient queue,
-        IClaimsPrincipalProvider claimsPrincipalProvider)
+        IMessageBus bus,
+        IClaimsPrincipalProvider claimsPrincipalProvider,
+        IWebhookService webhookService,
+        ITraceLogService traceLogService,
+        IOptions<PlatformSettings> platformSettings,
+        ILogger<SubscriptionService> logger)
     {
         _repository = repository;
         _authorization = authorization;
-        _queue = queue;
+        _bus = bus;
         _claimsPrincipalProvider = claimsPrincipalProvider;
-    }
+        _webhookService = webhookService;
+        _traceLogService = traceLogService;
+        _platformSettings = platformSettings.Value;
+        _logger = logger;
+        }
 
     /// <summary>
     /// Completes the common tasks related to creating a subscription once the producer specific services are completed
@@ -55,7 +73,7 @@ public class SubscriptionService : ISubscriptionService
 
         subscription ??= await _repository.CreateSubscription(eventsSubscription);
 
-        await _queue.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
+        await _bus.PublishAsync(new ValidateSubscriptionCommand(subscription));
 
         return (subscription, null);
     }
@@ -122,6 +140,102 @@ public class SubscriptionService : ISubscriptionService
         await _repository.SetValidSubscription(id);
 
         return (subscription, null);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ServiceError> SendAndValidate(Subscription subscription)
+    {
+        _logger.LogInformation(
+            "Validating subscription {SubscriptionId}, endpoint {Endpoint}",
+            subscription.Id,
+            subscription.EndPoint);
+
+        CloudEventEnvelope envelope = CreateValidateEvent(subscription);
+
+        try
+        {
+            await _webhookService.SendAsync(envelope);
+
+            (_, ServiceError error) = await SetValidSubscription(subscription.Id);
+
+            if (error != null)
+            {
+                _logger.LogError(
+                    "Failed to mark subscription {SubscriptionId} as valid, endpoint {Endpoint}. ErrorCode: {ErrorCode}, ErrorMessage: {ErrorMessage}",
+                    subscription.Id,
+                    subscription.EndPoint,
+                    error.ErrorCode,
+                    error.ErrorMessage);
+
+                await _traceLogService.CreateLogEntryWithSubscriptionDetails(
+                    envelope.CloudEvent,
+                    subscription,
+                    TraceLogActivity.EndpointValidationFailed);
+
+                return error;
+            }
+
+            await _traceLogService.CreateLogEntryWithSubscriptionDetails(
+                envelope.CloudEvent,
+                subscription,
+                TraceLogActivity.EndpointValidationSuccess);
+
+            _logger.LogInformation(
+                "Successfully validated subscription {SubscriptionId}, endpoint {Endpoint}",
+                subscription.Id,
+                subscription.EndPoint);
+
+            return null;
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _logger.LogError(
+                httpEx,
+                "Webhook validation failed for subscription {SubscriptionId}, endpoint {Endpoint}",
+                subscription.Id,
+                subscription.EndPoint);
+
+            await _traceLogService.CreateLogEntryWithSubscriptionDetails(
+                envelope.CloudEvent,
+                subscription,
+                TraceLogActivity.EndpointValidationFailed);
+
+            return new ServiceError(502, $"Webhook validation failed: {httpEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error occurred while validating subscription {SubscriptionId}, endpoint {Endpoint}",
+                subscription.Id,
+                subscription.EndPoint);
+
+            await _traceLogService.CreateLogEntryWithSubscriptionDetails(
+                envelope.CloudEvent,
+                subscription,
+                TraceLogActivity.EndpointValidationFailed);
+
+            return new ServiceError(500, $"Validation error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Creates a cloud event envelope to wrap the subscription validation event.
+    /// </summary>
+    private CloudEventEnvelope CreateValidateEvent(Subscription subscription)
+    {
+        return new CloudEventEnvelope
+        {
+            Consumer = subscription.Consumer,
+            Endpoint = subscription.EndPoint,
+            SubscriptionId = subscription.Id,
+            CloudEvent = new(CloudEventsSpecVersion.V1_0)
+            {
+                Id = Guid.NewGuid().ToString(),
+                Source = new Uri(_platformSettings.ApiEventsEndpoint + "subscriptions/" + subscription.Id),
+                Type = "platform.events.validatesubscription"
+            }
+        };
     }
 
     /// <summary>

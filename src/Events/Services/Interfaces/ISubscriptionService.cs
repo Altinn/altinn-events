@@ -31,5 +31,11 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// </summary>
         /// <returns>A list of subscriptions created by the current user.</returns>
         public Task<(List<Subscription> Subscription, ServiceError Error)> GetAllSubscriptions();
+
+        /// <summary>
+        /// Sends a validation event to the subscription endpoint and validates the response. This is used to validate the subscription when it is created or updated.
+        /// </summary>
+        /// <param name="subscription">The subscription to validate</param>
+        public Task<ServiceError> SendAndValidate(Subscription subscription);
     }
 }

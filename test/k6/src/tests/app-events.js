@@ -146,7 +146,8 @@ export default function runTests(data) {
 
       TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl);
 
-      nextUrl = TC03_GetAppEventsForParty(data);
+      nextUrl = TC03a_GetAppEventsForParty_From(data);
+      TC03b_GetAppEventsForParty_After1(data);
 
       TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
     } else {

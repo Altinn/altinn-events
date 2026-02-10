@@ -1,0 +1,25 @@
+meta {
+  name: Push Event
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{PlatformHostUrl}}/events/api/v1/outbound
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {"id":"eae8d8a7-4659-43c0-83cd-42f673eff8cf",
+  "source":"https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd",
+  "specversion":"1.0",
+  "type":"app.instance.created",
+  "subject":"/party/50019855",
+  "alternativesubject":"/person/16035001577",
+  "time": "2022-05-12T00:02:07.541482+00:00"}
+}
+
+settings {
+  encodeUrl: true
+}
