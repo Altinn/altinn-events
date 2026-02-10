@@ -39,11 +39,11 @@ namespace Altinn.Platform.Events.Services
         public async Task Send(CloudEventEnvelope envelope, CancellationToken cancellationToken)
         {
             string payload = GetPayload(envelope);
-            StringContent httpContent = new(payload, Encoding.UTF8, "application/json");
+            using StringContent httpContent = new(payload, Encoding.UTF8, "application/json");
 
             try
             {
-                HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent, cancellationToken);
+                using HttpResponseMessage response = await _client.PostAsync(envelope.Endpoint, httpContent, cancellationToken);
 
                 // log response from webhook to Events
                 await _traceLogService.CreateWebhookResponseEntry(GetLogEntry(envelope, response.StatusCode, response.IsSuccessStatusCode));
