@@ -15,4 +15,17 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <returns>A task representing the asynchronous operation</returns>
         Task SendAsync(CloudEventEnvelope envelope);
     }
+
+/// <summary>
+/// Interface to send content to webhooks
+/// </summary>
+public interface IWebhookService
+{
+    /// <summary>
+    /// Send cloudevent to webhook
+    /// </summary>
+    /// <param name="envelope">CloudEventEnvelope, includes content and uri</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task Send(CloudEventEnvelope envelope, CancellationToken cancellationToken);
+}
 }
