@@ -7,8 +7,6 @@ using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Services.Interfaces;
 using Azure.Messaging.ServiceBus;
-using Microsoft.Extensions.Options;
-using Npgsql;
 using Wolverine.ErrorHandling;
 using Wolverine.Runtime.Handlers;
 
@@ -22,7 +20,7 @@ public static class SendToOutboundHandler
     /// <summary>
     /// Gets or sets the Wolverine settings used for configuring error handling policies.
     /// </summary>
-    internal static WolverineSettings Settings { get; set; }
+    public static WolverineSettings Settings { get; set; } = null!;
 
     /// <summary>
     /// Configures error handling for the inbound queue handler.
