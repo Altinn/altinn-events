@@ -220,6 +220,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     // Set static settings for handlers before Wolverine discovers them
     SaveEventHandler.Settings = wolverineSettings;
     SendToOutboundHandler.Settings = wolverineSettings;
+    SendEventToSubscriberHandler.Settings = wolverineSettings;
 
     services.AddWolverine(opts =>
     {
@@ -243,7 +244,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 .ProcessInline();
             opts.ListenToAzureServiceBusQueue(wolverineSettings.InboundQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
-                .ProcessInline();                
+                .ProcessInline();
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.OutboundQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
             opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
@@ -259,6 +263,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
     services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
+    services.Configure<EventsOutboundSettings>(config.GetSection("EventsOutboundSettings"));
     services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
@@ -327,6 +332,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
+    services.AddHttpClient<IWebhookService, WebhookService>();
 
     services.AddTransient<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
