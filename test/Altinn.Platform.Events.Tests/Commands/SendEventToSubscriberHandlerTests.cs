@@ -258,4 +258,41 @@ public class SendEventToSubscriberHandlerTests
         Assert.Equal(settings.EnableServiceBus, SendEventToSubscriberHandler.Settings.EnableServiceBus);
         Assert.Equal(settings.OutboundQueuePolicy.CooldownDelaysMs, SendEventToSubscriberHandler.Settings.OutboundQueuePolicy.CooldownDelaysMs);
     }
+
+    [Fact]
+    public async Task Handle_WithSlackEndpoint_CallsWebhookServiceWithCorrectEnvelope()
+    {
+        // Arrange
+        var slackEndpoint = new Uri("https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX");
+        var envelope = new CloudEventEnvelope
+        {
+            CloudEvent = new CloudEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Source = new Uri("https://test.altinn.no/events"),
+                Type = "test.slack.event",
+                Time = DateTime.UtcNow
+            },
+            Endpoint = slackEndpoint,
+            Consumer = "org:slackorg",
+            SubscriptionId = 999,
+            Pushed = DateTime.UtcNow
+        };
+
+        var command = new OutboundEventCommand(envelope);
+
+        _mockWebhookService
+            .Setup(s => s.Send(It.IsAny<CloudEventEnvelope>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await SendEventToSubscriberHandler.Handle(command, _mockWebhookService.Object, _cancellationToken);
+
+        // Assert
+        _mockWebhookService.Verify(
+            s => s.Send(
+                It.Is<CloudEventEnvelope>(e => e.Endpoint.Host.Contains("slack.com") && e.SubscriptionId == 999), 
+                _cancellationToken),
+            Times.Once);
+    }
 }
