@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    string reason = await response.Content.ReadAsStringAsync();
+                    string reason = await response.Content.ReadAsStringAsync(cancellationToken);
                     _logger.LogError("WebhookService send failed to send cloud event id {CloudEventId} {SubscriptionId} {Reason} {Response}", envelope.CloudEvent?.Id, envelope.SubscriptionId, reason, response);
 
                     throw new HttpRequestException(reason);

@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.Commands;
 /// <summary>
 /// Handles outbound event commands by forwarding events to external webhooks (subscriptions).
 /// </summary>
-public class SendEventToSubscriberHandler
+public static class SendEventToSubscriberHandler
 {
     /// <summary>
     /// Gets or sets the Wolverine settings used for configuring error handling policies.
