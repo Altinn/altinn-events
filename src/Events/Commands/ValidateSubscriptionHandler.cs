@@ -32,7 +32,7 @@ public static class ValidateSubscriptionHandler
             throw new InvalidOperationException("WolverineSettings must be set before handler configuration");
         }
 
-        var policy = Settings.InboundQueuePolicy;
+        var policy = Settings.ValidationQueuePolicy;
 
         chain
             .OnException<HttpRequestException>() // Authorization service errors when validating event against subscriptions
