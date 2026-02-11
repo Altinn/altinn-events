@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 using Altinn.Platform.Events.Extensions;
 using CloudNative.CloudEvents;
@@ -58,6 +59,34 @@ namespace Altinn.Platform.Events.Models
 
             CloudEvent = cloudEvent;
             return serializedEnvelope;
+        }
+
+        /// <summary>
+        /// Deserializes a JSON string into a CloudEventEnvelope.
+        /// CloudEvent property requires specialized deserialization handling.
+        /// </summary>
+        /// <param name="serializedEnvelope">The serialized CloudEventEnvelope JSON string</param>
+        /// <returns>The deserialized CloudEventEnvelope</returns>
+        public static CloudEventEnvelope Deserialize(string serializedEnvelope)
+        {
+            var jsonNode = JsonNode.Parse(serializedEnvelope);
+            var cloudEventNode = jsonNode["CloudEvent"];
+
+            // Deserialize CloudEvent separately using CloudEvents SDK
+            var cloudEvent = cloudEventNode != null
+                ? CloudEventExtensions.Deserialize(cloudEventNode.ToJsonString())
+                : null;
+
+            // Remove CloudEvent from the JSON to deserialize the rest
+            jsonNode.AsObject().Remove("CloudEvent");
+
+            // Deserialize the envelope without CloudEvent
+            var envelope = JsonSerializer.Deserialize<CloudEventEnvelope>(jsonNode.ToJsonString(), _jsonSerializerOptions);
+
+            // Restore the CloudEvent
+            envelope.CloudEvent = cloudEvent;
+
+            return envelope;
         }
     }
 }

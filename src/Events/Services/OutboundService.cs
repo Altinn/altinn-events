@@ -250,7 +250,8 @@ public class OutboundService : IOutboundService
 
             if (useAzureServiceBus)
             {
-                await _bus.PublishAsync(new OutboundEventCommand(cloudEventEnvelope));
+                string payload = cloudEventEnvelope.Serialize();
+                await _bus.PublishAsync(new OutboundEventCommand(payload));
             }
             else
             {

@@ -3,6 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Contracts;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.IntegrationTests.Data;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
@@ -35,7 +36,7 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
         await using (factory)
         {
             var cloudEvent = CloudEventTestData.CreateTestCloudEvent();
-            var command = new RegisterEventCommand(cloudEvent);
+            var command = new RegisterEventCommand(cloudEvent.Serialize());
 
             // Act
             await factory.PublishMessageAsync(command);
@@ -76,7 +77,7 @@ public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixtur
         await using (factory)
         {
             var cloudEvent = CloudEventTestData.CreateTestCloudEvent();
-            var command = new RegisterEventCommand(cloudEvent);
+            var command = new RegisterEventCommand(cloudEvent.Serialize());
 
             // Act
             await factory.PublishMessageAsync(command);

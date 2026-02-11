@@ -74,7 +74,8 @@ namespace Altinn.Platform.Events.Services
         {
             try
             {
-                await _bus.PublishAsync(new RegisterEventCommand(cloudEvent));
+                string payload = cloudEvent.Serialize();
+                await _bus.PublishAsync(new RegisterEventCommand(payload));
             }
             catch (Exception ex)
             {
@@ -151,7 +152,8 @@ namespace Altinn.Platform.Events.Services
         {
             EnsureCorrectResourceFormat(cloudEvent);
             await Save(cloudEvent);
-            await _bus.PublishAsync(new InboundEventCommand(cloudEvent));
+            string payload = cloudEvent.Serialize();
+            await _bus.PublishAsync(new InboundEventCommand(payload));
         }
 
         /// <summary>
