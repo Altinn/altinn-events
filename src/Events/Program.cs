@@ -239,9 +239,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             opts.PublishMessage<ValidateSubscriptionCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
 
-            opts.ListenToAzureServiceBusQueue(wolverineSettings.OutboundQueueName)
-                .ListenerCount(wolverineSettings.ListenerCount)
-                .ProcessInline();                       
             opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
