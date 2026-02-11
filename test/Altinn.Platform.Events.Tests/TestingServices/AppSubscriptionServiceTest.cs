@@ -11,6 +11,8 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Wolverine;
 using Xunit;
@@ -306,7 +308,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorization,
                 register,
                 messageBus,
-                claimsPrincipalProvider);
+                claimsPrincipalProvider,
+                Options.Create(new PlatformSettings()),
+                new Mock<IWebhookService>().Object,
+                new Mock<ILogger<AppSubscriptionService>>().Object);
         }
     }
 }

@@ -221,6 +221,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     SaveEventHandler.Settings = wolverineSettings;
     SendToOutboundHandler.Settings = wolverineSettings;
     SendEventToSubscriberHandler.Settings = wolverineSettings;
+    ValidateSubscriptionHandler.Settings = wolverineSettings;
 
     services.AddWolverine(opts =>
     {
