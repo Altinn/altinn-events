@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -145,5 +146,14 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         throw new DirectoryNotFoundException(
             $"Could not find Migration directory. Expected structure: <repo-root>/src/Events/Migration. " +
             $"Searched up to 10 parent directories from: {AppContext.BaseDirectory}");
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        // Give Wolverine's Service Bus processors time to settle before disposal
+        // This prevents "ObjectDisposedException: Cannot access a disposed object" errors
+        // that can occur when processors are still active during shutdown
+        await Task.Delay(150);
+        await base.DisposeAsync();
     }
 }
