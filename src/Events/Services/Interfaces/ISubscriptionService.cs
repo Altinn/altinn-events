@@ -38,7 +38,6 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// </summary>
         /// <param name="subscription">The subscription to validate</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// 
         public Task SendAndValidate(Subscription subscription, CancellationToken cancellationToken);
     }
 }
