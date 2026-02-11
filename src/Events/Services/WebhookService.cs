@@ -87,7 +87,7 @@ namespace Altinn.Platform.Events.Services
             }
         }
 
-        /// inheritdoc/>
+        /// <inheritdoc/>
         public async Task Send(CloudEventEnvelope envelope, CancellationToken cancellationToken)
         {
             string payload = GetPayload(envelope);
