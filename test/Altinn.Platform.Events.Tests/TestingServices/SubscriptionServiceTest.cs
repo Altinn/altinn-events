@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.AccessManagement.Core.Models;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
@@ -15,6 +16,8 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Wolverine;
 using Xunit;
@@ -277,7 +280,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 repository ?? new SubscriptionRepositoryMock(),
                 authoriationMock.Object,
                 messageBus ?? new Mock<IMessageBus>().Object,
-                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object);
+                claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
+                Options.Create(new PlatformSettings()),
+                new Mock<IWebhookService>().Object,
+                new Mock<ILogger<SubscriptionService>>().Object);
         }
 
         public enum EntityType

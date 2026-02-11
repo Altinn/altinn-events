@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -9,6 +10,8 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Wolverine;
 using Xunit;
@@ -156,10 +159,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             }
 
             return new GenericSubscriptionService(
-                repoMock.Object, 
-                authorizationMock.Object, 
-                messageBus, 
-                claimsProviderMock.Object);
+                repoMock.Object,
+                authorizationMock.Object,
+                messageBus,
+                claimsProviderMock.Object,
+                Options.Create(new PlatformSettings()),
+                new Mock<IWebhookService>().Object,
+                new Mock<ILogger<GenericSubscriptionService>>().Object);
         }
     }
 }
