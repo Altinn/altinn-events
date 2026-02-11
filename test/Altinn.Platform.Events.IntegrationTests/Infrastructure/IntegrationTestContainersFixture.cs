@@ -22,7 +22,7 @@ namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
 /// </summary>
 public class IntegrationTestContainersFixture : IAsyncLifetime
 {
-    private const string MssqlSaPassword = "YourStrong!Passw0rd";
+    private const string _mssqlSaPassword = "YourStrong!Passw0rd";
     private INetwork? _network;
     private IContainer? _postgresContainer;
     private IContainer? _mssqlContainer;
@@ -101,7 +101,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
                 .WithNetwork(_network)
                 .WithNetworkAliases("mssql")
                 .WithEnvironment("ACCEPT_EULA", "Y")
-                .WithEnvironment("MSSQL_SA_PASSWORD", MssqlSaPassword)
+                .WithEnvironment("MSSQL_SA_PASSWORD", _mssqlSaPassword)
                 .WithAutoRemove(true)
                 .Build();
 
@@ -117,7 +117,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
             _serviceBusEmulatorContainer = new ContainerBuilder(ContainerImageUtils.GetImage("serviceBusEmulator"))
                 .WithNetwork(_network)
                 .WithEnvironment("SQL_SERVER", "mssql")
-                .WithEnvironment("MSSQL_SA_PASSWORD", MssqlSaPassword)
+                .WithEnvironment("MSSQL_SA_PASSWORD", _mssqlSaPassword)
                 .WithEnvironment("ACCEPT_EULA", "Y")
                 .WithEnvironment("SQL_WAIT_INTERVAL", "5")
                 .WithBindMount(configPath, "/ServiceBus_Emulator/ConfigFiles/Config.json", AccessMode.ReadOnly)
