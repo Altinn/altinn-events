@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
-using Altinn.Platform.Events.Models;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 using Wolverine.ErrorHandling;
 using Wolverine.Runtime.Handlers;
@@ -54,7 +54,7 @@ public static class SendEventToSubscriberHandler
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     public static async Task Handle(OutboundEventCommand message, IWebhookService webhookService, CancellationToken cancellationToken)
     {
-        var envelope = CloudEventEnvelope.Deserialize(message.Payload);
+        var envelope = message.Payload.DeserializeToEnvelope();
         await webhookService.Send(envelope, cancellationToken);
     }
 }

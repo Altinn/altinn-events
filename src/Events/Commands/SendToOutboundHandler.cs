@@ -57,7 +57,7 @@ public static class SendToOutboundHandler
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     public static async Task Handle(InboundEventCommand message, IOutboundService outboundService, CancellationToken cancellationToken)
     {
-        var cloudEvent = CloudEventExtensions.Deserialize(message.Payload);
+        var cloudEvent = message.Payload.Deserialize();
         await outboundService.PostOutbound(cloudEvent, cancellationToken, true);
     }
 }

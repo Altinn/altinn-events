@@ -22,12 +22,12 @@ namespace Altinn.Platform.Events.Extensions
         }
 
         /// <summary>
-        /// Deserializes a JSON string into a CloudEvent using a JsonEventFormatter
+        /// Deserializes a JSON string to a CloudEvent using a JsonEventFormatter
         /// </summary>
         /// <param name="payload">The serialized CloudEvent JSON string</param>
         /// <param name="formatter">Optional custom formatter, defaults to JsonEventFormatter</param>
         /// <returns>The deserialized CloudEvent</returns>
-        public static CloudEvent Deserialize(string payload, CloudEventFormatter formatter = null)
+        public static CloudEvent Deserialize(this string payload, CloudEventFormatter formatter = null)
         {
             formatter ??= new JsonEventFormatter();
             var bytes = Encoding.UTF8.GetBytes(payload);
