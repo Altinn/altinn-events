@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Models;
 
@@ -14,5 +15,12 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <param name="envelope">The cloud event envelope containing the event and endpoint information</param>
         /// <returns>A task representing the asynchronous operation</returns>
         Task SendAsync(CloudEventEnvelope envelope);
+
+        /// <summary>
+        /// Send cloudevent to webhook
+        /// </summary>
+        /// <param name="envelope">CloudEventEnvelope, includes content and uri</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        Task Send(CloudEventEnvelope envelope, CancellationToken cancellationToken);
     }
 }

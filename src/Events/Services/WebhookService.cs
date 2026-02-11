@@ -1,9 +1,11 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Reflection.Metadata;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Events.Configuration;
@@ -21,6 +23,7 @@ namespace Altinn.Platform.Events.Services
     public class WebhookService : IWebhookService
     {
         private readonly HttpClient _httpClient;
+        private readonly ITraceLogService _traceLogService;
         private readonly ILogger<WebhookService> _logger;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly ICertificateResolverService _certificateResolverService;
@@ -83,6 +86,34 @@ namespace Altinn.Platform.Events.Services
                 throw;
             }
         }
+
+        /// inheritdoc/>
+        public async Task Send(CloudEventEnvelope envelope, CancellationToken cancellationToken)
+        {
+            string payload = GetPayload(envelope);
+            using StringContent httpContent = new(payload, Encoding.UTF8, "application/json");
+
+            try
+            {
+                using HttpResponseMessage response = await _httpClient.PostAsync(envelope.Endpoint, httpContent, cancellationToken);
+
+                // log response from webhook to Events
+                await _traceLogService.CreateWebhookResponseEntry(GetLogEntry(envelope, response.StatusCode, response.IsSuccessStatusCode));
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string reason = await response.Content.ReadAsStringAsync(cancellationToken);
+                    _logger.LogError("WebhookService send failed to send cloud event id {CloudEventId} {SubscriptionId} {Reason} {Response}", envelope.CloudEvent?.Id, envelope.SubscriptionId, reason, response);
+
+                    throw new HttpRequestException(reason);
+                }
+            }
+            catch (Exception e) 
+            {
+                _logger.LogError(e, "Send to webhook with {SubscriptionId} failed with error message {Message}", envelope.SubscriptionId, e.Message);
+                throw;
+            }
+            }
 
         /// <summary>
         /// Prepares the provided cloud envelope as serialized payload
