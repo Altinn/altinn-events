@@ -4,7 +4,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Extensions;
 using CloudNative.CloudEvents;
-using CloudNative.CloudEvents.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
@@ -17,14 +16,11 @@ namespace Altinn.Platform.Events.Formatters
     /// </summary>
     public class CloudEventJsonOutputFormatter : TextOutputFormatter
     {
-        private readonly CloudEventFormatter _formatter;
-
         /// <summary>
-        /// Constructs a new instance that uses the given formatter for deserialization.
+        /// Constructs a new instance.
         /// </summary>
-        public CloudEventJsonOutputFormatter(CloudEventFormatter formatter)
-        {            
-            _formatter = Validation.CheckNotNull(formatter, nameof(formatter));
+        public CloudEventJsonOutputFormatter()
+        {
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/cloudevents+json"));
 
             SupportedEncodings.Add(Encoding.UTF8);
@@ -37,7 +33,7 @@ namespace Altinn.Platform.Events.Formatters
             var response = context.HttpContext.Response;
             if (context.Object is CloudEvent cloudEvent)
             {
-                await response.WriteAsync(cloudEvent.Serialize(_formatter));
+                await response.WriteAsync(cloudEvent.Serialize());
                 return;
             }
 
@@ -48,7 +44,7 @@ namespace Altinn.Platform.Events.Formatters
                 await response.WriteAsync("[");
                 for (int i = 0; i < cloudEvents.Count; i++)
                 {
-                    await response.WriteAsync(cloudEvents[i].Serialize(_formatter));
+                    await response.WriteAsync(cloudEvents[i].Serialize());
                     if (i != cloudEvents.Count - 1)
                     {
                         await response.WriteAsync(", ");

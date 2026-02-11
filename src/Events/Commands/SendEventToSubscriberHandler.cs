@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 using Wolverine.ErrorHandling;
 using Wolverine.Runtime.Handlers;
@@ -45,13 +46,15 @@ public static class SendEventToSubscriberHandler
     }
     
     /// <summary>
-    /// Handles the processing of an event command by checking subscriptions and posting the inbound event to the outbound service if authorized.
+    /// Handles the processing of an outbound event command by sending the event to external webhooks.
+    /// Deserializes the CloudEventEnvelope payload before processing.
     /// </summary>
-    /// <param name="message">The inbound event command containing the event to be sent outbound.</param>
+    /// <param name="message">The outbound event command containing the serialized envelope payload.</param>
     /// <param name="webhookService">The webhook service responsible for posting the event to external subscribers.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     public static async Task Handle(OutboundEventCommand message, IWebhookService webhookService, CancellationToken cancellationToken)
     {
-        await webhookService.Send(message.Envelope, cancellationToken);
+        var envelope = message.Payload.DeserializeToEnvelope();
+        await webhookService.Send(envelope, cancellationToken);
     }
 }

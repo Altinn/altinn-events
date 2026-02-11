@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 using Azure.Messaging.ServiceBus;
 using Wolverine.ErrorHandling;
@@ -49,12 +50,14 @@ public static class SendToOutboundHandler
 
     /// <summary>
     /// Handles the processing of an event command by checking subscriptions and posting the inbound event to the outbound service if authorized.
+    /// Deserializes the CloudEvent payload before processing.
     /// </summary>
-    /// <param name="message">The inbound event command containing the event to be sent outbound.</param>
+    /// <param name="message">The inbound event command containing the serialized event payload.</param>
     /// <param name="outboundService">The outbound service responsible for posting the event.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     public static async Task Handle(InboundEventCommand message, IOutboundService outboundService, CancellationToken cancellationToken)
     {
-        await outboundService.PostOutbound(message.InboundEvent, cancellationToken, true);
+        var cloudEvent = message.Payload.Deserialize();
+        await outboundService.PostOutbound(cloudEvent, cancellationToken, true);
     }
 }

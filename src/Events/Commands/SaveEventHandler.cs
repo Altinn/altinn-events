@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 using Azure.Messaging.ServiceBus;
 using Wolverine.ErrorHandling;
@@ -47,9 +48,11 @@ public static class SaveEventHandler
 
     /// <summary>
     /// Handles the registration of an event command.
+    /// Deserializes the CloudEvent payload before processing.
     /// </summary>
     public static async Task Handle(RegisterEventCommand message, IEventsService eventsService, CancellationToken cancellationToken)
     {
-        await eventsService.SaveAndPublish(message.RegisterEvent, cancellationToken);
+        var cloudEvent = message.Payload.Deserialize();
+        await eventsService.SaveAndPublish(cloudEvent, cancellationToken);
     }
 }

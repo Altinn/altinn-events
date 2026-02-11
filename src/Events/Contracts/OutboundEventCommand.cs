@@ -1,10 +1,8 @@
-﻿using Altinn.Platform.Events.Models;
-
-namespace Altinn.Platform.Events.Contracts;
+﻿namespace Altinn.Platform.Events.Contracts;
 
 /// <summary>
-/// Represents a command to process an outbound event using a <see cref="CloudEventEnvelope"/>.
+/// Represents a command to process an outbound event using a serialized CloudEventEnvelope payload.
 /// </summary>
-/// <param name="Envelope">The cloud event envelope to process.</param>
+/// <param name="Payload">The serialized CloudEventEnvelope JSON string.</param>
 public record OutboundEventCommand(
-    CloudEventEnvelope Envelope);
+    string Payload);
