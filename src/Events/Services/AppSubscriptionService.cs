@@ -23,7 +23,7 @@ namespace Altinn.Platform.Events.Services
         private const string OrganisationPrefix = "/organisation/";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
+        /// Initializes a new instance of the <see cref="AppSubscriptionService"/> class.
         /// </summary>
         public AppSubscriptionService(
             ISubscriptionRepository repository,
@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Services
             IClaimsPrincipalProvider claimsPrincipalProvider,
             IOptions<PlatformSettings> platformSettings,
             IWebhookService webhookService,
-            ILogger<SubscriptionService> logger)
+            ILogger<AppSubscriptionService> logger)
             : base(repository, authorization, bus, claimsPrincipalProvider, platformSettings, webhookService, logger)
         {
             _register = register;

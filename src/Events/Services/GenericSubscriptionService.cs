@@ -14,7 +14,7 @@ namespace Altinn.Platform.Events.Services;
 public class GenericSubscriptionService : SubscriptionService, IGenericSubscriptionService
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
+    /// Initializes a new instance of the <see cref="GenericSubscriptionService"/> class.
     /// </summary>
     public GenericSubscriptionService(
         ISubscriptionRepository repository,
@@ -23,7 +23,7 @@ public class GenericSubscriptionService : SubscriptionService, IGenericSubscript
         IClaimsPrincipalProvider claimsPrincipalProvider,
         IOptions<PlatformSettings> platformSettings,
         IWebhookService webhookService,
-        ILogger<SubscriptionService> logger)
+        ILogger<GenericSubscriptionService> logger)
         : base(repository, authorization, bus, claimsPrincipalProvider, platformSettings, webhookService, logger)
     {
     }
