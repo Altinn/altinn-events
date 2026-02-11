@@ -1,9 +1,11 @@
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Wolverine;
 
 namespace Altinn.Platform.Events.Services;
@@ -18,8 +20,11 @@ public class GenericSubscriptionService : SubscriptionService, IGenericSubscript
         ISubscriptionRepository repository,
         IAuthorization authorization,
         IMessageBus bus,
-        IClaimsPrincipalProvider claimsPrincipalProvider)
-        : base(repository, authorization, bus, claimsPrincipalProvider)
+        IClaimsPrincipalProvider claimsPrincipalProvider,
+        IOptions<PlatformSettings> platformSettings,
+        IWebhookService webhookService,
+        ILogger<SubscriptionService> logger)
+        : base(repository, authorization, bus, claimsPrincipalProvider, platformSettings, webhookService, logger)
     {
     }
 
