@@ -7,6 +7,11 @@ namespace Altinn.Platform.Events.Configuration;
 public class PlatformSettings
 {
     /// <summary>
+    /// Gets or sets the url for the Events API endpoint
+    /// </summary>
+    public string ApiEventsEndpoint { get; set; }
+
+    /// <summary>
     /// Gets or sets the base address for the Register API.
     /// </summary>
     public string RegisterApiBaseAddress { get; set; }
@@ -31,4 +36,9 @@ public class PlatformSettings
     /// The lifetime to cache subscriptions
     /// </summary>
     public int SubscriptionCachingLifetimeInSeconds { get; set; }
+
+    /// <summary>
+    /// Certificate thumbprint for service-to-service authentication
+    /// </summary>
+    public string CertificateThumbprint { get; set; }
 }

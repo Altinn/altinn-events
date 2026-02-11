@@ -319,6 +319,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     });
 
     services.AddHttpClient<IRegisterService, RegisterService>();
+    services.AddHttpClient<IWebhookService, WebhookService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddScoped<IEventsService, EventsService>();
     services.AddScoped<IOutboundService, OutboundService>();
@@ -332,6 +333,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
+    services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
     services.AddHttpClient<IWebhookService, WebhookService>();
 
     services.AddTransient<IAuthorization, AuthorizationService>();
@@ -362,7 +364,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         {
             [new OpenApiSecuritySchemeReference("Bearer", document)] = []
         });
-    });
+    });    
 }
 
 void AddAzureMonitorTelemetryExporters(IServiceCollection services, string applicationInsightsConnectionString)
