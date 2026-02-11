@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -10,29 +11,49 @@ namespace Altinn.Platform.Events.Extensions
     /// </summary>
     public static class CloudEventEnvelopeExtensions
     {
-        private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
+        private static readonly JsonSerializerOptions _cachedJsonSerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        private static readonly JsonSerializerOptions _cachedIgnoreNullOptions = new()
         {
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         };
 
+        private static readonly JsonNodeOptions _jsonNodeOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         /// <summary>
-        /// Serializes the CloudEventEnvelope to a JSON string.
+        /// Serializes the CloudEventEnvelope to a JSON string, including the CloudEvent.
         /// CloudEvent property requires specialized serialization handling.
-        /// Uses string manipulation to insert the serialized cloud event.
         /// </summary>
         /// <param name="envelope">The CloudEventEnvelope to serialize</param>
         /// <returns>A JSON serialized CloudEventEnvelope</returns>
         public static string Serialize(this CloudEventEnvelope envelope)
         {
+            if (envelope.CloudEvent == null)
+            {
+                throw new InvalidOperationException("CloudEvent cannot be null during serialization.");
+            }
+
             var cloudEvent = envelope.CloudEvent;
             string serializedCloudEvent = cloudEvent.Serialize();
             envelope.CloudEvent = null;
 
-            var partialSerializedEnvelope = JsonSerializer.Serialize(envelope, _jsonSerializerOptions);
+            var partialSerializedEnvelope = JsonSerializer.Serialize(envelope, _cachedIgnoreNullOptions);
             var index = partialSerializedEnvelope.LastIndexOf('}');
+            envelope.CloudEvent = cloudEvent; // Restore CloudEvent to its original state
+
+            if (index == -1)
+            {
+                throw new InvalidOperationException("Invalid JSON structure during serialization.");
+            }
+
             string serializedEnvelope = partialSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
 
-            envelope.CloudEvent = cloudEvent;
             return serializedEnvelope;
         }
 
@@ -44,22 +65,22 @@ namespace Altinn.Platform.Events.Extensions
         /// <returns>The deserialized CloudEventEnvelope</returns>
         public static CloudEventEnvelope DeserializeToEnvelope(this string serializedEnvelope)
         {
-            var jsonNode = JsonNode.Parse(serializedEnvelope);
-            var cloudEventNode = jsonNode["CloudEvent"];
+            ArgumentException.ThrowIfNullOrEmpty(serializedEnvelope);
 
-            // Deserialize CloudEvent separately using CloudEvents SDK
-            var cloudEvent = cloudEventNode?.ToJsonString().Deserialize();
+            var n = JsonNode.Parse(serializedEnvelope, _jsonNodeOptions) ?? throw new ArgumentException("Failed to parse serialized envelope as JSON", nameof(serializedEnvelope));
 
-            // Remove CloudEvent from the JSON to deserialize the rest
-            jsonNode.AsObject().Remove("CloudEvent");
+            var cloudEventNode = n["cloudEvent"] ?? throw new ArgumentException("Serialized envelope does not contain a cloudEvent property", nameof(serializedEnvelope));
 
-            // Deserialize the envelope without CloudEvent
-            var envelope = JsonSerializer.Deserialize<CloudEventEnvelope>(jsonNode.ToJsonString(), _jsonSerializerOptions);
+            string serializedCloudEvent = cloudEventNode.ToString();
+            var cloudEvent = serializedCloudEvent.Deserialize();
 
-            // Restore the CloudEvent
-            envelope.CloudEvent = cloudEvent;
+            n["cloudEvent"] = null;
+            CloudEventEnvelope cloudEventEnvelope = n.Deserialize<CloudEventEnvelope>(_cachedJsonSerializerOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize CloudEventEnvelope");
 
-            return envelope;
+            cloudEventEnvelope.CloudEvent = cloudEvent;
+
+            return cloudEventEnvelope;
         }
     }
 }

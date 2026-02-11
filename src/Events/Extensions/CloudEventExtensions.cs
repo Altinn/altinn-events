@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
@@ -14,24 +15,23 @@ namespace Altinn.Platform.Events.Extensions
         ///  Serializes the cloud event using a JsonEventFormatter
         /// </summary>
         /// <returns>The json serialized cloud event</returns>
-        public static string Serialize(this CloudEvent cloudEvent, CloudEventFormatter formatter = null)
+        public static string Serialize(this CloudEvent cloudEvent)
         {
-            formatter ??= new JsonEventFormatter();
+            var formatter = new JsonEventFormatter();
             var bytes = formatter.EncodeStructuredModeMessage(cloudEvent, out _);
             return Encoding.UTF8.GetString(bytes.Span);
         }
 
         /// <summary>
-        /// Deserializes a JSON string to a CloudEvent using a JsonEventFormatter
+        ///  Deserializes a json string to a the cloud event using a JsonEventFormatter
         /// </summary>
-        /// <param name="payload">The serialized CloudEvent JSON string</param>
-        /// <param name="formatter">Optional custom formatter, defaults to JsonEventFormatter</param>
-        /// <returns>The deserialized CloudEvent</returns>
-        public static CloudEvent Deserialize(this string payload, CloudEventFormatter formatter = null)
+        /// <returns>The cloud event</returns>
+        public static CloudEvent Deserialize(this string item)
         {
-            formatter ??= new JsonEventFormatter();
-            var bytes = Encoding.UTF8.GetBytes(payload);
-            return formatter.DecodeStructuredModeMessage(bytes, null, null);
+            var formatter = new JsonEventFormatter();
+
+            var cloudEvent = formatter.DecodeStructuredModeMessage(new MemoryStream(Encoding.UTF8.GetBytes(item)), null, null);
+            return cloudEvent;
         }
 
         /// <summary>
