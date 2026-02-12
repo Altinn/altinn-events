@@ -18,7 +18,7 @@ namespace Altinn.Platform.Events.IntegrationTests.TestingServiceBus;
 /// Uses Wolverine's built-in message tracking instead of manually polling Azure Service Bus.
 /// </summary>
 [Collection(nameof(IntegrationTestContainersCollection))]
-public class RetryPolicyIntegrationTests(IntegrationTestContainersFixture fixture)
+public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixture)
 {
     private readonly IntegrationTestContainersFixture _fixture = fixture;
 
