@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken
+  url: {{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken?env={{Environment}}&scopes=altinn:serviceowner/instances.read&org=ttd&orgNo=991825827
   body: none
   auth: basic
 }
