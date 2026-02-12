@@ -9,6 +9,7 @@ using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Services.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
+using Azure.Messaging.ServiceBus;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -156,5 +157,67 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         // that can occur when processors are still active during shutdown
         await Task.Delay(150);
         await base.DisposeAsync();
+
+        // Clean up test state to prevent cross-test pollution
+        await CleanupDatabaseAsync();
+        await DrainAllDeadLetterQueuesAsync();
+
+        GC.SuppressFinalize(this);
+    }
+
+    private async Task CleanupDatabaseAsync()
+    {
+        try
+        {
+            await using var dataSource = NpgsqlDataSource.Create(_fixture.PostgresConnectionString);
+            await using var cmd = dataSource.CreateCommand(
+                "DELETE FROM events.subscription; DELETE FROM events.events; DELETE FROM events.trace_log;");
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Factory] Database cleanup failed (non-fatal): {ex.Message}");
+        }
+    }
+
+    private async Task DrainAllDeadLetterQueuesAsync()
+    {
+        if (WolverineSettings == null)
+        {
+            return;
+        }
+
+        string[] queueNames =
+        [
+            WolverineSettings.RegistrationQueueName,
+            WolverineSettings.InboundQueueName,
+            WolverineSettings.OutboundQueueName,
+            WolverineSettings.ValidationQueueName
+        ];
+
+        try
+        {
+            await using var client = new ServiceBusClient(_fixture.ServiceBusConnectionString);
+
+            foreach (var queueName in queueNames)
+            {
+                await using var receiver = client.CreateReceiver($"{queueName}/$deadletterqueue");
+
+                while (true)
+                {
+                    var message = await receiver.ReceiveMessageAsync(TimeSpan.FromMilliseconds(500));
+                    if (message == null)
+                    {
+                        break;
+                    }
+
+                    await receiver.CompleteMessageAsync(message);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Factory] DLQ drain failed (non-fatal): {ex.Message}");
+        }
     }
 }
