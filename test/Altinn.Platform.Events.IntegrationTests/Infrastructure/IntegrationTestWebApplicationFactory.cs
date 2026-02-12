@@ -91,7 +91,8 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
             services.Replace(ServiceDescriptor.Singleton(new Mock<IAuthorization>().Object));
             services.Replace(ServiceDescriptor.Singleton(new Mock<IPDP>().Object));
             services.Replace(ServiceDescriptor.Singleton(new Mock<IPublicSigningKeyProvider>().Object));
-            services.Replace(ServiceDescriptor.Singleton(new Mock<IPostConfigureOptions<JwtCookieOptions>>().Object));
+            services.Replace(ServiceDescriptor.Singleton<IPostConfigureOptions<JwtCookieOptions>>(
+                new Mocks.Authentication.JwtCookiePostConfigureOptionsStub()));
             services.Replace(ServiceDescriptor.Singleton(CreateEventsQueueClientMock()));
 
             // Apply any additional test service configuration

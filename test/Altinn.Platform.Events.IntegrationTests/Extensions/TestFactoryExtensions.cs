@@ -1,8 +1,11 @@
 #nullable enable
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
+using Altinn.Platform.Events.IntegrationTests.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Wolverine;
 
@@ -33,6 +36,20 @@ public static class TestFactoryExtensions
         using var scope = factory.Host.Services.CreateScope();
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
         await messageBus.PublishAsync(message);
+    }
+
+    /// <summary>
+    /// Creates an HttpClient with a Bearer token for the given org and scope.
+    /// </summary>
+    public static HttpClient CreateAuthenticatedClient(
+        this IntegrationTestWebApplicationFactory factory,
+        string org = "digdir",
+        string? scope = null)
+    {
+        var client = factory.CreateClient();
+        var token = PrincipalUtil.GetOrgToken(org, scope: scope);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
     }
 
     /// <summary>
