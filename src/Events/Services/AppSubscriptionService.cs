@@ -1,12 +1,14 @@
 using System;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Wolverine;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -21,15 +23,18 @@ namespace Altinn.Platform.Events.Services
         private const string OrganisationPrefix = "/organisation/";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
+        /// Initializes a new instance of the <see cref="AppSubscriptionService"/> class.
         /// </summary>
         public AppSubscriptionService(
             ISubscriptionRepository repository,
             IAuthorization authorization,
             IRegisterService register,
-            IEventsQueueClient queue,
-            IClaimsPrincipalProvider claimsPrincipalProvider)
-            : base(repository, authorization, queue, claimsPrincipalProvider)
+            IMessageBus bus,
+            IClaimsPrincipalProvider claimsPrincipalProvider,
+            IOptions<PlatformSettings> platformSettings,
+            IWebhookService webhookService,
+            ILogger<AppSubscriptionService> logger)
+            : base(repository, authorization, bus, claimsPrincipalProvider, platformSettings, webhookService, logger)
         {
             _register = register;
             _claimsPrincipalProvider = claimsPrincipalProvider;

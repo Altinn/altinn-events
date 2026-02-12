@@ -18,6 +18,11 @@ public class PlatformSettings
     public int RegisterApiChunkSize { get; set; } = 100;
 
     /// <summary>
+    /// Gets or sets the url for the Events API endpoint
+    /// </summary>
+    public string ApiEventsEndpoint { get; set; }
+
+    /// <summary>
     /// Gets or sets the url for the Profile API endpoint
     /// </summary>
     public string ApiProfileEndpoint { get; set; }

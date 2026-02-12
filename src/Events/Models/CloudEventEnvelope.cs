@@ -1,7 +1,5 @@
 using System;
-using System.Text.Json;
 
-using Altinn.Platform.Events.Extensions;
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Models
@@ -11,11 +9,6 @@ namespace Altinn.Platform.Events.Models
     /// </summary>
     public class CloudEventEnvelope
     {
-        private static readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
-        {
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
-
         /// <summary>
         /// The Event to push
         /// </summary>
@@ -40,24 +33,5 @@ namespace Altinn.Platform.Events.Models
         /// The subscription id that matched.
         /// </summary>
         public int SubscriptionId { get; set; }
-
-        /// <summary>
-        /// CloudEvent property requires specialized serialization handling.
-        /// Uses string manipulation to insert the serialized cloud event.
-        /// </summary>
-        /// <returns>A json serialized cloud envelope</returns>
-        public string Serialize()
-        {
-            var cloudEvent = CloudEvent;
-            string serializedCloudEvent = CloudEvent.Serialize();
-            CloudEvent = null;
-
-            var partalSerializedEnvelope = JsonSerializer.Serialize(this, _jsonSerializerOptions);
-            var index = partalSerializedEnvelope.LastIndexOf('}');
-            string serializedEnvelope = partalSerializedEnvelope.Insert(index, $", \"CloudEvent\":{serializedCloudEvent}");
-
-            CloudEvent = cloudEvent;
-            return serializedEnvelope;
-        }
     }
 }

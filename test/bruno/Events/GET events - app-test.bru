@@ -1,0 +1,19 @@
+meta {
+  name: GET events - app-test
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{PlatformHostUrl}}/events/api/v1/app/ttd/apps-test
+  body: none
+  auth: inherit
+}
+
+params:query {
+  after: 5b9a8887-0023-4f07-8791-d98e15a3542b
+}
+
+settings {
+  encodeUrl: true
+}
