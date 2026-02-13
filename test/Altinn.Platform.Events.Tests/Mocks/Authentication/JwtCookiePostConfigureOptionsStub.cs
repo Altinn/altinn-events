@@ -28,13 +28,17 @@ namespace Altinn.Platform.Events.Tests.Mocks.Authentication
 
             if (!string.IsNullOrEmpty(options.MetadataAddress))
             {
-                if (!options.MetadataAddress.EndsWith("/", StringComparison.Ordinal))
+                if (!options.MetadataAddress.EndsWith('/'))
                 {
                     options.MetadataAddress += "/";
                 }
-            }
 
-            options.MetadataAddress += ".well-known/openid-configuration";
+                if (!options.MetadataAddress.EndsWith(".well-known/openid-configuration", StringComparison.Ordinal))
+                {
+                    options.MetadataAddress += ".well-known/openid-configuration";
+                }
+            }
+            
             options.ConfigurationManager = new ConfigurationManagerStub();
         }
     }

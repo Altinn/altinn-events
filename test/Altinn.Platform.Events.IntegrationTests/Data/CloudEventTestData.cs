@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using Altinn.Platform.Events.Models;
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.IntegrationTests.Data;
@@ -29,5 +30,20 @@ public static class CloudEventTestData
         cloudEvent["resource"] = "urn:altinn:resource:app_ttd_test-app";
 
         return cloudEvent;
+    }
+
+    /// <summary>
+    /// Creates a test CloudEventEnvelope wrapping a test CloudEvent.
+    /// </summary>
+    public static CloudEventEnvelope CreateTestEnvelope(string? id = null)
+    {
+        return new CloudEventEnvelope
+        {
+            CloudEvent = CreateTestCloudEvent(id),
+            Consumer = "/org/digdir",
+            Endpoint = new Uri("https://test-subscriber.example.com/webhook"),
+            SubscriptionId = 1,
+            Pushed = DateTime.UtcNow
+        };
     }
 }
