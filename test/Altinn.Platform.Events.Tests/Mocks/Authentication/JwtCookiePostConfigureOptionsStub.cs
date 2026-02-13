@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Tests.Mocks.Authentication
                 options.CookieManager = new ChunkingCookieManager();
             }
 
-            if (!string.IsNullOrEmpty(options.MetadataAddress) && !options.MetadataAddress.EndsWith("/", StringComparison.Ordinal))
+            if (!string.IsNullOrEmpty(options.MetadataAddress) && !options.MetadataAddress.EndsWith('/'))
             {
                 options.MetadataAddress += "/";
             }
