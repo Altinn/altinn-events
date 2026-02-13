@@ -20,7 +20,7 @@ public static class SendEventToSubscriberHandler
     /// <summary>
     /// Gets or sets the Wolverine settings used for configuring error handling policies.
     /// </summary>
-    public static WolverineSettings Settings { get; set; } = null!;
+    public static EventsWolverineSettings Settings { get; set; } = null!;
 
     /// <summary>
     /// Configures error handling for the outbound queue handler.

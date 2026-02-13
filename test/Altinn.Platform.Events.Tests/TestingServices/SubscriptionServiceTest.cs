@@ -272,7 +272,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             IMessageBus messageBus = null,
             IEventsQueueClient queueClient = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null,
-            WolverineSettings wolverineSettings = null)
+            EventsWolverineSettings wolverineSettings = null)
         {
             var authoriationMock = new Mock<IAuthorization>();
             authoriationMock
@@ -286,7 +286,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 queueClient ?? new Mock<IEventsQueueClient>().Object,
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
                 Options.Create(new PlatformSettings()),
-                Options.Create(wolverineSettings ?? new WolverineSettings { EnableServiceBus = true }),
+                Options.Create(wolverineSettings ?? new EventsWolverineSettings { EnableServiceBus = true }),
                 new Mock<IWebhookService>().Object,
                 new Mock<ILogger<SubscriptionService>>().Object);
         }

@@ -143,8 +143,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<ILogger<EventsService>> logger = new();
             Mock<ITraceLogService> traceLogServiceMock = new();
             
-            var wolverineSettingsMock = new Mock<IOptions<WolverineSettings>>();
-            wolverineSettingsMock.Setup(x => x.Value).Returns(new WolverineSettings { EnableServiceBus = false });
+            var wolverineSettingsMock = new Mock<IOptions<EventsWolverineSettings>>();
+            wolverineSettingsMock.Setup(x => x.Value).Returns(new EventsWolverineSettings { EnableServiceBus = false });
 
             var eventsService = new EventsService(
                 _repositoryMock,
@@ -185,8 +185,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<ILogger<EventsService>> logger = new();
             Mock<ITraceLogService> traceLogServiceMock = new();
             
-            var wolverineSettingsMock = new Mock<IOptions<WolverineSettings>>();
-            wolverineSettingsMock.Setup(x => x.Value).Returns(new WolverineSettings { EnableServiceBus = false });
+            var wolverineSettingsMock = new Mock<IOptions<EventsWolverineSettings>>();
+            wolverineSettingsMock.Setup(x => x.Value).Returns(new EventsWolverineSettings { EnableServiceBus = false });
 
             var eventsService = new EventsService(
                 _repositoryMock,
@@ -735,8 +735,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             }
 
             // Mock WolverineSettings with EnableServiceBus = true (default)
-            var wolverineSettingsMock = new Mock<IOptions<WolverineSettings>>();
-            wolverineSettingsMock.Setup(x => x.Value).Returns(new WolverineSettings { EnableServiceBus = true });
+            var wolverineSettingsMock = new Mock<IOptions<EventsWolverineSettings>>();
+            wolverineSettingsMock.Setup(x => x.Value).Returns(new EventsWolverineSettings { EnableServiceBus = true });
 
             return new EventsService(
                 repositoryMock,

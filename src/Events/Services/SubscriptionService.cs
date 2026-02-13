@@ -27,7 +27,7 @@ public class SubscriptionService : ISubscriptionService
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IAuthorization _authorization;
     private readonly PlatformSettings _platformSettings;
-    private readonly WolverineSettings _wolverineSettings;
+    private readonly EventsWolverineSettings _wolverineSettings;
     private readonly IWebhookService _webhookService;
     private readonly ILogger<SubscriptionService> _logger;
     private const string _organisationPrefix = "/organisation/";
@@ -46,7 +46,7 @@ public class SubscriptionService : ISubscriptionService
         IEventsQueueClient queueClient,
         IClaimsPrincipalProvider claimsPrincipalProvider,
         IOptions<PlatformSettings> platformSettings,
-        IOptions<WolverineSettings> wolverineSettings,
+        IOptions<EventsWolverineSettings> wolverineSettings,
         IWebhookService webhookService,
         ILogger<SubscriptionService> logger)
     {
