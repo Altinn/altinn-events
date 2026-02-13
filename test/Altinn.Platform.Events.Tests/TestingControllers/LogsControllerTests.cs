@@ -162,7 +162,7 @@ public partial class IntegrationTests
                     config.AddConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.unittest.json").Build());
                 });
 
-                builder.UseSetting("WolverineSettings:EnableServiceBus", "false");
+                builder.UseSetting("EventsWolverineSettings:EnableServiceBus", "false");
 
                 builder.ConfigureTestServices(services =>
                 {

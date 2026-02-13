@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,9 +23,11 @@ public class SubscriptionService : ISubscriptionService
 {
     private readonly ISubscriptionRepository _repository;
     private readonly IMessageBus _bus;
+    private readonly IEventsQueueClient _queueClient;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IAuthorization _authorization;
     private readonly PlatformSettings _platformSettings;
+    private readonly EventsWolverineSettings _wolverineSettings;
     private readonly IWebhookService _webhookService;
     private readonly ILogger<SubscriptionService> _logger;
     private const string _organisationPrefix = "/organisation/";
@@ -40,16 +43,20 @@ public class SubscriptionService : ISubscriptionService
         ISubscriptionRepository repository,
         IAuthorization authorization,
         IMessageBus bus,
+        IEventsQueueClient queueClient,
         IClaimsPrincipalProvider claimsPrincipalProvider,
         IOptions<PlatformSettings> platformSettings,
+        IOptions<EventsWolverineSettings> wolverineSettings,
         IWebhookService webhookService,
         ILogger<SubscriptionService> logger)
     {
         _repository = repository;
         _authorization = authorization;
         _bus = bus;
+        _queueClient = queueClient;
         _claimsPrincipalProvider = claimsPrincipalProvider;
         _platformSettings = platformSettings.Value;
+        _wolverineSettings = wolverineSettings.Value;
         _webhookService = webhookService;
         _logger = logger;
     }
@@ -69,7 +76,7 @@ public class SubscriptionService : ISubscriptionService
 
         subscription ??= await _repository.CreateSubscription(eventsSubscription);
 
-        await _bus.PublishAsync(new ValidateSubscriptionCommand(subscription));
+        await PublishSubscriptionValidationEvent(subscription);
 
         return (subscription, null);
     }
@@ -218,5 +225,22 @@ public class SubscriptionService : ISubscriptionService
         };
 
         return cloudEventEnvelope;
+    }
+
+    private async Task PublishSubscriptionValidationEvent(Subscription subscription)
+    {
+        if (_wolverineSettings.EnableServiceBus)
+        {
+            await _bus.PublishAsync(new ValidateSubscriptionCommand(subscription));
+        }
+        else
+        {
+            QueuePostReceipt receipt = await _queueClient.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
+
+            if (!receipt.Success)
+            {
+                throw receipt.Exception;
+            }
+        }
     }
 }
