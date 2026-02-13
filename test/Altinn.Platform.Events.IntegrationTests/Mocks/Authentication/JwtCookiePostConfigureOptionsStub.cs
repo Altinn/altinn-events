@@ -28,7 +28,11 @@ public class JwtCookiePostConfigureOptionsStub : IPostConfigureOptions<JwtCookie
             options.MetadataAddress += "/";
         }
 
-        options.MetadataAddress += ".well-known/openid-configuration";
+        if (!string.IsNullOrEmpty(options.MetadataAddress) &&
+            !options.MetadataAddress.EndsWith(".well-known/openid-configuration", StringComparison.Ordinal))
+        {
+            options.MetadataAddress += ".well-known/openid-configuration";
+        }
         options.ConfigurationManager = new ConfigurationManagerStub();
     }
 }

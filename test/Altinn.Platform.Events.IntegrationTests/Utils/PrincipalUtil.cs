@@ -20,7 +20,7 @@ public static class PrincipalUtil
     {
         ClaimsPrincipal principal = GetClaimsPrincipal(org, orgNumber, scope);
 
-        return JwtTokenMock.GenerateToken(principal, new TimeSpan(1, 1, 1));
+        return JwtTokenMock.GenerateToken(principal, TimeSpan.FromHours(1));
     }
 
     /// <summary>

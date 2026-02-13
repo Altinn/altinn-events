@@ -182,7 +182,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
 
     private async Task DrainAllDeadLetterQueuesAsync()
     {
-        if (WolverineSettings == null)
+        if (WolverineSettings == null || !WolverineSettings.EnableServiceBus)
         {
             return;
         }
@@ -194,6 +194,8 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
             WolverineSettings.OutboundQueueName,
             WolverineSettings.ValidationQueueName
         ];
+
+        queueNames = Array.FindAll(queueNames, n => !string.IsNullOrWhiteSpace(n));
 
         try
         {

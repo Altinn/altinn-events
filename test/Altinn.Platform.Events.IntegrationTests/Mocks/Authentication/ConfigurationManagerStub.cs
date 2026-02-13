@@ -32,7 +32,6 @@ public class ConfigurationManagerStub : IConfigurationManager<OpenIdConnectConfi
     /// <inheritdoc />
     public void RequestRefresh()
     {
-        throw new NotImplementedException();
     }
 
     private static async Task<ICollection<SecurityKey>> GetSigningKeys()
