@@ -17,8 +17,8 @@ public static class JwtTokenMock
     /// <returns>A new token.</returns>
     public static string GenerateToken(ClaimsPrincipal principal, TimeSpan tokenExipry, string issuer = "UnitTest")
     {
-        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-        SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
+        JwtSecurityTokenHandler tokenHandler = new();
+        SecurityTokenDescriptor tokenDescriptor = new()
         {
             Subject = new ClaimsIdentity(principal.Identity),
             Expires = DateTime.UtcNow.AddSeconds(tokenExipry.TotalSeconds),

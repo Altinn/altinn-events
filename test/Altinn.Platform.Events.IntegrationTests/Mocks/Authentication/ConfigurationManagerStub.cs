@@ -20,7 +20,7 @@ public class ConfigurationManagerStub : IConfigurationManager<OpenIdConnectConfi
     {
         ICollection<SecurityKey> signingKeys = await GetSigningKeys();
 
-        OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
+        OpenIdConnectConfiguration configuration = new();
         foreach (var securityKey in signingKeys)
         {
             configuration.SigningKeys.Add(securityKey);
