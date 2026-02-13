@@ -31,7 +31,7 @@ public static class SendToOutboundHandler
     {
         if (Settings == null)
         {
-            throw new InvalidOperationException("WolverineSettings must be set before handler configuration");
+            throw new InvalidOperationException("EventsWolverineSettings must be set before handler configuration");
         }
 
         var policy = Settings.InboundQueuePolicy;
