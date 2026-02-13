@@ -26,12 +26,19 @@ namespace Altinn.Platform.Events.Tests.Mocks.Authentication
                 options.CookieManager = new ChunkingCookieManager();
             }
 
-            if (!string.IsNullOrEmpty(options.MetadataAddress) && !options.MetadataAddress.EndsWith('/'))
+            if (!string.IsNullOrEmpty(options.MetadataAddress))
             {
-                options.MetadataAddress += "/";
-            }
+                if (!options.MetadataAddress.EndsWith('/'))
+                {
+                    options.MetadataAddress += "/";
+                }
 
-            options.MetadataAddress += ".well-known/openid-configuration";
+                if (!options.MetadataAddress.EndsWith(".well-known/openid-configuration", StringComparison.Ordinal))
+                {
+                    options.MetadataAddress += ".well-known/openid-configuration";
+                }
+            }
+            
             options.ConfigurationManager = new ConfigurationManagerStub();
         }
     }
