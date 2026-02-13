@@ -60,7 +60,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
             // This allows safe parallel test execution without race conditions
             var testConfigOverrides = new Dictionary<string, string?>
             {
-                ["WolverineSettings:ServiceBusConnectionString"] = _fixture.ServiceBusConnectionString,
+                ["EventsWolverineSettings:ServiceBusConnectionString"] = _fixture.ServiceBusConnectionString,
                 ["PostgreSQLSettings:ConnectionString"] = _fixture.PostgresConnectionString,
                 ["PostgreSQLSettings:AdminConnectionString"] = _fixture.PostgresConnectionString,
                 ["PostgreSQLSettings:WorkspacePath"] = FindMigrationPath()
@@ -71,7 +71,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         builder.ConfigureServices((context, services) =>
         {
             // Load Wolverine settings after configuration is built
-            WolverineSettings = context.Configuration.GetSection("WolverineSettings").Get<EventsWolverineSettings>()
+            WolverineSettings = context.Configuration.GetSection("EventsWolverineSettings").Get<EventsWolverineSettings>()
                 ?? throw new InvalidOperationException("WolverineSettings not found in configuration");
 
             Console.WriteLine($"[Factory] Loaded WolverineSettings - EnableServiceBus: {WolverineSettings.EnableServiceBus}");
