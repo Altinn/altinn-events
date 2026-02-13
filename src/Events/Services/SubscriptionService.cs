@@ -235,7 +235,12 @@ public class SubscriptionService : ISubscriptionService
         }
         else
         {
-            await _queueClient.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
+            QueuePostReceipt receipt = await _queueClient.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
+
+            if (!receipt.Success)
+            {
+                throw receipt.Exception;
+            }
         }
     }
 }
