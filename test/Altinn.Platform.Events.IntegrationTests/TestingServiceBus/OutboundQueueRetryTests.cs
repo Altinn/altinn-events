@@ -52,7 +52,7 @@ public class OutboundQueueRetryTests(IntegrationTestContainersFixture fixture)
 
             // Assert - Wait for webhook to be called
             var delivered = await WaitForUtils.WaitForAsync(
-                () => Task.FromResult(webhookCalls.Count > 0),
+                () => Task.FromResult(!webhookCalls.IsEmpty),
                 maxAttempts: 30,
                 delayMs: 500);
             Assert.True(delivered, "Event should be delivered to webhook");
