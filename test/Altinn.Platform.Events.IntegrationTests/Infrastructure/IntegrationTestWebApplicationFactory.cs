@@ -156,13 +156,18 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         // This prevents "ObjectDisposedException: Cannot access a disposed object" errors
         // that can occur when processors are still active during shutdown
         await Task.Delay(150);
-        await base.DisposeAsync();
 
-        // Clean up test state to prevent cross-test pollution
-        await CleanupDatabaseAsync();
-        await DrainAllDeadLetterQueuesAsync();
-
-        GC.SuppressFinalize(this);
+        try
+        {
+            await base.DisposeAsync();
+        }
+        finally
+        {
+            // Clean up test state to prevent cross-test pollution
+            await CleanupDatabaseAsync();
+            await DrainAllDeadLetterQueuesAsync();
+            GC.SuppressFinalize(this);
+        }
     }
 
     private async Task CleanupDatabaseAsync()

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,33 +14,18 @@ namespace Altinn.Platform.Events.IntegrationTests.Mocks.Authentication;
 public class ConfigurationManagerStub : IConfigurationManager<OpenIdConnectConfiguration>
 {
     /// <inheritdoc />
-    public async Task<OpenIdConnectConfiguration> GetConfigurationAsync(CancellationToken cancel)
+    public Task<OpenIdConnectConfiguration> GetConfigurationAsync(CancellationToken cancel)
     {
-        ICollection<SecurityKey> signingKeys = await GetSigningKeys();
+        X509Certificate2 cert = X509CertificateLoader.LoadCertificateFromFile("JWTValidationCert.cer");
 
         OpenIdConnectConfiguration configuration = new();
-        foreach (var securityKey in signingKeys)
-        {
-            configuration.SigningKeys.Add(securityKey);
-        }
+        configuration.SigningKeys.Add(new X509SecurityKey(cert));
 
-        return configuration;
+        return Task.FromResult(configuration);
     }
 
     /// <inheritdoc />
     public void RequestRefresh()
     {
-    }
-
-    private static async Task<ICollection<SecurityKey>> GetSigningKeys()
-    {
-        List<SecurityKey> signingKeys = new List<SecurityKey>();
-
-        X509Certificate2 cert = X509CertificateLoader.LoadCertificateFromFile("JWTValidationCert.cer");
-        SecurityKey key = new X509SecurityKey(cert);
-
-        signingKeys.Add(key);
-
-        return await Task.FromResult(signingKeys);
     }
 }
