@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents settings for configuring Wolverine integration.
 /// </summary>
-public class WolverineSettings
+public class EventsWolverineSettings
 {
     /// <summary>
     /// Indicates whether Azure Service Bus should be configured.

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.AccessManagement.Core.Models;
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
@@ -269,7 +270,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             ISubscriptionRepository repository = null,
             bool authorizationDecision = true,
             IMessageBus messageBus = null,
-            IClaimsPrincipalProvider claimsPrincipalProvider = null)
+            IEventsQueueClient queueClient = null,
+            IClaimsPrincipalProvider claimsPrincipalProvider = null,
+            EventsWolverineSettings wolverineSettings = null)
         {
             var authoriationMock = new Mock<IAuthorization>();
             authoriationMock
@@ -280,8 +283,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 repository ?? new SubscriptionRepositoryMock(),
                 authoriationMock.Object,
                 messageBus ?? new Mock<IMessageBus>().Object,
+                queueClient ?? new Mock<IEventsQueueClient>().Object,
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
                 Options.Create(new PlatformSettings()),
+                Options.Create(wolverineSettings ?? new EventsWolverineSettings { EnableServiceBus = true }),
                 new Mock<IWebhookService>().Object,
                 new Mock<ILogger<SubscriptionService>>().Object);
         }
