@@ -215,7 +215,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                     .EnableFirstResponseEvent(false)));
     }
 
-    EventsWolverineSettings wolverineSettings = config.GetSection("EventsWolverineSettings").Get<EventsWolverineSettings>() ?? new EventsWolverineSettings();
+    WolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<WolverineSettings>() ?? new WolverineSettings();
 
     // Set static settings for handlers before Wolverine discovers them
     SaveEventHandler.Settings = wolverineSettings;
@@ -263,7 +263,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
-    services.Configure<EventsWolverineSettings>(config.GetSection("EventsWolverineSettings"));
+    services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
     services.Configure<EventsOutboundSettings>(config.GetSection("EventsOutboundSettings"));
     services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));

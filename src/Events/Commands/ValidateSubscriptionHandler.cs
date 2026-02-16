@@ -19,7 +19,7 @@ public static class ValidateSubscriptionHandler
     /// <summary>
     /// Gets or sets the Wolverine settings used for configuring error handling policies.
     /// </summary>
-    public static EventsWolverineSettings Settings { get; set; } = null!;
+    public static WolverineSettings Settings { get; set; } = null!;
 
     /// <summary>
     /// Configures error handling for the inbound queue handler.
@@ -29,7 +29,7 @@ public static class ValidateSubscriptionHandler
     {
         if (Settings == null)
         {
-            throw new InvalidOperationException("EventsWolverineSettings must be set before handler configuration");
+            throw new InvalidOperationException("WolverineSettings must be set before handler configuration");
         }
 
         var policy = Settings.ValidationQueuePolicy;

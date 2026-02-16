@@ -309,7 +309,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 new Mock<IEventsQueueClient>().Object,
                 claimsPrincipalProvider,
                 Options.Create(new PlatformSettings()),
-                Options.Create(new EventsWolverineSettings { EnableServiceBus = true }),
+                Options.Create(new WolverineSettings { EnableServiceBus = true }),
                 new Mock<IWebhookService>().Object,
                 new Mock<ILogger<AppSubscriptionService>>().Object);
         }
