@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -162,8 +163,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 repoMock.Object,
                 authorizationMock.Object,
                 messageBus,
+                new Mock<IEventsQueueClient>().Object,
                 claimsProviderMock.Object,
                 Options.Create(new PlatformSettings()),
+                Options.Create(new EventsWolverineSettings { EnableServiceBus = true }),
                 new Mock<IWebhookService>().Object,
                 new Mock<ILogger<GenericSubscriptionService>>().Object);
         }
