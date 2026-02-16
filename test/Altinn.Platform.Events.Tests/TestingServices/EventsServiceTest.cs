@@ -878,6 +878,64 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Contains("urn:altinn:resource:app__", capturedEvent);
         }
 
+        [Fact]
+        public async Task GetAppEvents_NullSourceList_PassesNullToRepository()
+        {
+            // Arrange
+            var repositoryMock = new Mock<ICloudEventRepository>();
+            repositoryMock.Setup(r => r.GetAppEvents(
+                It.IsAny<string>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<string>(),
+                It.Is<List<string>>(s => s == null),
+                It.IsAny<string>(),
+                It.IsAny<List<string>>(),
+                It.IsAny<int>()))
+                .ReturnsAsync([]);
+
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
+
+            // Act
+            await eventsService.GetAppEvents(null, null, null, 0, null, null, [], null, null);
+
+            // Assert
+            repositoryMock.VerifyAll();
+        }
+
+        [Fact]
+        public async Task SaveAndPublish_NoResourceAttribute_SkipsResourceFormatting()
+        {
+            // Arrange
+            Mock<ICloudEventRepository> repositoryMock = new();
+            string capturedEvent = null;
+            repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>()))
+                .Callback<string>(e => capturedEvent = e)
+                .Returns(Task.CompletedTask);
+
+            Mock<IMessageBus> messageBusMock = new();
+            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
+
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
+
+            // CloudEvent without resource attribute - covers `resource is not null` false branch
+            CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "instance.created",
+                Source = new Uri("https://ttd.apps.altinn.no/ttd/test"),
+                Time = DateTime.Now,
+                Subject = "/party/456456"
+            };
+
+            // Act
+            await eventsService.SaveAndPublish(cloudEvent, CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedEvent);
+            Assert.DoesNotContain("urn:altinn:resource:app_", capturedEvent);
+        }
+
         private EventsService GetEventsService(
             ICloudEventRepository repositoryMock = null,
             IEventsQueueClient queueMock = null,

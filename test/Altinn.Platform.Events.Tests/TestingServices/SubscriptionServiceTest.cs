@@ -379,6 +379,42 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
+        public async Task SendAndValidate_SetValidReturns403_DoesNotLogError()
+        {
+            // Arrange - GetSubscription returns a sub with different CreatedBy to trigger 403
+            var subscription = new Subscription
+            {
+                Id = 42,
+                CreatedBy = "/org/skd",
+                Consumer = "/org/ttd",
+                EndPoint = new Uri("https://example.com/webhook")
+            };
+
+            Mock<ISubscriptionRepository> repositoryMock = new();
+            repositoryMock.Setup(r => r.GetSubscription(42)).ReturnsAsync(subscription);
+
+            Mock<IClaimsPrincipalProvider> claimsMock = new();
+            claimsMock.Setup(s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
+
+            Mock<IWebhookService> webhookMock = new();
+            webhookMock.Setup(w => w.Send(It.IsAny<CloudEventEnvelope>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+            Mock<ILogger<SubscriptionService>> loggerMock = new();
+
+            SubscriptionService sut = GetSubscriptionService(
+                repository: repositoryMock.Object,
+                claimsPrincipalProvider: claimsMock.Object,
+                webhookService: webhookMock.Object,
+                logger: loggerMock.Object);
+
+            // Act - error is 403, not 404, so no log error expected
+            await sut.SendAndValidate(subscription, CancellationToken.None);
+
+            // Assert - should not log error since the error code is not 404
+            loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
+        }
+
+        [Fact]
         public async Task SendAndValidate_SetValidThrows_ThrowsInvalidOperationException()
         {
             // Arrange
