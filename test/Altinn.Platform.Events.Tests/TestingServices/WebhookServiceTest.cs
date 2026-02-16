@@ -19,7 +19,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices;
 public class WebhookServiceTest
 {
     private const string _cloudEventId = "1337";
-    private Mock<ITraceLogService> _traceLogServiceMock = new Mock<ITraceLogService>();
+    private readonly Mock<ITraceLogService> _traceLogServiceMock = new();
 
     private readonly CloudEvent _minimalCloudEvent = new(CloudEventsSpecVersion.V1_0)
     {
@@ -35,7 +35,7 @@ public class WebhookServiceTest
     public void Ctor_HttpClientHasRequestTimeout()
     {
         // Arrange
-        Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
+        Mock<ILogger<WebhookService>> loggerMock = new();
 
         HttpClient actualClient = new();
 
@@ -167,7 +167,7 @@ public class WebhookServiceTest
     public async Task Send_ClientReturnsNonSuccessCode_ErrorLoggedAndExceptionThrown()
     {
         // Arrange
-        Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
+        Mock<ILogger<WebhookService>> loggerMock = new();
         var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
 
         var sut = new WebhookService(new HttpClient(handlerMock.Object), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
@@ -190,7 +190,7 @@ public class WebhookServiceTest
     public async Task Send_ClientReturnsSuccessCode_NoLoggingOrException()
     {
         // Arrange
-        Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
+        Mock<ILogger<WebhookService>> loggerMock = new();
         var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
         var sut = new WebhookService(new HttpClient(handlerMock.Object), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
@@ -207,6 +207,72 @@ public class WebhookServiceTest
         // Assert
         loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
         handlerMock.VerifyAll();
+    }
+
+    [Fact]
+    public void GetPayload_NullCloudEvent_ReturnsEmptyString()
+    {
+        // Arrange
+        CloudEventEnvelope input = new()
+        {
+            CloudEvent = null,
+            SubscriptionId = 1337,
+            Consumer = "/party/test",
+            Endpoint = new Uri("https://skd.mottakssystem.no/events"),
+        };
+
+        var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+
+        // Act
+        var actual = sut.GetPayload(input);
+
+        // Assert
+        Assert.Equal(string.Empty, actual);
+    }
+
+    [Fact]
+    public void GetPayload_NullEndpoint_ReturnsSerializedCloudEvent()
+    {
+        // Arrange
+        CloudEventEnvelope input = new()
+        {
+            CloudEvent = _minimalCloudEvent,
+            SubscriptionId = 1337,
+            Consumer = "/party/test",
+            Endpoint = null,
+        };
+
+        var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+
+        // Act
+        var actual = sut.GetPayload(input);
+
+        // Assert
+        Assert.Contains(_cloudEventId, actual);
+    }
+
+    [Fact]
+    public async Task Send_ClientThrowsException_LogsAndRethrows()
+    {
+        // Arrange
+        Mock<ILogger<WebhookService>> loggerMock = new();
+        var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+        var sut = new WebhookService(new HttpClient(handlerMock.Object), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
+
+        var cloudEventEnvelope = new CloudEventEnvelope()
+        {
+            Endpoint = new Uri("https://unreachable.example.com"),
+            CloudEvent = _minimalCloudEvent
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.Send(cloudEventEnvelope, CancellationToken.None));
+
+        loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
     }
 
     private static Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpResponseMessage response)
