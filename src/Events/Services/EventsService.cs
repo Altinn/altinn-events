@@ -80,15 +80,15 @@ namespace Altinn.Platform.Events.Services
             try
             {
                 await PublishRegistrationEvent(cloudEvent);
-                await _traceLogService.CreateRegisteredEntry(cloudEvent);
-
-                return cloudEvent.Id;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "// EventsService // RegisterNew // Failed to register eventId {EventId}.", cloudEvent.Id);
-                throw new InvalidOperationException($"Failed to register event with ID {cloudEvent.Id}.", ex);
+                throw;
             }
+
+            await _traceLogService.CreateRegisteredEntry(cloudEvent);
+            return cloudEvent.Id;            
         }
 
         /// <inheritdoc/>
