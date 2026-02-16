@@ -33,7 +33,7 @@ namespace Altinn.Platform.Events.Services
         private readonly IAuthorization _authorizationService;
         private readonly IMessageBus _bus;
         private readonly ILogger _logger;
-        private readonly EventsWolverineSettings _wolverineSettings;
+        private readonly WolverineSettings _wolverineSettings;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsService"/> class.
@@ -46,7 +46,7 @@ namespace Altinn.Platform.Events.Services
             IAuthorization authorizationService,
             IMessageBus bus,
             ILogger<EventsService> logger,
-            IOptions<EventsWolverineSettings> wolverineSettings)
+            IOptions<WolverineSettings> wolverineSettings)
         {
             _repository = repository;
             _traceLogService = traceLogService;

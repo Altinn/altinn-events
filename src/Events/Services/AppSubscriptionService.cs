@@ -34,7 +34,7 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IClaimsPrincipalProvider claimsPrincipalProvider,
             IOptions<PlatformSettings> platformSettings,
-            IOptions<EventsWolverineSettings> wolverineSettings,
+            IOptions<WolverineSettings> wolverineSettings,
             IWebhookService webhookService,
             ILogger<AppSubscriptionService> logger)
             : base(repository, authorization, bus, queueClient, claimsPrincipalProvider, platformSettings, wolverineSettings, webhookService, logger)

@@ -31,7 +31,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
     private IHost _host = null!;
     private readonly List<Action<IServiceCollection>> _configureTestServices = [];
 
-    public EventsWolverineSettings WolverineSettings { get; private set; } = null!;
+    public WolverineSettings WolverineSettings { get; private set; } = null!;
 
     /// <summary>
     /// Gets the IHost instance for use with Wolverine's testing API.
@@ -61,7 +61,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
             // This allows safe parallel test execution without race conditions
             var testConfigOverrides = new Dictionary<string, string?>
             {
-                ["EventsWolverineSettings:ServiceBusConnectionString"] = _fixture.ServiceBusConnectionString,
+                ["WolverineSettings:ServiceBusConnectionString"] = _fixture.ServiceBusConnectionString,
                 ["PostgreSQLSettings:ConnectionString"] = _fixture.PostgresConnectionString,
                 ["PostgreSQLSettings:AdminConnectionString"] = _fixture.PostgresConnectionString,
                 ["PostgreSQLSettings:WorkspacePath"] = FindMigrationPath()
@@ -72,7 +72,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         builder.ConfigureServices((context, services) =>
         {
             // Load Wolverine settings after configuration is built
-            WolverineSettings = context.Configuration.GetSection("EventsWolverineSettings").Get<EventsWolverineSettings>()
+            WolverineSettings = context.Configuration.GetSection("WolverineSettings").Get<WolverineSettings>()
                 ?? throw new InvalidOperationException("WolverineSettings not found in configuration");
 
             Console.WriteLine($"[Factory] Loaded WolverineSettings - EnableServiceBus: {WolverineSettings.EnableServiceBus}");

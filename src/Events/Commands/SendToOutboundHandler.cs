@@ -21,7 +21,7 @@ public static class SendToOutboundHandler
     /// <summary>
     /// Gets or sets the Wolverine settings used for configuring error handling policies.
     /// </summary>
-    public static EventsWolverineSettings Settings { get; set; } = null!;
+    public static WolverineSettings Settings { get; set; } = null!;
 
     /// <summary>
     /// Configures error handling for the inbound queue handler.
@@ -31,7 +31,7 @@ public static class SendToOutboundHandler
     {
         if (Settings == null)
         {
-            throw new InvalidOperationException("EventsWolverineSettings must be set before handler configuration");
+            throw new InvalidOperationException("WolverineSettings must be set before handler configuration");
         }
 
         var policy = Settings.InboundQueuePolicy;
