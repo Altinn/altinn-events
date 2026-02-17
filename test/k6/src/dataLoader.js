@@ -206,10 +206,8 @@ export function createCloudEventFromCSV(csvRow, overrides = {}) {
         resource: csvRow.resource,
     };
     
-    // Add optional fields if they exist in CSV
-    if (csvRow.alternativeSubject && csvRow.alternativeSubject.trim() !== '') {
-        event.alternativeSubject = csvRow.alternativeSubject;
-    }
+    // Note: alternativeSubject from CSV is intentionally excluded as it's not a valid CloudEvent attribute
+    // Standard attributes only: source, specversion, type, subject, id, time, datacontenttype, dataschema
     
     // Add timestamp if not provided
     if (!overrides.time) {
