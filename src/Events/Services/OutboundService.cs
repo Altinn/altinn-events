@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -17,6 +18,7 @@ using CloudNative.CloudEvents;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Wolverine;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -26,6 +28,7 @@ namespace Altinn.Platform.Events.Services;
 public class OutboundService : IOutboundService
 {
     private readonly IEventsQueueClient _queueClient;
+    private readonly IMessageBus _bus;
     private readonly ITraceLogService _traceLogService;
     private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly IAuthorization _authorizationService;
@@ -42,6 +45,7 @@ public class OutboundService : IOutboundService
     /// </summary>
     public OutboundService(
         IEventsQueueClient queueClient,
+        IMessageBus bus,
         ITraceLogService traceLogService,
         ISubscriptionRepository repository,
         IAuthorization authorizationService,
@@ -51,6 +55,7 @@ public class OutboundService : IOutboundService
         TelemetryClient telemetry)
     {
         _queueClient = queueClient;
+        _bus = bus;
         _traceLogService = traceLogService;
         _subscriptionRepository = repository;
         _authorizationService = authorizationService;
@@ -66,7 +71,7 @@ public class OutboundService : IOutboundService
     }
 
     /// <inheritdoc/>
-    public async Task PostOutbound(CloudEvent cloudEvent, CancellationToken cancellationToken)
+    public async Task PostOutbound(CloudEvent cloudEvent, CancellationToken cancellationToken, bool useAzureServiceBus = false)
     {
         List<Subscription> subscriptions = await _subscriptionRepository.GetSubscriptions(
              cloudEvent.GetResource(),
@@ -74,7 +79,7 @@ public class OutboundService : IOutboundService
              cloudEvent.Type,
              cancellationToken);
 
-        await AuthorizeAndPush(cloudEvent, subscriptions, cancellationToken);
+        await AuthorizeAndPush(cloudEvent, subscriptions, cancellationToken, useAzureServiceBus);
     }
 
     /// <summary>
@@ -84,8 +89,9 @@ public class OutboundService : IOutboundService
     /// <param name="cloudEvent">The cloud event to be pushed.</param>
     /// <param name="subscriptions">List of subscriptions matching the event.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="useAzureServiceBus">Indicates whether to use Azure Service Bus for event delivery.</param>
     private async Task AuthorizeAndPush(
-        CloudEvent cloudEvent, List<Subscription> subscriptions, CancellationToken cancellationToken)
+        CloudEvent cloudEvent, List<Subscription> subscriptions, CancellationToken cancellationToken, bool useAzureServiceBus)
     {
         // Get distinct consumers to minimize authorization requests
         var consumers = subscriptions.Select(x => x.Consumer).Distinct().ToList();
@@ -103,7 +109,7 @@ public class OutboundService : IOutboundService
                 _logger.LogWarning("No authorization result found for consumer {Consumer} on event {EventId}", subscription.Consumer, cloudEvent.Id);
             }
 
-            await EnqueueOutbound(cloudEvent, subscription, authorized: isAuthorized);
+            await EnqueueOutbound(cloudEvent, subscription, authorized: isAuthorized, useAzureServiceBus);
         }
     }
 
@@ -234,23 +240,32 @@ public class OutboundService : IOutboundService
     /// <param name="cloudEvent">The cloud event to enqueue.</param>
     /// <param name="subscription">The subscription containing consumer and endpoint information.</param>
     /// <param name="authorized">Whether the consumer is authorized to receive this event.</param>
+    /// <param name="useAzureServiceBus">Indicates whether to use Azure Service Bus for event delivery.</param>
     private async Task EnqueueOutbound(
-        CloudEvent cloudEvent, Subscription subscription, bool authorized)
+        CloudEvent cloudEvent, Subscription subscription, bool authorized, bool useAzureServiceBus)
     {
         if (authorized)
         {
             CloudEventEnvelope cloudEventEnvelope = MapToEnvelope(cloudEvent, subscription);
 
-            var wrapper = new RetryableEventWrapper
+            if (useAzureServiceBus)
             {
-                Payload = cloudEventEnvelope.Serialize()
-            };
-
-            var receipt = await _queueClient.EnqueueOutbound(wrapper.Serialize());
-
-            if (!receipt.Success)
+                string payload = cloudEventEnvelope.Serialize();
+                await _bus.PublishAsync(new OutboundEventCommand(payload));
+            }
+            else
             {
-                _logger.LogError(receipt.Exception, "OutboundService EnqueueOutbound Failed to send event envelope {EventId} to consumer with {SubscriptionId}.", cloudEvent.Id, subscription.Id);
+                var wrapper = new RetryableEventWrapper
+                {
+                    Payload = cloudEventEnvelope.Serialize()
+                };
+
+                var receipt = await _queueClient.EnqueueOutbound(wrapper.Serialize());
+
+                if (!receipt.Success)
+                {
+                    _logger.LogError(receipt.Exception, "OutboundService EnqueueOutbound Failed to send event envelope {EventId} to consumer with {SubscriptionId}.", cloudEvent.Id, subscription.Id);
+                }
             }
 
             await _traceLogService.CreateLogEntryWithSubscriptionDetails(cloudEvent, subscription, TraceLogActivity.OutboundQueue);

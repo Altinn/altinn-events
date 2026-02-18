@@ -183,6 +183,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.Send(cloudEventEnvelope));
 
             // Assert
+            _eventsClientMock.Verify(x => x.LogWebhookHttpStatusCode(cloudEventEnvelope, HttpStatusCode.ServiceUnavailable, false), Times.Once);
             loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Exactly(2));
             handlerMock.VerifyAll();
         }
@@ -206,8 +207,84 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             await sut.Send(cloudEventEnvelope);
 
             // Assert
+            _eventsClientMock.Verify(x => x.LogWebhookHttpStatusCode(cloudEventEnvelope, HttpStatusCode.OK, true), Times.Once);
             loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
             handlerMock.VerifyAll();
+        }
+
+        [Fact]
+        public async Task Send_ClientThrows_LogsAndRethrowsAndSkipsEventClientLogging()
+        {
+            // Arrange
+            Mock<ILogger<WebhookService>> loggerMock = new Mock<ILogger<WebhookService>>();
+            var handlerMock = CreateThrowingMessageHandlerMock("https://vg.no", new HttpRequestException("boom"));
+
+            var sut = new WebhookService(new HttpClient(handlerMock.Object), _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
+
+            var cloudEventEnvelope = new CloudEventEnvelope()
+            {
+                Endpoint = new Uri("https://vg.no"),
+                CloudEvent = _minimalCloudEvent,
+                SubscriptionId = 1337
+            };
+
+            // Act
+            await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.Send(cloudEventEnvelope));
+
+            // Assert
+            _eventsClientMock.Verify(x => x.LogWebhookHttpStatusCode(It.IsAny<CloudEventEnvelope>(), It.IsAny<HttpStatusCode>(), It.IsAny<bool>()), Times.Never);
+            loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            handlerMock.VerifyAll();
+        }
+
+        [Fact]
+        public void GetPayload_CloudEventMissing_ReturnsEmptyString()
+        {
+            // Arrange
+            CloudEventEnvelope input = new()
+            {
+                SubscriptionId = 1337,
+                Consumer = "/party/test",
+                Endpoint = new Uri("https://skd.mottakssystem.no/events"),
+                Pushed = DateTime.UtcNow
+            };
+
+            var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+
+            // Act
+            var actual = sut.GetPayload(input);
+
+            // Assert
+            Assert.Equal(string.Empty, actual);
+        }
+
+        [Fact]
+        public void GetPayload_EndpointMissing_CloudEventSerialized()
+        {
+            // Arrange
+            string expectedPayload =
+               "{" +
+               "\"specversion\":\"1.0\"," +
+               $"\"id\":\"{_cloudEventId}\"," +
+               "\"source\":\"https://ttd.apps.at22.altinn.cloud/ttd/apps-test\"," +
+               "\"type\":\"automated.test\"" +
+               "}";
+
+            CloudEventEnvelope input = new()
+            {
+                CloudEvent = _minimalCloudEvent,
+                SubscriptionId = 1337,
+                Consumer = "/party/test",
+                Pushed = DateTime.UtcNow
+            };
+
+            var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+
+            // Act
+            var actual = sut.GetPayload(input);
+
+            // Assert
+            Assert.Equal(expectedPayload, actual);
         }
 
         private static Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpResponseMessage response)
@@ -220,6 +297,18 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 {
                     return response;
                 })
+                .Verifiable();
+
+            return messageHandlerMock;
+        }
+
+        private static Mock<HttpMessageHandler> CreateThrowingMessageHandlerMock(string clientEndpoint, Exception exception)
+        {
+            var messageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+
+            messageHandlerMock.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Equals(clientEndpoint)), ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(exception)
                 .Verifiable();
 
             return messageHandlerMock;

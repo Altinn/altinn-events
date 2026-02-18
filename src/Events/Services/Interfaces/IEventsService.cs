@@ -59,5 +59,12 @@ namespace Altinn.Platform.Events.Services.Interfaces
             List<string> types, 
             int size,
             CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Saves a cloud event to persistent storage and publishes it to the inbound queue.
+        /// </summary>
+        /// <param name="cloudEvent">The cloudEvent to be saved and published</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken);
     }
 }

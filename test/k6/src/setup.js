@@ -15,7 +15,7 @@ export function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "991825827") {
     let accessToken = maskinporten.generateAccessToken(scopes);
     return authentication.exchangeToAltinnToken(accessToken, true);
   }
-
+  
   let queryParams = {
     env: environment,
     scopes: scopes.replace(/ /gi, ","),

@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -13,6 +15,8 @@ using Altinn.Platform.Events.Services.Interfaces;
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Wolverine;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -27,7 +31,9 @@ namespace Altinn.Platform.Events.Services
 
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
+        private readonly IMessageBus _bus;
         private readonly ILogger _logger;
+        private readonly WolverineSettings _wolverineSettings;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsService"/> class.
@@ -38,14 +44,18 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
-            ILogger<EventsService> logger)
+            IMessageBus bus,
+            ILogger<EventsService> logger,
+            IOptions<WolverineSettings> wolverineSettings)
         {
             _repository = repository;
             _traceLogService = traceLogService;
             _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
+            _bus = bus;
             _logger = logger;
+            _wolverineSettings = wolverineSettings.Value;
         }
 
         /// <inheritdoc/>
@@ -58,7 +68,7 @@ namespace Altinn.Platform.Events.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "// EventsService // Save // Failed to save eventId {EventId} to storage.", cloudEvent.Id);
-                throw;
+                throw new InvalidOperationException($"Failed to save event with ID {cloudEvent.Id} to storage.", ex);
             }
 
             return cloudEvent.Id;
@@ -67,16 +77,18 @@ namespace Altinn.Platform.Events.Services
         /// <inheritdoc/>
         public async Task<string> RegisterNew(CloudEvent cloudEvent)
         {
-            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(cloudEvent.Serialize());
-
-            if (!receipt.Success)
+            try
             {
-                _logger.LogError(receipt.Exception, "// EventsService // RegisterNew // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
-                throw receipt.Exception;
+                await PublishRegistrationEvent(cloudEvent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "// EventsService // RegisterNew // Failed to register eventId {EventId}.", cloudEvent.Id);
+                throw;
             }
 
-            await _traceLogService.CreateRegisteredEntry(cloudEvent); // log entry for registering a new event
-            return cloudEvent.Id;
+            await _traceLogService.CreateRegisteredEntry(cloudEvent);
+            return cloudEvent.Id;            
         }
 
         /// <inheritdoc/>
@@ -137,6 +149,66 @@ namespace Altinn.Platform.Events.Services
             }
 
             return await _authorizationService.AuthorizeEvents(events, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken)
+        {
+            EnsureCorrectResourceFormat(cloudEvent);
+            await Save(cloudEvent);
+            string payload = cloudEvent.Serialize();
+            await _bus.PublishAsync(new InboundEventCommand(payload));
+        }
+
+        /// <summary>
+        /// Changes . notation in resource for Altinn App events to use _.
+        /// </summary>
+        private static void EnsureCorrectResourceFormat(CloudEvent cloudEvent)
+        {
+            var resource = cloudEvent["resource"];
+
+            if (resource is not null)
+            {
+                string resourceValue = resource.ToString();
+                if (resourceValue != null && resourceValue.StartsWith("urn:altinn:resource:altinnapp."))
+                {
+                    string org = null;
+                    string app = null;
+
+                    string[] pathParams = cloudEvent.Source?.AbsolutePath.Split("/") ?? Array.Empty<string>();
+
+                    if (pathParams.Length > 5)
+                    {
+                        org = pathParams[1];
+                        app = pathParams[2];
+                    }
+
+                    cloudEvent.SetAttributeFromString("resource", $"urn:altinn:resource:app_{org}_{app}");
+                }
+            }
+        }
+
+        private async Task PublishRegistrationEvent(CloudEvent cloudEvent)
+        {
+            string payload = cloudEvent.Serialize();
+            if (_wolverineSettings.EnableServiceBus)
+            {
+                await _bus.PublishAsync(new RegisterEventCommand(payload));
+            }
+            else
+            {
+                await EnqueueToStorageQueue(payload);
+            }
+        }
+
+        private async Task EnqueueToStorageQueue(string payload)
+        {
+            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(payload);
+
+            if (!receipt.Success)
+            {
+                throw receipt.Exception;
+            }
         }
     }
 }
