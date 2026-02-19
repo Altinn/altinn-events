@@ -117,20 +117,14 @@ export default function runTests(data) {
 }
 
 // teardown() runs once after all VUs have finished.
-// Removes the subscription so it does not accumulate across runs.
+// Intentionally does NOT delete the subscription — webhook delivery and
+// WebhookPostResponse trace_log entries happen asynchronously after the test ends.
+// Deleting the subscription here would pull it out from under in-flight
+// Service Bus deliveries. Delete manually once you've verified the DB results.
 export function teardown(data) {
-    if (!data.subscriptionId) {
-        return;
+    if (data.subscriptionId) {
+        console.log(`[TEARDOWN] Subscription ${data.subscriptionId} left active — delete manually when done.`);
     }
-
-    const token = setupToken.getAltinnTokenForOrg(scopes);
-    const response = subscriptionsApi.deleteSubscription(data.subscriptionId, token);
-
-    check(response, {
-        "Teardown: subscription deleted. Status is 200": (r) => r.status === 200,
-    });
-
-    console.log(`[TEARDOWN] Deleted subscription ${data.subscriptionId}`);
 }
 
 // handleSummary() runs after teardown.
@@ -176,9 +170,10 @@ export function handleSummary(data) {
         "",
         "  -- SQL 1: ingest vs outbound queue counts ───────────────────",
         "  SELECT",
-        "      COUNT(*) FILTER (WHERE activity = 'Registered')    AS events_registered,",
-        "      COUNT(*) FILTER (WHERE activity = 'OutboundQueue') AS events_queued,",
-        "      COUNT(*) FILTER (WHERE activity = 'Unauthorized')  AS events_unauthorized",
+        "      COUNT(*) FILTER (WHERE activity = 'Registered')         AS events_registered,",
+        "      COUNT(*) FILTER (WHERE activity = 'OutboundQueue')      AS events_queued,",
+        "      COUNT(*) FILTER (WHERE activity = 'WebhookPostResponse') AS events_webhook_response,",
+        "      COUNT(*) FILTER (WHERE activity = 'Unauthorized')       AS events_unauthorized",
         "  FROM events.trace_log",
         `  WHERE time BETWEEN '${sPg}' AND '${ePg}'`,
         `    AND eventtype = '${eventType}';`,
@@ -186,34 +181,37 @@ export function handleSummary(data) {
         "  -- SQL 2: throughput per 10s bucket ────────────────────────",
         "  SELECT",
         "      to_timestamp(floor(extract(epoch FROM time) / 10) * 10) AT TIME ZONE 'UTC' AS bucket,",
-        "      COUNT(*) FILTER (WHERE activity = 'Registered')                            AS events_registered,",
-        "      COUNT(*) FILTER (WHERE activity = 'OutboundQueue')                         AS events_queued",
+        "      COUNT(*) FILTER (WHERE activity = 'Registered')    AS events_registered,",
+        "      COUNT(*) FILTER (WHERE activity = 'OutboundQueue') AS events_queued,",
+        "      COUNT(*) FILTER (WHERE activity = 'WebhookPostResponse') AS events_webhook_response",
         "  FROM events.trace_log",
         `  WHERE time BETWEEN '${sPg}' AND '${ePg}'`,
-        "    AND activity IN ('Registered', 'OutboundQueue')",
+        "    AND activity IN ('Registered', 'OutboundQueue', 'WebhookPostResponse')",
         `    AND eventtype = '${eventType}'`,
-        "  GROUP BY bucket",
-        "  ORDER BY bucket;",
-        "",
-        "  -- SQL 3: end-to-end latency (register → outbound queue) ────",
-        "  -- Joins on cloudeventid so each row is one complete trip.",
-        "  -- p95/p99 show where the pipeline is slow under load.",
-        "  SELECT",
-        "      COUNT(*)                                                                                              AS total_events,",
-        "      ROUND(AVG(EXTRACT(EPOCH FROM (q.time - r.time)) * 1000))                                             AS avg_latency_ms,",
-        "      ROUND(PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (q.time - r.time)) * 1000))   AS p50_ms,",
-        "      ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (q.time - r.time)) * 1000))   AS p95_ms,",
-        "      ROUND(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (q.time - r.time)) * 1000))   AS p99_ms,",
-        "      ROUND(MIN(EXTRACT(EPOCH FROM (q.time - r.time)) * 1000))                                             AS min_ms,",
-        "      ROUND(MAX(EXTRACT(EPOCH FROM (q.time - r.time)) * 1000))                                             AS max_ms",
-        "  FROM events.trace_log r",
-        "  JOIN events.trace_log q ON r.cloudeventid = q.cloudeventid",
-        `  WHERE r.time BETWEEN '${sPg}' AND '${ePg}'`,
-        "    AND r.activity = 'Registered'",
-        `    AND r.eventtype = '${eventType}'`,
-        "    AND q.activity = 'OutboundQueue';",
+        "  GROUP BY bucket ORDER BY bucket;",
         "",
         `  Test ended at: ${testEndTime.toISOString()}`,
+        `  Query window ends at: ${queryEndTime.toISOString()}`,
+        "",
+        "  ⚠  Subscription was NOT deleted — webhooks are still delivering.",
+        "     Check [SETUP] log above for the subscription ID, then delete",
+        "     it manually once SQL 1 shows events_webhook_response ≈ events_queued.",
+        "",
+
+        // ── Cleanup SQL ───────────────────────────────────────────────
+        "  ════════════════════════════════════════════════════════════",
+        "  Cleanup SQL — remove all test data for this run",
+        "  ════════════════════════════════════════════════════════════",
+        "  -- Run AFTER verifying results. Wrap in a transaction so you",
+        "  -- can ROLLBACK if the counts look wrong before committing.",
+        "",
+        "  BEGIN;",
+        `  DELETE FROM events.trace_log WHERE eventtype = '${eventType}' AND time BETWEEN '${sPg}' AND '${ePg}';`,
+        `  DELETE FROM events.events    WHERE type      = '${eventType}' AND time BETWEEN '${sPg}' AND '${ePg}';`,
+        "  -- Verify counts are 0 before committing:",
+        `  -- SELECT COUNT(*) FROM events.trace_log WHERE eventtype = '${eventType}' AND time BETWEEN '${sPg}' AND '${ePg}';`,
+        `  -- SELECT COUNT(*) FROM events.events    WHERE type      = '${eventType}' AND time BETWEEN '${sPg}' AND '${ePg}';`,
+        "  COMMIT; -- or ROLLBACK",
         "",
     ];
 
