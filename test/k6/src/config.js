@@ -58,6 +58,8 @@ export const platformEvents = {
     "https://platform." + baseUrl + "/events/api/v1/app/",
   subscriptions:
     "https://platform." + baseUrl + "/events/api/v1/subscriptions/",
+  webhookReceiver:
+    "https://platform." + baseUrl + "/events/api/v1/tests/webhookreceiver",
 };
 
 console.log(`[CONFIG] Events endpoint: "${platformEvents.events}"`);
