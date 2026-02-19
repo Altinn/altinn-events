@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -39,6 +40,11 @@ namespace Altinn.Platform.Events.UnitTest.Mocks
         public async Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest)
         {
             return await Authorize(xacmlJsonRequest.Request);
+        }
+
+        public Task<XacmlJsonResponse> GetDecisionForRequest(XacmlJsonRequestRoot xacmlJsonRequest, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         private async Task<XacmlJsonResponse> Authorize(XacmlJsonRequest decisionRequest)
@@ -127,6 +133,11 @@ namespace Altinn.Platform.Events.UnitTest.Mocks
         {
             XacmlJsonResponse response = await GetDecisionForRequest(xacmlJsonRequest);
             return DecisionHelper.ValidatePdpDecision(response.Response, user);
+        }
+
+        public Task<bool> GetDecisionForUnvalidateRequest(XacmlJsonRequestRoot xacmlJsonRequest, ClaimsPrincipal user, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<XacmlContextRequest> Enrich(XacmlContextRequest request)
@@ -304,6 +315,6 @@ namespace Altinn.Platform.Events.UnitTest.Mocks
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PepWithPDPAuthorizationMockSI).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "apps", org, app, "config", "authorization");
-        }
+        }              
     }
 }
