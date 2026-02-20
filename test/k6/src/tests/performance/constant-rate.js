@@ -1,32 +1,43 @@
 /*
-    Performance test: end-to-end event throughput (registration → outbound queue)
+    Performance test: constant arrival rate
 
-    A single subscription is created once in setup(). The main loop then posts events
-    as fast as possible for the configured duration. Every posted event that matches
-    the subscription triggers the full outbound pipeline, ending with the event being
-    enqueued on the outbound Service Bus queue (TraceLogActivity.OutboundQueue).
+    Fires exactly `targetRps` event POST requests per second for `duration`,
+    regardless of how long each request takes. This decouples load generation
+    from response time, which is the correct model for finding the system's
+    throughput ceiling.
 
-    After the test, handleSummary() prints k6 results and ready-to-run SQL queries
-    against the trace_log table with the exact test timestamps already filled in.
+    If k6 cannot start iterations fast enough — because the system is overloaded,
+    VUs are exhausted, or registration is too slow — `dropped_iterations` climbs
+    above 0, telling you the target rate was not sustained.
+
+    How to find the ceiling:
+      Start low (e.g. -e targetRps=10) and increase until you see either
+      dropped_iterations > 0 or a sharp spike in p(95) POST latency.
+      That inflection point is your system's throughput ceiling for that infra.
+
+    Comparing ASQ vs ASB:
+      Run with the same targetRps on each infra. Look at SQL 2 (pipeline
+      latency) and the per-bucket counts in SQL 3 to see which processes
+      events more quickly at identical ingest rates.
 
     Command:
-    docker-compose run k6 run /src/tests/events/e2e-throughput.js `
-      -e altinn_env=yt01 `
-      -e tokenGeneratorUserName=autotest `
-      -e tokenGeneratorUserPwd=*** `
+    podman compose run k6 run /src/tests/performance/constant-rate.js \
+      -e altinn_env=yt01 \
+      -e tokenGeneratorUserName=autotest \
+      -e tokenGeneratorUserPwd=*** \
       -e runId=$(date +%Y%m%d-%H%M%S) \
-      --vus 10 `
-      --duration 5m
+      -e targetRps=20 \
+      -e duration=2m \
+      -e maxVus=50
 
-    queryOffsetMinutes controls how far past the test end the queries look.
-    Increase if outbound queue processing is expected to lag (default: 15).
+    queryOffsetMinutes controls how far past the test end the SQL queries look (default: 15).
     -e queryOffsetMinutes=30
 
-    Pass a runId to isolate this run's trace_log rows from concurrent traffic.
-    __ENV variables are consistent across all VUs (unlike module-level code which
-    runs once per VU). Without runId, all events share the type
-    "automatedtest.e2e-throughput.untagged" — fine for solo runs, ambiguous otherwise.
-    -e runId=$(date +%Y%m%d-%H%M%S)
+    Tuning preAllocatedVUs:
+      k6 pre-warms this many VUs before the test starts. The rule of thumb is
+      preAllocatedVUs ≈ targetRps × expected_p95_latency_in_seconds.
+      This script defaults to targetRps × 2 (assumes up to 2s per request),
+      capped by maxVus. Override maxVus if you need more headroom.
 */
 
 import { check } from "k6";
@@ -38,37 +49,40 @@ import * as config from "../../config.js";
 import { addErrorCount } from "../../errorhandler.js";
 
 const scopes = "altinn:events.publish altinn:serviceowner altinn:events.subscribe";
-
-// Resource used for both the posted events and the subscription filter.
-// Must match so the subscription picks up every event we post.
 const resourceFilter = "urn:altinn:resource:ttd-altinn-events-automated-tests";
 
-// Unique identifier for this test run, embedded in every event's type field so
-// trace_log rows can be filtered to exactly this run.
-//
-// IMPORTANT: module-level code runs once per VU, so uuidv4() here would produce
-// a different value for each VU. __ENV variables are evaluated once before any VU
-// starts and are therefore consistent across all VUs — the correct place for this.
-const runId = __ENV.runId || "untagged";
-const eventType = `automatedtest.e2e-throughput.${runId}`;
+const runId     = __ENV.runId || "untagged";
+const eventType = `performancetest.constant-rate.${runId}`;
+const targetRps = Number.parseInt(__ENV.targetRps || "20", 10);
+const duration  = __ENV.duration || "2m";
+const maxVus    = Number.parseInt(__ENV.maxVus || "50", 10);
+
+// Pre-allocate enough VUs to sustain targetRps assuming up to ~2s per request.
+// k6 will spin up more (up to maxVus) if needed mid-test.
+const preAllocatedVUs = Math.min(targetRps * 2, maxVus);
 
 if (runId === "untagged") {
-    console.warn("[WARN] No runId provided. Events will use type 'automatedtest.e2e-throughput.untagged'.");
-    console.warn("[WARN] Pass -e runId=$(date +%Y%m%d-%H%M%S) to isolate this run in trace_log queries.");
+    console.warn("[WARN] No runId provided. Pass -e runId=$(date +%Y%m%d-%H%M%S) to isolate this run.");
 }
 
 export const options = {
     thresholds: {
-        error_rate: ["count<1"],
-        http_req_duration: ["p(95)<5000"],
+        error_rate:         ["count<1"],
+        http_req_duration:  ["p(95)<5000"],
+        dropped_iterations: ["count<1"],
     },
-    // Defaults — override via --vus / --duration on the CLI
-    vus: 10,
-    duration: "5m",
+    scenarios: {
+        constant_rate: {
+            executor:        "constant-arrival-rate",
+            rate:            targetRps,
+            timeUnit:        "1s",
+            duration:        duration,
+            preAllocatedVUs: preAllocatedVUs,
+            maxVUs:          maxVus,
+        },
+    },
 };
 
-// setup() runs once before any VU starts. Creates the subscription and returns
-// shared data to all VUs.
 export function setup() {
     const token = setupToken.getAltinnTokenForOrg(scopes);
 
@@ -89,13 +103,11 @@ export function setup() {
 
     const subscriptionId = JSON.parse(response.body).id;
     console.log(`[SETUP] Subscription ${subscriptionId} created`);
+    console.log(`[SETUP] Target rate: ${targetRps} events/s for ${duration} (preAllocated: ${preAllocatedVUs}, max: ${maxVus} VUs)`);
 
     return { token, subscriptionId };
 }
 
-// Default function — called once per VU iteration for the full test duration.
-// Posts a single cloud event that matches the subscription so the outbound
-// queue pipeline is exercised on every iteration.
 export default function runTests(data) {
     const cloudEvent = {
         id: uuidv4(),
@@ -116,46 +128,48 @@ export default function runTests(data) {
     addErrorCount(success);
 }
 
-// teardown() runs once after all VUs have finished.
 // Intentionally does NOT delete the subscription — webhook delivery and
 // WebhookPostResponse trace_log entries happen asynchronously after the test ends.
-// Deleting the subscription here would pull it out from under in-flight
-// Service Bus deliveries. Delete manually once you've verified the DB results.
 export function teardown(data) {
     if (data.subscriptionId) {
         console.log(`[TEARDOWN] Subscription ${data.subscriptionId} left active — delete manually when done.`);
     }
 }
 
-// handleSummary() runs after teardown.
-// Prints k6 results and copy-paste SQL queries with actual timestamps.
 export function handleSummary(data) {
-    const testEndTime = new Date();
+    const testEndTime    = new Date();
     const testDurationMs = data.state.testRunDurationMs;
-    const testStartTime = new Date(testEndTime.getTime() - testDurationMs);
+    const testStartTime  = new Date(testEndTime.getTime() - testDurationMs);
 
     const offsetMinutes = Number.parseInt(__ENV.queryOffsetMinutes || "15", 10);
-    const queryEndTime = new Date(testEndTime.getTime() + offsetMinutes * 60 * 1000);
+    const queryEndTime  = new Date(testEndTime.getTime() + offsetMinutes * 60 * 1000);
 
-    const eventsPosted = data.metrics["http_reqs"]?.values?.count ?? 0;
-    const errorCount   = data.metrics["error_rate"]?.values?.count ?? 0;
-    const p95Ms        = data.metrics["http_req_duration"]?.values?.["p(95)"] ?? 0;
-    const successCount = eventsPosted - errorCount;
+    const eventsPosted   = data.metrics["http_reqs"]?.values?.count ?? 0;
+    const errorCount     = data.metrics["error_rate"]?.values?.count ?? 0;
+    const droppedCount   = data.metrics["dropped_iterations"]?.values?.count ?? 0;
+    const p95Ms          = data.metrics["http_req_duration"]?.values?.["p(95)"] ?? 0;
+    const successCount   = eventsPosted - errorCount;
+    const durationSec    = testDurationMs / 1000;
+    const effectiveRps   = durationSec > 0 ? (successCount / durationSec).toFixed(1) : "N/A";
+    const targetMet      = droppedCount === 0 ? "YES" : `NO — ${droppedCount} iterations dropped`;
 
-    // Postgres-formatted timestamps for SQL (trace_log uses timestamptz)
     const sPg = testStartTime.toISOString().replace("T", " ").replace("Z", "+00");
     const ePg = queryEndTime.toISOString().replace("T", " ").replace("Z", "+00");
 
     const lines = [
         "",
         "╔══════════════════════════════════════════════════════════════╗",
-        "║           E2E Throughput Test — Summary                      ║",
+        "║         Constant-Rate Throughput Test — Summary              ║",
         "╚══════════════════════════════════════════════════════════════╝",
         "",
-        "  k6 results (what was sent):",
-        `    Events posted (HTTP 200) : ${successCount}`,
-        `    Errors                   : ${errorCount}`,
-        `    p(95) POST latency       : ${p95Ms.toFixed(0)} ms`,
+        "  k6 results:",
+        `    Target rate               : ${targetRps} events/s`,
+        `    Effective rate            : ${effectiveRps} events/s`,
+        `    Target rate sustained     : ${targetMet}`,
+        `    Events posted (HTTP 200)  : ${successCount}`,
+        `    Errors                    : ${errorCount}`,
+        `    Dropped iterations        : ${droppedCount}`,
+        `    p(95) POST latency        : ${p95Ms.toFixed(0)} ms`,
         "",
         `  Run ID    : ${runId}${runId === "untagged" ? "  ⚠ pass -e runId=... to isolate this run" : ""}`,
         `  Event type: ${eventType}`,
@@ -163,26 +177,46 @@ export function handleSummary(data) {
         "  Override offset with -e queryOffsetMinutes=N",
         "",
 
-        // ── SQL ──────────────────────────────────────────────────────
         "  ════════════════════════════════════════════════════════════",
         "  SQL — events.trace_log",
         "  ════════════════════════════════════════════════════════════",
         "",
-        "  -- SQL 1: ingest vs outbound queue counts ───────────────────",
+        "  -- SQL 1: ingest vs outbound counts ────────────────────────",
         "  SELECT",
-        "      COUNT(*) FILTER (WHERE activity = 'Registered')         AS events_registered,",
-        "      COUNT(*) FILTER (WHERE activity = 'OutboundQueue')      AS events_queued,",
+        "      COUNT(*) FILTER (WHERE activity = 'Registered')          AS events_registered,",
+        "      COUNT(*) FILTER (WHERE activity = 'OutboundQueue')       AS events_queued,",
         "      COUNT(*) FILTER (WHERE activity = 'WebhookPostResponse') AS events_webhook_response,",
-        "      COUNT(*) FILTER (WHERE activity = 'Unauthorized')       AS events_unauthorized",
+        "      COUNT(*) FILTER (WHERE activity = 'Unauthorized')        AS events_unauthorized",
         "  FROM events.trace_log",
         `  WHERE time BETWEEN '${sPg}' AND '${ePg}'`,
         `    AND eventtype = '${eventType}';`,
         "",
-        "  -- SQL 2: throughput per 10s bucket ────────────────────────",
+        "  -- SQL 2: pipeline latency per event (Registered → OutboundQueue) ──",
         "  SELECT",
-        "      to_timestamp(floor(extract(epoch FROM time) / 10) * 10) AT TIME ZONE 'UTC' AS bucket,",
-        "      COUNT(*) FILTER (WHERE activity = 'Registered')    AS events_registered,",
-        "      COUNT(*) FILTER (WHERE activity = 'OutboundQueue') AS events_queued,",
+        "      percentile_cont(0.50) WITHIN GROUP (ORDER BY lag_ms) AS p50_ms,",
+        "      percentile_cont(0.95) WITHIN GROUP (ORDER BY lag_ms) AS p95_ms,",
+        "      percentile_cont(0.99) WITHIN GROUP (ORDER BY lag_ms) AS p99_ms,",
+        "      MAX(lag_ms)                                           AS max_ms",
+        "  FROM (",
+        "      SELECT",
+        "          cloudeventid,",
+        "          EXTRACT(EPOCH FROM (",
+        "              MAX(time) FILTER (WHERE activity = 'OutboundQueue')",
+        "            - MIN(time) FILTER (WHERE activity = 'Registered')",
+        "          )) * 1000 AS lag_ms",
+        "      FROM events.trace_log",
+        `      WHERE time BETWEEN '${sPg}' AND '${ePg}'`,
+        `        AND eventtype = '${eventType}'`,
+        "        AND activity IN ('Registered', 'OutboundQueue')",
+        "      GROUP BY cloudeventid",
+        "      HAVING COUNT(DISTINCT activity) = 2",
+        "  ) t;",
+        "",
+        "  -- SQL 3: actual rate per 5s bucket (compare to target) ────",
+        "  SELECT",
+        "      to_timestamp(floor(extract(epoch FROM time) / 5) * 5) AT TIME ZONE 'UTC' AS bucket,",
+        "      COUNT(*) FILTER (WHERE activity = 'Registered')          AS events_registered,",
+        "      COUNT(*) FILTER (WHERE activity = 'OutboundQueue')       AS events_queued,",
         "      COUNT(*) FILTER (WHERE activity = 'WebhookPostResponse') AS events_webhook_response",
         "  FROM events.trace_log",
         `  WHERE time BETWEEN '${sPg}' AND '${ePg}'`,
@@ -198,7 +232,6 @@ export function handleSummary(data) {
         "     it manually once SQL 1 shows events_webhook_response ≈ events_queued.",
         "",
 
-        // ── Cleanup SQL ───────────────────────────────────────────────
         "  ════════════════════════════════════════════════════════════",
         "  Cleanup SQL — remove all test data for this run",
         "  ════════════════════════════════════════════════════════════",
