@@ -253,7 +253,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
             opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
-                .ProcessInline();
+                .UseDurableInbox();
             opts.ListenToAzureServiceBusQueue(wolverineSettings.InboundQueueName)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
