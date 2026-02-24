@@ -52,6 +52,7 @@ using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Wolverine;
 using Wolverine.AzureServiceBus;
+using Wolverine.Postgresql;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -231,12 +232,22 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 builder.Environment,
                 wolverineSettings.ServiceBusConnectionString);
 
+            if (config.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
+            {
+                var wolverineAdminConnectionString = string.Format(
+                    config.GetValue<string>("PostgreSQLSettings:AdminConnectionString"),
+                    config.GetValue<string>("PostgreSQLSettings:EventsDbAdminPwd"));
+
+                opts.PersistMessagesWithPostgresql(wolverineAdminConnectionString, "wolverine");
+            }
+
             opts.PublishMessage<RegisterEventCommand>()
-                .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+                .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
+                .UseDurableOutbox();
             opts.PublishMessage<InboundEventCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
             opts.PublishMessage<OutboundEventCommand>()
-                .ToAzureServiceBusQueue(wolverineSettings.OutboundQueueName);                
+                .ToAzureServiceBusQueue(wolverineSettings.OutboundQueueName);
             opts.PublishMessage<ValidateSubscriptionCommand>()
                 .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
 
@@ -253,9 +264,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 .ListenerCount(wolverineSettings.ListenerCount)
                 .ProcessInline();
         }
-
-        opts.Policies.AllListeners(x => x.ProcessInline());
-        opts.Policies.AllSenders(x => x.SendInline());
     });
 
     services.AddSingleton(config);
