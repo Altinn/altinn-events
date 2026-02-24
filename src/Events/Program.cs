@@ -235,7 +235,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             if (config.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
             {
                 var wolverineAdminConnectionString = string.Format(
-                    config.GetValue<string>("PostgreSQLSettings:AdminConnectionString"),
+                    config.GetValue<string>("PostgreSQLSettings:AdminConnectionString") + ";Maximum Pool Size=300;",
                     config.GetValue<string>("PostgreSQLSettings:EventsDbAdminPwd"));
 
                 opts.PersistMessagesWithPostgresql(wolverineAdminConnectionString, "wolverine");
