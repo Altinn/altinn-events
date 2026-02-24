@@ -201,7 +201,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     if (config.GetValue<bool>("PostgreSQLSettings:EnableDBConnection"))
     {
         var connectionString = string.Format(
-                config.GetValue<string>("PostgreSQLSettings:ConnectionString"),
+                config.GetValue<string>("PostgreSQLSettings:ConnectionString") + ";Maximum Pool Size=300;",
                 config.GetValue<string>("PostgreSQLSettings:EventsDbPwd"));
 
         services.AddHealthChecks()
