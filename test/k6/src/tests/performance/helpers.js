@@ -12,7 +12,7 @@ export const runId = __ENV.runId || "untagged";
 
 export function warnIfUntagged() {
     if (runId === "untagged") {
-        console.warn(`[WARN] No runId provided. Pass -e runId=$(date +%Y%m%d-%H%M%S) to isolate this run.`);
+        throw new Error("[CONFIG] Missing runId. Pass -e runId=$(date +%Y%m%d-%H%M%S) to isolate this run safely.");
     }
 }
 
@@ -34,7 +34,16 @@ export function performanceSetup(setupLogLine) {
         throw new Error(`[SETUP] Failed to create subscription: HTTP ${response.status} – ${response.body}`);
     }
 
-    const subscriptionId = JSON.parse(response.body).id;
+    let parsedBody;
+    try {
+        parsedBody = JSON.parse(response.body);
+    } catch {
+        throw new Error(`[SETUP] Subscription created with HTTP 201, but body was not valid JSON: ${response.body}`);
+    }
+    const subscriptionId = parsedBody?.id;
+    if (!subscriptionId) {
+        throw new Error(`[SETUP] Subscription response missing 'id': ${response.body}`);
+    }
     console.log(`[SETUP] Subscription ${subscriptionId} created`);
     if (setupLogLine) {
         console.log(`[SETUP] ${setupLogLine}`);
@@ -86,10 +95,10 @@ export function getTimeWindow(data) {
 }
 
 export function getBaseMetrics(data) {
-    const eventsPosted = data.metrics["http_reqs"]?.values?.count ?? 0;
+    const eventsPosted = data.metrics["iterations"]?.values?.count ?? 0;
     const errorCount   = data.metrics["error_rate"]?.values?.count ?? 0;
     const p95Ms        = data.metrics["http_req_duration"]?.values?.["p(95)"] ?? 0;
-    const successCount = eventsPosted - errorCount;
+    const successCount = Math.max(eventsPosted - errorCount, 0);
 
     return { eventsPosted, errorCount, p95Ms, successCount };
 }
