@@ -138,8 +138,8 @@ function TC01_GetAllEvents(data) {
     });
     addErrorCount(success);
 
-    if (!success) {        
-        stopIterationOnFail(success);
+    if (!success) {
+        stopIterationOnFail("GET all cloud events: status is 200", success, response);
     }
 
     success = check(response, {

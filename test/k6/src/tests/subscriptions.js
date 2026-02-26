@@ -121,7 +121,7 @@ function createSubscription(subscriptionType = 'app') {
 
 export const options = {
   thresholds: {
-    error_rate: ["count<1"],
+    errors: ["count<1"],
   },
 };
 

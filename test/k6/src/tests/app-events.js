@@ -34,8 +34,7 @@ import { addErrorCount } from "../errorhandler.js";
 
 export const options = {
   thresholds: {
-    // Allow up to 5% error rate for performance testing
-    error_rate: ["rate<0.05"],
+    errors: ["count<1"],
     // HTTP error rate should be below 2%
     http_req_failed: ["rate<0.02"],
     // 95% of requests should complete within 1 second
