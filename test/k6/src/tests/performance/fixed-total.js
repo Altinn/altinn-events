@@ -36,7 +36,7 @@ warnIfUntagged();
 
 export const options = {
     thresholds: {
-        error_rate: ["count<1"],
+        errors: ["count<1"],
         http_req_duration: ["p(95)<5000"],
     },
     scenarios: {
