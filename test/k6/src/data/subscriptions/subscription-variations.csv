@@ -1,7 +1,0 @@
-endPoint,sourceFilter,type
-https://webhook.site/xxx,https://ttd.apps.at22.altinn.cloud/ttd/app1,app
-https://webhook.site/yyy,https://platform.at22.altinn.cloud/events/api/v1,generic
-https://webhook.site/abc,https://ttd.apps.at22.altinn.cloud/ttd/app1,app
-https://webhook.site/def,https://platform.at22.altinn.cloud/events/api/v1,generic
-https://webhook.site/hhh,https://ttd.apps.at22.altinn.cloud/ttd/app1,app
-https://webhook.site/ggg,https://platform.at22.altinn.cloud/events/api/v1,generic

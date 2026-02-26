@@ -53,7 +53,6 @@ You are free to provide whichever endpoint, but make sure it ends with `/`.
 We would suggest to use webhook.site.
 The following PowerShell script will generate a dedicated webhook to provide as the environment variable `webhookEndpoint`
 
-You can run the PowerShell script provided at `src/data/subscriptions/scriptToGenerateWebhookEndpoint.ps1` inside a PowerShell terminal
 
 ```ps
 $params = @{

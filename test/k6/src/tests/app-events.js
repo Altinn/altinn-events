@@ -14,17 +14,7 @@
     -e personNumber=*** `
     -e userName=*** `
     -e userPassword=*** `
-    -e runFullTestSet=true `
-    -e useCSVData=true
-    --vus 5 `
-    --duration 30s
-
-    // Single line command to run the test using the script with example environment variables:
-    docker-compose run k6 run /src/tests/app-events.js -e altinn_env=*** -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e app=apps-test -e userId=*** -e partyId=*** -e personNumber=*** -e userName=*** -e userPassword=*** -e runFullTestSet=true -e useCSVData=true --vus 1 --duration 30s
-
-    Update the variables --vus and --duration as needed for performance testing
-    For use case tests omit environment variable runFullTestSet or set value to false
-    Retrieve the userName and userPassword from Altinn Pedia https://pedia.altinn.cloud/altinn-3/ops/patching/containers/ for the respective environment    
+    -e runFullTestSet=true
 */
 
 import { check } from "k6";
@@ -35,10 +25,6 @@ import { addErrorCount } from "../errorhandler.js";
 export const options = {
   thresholds: {
     errors: ["count<1"],
-    // HTTP error rate should be below 2%
-    http_req_failed: ["rate<0.02"],
-    // 95% of requests should complete within 1 second
-    http_req_duration: ["p(95)<1000"],
   },
 };
 
@@ -81,7 +67,7 @@ function TC01_GetAppEventsForOrg(data) {
     data.orgToken
   );
 
-  let nextUrl = response.headers["Next"] || response.headers["next"];
+  let nextUrl = response.headers["Next"];
 
   let success = check(response, {
     "01 - GET app events for org. Query parameter 'after'. Status is 200": (
@@ -89,13 +75,9 @@ function TC01_GetAppEventsForOrg(data) {
     ) => r.status === 200,
     "01 - GET app events for org. Query parameter 'after'. List contains minimum one element":
       (r) => JSON.parse(r.body).length >= 1,
+    "01 - GET app events for org. Query parameter 'after'. Next url provided":
+      nextUrl,
   });
-
-  if (nextUrl) {
-    check(nextUrl, {
-      "01 - GET app events for org. Query parameter 'after'. Next url provided": (url) => url !== undefined,
-    });
-  }
 
   addErrorCount(success);
   return nextUrl;
@@ -103,11 +85,6 @@ function TC01_GetAppEventsForOrg(data) {
 
 // 02 - GET events for org from next url
 function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
-  if (!nextUrl) {
-    // console.warn("02 - Skipping test: nextUrl is undefined");
-    return;
-  }
-
   let response = appEventsApi.getEventsFromNextLink(nextUrl, data.orgToken);
 
   let success = check(response, {
@@ -128,15 +105,8 @@ function TC03_GetAppEventsForParty(data) {
     data.userToken
   );
 
-  let nextUrl = response.headers["Next"] || response.headers["next"];
-  let responseBody;
-  if (response.status === 200) {
-    try {
-      responseBody = JSON.parse(response.body);
-    } catch (e) {
-      console.warn("03 - Response body was not valid JSON");
-    }
-  }
+  let nextUrl = response.headers["Next"];
+
   let success = check(response, {
     "03 - GET app events for party. Query parameters: partyId, from. Status is 200":
       (r) => r.status === 200,
@@ -145,23 +115,14 @@ function TC03_GetAppEventsForParty(data) {
     "03 - GET app events for party. Query parameters: partyId, from. Next url provided":
       nextUrl,
   });
-  // Only check for minimum one element if the response is successful
-  if (response.status === 200 && Array.isArray(responseBody) && responseBody.length === 0) {
-    console.log(`TC03: No events found for party ${data.userPartyId} - this may be expected`);
-  }
 
   addErrorCount(success);
 
   return nextUrl;
 }
-// No next URL means no more pages - this is normal, not an error
+
 // 04 - GET events for party from 'next' url
 function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
-  if (!nextUrl) {
-    console.warn("04 - Skipping test: nextUrl is undefined");
-    return;
-  }
-
   let response = appEventsApi.getEventsFromNextLink(nextUrl, data.userToken);
 
   let success = check(response, {
