@@ -280,7 +280,7 @@ public class WebhookServiceTest
         var messageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
 
         messageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Equals(clientEndpoint)), ItExpr.IsAny<CancellationToken>())
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.AbsoluteUri.TrimEnd('/') == clientEndpoint.TrimEnd('/')), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
             {
                 return response;
