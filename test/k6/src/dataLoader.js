@@ -85,7 +85,7 @@ function parseCSV(csvString, options = {}) {
  * 
  * @example
  * const events = loadCSV('events', '../../data/events/event-variations.csv');
- * const event = events[__VU % events.length]; // Get event for this VU
+ * const event = events[(__VU - 1) % events.length]; // Get event for this VU
  */
 export function loadCSV(name, filePath, options = {}) {
     return new SharedArray(name, function() {
@@ -182,6 +182,16 @@ export function getItemByVU(array, vuId) {
     return array[(vuId - 1) % array.length];
 }
 
+/**
+ * Get an item from array based on iteration number (round-robin)
+ *
+ * @param {Array} array - Array to select from
+ * @param {number} iteration - Iteration number (typically __ITER)
+ * @returns {*} Item from array
+ *
+ * @example
+ * const event = getItemByIteration(events, __ITER);
+ */
 export function getItemByIteration(array, iteration) {
     if (!array || array.length === 0) {
         throw new Error('getItemByIteration: array is empty');
