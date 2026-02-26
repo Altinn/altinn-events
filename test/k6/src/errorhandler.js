@@ -1,7 +1,7 @@
 import { Counter } from "k6/metrics";
 import { fail } from "k6";
 
-let ErrorCount = new Counter("error_rate");
+let ErrorCount = new Counter("errors");
 
 //Adds a count to the error counter when value of success is false
 export function addErrorCount(success) {

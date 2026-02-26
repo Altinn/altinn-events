@@ -21,11 +21,6 @@ import { check } from "k6";
 import * as setupToken from "../setup.js";
 import * as appEventsApi from "../api/app-events.js";
 import { addErrorCount } from "../errorhandler.js";
-import { loadCSV, loadJSONDirectory } from "../dataLoader.js";
-
-const useCSVData = __ENV.useCSVData ? __ENV.useCSVData.toLowerCase().includes("true") : false;
-
-console.log(`[APP-EVENTS] Using CSV data: ${useCSVData}`);
 
 export const options = {
   thresholds: {
@@ -151,8 +146,7 @@ export default function runTests(data) {
 
       TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl);
 
-      nextUrl = TC03a_GetAppEventsForParty_From(data);
-      TC03b_GetAppEventsForParty_After1(data);
+      nextUrl = TC03_GetAppEventsForParty(data);
 
       TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
     } else {

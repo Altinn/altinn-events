@@ -46,7 +46,7 @@ genericSubscription.endPoint = webhookEndpoint;
 
 export const options = {
   thresholds: {
-    error_rate: ["count<1"],
+    errors: ["count<1"],
   },
 };
 
@@ -136,14 +136,9 @@ function TC04_GetExistingSubscriptionsForOrg(data, expectedSubscriptionCount) {
   let response = subscriptionsApi.getAllSubscriptions(data.orgToken);
 
   let responseObject = JSON.parse(response.body);
-  
-  // With concurrent VUs, count may vary significantly due to other VUs creating/deleting subscriptions
-  // Accept count within a reasonable range (±10) to account for race conditions in load tests
-  const countDiff = Math.abs(responseObject.count - expectedSubscriptionCount);
-  
   let success = check(response, {
-    "04 - GET existing subscriptions for org again. Count is within expected range (±10 tolerance)":
-      countDiff <= 10,
+    "04 - GET existing subscriptions for org again. Count matches expected subscription count":
+      responseObject.count === expectedSubscriptionCount,
   });
 
   addErrorCount(success);
@@ -168,11 +163,11 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
   if (success) {
     let subscription = JSON.parse(response.body);
 
-    // Note: Webhook validation may fail if webhook.site is down or slow during load tests
-    // Log validation status for informational purposes only
-    if (!subscription.validated) {
-      console.warn(`[TC05] Subscription ${subscriptionId} not validated`);
-   }
+    success = check(response, {
+      "05 - Get subscription by id. Returned subscription is validated":
+        subscription.validated,
+    });
+    addErrorCount(success);
   }
 }
 
