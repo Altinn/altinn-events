@@ -1,6 +1,0 @@
-source,specversion,type,subject,resource,alternativeSubject
-https://github.com/Altinn/altinn-events/tree/main/test/k6,1.0,automatedtest.triggered,/autotest/k6,urn:altinn:resource:ttd-altinn-events-automated-tests,
-https://github.com/Altinn/altinn-events/tree/main/test/k6,1.0,automatedtest.updated,/autotest/k6/update,urn:altinn:resource:ttd-altinn-events-automated-tests,
-https://github.com/Altinn/altinn-events/tree/main/test/k6,1.0,automatedtest.deleted,/autotest/k6/delete,urn:altinn:resource:ttd-altinn-events-automated-tests,
-https://github.com/Altinn/altinn-events/tree/main/test/k6,1.0,automatedtest.batch,/autotest/k6/batch,urn:altinn:resource:ttd-altinn-events-automated-tests,
-https://github.com/Altinn/altinn-events/tree/main/test/k6,1.0,automatedtest.large,/autotest/k6/large,urn:altinn:resource:ttd-altinn-events-automated-tests,

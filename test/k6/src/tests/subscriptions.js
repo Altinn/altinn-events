@@ -10,36 +10,24 @@
       -e encodedJwk=*** `
       -e app=apps-test `
       -e webhookEndpoint=***** `
-      -e runFullTestSet=true `
-      -e useCSVData=false
-
-    For single line version of the above command, use the following command:
-    docker-compose run k6 run /src/tests/subscriptions.js -e tokenGeneratorUserName=autotest -e tokenGeneratorUserPwd=*** -e altinn_env=at22 -e runFullTestSet=true -e useCSVData=true -e webhookEndpoint=*** --vus 1 --duration 30s -e app=apps-test
+      -e runFullTestSet=true
 
     For use case tests omit environment variable runFullTestSet or set value to false
-    Set useCSVData=true to load test data from CSV file instead of JSON
-    Update the variables --vus and --duration as needed for performance testing
-*/
+    */
 
 import { check, sleep } from "k6";
 import * as subscriptionsApi from "../api/subscriptions.js";
 import * as config from "../config.js";
 import { addErrorCount } from "../errorhandler.js";
 import * as setupToken from "../setup.js";
-import { loadCSV, loadJSONDirectory, loadJSON, createSubscriptionFromCSV, getItemByVU } from "../dataLoader.js";
 
-const useCSVData = (__ENV.useCSVData || "").toLowerCase() === "true";
+const appSubscription = JSON.parse(
+  open("../data/subscriptions/01-app-subscription.json")
+);
 
-const subscriptionVariations = useCSVData 
-              ? loadCSV('subscription-variations', '../data/subscriptions/subscription-variations.csv') : 
-              loadJSONDirectory('subscription-variations', '../data/subscriptions/', 
-              [
-                '01-app-subscription.json',
-                '02-generic-subscription.json'
-              ]);
-
-console.log(`[SUBSCRIPTIONS] Using CSV data: ${useCSVData}`);
-console.log(`[SUBSCRIPTIONS] Subscription variations loaded: ${subscriptionVariations.length}`);
+const genericSubscription = JSON.parse(
+  open("../data/subscriptions/02-generic-subscription.json")
+);
 
 const scopes =
   "altinn:serviceowner altinn:events.publish altinn:events.subscribe";
@@ -52,72 +40,9 @@ const runFullTestSet = __ENV.runFullTestSet
   ? __ENV.runFullTestSet.toLowerCase().includes("true")
   : false;
 
-// Helper function to create subscription dynamically during test execution
-function createSubscription(subscriptionType = 'app') {
-    let subscriptionData;
-    
-    if (useCSVData) {
-        // SharedArray doesn't support filter - manually iterate
-        const filteredRows = [];
-        for (let i = 0; i < subscriptionVariations.length; i++) {
-            if (subscriptionVariations[i].type === subscriptionType) {
-                filteredRows.push(subscriptionVariations[i]);
-            }
-        }
-        if (filteredRows.length === 0) {
-            console.error(`[ERROR] No ${subscriptionType} subscriptions found in CSV data`);
-            throw new Error(`No ${subscriptionType} subscriptions in CSV`);
-        }
-        subscriptionData = getItemByVU(filteredRows, __VU);
-    } else {
-        // For JSON: subscriptionVariations[0] = app, subscriptionVariations[1] = generic
-        const templateIndex = subscriptionType === 'app' ? 0 : 1;
-        subscriptionData = subscriptionVariations[templateIndex];
-    }
-    
-    let subscription;
-    if (useCSVData) {
-        // Create subscription from CSV row
-        // Make endpoint unique per VU and iteration to avoid conflicts in load tests
-        subscription = createSubscriptionFromCSV(subscriptionData, {
-            endPoint: `${webhookEndpoint}?vu=${__VU}&iter=${__ITER}`
-        });
-        
-        // Handle filter mapping based on subscription type
-        if (subscriptionType === 'app') {
-            // Override sourceFilter for app subscriptions with actual app name
-            subscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${app}`;
-            delete subscription.resourceFilter;
-            delete subscription.consumer;
-        } else if (subscriptionType === 'generic') {
-            // For generic subscriptions, use a valid URN for resourceFilter
-            subscription.resourceFilter = "urn:altinn:resource:ttd-altinn-events-automated-tests";
-            delete subscription.sourceFilter;
-            
-            // Add consumer if not present
-            if (!subscription.consumer) {
-                subscription.consumer = "norsknettavisleser";
-            }
-        }
-    } else {
-        // Use JSON subscription directly
-        subscription = { ...subscriptionData };
-        // Make endpoint unique per VU and iteration to avoid conflicts
-        subscription.endPoint = `${webhookEndpoint}?vu=${__VU}&iter=${__ITER}`;
-        
-        // Set sourceFilter for app subscriptions
-        if (subscriptionType === 'app') {
-            subscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${app}`;
-            // Remove resourceFilter if present (app subscriptions use sourceFilter)
-            delete subscription.resourceFilter;
-            delete subscription.consumer;
-        }
-    }
-    
-    console.log(`[SUBSCRIPTIONS VU${__VU}] Creating ${subscriptionType} subscription - endpoint: ${subscription.endPoint}`);
-    
-    return subscription;
-}
+appSubscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${app}`;
+appSubscription.endPoint = webhookEndpoint;
+genericSubscription.endPoint = webhookEndpoint;
 
 export const options = {
   thresholds: {
@@ -137,8 +62,9 @@ export function setup() {
     incorrectScopeToken: incorrectScopeToken,
     org: org,
     app: app,
+    appSubscription: JSON.stringify(appSubscription),
+    genericSubscription: JSON.stringify(genericSubscription),
     webhookEndpoint: webhookEndpoint,
-    useCSVData: useCSVData,
   };
 
   return data;
@@ -148,10 +74,8 @@ export function setup() {
 function TC01_PostNewSubscriptionForAppEventSource(data) {
   let response, success;
 
-  let appSubscription = createSubscription('app');
-
   response = subscriptionsApi.postSubscription(
-    JSON.stringify(appSubscription),
+    data.appSubscription,
     data.orgToken
   );
 
@@ -164,26 +88,23 @@ function TC01_PostNewSubscriptionForAppEventSource(data) {
   });
 
   addErrorCount(success);
-  return { id: subscription.id, endpoint: appSubscription.endPoint };
+  return subscription.id;
 }
 
 // 02 - GET existing subscriptions for org
-function TC02_GetExistingSubscriptionsForOrg(data, expectedEndpoint) {
+function TC02_GetExistingSubscriptionsForOrg(data) {
   let response = subscriptionsApi.getAllSubscriptions(data.orgToken);
 
   let subscriptionList = JSON.parse(response.body);
   let subscriptions = subscriptionList.subscriptions;
 
-  // Use the expected endpoint (with VU/iter params if provided) or base webhook endpoint
-  const endpointToCheck = expectedEndpoint || data.webhookEndpoint;
-  
   let success = check(response, {
     "02 - GET existing subscriptions for org. Status is 200.": (r) =>
       r.status === 200,
     "02 - GET existing subscriptions for org. Count is at least 1":
       subscriptionList.count >= 1,
     "02 - GET existing subscriptions for org. Auto test subscription in list":
-      subscriptions.some((s) => s.endPoint === endpointToCheck),
+      subscriptions.some((s) => s.endPoint === data.webhookEndpoint),
   });
 
   addErrorCount(success);
@@ -193,10 +114,9 @@ function TC02_GetExistingSubscriptionsForOrg(data, expectedEndpoint) {
 
 // 03 - POST existing subscription
 function TC03_PostExistingSubscription(data) {
-  let appSubscription = createSubscription('app');
 
   let response = subscriptionsApi.postSubscription(
-    JSON.stringify(appSubscription),
+    data.appSubscription,
     data.orgToken
   );
 
@@ -268,10 +188,8 @@ function TC06_DeleteSubscription(data, subscriptionId) {
 
 //  07 - POST subscription for external event source
 function TC07_PostSubscriptionExternalEventSource(data) {
-  let genericSubscription = createSubscription('generic');
-
   let response = subscriptionsApi.postSubscription(
-    JSON.stringify(genericSubscription),
+    data.genericSubscription,
     data.orgToken
   );
 
@@ -290,10 +208,8 @@ function TC07_PostSubscriptionExternalEventSource(data) {
 
 // 08 - POST subscription for external event source without required scope
 function TC08_PostSubscriptionForExternalEventSourceWithoutScope(data) {
-  let genericSubscription = createSubscription('generic');
-
   let response = subscriptionsApi.postSubscription(
-    JSON.stringify(genericSubscription),
+    data.genericSubscription,
     data.incorrectScopeToken
   );
 
@@ -317,18 +233,18 @@ function TC08_PostSubscriptionForExternalEventSourceWithoutScope(data) {
 export default function runTests(data) {
   try {
     if (data.runFullTestSet) {
-      const appSubscriptionData = TC01_PostNewSubscriptionForAppEventSource(data);
+      const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
 
       const currentSubscriptionCount =
-        TC02_GetExistingSubscriptionsForOrg(data, appSubscriptionData.endpoint);
+        TC02_GetExistingSubscriptionsForOrg(data);
 
       TC03_PostExistingSubscription(data);
 
       TC04_GetExistingSubscriptionsForOrg(data, currentSubscriptionCount);
 
-      TC05_GetSubscriptionById(data, appSubscriptionData.id);
+      TC05_GetSubscriptionById(data, appSubscriptionId);
 
-      TC06_DeleteSubscription(data, appSubscriptionData.id);
+      TC06_DeleteSubscription(data, appSubscriptionId);
 
       const genericSubscriptionId =
         TC07_PostSubscriptionExternalEventSource(data);
@@ -340,13 +256,13 @@ export default function runTests(data) {
       TC08_PostSubscriptionForExternalEventSourceWithoutScope(data);
     } else {
       // Limited test set for use case tests
-      const appSubscriptionData = TC01_PostNewSubscriptionForAppEventSource(data);
+      const appSubscriptionId = TC01_PostNewSubscriptionForAppEventSource(data);
 
-      TC02_GetExistingSubscriptionsForOrg(data, appSubscriptionData.endpoint);
+      TC02_GetExistingSubscriptionsForOrg(data);
 
-      TC05_GetSubscriptionById(data, appSubscriptionData.id);
+      TC05_GetSubscriptionById(data, appSubscriptionId);
 
-      TC06_DeleteSubscription(data, appSubscriptionData.id);
+      TC06_DeleteSubscription(data, appSubscriptionId);
     }
   } catch (error) {
     addErrorCount(false);

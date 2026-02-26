@@ -1,9 +1,0 @@
-{
-    "source":"https://example.com/service-b",
-    "specversion":"1.0",
-    "type":"payment.completed",
-    "subject":"/party/2468",
-    "resource":"urn:altinn:resource:service-b",
-    "alternativeSubject":"/person/01015512345",
-    "time": "2022-05-12T14:22:15.541482Z"
-}
