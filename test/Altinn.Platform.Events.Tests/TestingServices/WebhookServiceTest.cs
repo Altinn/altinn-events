@@ -47,7 +47,7 @@ public class WebhookServiceTest
     }
 
     [Fact]
-    public void GetPayload_CloudEventExtentionAttributesPersisted()
+    public void GetPayload_CloudEventExtensionAttributesPersisted()
     {
         // Arrange
         string expectedPayload =
