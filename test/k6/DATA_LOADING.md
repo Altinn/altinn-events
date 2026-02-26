@@ -157,6 +157,12 @@ Creates a cloud event object from CSV row data.
 - **overrides**: Optional fields to add/override
 - **Returns**: Cloud event object
 
+### createSubscriptionFromCSV(csvRow, overrides)
+Creates a subscription object from CSV row data.
+- **csvRow**: Object representing a CSV row
+- **overrides**: Optional fields to add/override (e.g., `{ endPoint: '...' }`)
+- **Returns**: Subscription object
+
 ### getRandomItem(array)
 Gets a random item from an array.
 - **array**: Source array
