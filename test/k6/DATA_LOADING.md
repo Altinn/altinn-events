@@ -126,10 +126,11 @@ export default function() {
 
 ## Data Loader API Reference
 
-### loadCSV(name, filePath)
+### loadCSV(name, filePath, options)
 Loads and parses a CSV file into a SharedArray.
 - **name**: Unique identifier for the SharedArray
 - **filePath**: Relative path to CSV file
+- **options**: (Optional) Parsing options — `{ delimiter: ',', skipEmptyLines: true }`
 - **Returns**: SharedArray of objects
 
 ### loadJSON(filePath)

@@ -65,10 +65,3 @@ $webhookToken =((Invoke-Webrequest @params).Content  | ConvertFrom-Json).uuid
 
 $webhookEndpoint= "https://webhook.site/" + $webhookToken + "/"
 ```
-
-### Known issues while running the tests
-
-- We have realised the following points when running the tests under
-     When we run the scripts to run against one or two users VUS, the tests are executed successfully
-     Increasing the number og VUS to more than 2 is resulting in empty test results and more number of failed responses for the events
-     This has to be investigated for all the test files based on the need

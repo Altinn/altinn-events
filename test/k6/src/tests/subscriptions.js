@@ -239,21 +239,15 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     data.orgToken
   );
 
+  let subscription = JSON.parse(response.body);
+
   let success = check(response, {
     "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200,
+    "05 - Get subscription by id. Returned subscription is validated":
+      subscription.validated,
   });
 
   addErrorCount(success);
-
-  if (success) {
-    let subscription = JSON.parse(response.body);
-
-    // Note: Webhook validation may fail if webhook.site is down or slow during load tests
-    // Log validation status for informational purposes only
-    if (!subscription.validated) {
-      console.warn(`[TC05] Subscription ${subscriptionId} not validated`);
-   }
-  }
 }
 
 // 06 - DELETE subscription

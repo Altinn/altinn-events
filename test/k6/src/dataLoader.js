@@ -156,9 +156,9 @@ export function loadJSONDirectory(name, baseDir, fileNames) {
  * const event = getRandomItem(events);
  */
 export function getRandomItem(array) {
-if (!array || array.length === 0) {
-    throw new Error('getRandomItem: array is empty');
-}
+    if (!array || array.length === 0) {
+        throw new Error('getRandomItem: array is empty');
+    }
     return array[Math.floor(Math.random() * array.length)];
 }
 /**
@@ -173,18 +173,18 @@ if (!array || array.length === 0) {
  * const event = getItemByVU(events, __VU);
  */
 export function getItemByVU(array, vuId) {
-if (!array || array.length === 0) {
-    throw new Error('getItemByVU: array is empty');
-}
-return array[(vuId - 1) % array.length];
+    if (!array || array.length === 0) {
+        throw new Error('getItemByVU: array is empty');
+    }
+    return array[(vuId - 1) % array.length];
 }
 
- export function getItemByIteration(array, iteration) {
+export function getItemByIteration(array, iteration) {
     if (!array || array.length === 0) {
         throw new Error('getItemByIteration: array is empty');
     }
-     return array[iteration % array.length];
- }
+    return array[iteration % array.length];
+}
 
 /**
  * Create a cloud event from CSV row data
