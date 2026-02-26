@@ -47,7 +47,7 @@ public class WebhookServiceTest
     }
 
     [Fact]
-    public void GetPayload_CloudEventExtentionAttributesPersisted()
+    public void GetPayload_CloudEventExtensionAttributesPersisted()
     {
         // Arrange
         string expectedPayload =
@@ -168,7 +168,13 @@ public class WebhookServiceTest
     {
         // Arrange
         Mock<ILogger<WebhookService>> loggerMock = new();
-        var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
+        var handlerMock = CreateMessageHandlerMock(
+            "https://vg.no",
+            new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.ServiceUnavailable,
+                Content = new StringContent("Service unavailable")
+            });
 
         var sut = new WebhookService(new HttpClient(handlerMock.Object), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
@@ -280,7 +286,7 @@ public class WebhookServiceTest
         var messageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
 
         messageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Equals(clientEndpoint)), ItExpr.IsAny<CancellationToken>())
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.AbsoluteUri.TrimEnd('/') == clientEndpoint.TrimEnd('/')), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
             {
                 return response;

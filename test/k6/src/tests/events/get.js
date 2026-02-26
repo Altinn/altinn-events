@@ -38,9 +38,7 @@ const scopes = "altinn:events.subscribe altinn:serviceowner";
 
 // Load test data using SharedArray for memory efficiency
 // Choose between CSV or JSON based on environment variable
-const useCSVData = __ENV.useCSVData 
-    ? __ENV.useCSVData.toLowerCase().includes("true") 
-    : false;
+const useCSVData = (__ENV.useCSVData || "").toLowerCase() === "true";
 
 const eventVariations = useCSVData
     ? loadCSV('event-variations', '../../data/events/event-variations.csv')
@@ -140,8 +138,8 @@ function TC01_GetAllEvents(data) {
     });
     addErrorCount(success);
 
-    if (!success) {        
-        stopIterationOnFail(success);
+    if (!success) {
+        stopIterationOnFail("GET all cloud events: status is 200", success, response);
     }
 
     success = check(response, {

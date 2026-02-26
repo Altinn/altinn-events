@@ -63,7 +63,7 @@ const events = loadCSV('events', '../../data/events/event-variations.csv');
 
 // Use in test
 export default function() {
-    const csvRow = events[__VU % events.length];
+    const csvRow = events[(__VU - 1) % events.length];
     const cloudEvent = createCloudEventFromCSV(csvRow, { id: uuidv4() });
     // Use cloudEvent...
 }
@@ -126,10 +126,11 @@ export default function() {
 
 ## Data Loader API Reference
 
-### loadCSV(name, filePath)
+### loadCSV(name, filePath, options)
 Loads and parses a CSV file into a SharedArray.
 - **name**: Unique identifier for the SharedArray
 - **filePath**: Relative path to CSV file
+- **options**: (Optional) Parsing options — `{ delimiter: ',', skipEmptyLines: true }`
 - **Returns**: SharedArray of objects
 
 ### loadJSON(filePath)
@@ -155,6 +156,12 @@ Creates a cloud event object from CSV row data.
 - **csvRow**: Object representing a CSV row
 - **overrides**: Optional fields to add/override
 - **Returns**: Cloud event object
+
+### createSubscriptionFromCSV(csvRow, overrides)
+Creates a subscription object from CSV row data.
+- **csvRow**: Object representing a CSV row
+- **overrides**: Optional fields to add/override (e.g., `{ endPoint: '...' }`)
+- **Returns**: Subscription object
 
 ### getRandomItem(array)
 Gets a random item from an array.

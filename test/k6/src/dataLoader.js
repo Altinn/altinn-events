@@ -50,6 +50,9 @@ function parseCSV(csvString, options = {}) {
             continue;
         }
         
+        if (line.includes('"')) {
+            throw new Error('parseCSV: quoted fields are not supported by this parser');
+        }
         const values = line.split(delimiter);
         
         let hasData = false;
@@ -82,7 +85,7 @@ function parseCSV(csvString, options = {}) {
  * 
  * @example
  * const events = loadCSV('events', '../../data/events/event-variations.csv');
- * const event = events[__VU % events.length]; // Get event for this VU
+ * const event = events[(__VU - 1) % events.length]; // Get event for this VU
  */
 export function loadCSV(name, filePath, options = {}) {
     return new SharedArray(name, function() {
@@ -156,9 +159,9 @@ export function loadJSONDirectory(name, baseDir, fileNames) {
  * const event = getRandomItem(events);
  */
 export function getRandomItem(array) {
-if (!array || array.length === 0) {
-    throw new Error('getRandomItem: array is empty');
-}
+    if (!array || array.length === 0) {
+        throw new Error('getRandomItem: array is empty');
+    }
     return array[Math.floor(Math.random() * array.length)];
 }
 /**
@@ -173,18 +176,28 @@ if (!array || array.length === 0) {
  * const event = getItemByVU(events, __VU);
  */
 export function getItemByVU(array, vuId) {
-if (!array || array.length === 0) {
-    throw new Error('getItemByVU: array is empty');
-}
-return array[(vuId - 1) % array.length];
+    if (!array || array.length === 0) {
+        throw new Error('getItemByVU: array is empty');
+    }
+    return array[(vuId - 1) % array.length];
 }
 
- export function getItemByIteration(array, iteration) {
+/**
+ * Get an item from array based on iteration number (round-robin)
+ *
+ * @param {Array} array - Array to select from
+ * @param {number} iteration - Iteration number (typically __ITER)
+ * @returns {*} Item from array
+ *
+ * @example
+ * const event = getItemByIteration(events, __ITER);
+ */
+export function getItemByIteration(array, iteration) {
     if (!array || array.length === 0) {
         throw new Error('getItemByIteration: array is empty');
     }
-     return array[iteration % array.length];
- }
+    return array[iteration % array.length];
+}
 
 /**
  * Create a cloud event from CSV row data

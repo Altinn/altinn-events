@@ -28,7 +28,7 @@ import { addErrorCount } from "../errorhandler.js";
 import * as setupToken from "../setup.js";
 import { loadCSV, loadJSONDirectory, loadJSON, createSubscriptionFromCSV, getItemByVU } from "../dataLoader.js";
 
-const useCSVData = __ENV.useCSVData ? __ENV.useCSVData.toLowerCase().includes("true") : false;
+const useCSVData = (__ENV.useCSVData || "").toLowerCase() === "true";
 
 const subscriptionVariations = useCSVData 
               ? loadCSV('subscription-variations', '../data/subscriptions/subscription-variations.csv') : 

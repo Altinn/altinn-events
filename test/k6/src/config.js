@@ -92,7 +92,7 @@ export const getCommonOptions = (overrides = {}) => {
   const { thresholds: thresholdOverrides, vus, duration, ...rest } = overrides;
   return {
     thresholds: {
-      error_rate: ["count<1"],
+      errors: ["count<1"],
       ...thresholdOverrides,
     },
     vus: vus ?? testDefaults.vus,

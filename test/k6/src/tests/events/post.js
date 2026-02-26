@@ -23,19 +23,16 @@ import * as setupToken from "../../setup.js";
 import * as eventsApi from "../../api/events.js";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 import { addErrorCount } from "../../errorhandler.js";
-import { 
-    loadCSV, 
-    loadJSONDirectory, 
-    loadJSON,
+import {
+    loadCSV,
+    loadJSONDirectory,
     createCloudEventFromCSV,
-    getItemByVU 
+    getItemByVU
 } from "../../dataLoader.js";
 const scopes = "altinn:events.publish altinn:serviceowner";
 
 // Load test data using SharedArray for memory efficiency
-const useCSVData = __ENV.useCSVData 
-    ? __ENV.useCSVData.toLowerCase().includes("true") 
-    : false;
+const useCSVData = (__ENV.useCSVData || "").toLowerCase() === "true";
 
 const eventVariations = useCSVData
     ? loadCSV('event-variations', '../../data/events/event-variations.csv')
@@ -44,8 +41,6 @@ const eventVariations = useCSVData
         '02-event.json',
         '03-event.json'
     ]);
-
-const defaultEvent = loadJSON("../../data/events/01-event.json");
 
 console.log(`[POST] Using CSV data: ${useCSVData}`);
 console.log(`[POST] Event variations loaded: ${eventVariations.length}`);
