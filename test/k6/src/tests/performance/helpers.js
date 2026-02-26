@@ -96,7 +96,7 @@ export function getTimeWindow(data) {
 
 export function getBaseMetrics(data) {
     const eventsPosted = data.metrics["iterations"]?.values?.count ?? 0;
-    const errorCount   = data.metrics["error_rate"]?.values?.count ?? 0;
+    const errorCount   = data.metrics["errors"]?.values?.count ?? 0;
     const p95Ms        = data.metrics["http_req_duration"]?.values?.["p(95)"] ?? 0;
     const successCount = Math.max(eventsPosted - errorCount, 0);
 
