@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -9,8 +11,10 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
-
+using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -115,7 +119,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
-        private static GenericSubscriptionService GetGenericSubscriptionService(Mock<ISubscriptionRepository> repoMock = null, bool isAuthorized = true)
+        private static GenericSubscriptionService GetGenericSubscriptionService(
+            Mock<ISubscriptionRepository> repoMock = null,
+            IMessageBus messageBus = null,
+            bool isAuthorized = true)
         {
             var claimsProviderMock = new Mock<IClaimsPrincipalProvider>();
             claimsProviderMock.Setup(
@@ -142,8 +149,26 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                             return s;
                         });
 
+            // Create mock for IMessageBus if not provided
+            if (messageBus == null)
+            {
+                var messageBusMock = new Mock<IMessageBus>();
+                messageBusMock
+                    .Setup(m => m.PublishAsync(It.IsAny<object>(), It.IsAny<DeliveryOptions>()))
+                    .Returns(ValueTask.CompletedTask);
+                messageBus = messageBusMock.Object;
+            }
+
             return new GenericSubscriptionService(
-                repoMock.Object, authorizationMock.Object, new EventsQueueClientMock(), claimsProviderMock.Object);
+                repoMock.Object,
+                authorizationMock.Object,
+                messageBus,
+                new Mock<IEventsQueueClient>().Object,
+                claimsProviderMock.Object,
+                Options.Create(new PlatformSettings()),
+                Options.Create(new WolverineSettings { EnableServiceBus = true }),
+                new Mock<IWebhookService>().Object,
+                new Mock<ILogger<GenericSubscriptionService>>().Object);
         }
     }
 }

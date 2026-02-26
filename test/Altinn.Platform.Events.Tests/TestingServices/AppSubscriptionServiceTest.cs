@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -11,8 +9,10 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
-
+using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -276,7 +276,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             IRegisterService register = null,
             IAuthorization authorization = null,
             ISubscriptionRepository repository = null,
-            IClaimsPrincipalProvider claimsPrincipalProvider = null)
+            IClaimsPrincipalProvider claimsPrincipalProvider = null,
+            IMessageBus messageBus = null)
         {
             register ??= new RegisterServiceMock();
 
@@ -291,12 +292,26 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 claimsPrincipalProvider = mock.Object;
             }
 
+            if (messageBus == null)
+            {
+                var mock = new Mock<IMessageBus>();
+                mock.Setup(m => m.PublishAsync(It.IsAny<object>(), It.IsAny<DeliveryOptions>()))
+                    .Returns(ValueTask.CompletedTask);
+
+                messageBus = mock.Object;
+            }
+
             return new AppSubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
                 authorization,
                 register,
-                new EventsQueueClientMock(),
-                claimsPrincipalProvider);
+                messageBus,
+                new Mock<IEventsQueueClient>().Object,
+                claimsPrincipalProvider,
+                Options.Create(new PlatformSettings()),
+                Options.Create(new WolverineSettings { EnableServiceBus = true }),
+                new Mock<IWebhookService>().Object,
+                new Mock<ILogger<AppSubscriptionService>>().Object);
         }
     }
 }

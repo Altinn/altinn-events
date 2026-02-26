@@ -162,6 +162,11 @@ namespace Altinn.Platform.Events.Tests.Mocks
             throw new NotImplementedException();
         }
 
+        public Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
         private int PartyLookup(string unit, string person)
         {
             return string.IsNullOrEmpty(unit) ? _partyLookup.GetValueOrDefault(person) : _partyLookup.GetValueOrDefault(unit);

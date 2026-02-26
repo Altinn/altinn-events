@@ -7,18 +7,43 @@
     -e mpClientId=*** `
     -e mpKid=altinn-usecase-events `
     -e encodedJwk=*** `
-    -e env=*** `
-    -e runFullTestSet=true
+    -e altinn_env=*** `
+    -e runFullTestSet=true `
+    -e useCSVData=false
+
+    For running this as a single line command, the following can be used:
+    docker-compose run k6 run /src/tests/events/post.js -e altinn_env=*** -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e useCSVData=true --vus 1 --duration 30s
 
     For use case tests omit environment variable runFullTestSet or set value to false
+    Set useCSVData=true to load test data from CSV file instead of JSON
+    Update the variables --vus and --duration as needed for performance testing
 */
 import { check } from "k6";
 import * as setupToken from "../../setup.js";
 import * as eventsApi from "../../api/events.js";
 import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
-const eventJson = JSON.parse(open("../../data/events/01-event.json"));
 import { addErrorCount } from "../../errorhandler.js";
+import {
+    loadCSV,
+    loadJSONDirectory,
+    createCloudEventFromCSV,
+    getItemByVU
+} from "../../dataLoader.js";
 const scopes = "altinn:events.publish altinn:serviceowner";
+
+// Load test data using SharedArray for memory efficiency
+const useCSVData = (__ENV.useCSVData || "").toLowerCase() === "true";
+
+const eventVariations = useCSVData
+    ? loadCSV('event-variations', '../../data/events/event-variations.csv')
+    : loadJSONDirectory('event-variations', '../../data/events/', [
+        '01-event.json',
+        '02-event.json',
+        '03-event.json'
+    ]);
+
+console.log(`[POST] Using CSV data: ${useCSVData}`);
+console.log(`[POST] Event variations loaded: ${eventVariations.length}`);
 
 export const options = {
     thresholds: {
@@ -36,14 +61,34 @@ export function setup() {
     const data = {
         runFullTestSet: runFullTestSet,
         token: token,
+        useCSVData: useCSVData,
     };
 
     return data;
 }
 
 function createCloudEvent() {
-    const cloudEvent = { ...eventJson };
-    cloudEvent.id = uuidv4();
+    // Get event variation for this VU (round-robin distribution)
+    const eventData = getItemByVU(eventVariations, __VU);
+    
+    let cloudEvent;
+    if (useCSVData) {
+        // Create cloud event from CSV row
+        cloudEvent = createCloudEventFromCSV(eventData, { 
+            id: uuidv4(),
+            time: new Date().toISOString()
+        });
+    } else {
+        // Use JSON event directly
+        cloudEvent = { ...eventData };
+        cloudEvent.id = uuidv4();
+        if (!cloudEvent.time) {
+            cloudEvent.time = new Date().toISOString();
+        }
+    }
+    
+    console.log(`[POST VU${__VU}] Creating event - source: ${cloudEvent.source}, type: ${cloudEvent.type}`);
+    
     return cloudEvent;
 }
 
