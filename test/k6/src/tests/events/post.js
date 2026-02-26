@@ -32,9 +32,7 @@ import {
 const scopes = "altinn:events.publish altinn:serviceowner";
 
 // Load test data using SharedArray for memory efficiency
-const useCSVData = __ENV.useCSVData 
-    ? __ENV.useCSVData.toLowerCase().includes("true") 
-    : false;
+const useCSVData = (__ENV.useCSVData || "").toLowerCase() === "true";
 
 const eventVariations = useCSVData
     ? loadCSV('event-variations', '../../data/events/event-variations.csv')

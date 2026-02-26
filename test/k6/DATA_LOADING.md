@@ -63,7 +63,7 @@ const events = loadCSV('events', '../../data/events/event-variations.csv');
 
 // Use in test
 export default function() {
-    const csvRow = events[__VU % events.length];
+    const csvRow = events[(__VU - 1) % events.length];
     const cloudEvent = createCloudEventFromCSV(csvRow, { id: uuidv4() });
     // Use cloudEvent...
 }

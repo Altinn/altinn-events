@@ -50,6 +50,9 @@ function parseCSV(csvString, options = {}) {
             continue;
         }
         
+        if (line.includes('"')) {
+            throw new Error('parseCSV: quoted fields are not supported by this parser');
+        }
         const values = line.split(delimiter);
         
         let hasData = false;
