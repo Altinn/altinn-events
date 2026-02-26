@@ -168,7 +168,13 @@ public class WebhookServiceTest
     {
         // Arrange
         Mock<ILogger<WebhookService>> loggerMock = new();
-        var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
+        var handlerMock = CreateMessageHandlerMock(
+            "https://vg.no",
+            new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.ServiceUnavailable,
+                Content = new StringContent("Service unavailable")
+            });
 
         var sut = new WebhookService(new HttpClient(handlerMock.Object), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
