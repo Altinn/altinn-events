@@ -74,7 +74,7 @@ export function postCloudEvent(eventType, token) {
 
 export function performanceTeardown(data) {
     if (data.subscriptionId) {
-        console.log(`[TEARDOWN] Subscription ${data.subscriptionId} left active — delete manually when done.`);
+        console.log(`[TEARDOWN] Subscription ${data.subscriptionId} left active. Delete after reviewing the SQL results:\n  DELETE FROM events.subscription WHERE id = ${data.subscriptionId};`);
     }
 }
 
@@ -163,14 +163,10 @@ export function buildSqlSection(eventType, sPg, ePg) {
     ];
 }
 
-export function buildSubscriptionWarning(testEndTime, queryEndTime) {
+export function buildQueryWindow(testEndTime, queryEndTime) {
     return [
         `  Test ended at: ${testEndTime.toISOString()}`,
         `  Query window ends at: ${queryEndTime.toISOString()}`,
-        "",
-        "  ⚠  Subscription was NOT deleted — webhooks are still delivering.",
-        "     Check [SETUP] log above for the subscription ID, then delete",
-        "     it manually once SQL 1 shows events_webhook_response ≈ events_queued.",
     ];
 }
 
@@ -207,7 +203,7 @@ export function buildSummary(title, k6ResultLines, eventType, data) {
         "",
         ...buildSqlSection(eventType, tw.sPg, tw.ePg),
         "",
-        ...buildSubscriptionWarning(tw.testEndTime, tw.queryEndTime),
+        ...buildQueryWindow(tw.testEndTime, tw.queryEndTime),
         "",
         "",
         ...buildCleanupSection(eventType, tw.sPg, tw.ePg),
