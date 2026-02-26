@@ -28,7 +28,7 @@ import { addErrorCount } from "../errorhandler.js";
 import * as setupToken from "../setup.js";
 import { loadCSV, loadJSONDirectory, loadJSON, createSubscriptionFromCSV, getItemByVU } from "../dataLoader.js";
 
-const useCSVData = __ENV.useCSVData ? __ENV.useCSVData.toLowerCase().includes("true") : false;
+const useCSVData = (__ENV.useCSVData || "").toLowerCase() === "true";
 
 const subscriptionVariations = useCSVData 
               ? loadCSV('subscription-variations', '../data/subscriptions/subscription-variations.csv') : 
@@ -216,14 +216,9 @@ function TC04_GetExistingSubscriptionsForOrg(data, expectedSubscriptionCount) {
   let response = subscriptionsApi.getAllSubscriptions(data.orgToken);
 
   let responseObject = JSON.parse(response.body);
-  
-  // With concurrent VUs, count may vary significantly due to other VUs creating/deleting subscriptions
-  // Accept count within a reasonable range (±10) to account for race conditions in load tests
-  const countDiff = Math.abs(responseObject.count - expectedSubscriptionCount);
-  
   let success = check(response, {
-    "04 - GET existing subscriptions for org again. Count is within expected range (±10 tolerance)":
-      countDiff <= 10,
+    "04 - GET existing subscriptions for org again. Count matches expected subscription count":
+      responseObject.count === expectedSubscriptionCount,
   });
 
   addErrorCount(success);
@@ -239,15 +234,21 @@ function TC05_GetSubscriptionById(data, subscriptionId) {
     data.orgToken
   );
 
-  let subscription = JSON.parse(response.body);
-
   let success = check(response, {
     "05 - GET subscriptions by id. Status is 200.": (r) => r.status === 200,
-    "05 - Get subscription by id. Returned subscription is validated":
-      subscription.validated,
   });
 
   addErrorCount(success);
+
+  if (success) {
+    let subscription = JSON.parse(response.body);
+
+    success = check(response, {
+      "05 - Get subscription by id. Returned subscription is validated":
+        subscription.validated,
+    });
+    addErrorCount(success);
+  }
 }
 
 // 06 - DELETE subscription
