@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Nodes;
 
 using Altinn.Platform.Events.Models;
 
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -16,8 +16,10 @@ namespace Altinn.Platform.Events.Swagger
     [ExcludeFromCodeCoverage]
     public class RequestBodyExampleFilter : IRequestBodyFilter
     {
+        private const string _applicationJson = "application/json";
+
         /// <inheritdoc/>
-        public void Apply(OpenApiRequestBody requestBody, RequestBodyFilterContext context)
+        public void Apply(IOpenApiRequestBody requestBody, RequestBodyFilterContext context)
         {
             switch (context.BodyParameterDescription.Type.Name)
             {
@@ -32,15 +34,20 @@ namespace Altinn.Platform.Events.Swagger
             }
         }
 
-        private static void CreateCloudEventRequestModelExamples(OpenApiRequestBody requestBody)
+        private static void CreateCloudEventRequestModelExamples(IOpenApiRequestBody requestBody)
         {
-            OpenApiMediaType appJson = requestBody.Content["application/json"];
-
-            List<(string Name, OpenApiObject Value)> examples = new()
+            if (requestBody.Content == null || !requestBody.Content.TryGetValue(_applicationJson, out OpenApiMediaType appJson))
             {
+                return;
+            }
+
+            appJson.Examples ??= new Dictionary<string, IOpenApiExample>();
+
+            List<(string Name, JsonObject Value)> examples =
+            [
                 ("Instance created event with alternative subject",
-                CreateOpenApiObject(new List<(string Name, string Value)>()
-                {
+                CreateOpenApiObject(
+                [
                     ("resource", "urn:altinn:resource:app_ttd_apps-test"),
                     ("resourceinstance", "50015641/a72223a3-926b-4095-a2a6-bacc10815f2d"),
                     ("source", "https://ttd.apps.altinn.no/ttd/apps-test/instances/50015641/a72223a3-926b-4095-a2a6-bacc10815f2d"),
@@ -48,30 +55,38 @@ namespace Altinn.Platform.Events.Swagger
                     ("type",  "app.instance.created"),
                     ("subject",  "/party/50015641"),
                     ("alternativesubject", "/person/01017512345")
-                })),
+                ])),
                 ("Instance created event without alternative subject",
-                CreateOpenApiObject(new List<(string Name, string Value)>()
-                {
+                CreateOpenApiObject(
+                [
                     ("resource", "urn:altinn:resource:app_ttd_apps-test"),
                     ("resourceinstance", "50067592/f3c92d96-0eb3-4532-a16f-bcafd94bde3a"),
                     ("source", "https://ttd.apps.altinn.no/ttd/apps-test/instances/50067592/f3c92d96-0eb3-4532-a16f-bcafd94bde3a"),
                     ("specversion",  "1.0"),
                     ("type",  "app.instance.created"),
                     ("subject",  "/party/50067592")
-                }))
-            };
+                ]))
+            ];
 
-            examples.ForEach(entry => appJson.Examples.Add(entry.Name, new OpenApiExample { Value = entry.Value }));
+            foreach (var (name, value) in examples)
+            {
+                appJson.Examples[name] = new OpenApiExample { Value = value };
+            }
 
-            requestBody.Content["application/json"] = appJson;
+            requestBody.Content[_applicationJson] = appJson;
         }
 
-        private static void CreateSubscriptionRequestModelExamples(OpenApiRequestBody requestBody)
+        private static void CreateSubscriptionRequestModelExamples(IOpenApiRequestBody requestBody)
         {
-            OpenApiMediaType appJson = requestBody.Content["application/json"];
-
-            List<(string Name, OpenApiObject Value)> examples = new()
+            if (requestBody.Content == null || !requestBody.Content.TryGetValue(_applicationJson, out OpenApiMediaType appJson))
             {
+                return;
+            }
+
+            appJson.Examples ??= new Dictionary<string, IOpenApiExample>();
+
+            List<(string Name, JsonObject Value)> examples =
+            [
                  ("End user (system) subscribing to events regarding themselves",
                  CreateOpenApiObject(new List<(string Name, string Value)>()
                  {
@@ -81,38 +96,41 @@ namespace Altinn.Platform.Events.Swagger
                     ("typeFilter", "app.instance.process.completed")
                  })),
                  ("End user (system) subscribing to events from a specific regarding an organisation",
-                 CreateOpenApiObject(new List<(string Name, string Value)>()
-                 {
+                 CreateOpenApiObject(
+                 [
                     ("endpoint", "https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
                     ("sourceFilter", "https://skd.apps.altinn.no/skd/mva-melding"),
                     ("alternativeSubjectFilter", "/organisation/897069651"),
                     ("typeFilter", "app.instance.process.completed")
-                 })),
+                 ])),
                  ("Org subscription to events of all their apps",
-                 CreateOpenApiObject(new List<(string Name, string Value)>()
-                 {
+                 CreateOpenApiObject(
+                 [
                     ("endpoint", "https://org-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
                     ("sourceFilter", "https://ttd.apps.altinn.no/ttd/%25"),
                     ("typeFilter", "app.instance.process.completed")
-                 })),
+                 ])),
 
                  ("Subscription with Slack webhook",
-                 CreateOpenApiObject(new List<(string Name, string Value)>()
-                 {
+                 CreateOpenApiObject(
+                 [
                      ("endpoint", "https://hooks.slack.com/services/{include-webhook}"),
                      ("resourceFilter", "urn:altinn:resource:app_ttd_apps-test")
-                 }))
-            };
+                 ]))
+            ];
 
-            examples.ForEach(entry => appJson.Examples.Add(entry.Name, new OpenApiExample { Value = entry.Value }));
+            foreach (var (name, value) in examples)
+            {
+                appJson.Examples[name] = new OpenApiExample { Value = value };
+            }
 
-            requestBody.Content["application/json"] = appJson;
+            requestBody.Content[_applicationJson] = appJson;
         }
 
-        private static OpenApiObject CreateOpenApiObject(List<(string Name, string Value)> elements)
+        private static JsonObject CreateOpenApiObject(List<(string Name, string Value)> elements)
         {
-            var obj = new OpenApiObject();
-            elements.ForEach(e => obj.Add(e.Name, new OpenApiString(e.Value)));
+            var obj = new JsonObject();
+            elements.ForEach(e => obj.Add(e.Name, JsonValue.Create(e.Value)));
 
             return obj;
         }

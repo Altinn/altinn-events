@@ -70,9 +70,8 @@ namespace Altinn.Platform.Events.Functions.Clients
 
             if (!success)
             {
-                var msg = $"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {statusCode}";
-                _logger.LogError(msg);
-                throw new HttpRequestException(msg);
+                _logger.LogError("// SaveCloudEvent with id {CloudEventId} failed with status code {StatusCode}", cloudEvent.Id, statusCode);
+                throw new HttpRequestException($"// SaveCloudEvent with id {cloudEvent.Id} failed with status code {statusCode}");
             }
         }
 
@@ -85,9 +84,8 @@ namespace Altinn.Platform.Events.Functions.Clients
 
             if (!success)
             {
-                var msg = $"// PostInbound event with id {cloudEvent.Id} failed with status code {statusCode}";
-                _logger.LogError(msg);
-                throw new HttpRequestException(msg);
+                _logger.LogError("// PostInbound event with id {CloudEventId} failed with status code {StatusCode}", cloudEvent.Id, statusCode);
+                throw new HttpRequestException($"// PostInbound event with id {cloudEvent.Id} failed with status code {statusCode}");
             }
         }
 
@@ -100,10 +98,9 @@ namespace Altinn.Platform.Events.Functions.Clients
 
             if (!success)
             {
-                var msg = $"// PostOutbound event with id {cloudEvent.Id} failed with status code {statusCode}";
+                _logger.LogError("// PostOutbound event with id {CloudEventId} failed with status code {StatusCode}", cloudEvent.Id, statusCode);
 
-                _logger.LogError(msg);
-                throw new HttpRequestException(msg);
+                throw new HttpRequestException($"// PostOutbound event with id {cloudEvent.Id} failed with status code {statusCode}");
             }
         }
 
@@ -146,9 +143,9 @@ namespace Altinn.Platform.Events.Functions.Clients
 
                 var logEntryData = new LogEntryDto
                 {
-                    CloudEventId = cloudEventEnvelope.CloudEvent.Id,
-                    CloudEventType = cloudEventEnvelope.CloudEvent.Type,
-                    CloudEventResource = cloudEventEnvelope.CloudEvent["resource"]?.ToString(),
+                    CloudEventId = cloudEventEnvelope.CloudEvent?.Id,
+                    CloudEventType = cloudEventEnvelope.CloudEvent?.Type,
+                    CloudEventResource = cloudEventEnvelope.CloudEvent?["resource"]?.ToString(),
                     Consumer = cloudEventEnvelope.Consumer,
                     IsSuccessStatusCode = isSuccessStatusCode,
                     Endpoint = cloudEventEnvelope.Endpoint,
@@ -163,7 +160,7 @@ namespace Altinn.Platform.Events.Functions.Clients
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Failed to log trace log webhook status code for cloud event id {CloudEventId}", cloudEventEnvelope.CloudEvent.Id);
+                _logger.LogError(e, "Failed to log trace log webhook status code for cloud event id {CloudEventId}", cloudEventEnvelope.CloudEvent?.Id);
             }
         }
 

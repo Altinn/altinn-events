@@ -1,12 +1,12 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Nodes;
 
 using Altinn.Platform.Events.Models;
 
 using CloudNative.CloudEvents;
 
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -18,82 +18,83 @@ namespace Altinn.Platform.Events.Swagger
     [ExcludeFromCodeCoverage]
     public class SchemaExampleFilter : ISchemaFilter
     {
+        private const string _testUserPrefix = "/user/12345";
+        private const string _consumerKey = "consumer";
+
         /// <inheritdoc/>
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            schema.Example = GetExampleOrNullFor(context.Type);
+            if (schema is OpenApiSchema openApiSchema)
+            {
+                openApiSchema.Example = GetExampleOrNullFor(context.Type);
+            }
         }
 
-        private IOpenApiAny GetExampleOrNullFor(Type type)
+        private static JsonObject GetExampleOrNullFor(Type type)
         {
-            switch (type.Name)
+            return type.Name switch
             {
-                case nameof(CloudEvent):
-                    return new OpenApiObject
-                    {
-                        ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
-                        ["resource"] = new OpenApiString("urn:altinn:resource:app_ttd_apps-test"),
-                        ["source"] = new OpenApiString("https://ttd.apps.altinn.no/ttd/apps-test/instances/50015641/a72223a3-926b-4095-a2a6-bacc10815f2d"),
-                        ["specversion"] = new OpenApiString("1.0"),
-                        ["type"] = new OpenApiString("app.instance.created"),
-                        ["subject"] = new OpenApiString("/party/50015641"),
-                        ["alternativesubject"] = new OpenApiString("/person/27124902369"),
-                        ["time"] = new OpenApiString("2020-10-29T07:22:19.438039Z")
-                    };
-                case nameof(LogEntryDto):
-                    return new OpenApiObject
-                    {
-                        ["cloudEventId"] = new OpenApiString(Guid.NewGuid().ToString()),
-                        ["cloudEventType"] = new OpenApiString("app.instance.created"),
-                        ["cloudEventResource"] = new OpenApiString("urn:altinn:resource:app_ttd_apps-test"),
-                        ["subscriptionId"] = new OpenApiInteger(1),
-                        ["consumer"] = new OpenApiString("/user/12345"),
-                        ["endpoint"] = new OpenApiString("https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
-                        ["statusCode"] = new OpenApiInteger(200)
-                    };
-                case nameof(Subscription):
-                    return new OpenApiObject
-                    {
-                        ["endPoint"] = new OpenApiString("https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
-                        ["id"] = new OpenApiInteger(1),
-                        ["sourceFilter"] = new OpenApiString("https://skd.apps.altinn.cloud/skd/mva-melding"),
-                        ["subjectFilter"] = new OpenApiString("/party/512345"),
-                        ["typeFilter"] = new OpenApiString("app.instance.process.completed"),
-                        ["consumer"] = new OpenApiString("/user/12345"),
-                        ["createdBy"] = new OpenApiString("/user/12345"),
-                        ["created"] = new OpenApiString("2022-07-27T13:14:14.395226Z")
-                    };
-                case nameof(SubscriptionList):
-                    return new OpenApiObject
-                    {
-                        ["count"] = new OpenApiInteger(2),
-                        ["subscriptions"] = new OpenApiArray
+                nameof(CloudEvent) => new JsonObject
+                {
+                    ["id"] = Guid.NewGuid().ToString(),
+                    ["resource"] = "urn:altinn:resource:app_ttd_apps-test",
+                    ["source"] = "https://ttd.apps.altinn.no/ttd/apps-test/instances/50015641/a72223a3-926b-4095-a2a6-bacc10815f2d",
+                    ["specversion"] = "1.0",
+                    ["type"] = "app.instance.created",
+                    ["subject"] = "/party/50015641",
+                    ["alternativesubject"] = "/person/27124902369",
+                    ["time"] = "2020-10-29T07:22:19.438039Z"
+                },
+                nameof(LogEntryDto) => new JsonObject
+                {
+                    ["cloudEventId"] = Guid.NewGuid().ToString(),
+                    ["cloudEventType"] = "app.instance.created",
+                    ["cloudEventResource"] = "urn:altinn:resource:app_ttd_apps-test",
+                    ["subscriptionId"] = 1,
+                    [_consumerKey] = _testUserPrefix,
+                    ["endpoint"] = "https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY",
+                    ["statusCode"] = 200
+                },
+                nameof(Subscription) => new JsonObject
+                {
+                    ["endPoint"] = "https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY",
+                    ["id"] = 1,
+                    ["sourceFilter"] = "https://skd.apps.altinn.cloud/skd/mva-melding",
+                    ["subjectFilter"] = "/party/512345",
+                    ["typeFilter"] = "app.instance.process.completed",
+                    [_consumerKey] = _testUserPrefix,
+                    ["createdBy"] = _testUserPrefix,
+                    ["created"] = "2022-07-27T13:14:14.395226Z"
+                },
+                nameof(SubscriptionList) => new JsonObject
+                {
+                    ["count"] = 2,
+                    ["subscriptions"] = new JsonArray
                         {
-                            new OpenApiObject
+                            new JsonObject
                             {
-                                ["endPoint"] = new OpenApiString("https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY"),
-                                ["id"] = new OpenApiInteger(1),
-                                ["sourceFilter"] = new OpenApiString("https://skd.apps.altinn.cloud/skd/mva-melding"),
-                                ["subjectFilter"] = new OpenApiString("/party/512345"),
-                                ["typeFilter"] = new OpenApiString("app.instance.process.completed"),
-                                ["consumer"] = new OpenApiString("/user/12345"),
-                                ["createdBy"] = new OpenApiString("/user/12345"),
-                                ["created"] = new OpenApiString("2022-07-27T13:14:14.395226Z")
+                                ["endPoint"] = "https://enduser-reception-func.azurewebsites.net/api/processCompleteInstance?code=APIKEY",
+                                ["id"] = 1,
+                                ["sourceFilter"] = "https://skd.apps.altinn.cloud/skd/mva-melding",
+                                ["subjectFilter"] = "/party/512345",
+                                ["typeFilter"] = "app.instance.process.completed",
+                                [_consumerKey] = _testUserPrefix,
+                                ["createdBy"] = _testUserPrefix,
+                                ["created"] = "2022-07-27T13:14:14.395226Z"
                             },
-                            new OpenApiObject
+                            new JsonObject
                             {
-                                ["endPoint"] = new OpenApiString("https://hooks.slack.com/services/ID/CODE"),
-                                ["id"] = new OpenApiInteger(2),
-                                ["sourceFilter"] = new OpenApiString("https://ttd.apps.altinn.cloud/ttd/apps-test"),
-                                ["consumer"] = new OpenApiString("/org/ttd"),
-                                ["createdBy"] = new OpenApiString("/org/ttd5"),
-                                ["created"] = new OpenApiString("2022-08-02T08:49:07.269958Z")
+                                ["endPoint"] = "https://hooks.slack.com/services/ID/CODE",
+                                ["id"] = 2,
+                                ["sourceFilter"] = "https://ttd.apps.altinn.cloud/ttd/apps-test",
+                                [_consumerKey] = "/org/ttd",
+                                ["createdBy"] = "/org/ttd5",
+                                ["created"] = "2022-08-02T08:49:07.269958Z"
                             }
                         }
-                    };
-                default:
-                    return null;
-            }
+                },
+                _ => null,
+            };
         }
     }
 }

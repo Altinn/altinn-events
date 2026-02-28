@@ -243,6 +243,11 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "Only one of 'Party' or 'Unit' can be defined.");
             }
 
+            if (!string.IsNullOrEmpty(unit) && (unit.Length != 9 || !unit.All(char.IsDigit)))
+            {
+                return (false, "Value of 'Unit' needs to be exactly 9 digits.");
+            }
+
             return (true, null);
         }
 

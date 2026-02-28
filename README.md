@@ -13,7 +13,7 @@ These instructions will get you a copy of the events component up and running on
 
 ### Prerequisites
 
-1. [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+1. [.NET 10.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 2. Newest [Git](https://git-scm.com/downloads)
 3. A code editor - we like [Visual Studio Code](https://code.visualstudio.com/download)
    - Install [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions). You can also install the [Azure Tools extension pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-node-azure-pack), which is recommended for working with Azure resources.
@@ -33,9 +33,16 @@ In pgAdmin
 - Create the following users with password: _Password_ (see privileges in parentheses)
   - platform_events_admin (superuser, canlogin)
   - platform_events (canlogin)
-- Create schema _events_ in eventsdb with owner _platform_events_admin_
 
 A more detailed description of the database setup is available in [our developer handbook](https://docs.altinn.studio/community/contributing/handbook/postgres/)
+
+### Setting up Azure Service Bus Emulator
+Ensure Podman is installed and running. From the repository root, navigate to the emulator directory and run:
+
+```bash
+cd emulator
+podman compose up -d
+```
 
 ### Cloning the application
 

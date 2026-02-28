@@ -119,5 +119,16 @@
     "Created": "2020-10-13T11:50:29.463221+00",
     "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8",
     "ResourceFilter": "urn:altinn:resource:test-source"
+  },
+  {
+    "Id": "12",
+    "Sourcefilter": "urn:testing-events:test-source",
+    "Consumer": "/org/ttd",
+    "CreatedBy": "/org/ttd",
+    "Typefilter": "generic.event.type",
+    "EndPoint": "https://www.ttd.no/webhook",
+    "Created": "2020-10-13T11:50:29.463221+00",
+    "SourceFilterHash": "239581F1C26A43827BF1CC8F90CA81D8",
+    "ResourceFilter": "urn:altinn:resource:test-source"
   }
 ]

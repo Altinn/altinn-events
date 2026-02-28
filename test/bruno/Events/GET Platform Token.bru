@@ -1,0 +1,32 @@
+meta {
+  name: GET Platform Token
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken?env={{Environment}}&scopes=altinn:serviceowner/instances.read&org=ttd&orgNo=991825827
+  body: none
+  auth: basic
+}
+
+params:query {
+  env: {{Environment}}
+  scopes: altinn:serviceowner/instances.read
+  org: ttd
+  orgNo: 991825827
+}
+
+auth:basic {
+  username: {{TokenGeneratorUserName}}
+  password: {{TokenGeneratorPassword}}
+}
+
+script:post-response {
+  const token = res.getBody();
+  bru.setVar("PlatformToken", token);
+}
+
+settings {
+  encodeUrl: true
+}

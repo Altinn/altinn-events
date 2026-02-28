@@ -98,6 +98,27 @@ public class AppCloudEventXacmlMapperTests
         Assert.Single(xacmlJsonProfile.Request.AccessSubject);
     }
 
+    [Fact]
+    public void CreateMultiDecisionRequest_ShouldReturnValidXACMLRequest_ForMultipleConsumers()
+    {
+        // Arrange
+        List<string> consumers = ["/org/a", "/org/b", "/org/c"];
+        CloudEvent cloudEvent = new()
+        {
+            Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Subject = "/party/1234324"
+        };
+        
+        // Act
+        XacmlJsonRequestRoot xacmlJsonProfile = AppCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers);
+        
+        // Assert.
+        Assert.NotNull(xacmlJsonProfile);
+        Assert.Single(xacmlJsonProfile.Request.Action);
+        Assert.Single(xacmlJsonProfile.Request.Resource);
+        Assert.Equal(3, xacmlJsonProfile.Request.AccessSubject.Count);
+    }
+
     /// <summary>
     /// Creates a ClaimsPrincipal object represents a user.
     /// </summary>

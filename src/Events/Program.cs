@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
@@ -15,12 +14,14 @@ using Altinn.Common.PEP.Authorization;
 using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
-
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.BridgeProxy;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Commands;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Contracts;
+using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
 using Altinn.Platform.Events.Middleware;
@@ -29,15 +30,11 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Swagger;
 using Altinn.Platform.Events.Telemetry;
-
 using AltinnCore.Authentication.JwtCookie;
-
 using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using Azure.Security.KeyVault.Secrets;
-
 using CloudNative.CloudEvents.SystemTextJson;
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -47,17 +44,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-
+using Microsoft.OpenApi;
 using Npgsql;
-
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-
 using Swashbuckle.AspNetCore.SwaggerGen;
-
+using Wolverine;
+using Wolverine.AzureServiceBus;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -165,20 +160,16 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     logger.LogInformation("Program // ConfigureServices");
 
-    var attributes = new List<KeyValuePair<string, object>>(2)
-    {
-        KeyValuePair.Create("service.name", (object)"platform-events"),
-    };
-
     services.AddOpenTelemetry()
-        .ConfigureResource(resourceBuilder => resourceBuilder.AddAttributes(attributes))
+        .ConfigureResource(resourceBuilder => resourceBuilder.AddService(serviceName: TelemetryClient.AppName, serviceInstanceId: Environment.MachineName))
         .WithMetrics(metrics => 
         {
             metrics.AddAspNetCoreInstrumentation();
             metrics.AddMeter(
                 "Microsoft.AspNetCore.Hosting",
                 "Microsoft.AspNetCore.Server.Kestrel",
-                "System.Net.Http");
+                "System.Net.Http",
+                TelemetryClient.AppName);
         })
         .WithTracing(tracing => 
         {
@@ -187,6 +178,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 tracing.SetSampler(new AlwaysOnSampler());
             }
 
+            tracing.AddSource(TelemetryClient.AppName);
             tracing.AddAspNetCoreInstrumentation();
 
             tracing.AddHttpClientInstrumentation();
@@ -201,6 +193,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     }
 
     services.AddAutoMapper(typeof(Program));
+    services.AddSingleton<TelemetryClient>();
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
@@ -223,12 +216,57 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                     .EnableFirstResponseEvent(false)));
     }
 
+    WolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<WolverineSettings>() ?? new WolverineSettings();
+
+    // Set static settings for handlers before Wolverine discovers them
+    SaveEventHandler.Settings = wolverineSettings;
+    SendToOutboundHandler.Settings = wolverineSettings;
+    SendEventToSubscriberHandler.Settings = wolverineSettings;
+    ValidateSubscriptionHandler.Settings = wolverineSettings;
+
+    services.AddWolverine(opts =>
+    {
+        if (wolverineSettings.EnableServiceBus)
+        {
+            opts.ConfigureEventsDefaults(
+                builder.Environment,
+                wolverineSettings.ServiceBusConnectionString);
+
+            opts.PublishMessage<RegisterEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
+            opts.PublishMessage<InboundEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
+            opts.PublishMessage<OutboundEventCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.OutboundQueueName);                
+            opts.PublishMessage<ValidateSubscriptionCommand>()
+                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
+
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.InboundQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.OutboundQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
+            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName)
+                .ListenerCount(wolverineSettings.ListenerCount)
+                .ProcessInline();
+        }
+
+        opts.Policies.AllListeners(x => x.ProcessInline());
+        opts.Policies.AllSenders(x => x.SendInline());
+    });
+
     services.AddSingleton(config);
     services.Configure<PostgreSqlSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
-    services.Configure<Altinn.Common.AccessToken.Configuration.KeyVaultSettings>(config.GetSection("kvSetting"));
+    services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
+    services.Configure<EventsOutboundSettings>(config.GetSection("EventsOutboundSettings"));
+    services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
 
     services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
@@ -273,7 +311,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddControllers(opts =>
     {
         opts.InputFormatters.Insert(0, new CloudEventJsonInputFormatter(new JsonEventFormatter()));
-        opts.OutputFormatters.Insert(0, new CloudEventJsonOutputFormatter(new JsonEventFormatter()));
+        opts.OutputFormatters.Insert(0, new CloudEventJsonOutputFormatter());
         opts.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
     })
     .AddJsonOptions(options =>
@@ -285,13 +323,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddBridgeProxy(builder.Configuration);
 
     services.AddHttpClient<IRegisterService, RegisterService>();
-    services.AddSingleton<IEventsService, EventsService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
-    services.AddSingleton<IOutboundService, OutboundService>();
-    services.AddSingleton<ISubscriptionService, SubscriptionService>();
-    services.AddSingleton<ITraceLogService, TraceLogService>();
-    services.AddSingleton<IAppSubscriptionService, AppSubscriptionService>();
-    services.AddSingleton<IGenericSubscriptionService, GenericSubscriptionService>();
+    services.AddScoped<IEventsService, EventsService>();
+    services.AddScoped<IOutboundService, OutboundService>();
+    services.AddScoped<ISubscriptionService, SubscriptionService>();
+    services.AddScoped<IAppSubscriptionService, AppSubscriptionService>();
+    services.AddScoped<IGenericSubscriptionService, GenericSubscriptionService>();
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.AddSingleton<ITraceLogRepository, TraceLogRepository>();
@@ -299,6 +336,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
+    services.AddHttpClient<IWebhookService, WebhookService>();
 
     services.AddTransient<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
@@ -324,19 +362,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             Scheme = "bearer"
         });
 
-        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
         {
-            {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                Array.Empty<string>()
-            }
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
         });
     });
 }

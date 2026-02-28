@@ -3,10 +3,12 @@ name: Regression Test - AT24
 on:
   workflow_dispatch:
   schedule:
-  - cron: '0 12 * * 1-5'
+    - cron: '0 12 * * 1-5'
 
 jobs:
   at24:
+    permissions:
+      contents: read
     uses: ./.github/workflows/regression-test-ATX.yml
     with:
       environment: AT24

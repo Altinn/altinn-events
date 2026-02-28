@@ -26,15 +26,8 @@ public static class RetryableEventWrapperExtensions
     /// langword="null"/> if the input is invalid or deserialization fails.</returns>
     public static RetryableEventWrapper? DeserializeToRetryableEventWrapper(this string item)
     {
-        try
-        {
-            var eventWrapper = JsonSerializer.Deserialize<RetryableEventWrapper>(item, _serializerOptions);
-            return eventWrapper;
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
+        var eventWrapper = JsonSerializer.Deserialize<RetryableEventWrapper>(item, _serializerOptions);
+        return eventWrapper;
     }
 
     /// <summary>

@@ -3,53 +3,51 @@ name: Regression test  - PROD
 on:
   workflow_dispatch:
   schedule:
-  - cron: '0 12 * * 1-5'
+    - cron: '0 12 * * 1-5'
 
 jobs:
   regression-tests:
     environment: prod
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env: # Shared environment vars for k6 test scripts
+      altinn_env: prod
+      encodedJwk: ${{ secrets.MP_ENCODEDJWK }}
+      mpKid: ${{ secrets.MP_KID }}
+      mpClientId: ${{ secrets.MP_CLIENT_ID }}
+      runFullTestSet: true
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-    - name: Run app-events regression tests
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/app-events.js
-        flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=${{ secrets.APP_NAME}} -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
-    - name: Run events regression tests (POST)
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/events/post.js
-        flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
-    - name: Run events regression tests (GET)
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/events/get.js
-        flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }}
-    - name: Run subscription regression tests
-      if: always()
-      uses: grafana/k6-action@e4714b734f2b0afaabeb7b4a69142745548ab9ec # v0.3.1
-      with:
-        filename: test/k6/src/tests/subscriptions.js
-        flags: -e runFullTestSet=true -e env=${{ vars.ENV }} -e mpClientId=${{ secrets.MP_CLIENT_ID }} -e mpKid=${{ secrets.MP_KID }} -e encodedJwk=${{ secrets.MP_ENCODEDJWK }} -e app=${{ secrets.APP_NAME}} -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
-    - name: Build failure report
-      if: failure()
-      run: |
-
-          report=":warning: Events regression test failure in ${{ vars.ENV }}  :warning: \n"
-          report+="\n Workflow available here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "stepreport="$report >> $GITHUB_ENV
-    - name: Report failure to Slack
-      if: failure()
-      id: slack
-      uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-      with:
-        webhook-type: incoming-webhook
-        webhook: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}
-        payload: |
-            {
-              "text": "${{ env.stepreport }}"
-            }
-
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up k6
+        uses: grafana/setup-k6-action@ffe7d7290dfa715e48c2ccc924d068444c94bde2 # v1.1.0
+      - name: Run app-events regression tests
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
+        with:
+          path: test/k6/src/tests/app-events.js
+          flags: -e app=${{ secrets.APP_NAME}} -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
+      - name: Run events regression tests (POST)
+        if: always()
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
+        with:
+          path: test/k6/src/tests/events/post.js
+      - name: Run events regression tests (GET)
+        if: always()
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
+        with:
+          path: test/k6/src/tests/events/get.js
+      - name: Run subscription regression tests
+        if: always()
+        uses: grafana/run-k6-action@a15e2072ede004e8d46141e33d7f7dad8ad08d9d # v1.3.1
+        with:
+          path: test/k6/src/tests/subscriptions.js
+          flags: -e app=${{ secrets.APP_NAME}} -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
+  slack-notify:
+    if: failure()
+    needs: regression-tests
+    uses: ./.github/workflows/send-slack-warning.yml
+    permissions: {}
+    with:
+      warning-message: 'Events regression test failure in prod'
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_PROD }}

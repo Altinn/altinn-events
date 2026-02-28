@@ -7,6 +7,9 @@ using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Wolverine;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -21,15 +24,20 @@ namespace Altinn.Platform.Events.Services
         private const string OrganisationPrefix = "/organisation/";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SubscriptionService"/> class.
+        /// Initializes a new instance of the <see cref="AppSubscriptionService"/> class.
         /// </summary>
         public AppSubscriptionService(
             ISubscriptionRepository repository,
             IAuthorization authorization,
             IRegisterService register,
-            IEventsQueueClient queue,
-            IClaimsPrincipalProvider claimsPrincipalProvider)
-            : base(repository, authorization, queue, claimsPrincipalProvider)
+            IMessageBus bus,
+            IEventsQueueClient queueClient,
+            IClaimsPrincipalProvider claimsPrincipalProvider,
+            IOptions<PlatformSettings> platformSettings,
+            IOptions<WolverineSettings> wolverineSettings,
+            IWebhookService webhookService,
+            ILogger<AppSubscriptionService> logger)
+            : base(repository, authorization, bus, queueClient, claimsPrincipalProvider, platformSettings, wolverineSettings, webhookService, logger)
         {
             _register = register;
             _claimsPrincipalProvider = claimsPrincipalProvider;
@@ -54,7 +62,7 @@ namespace Altinn.Platform.Events.Services
             return await CompleteSubscriptionCreation(eventsSubscription);
         }
 
-        private void SetResourceFilterIfEmpty(Subscription eventsSubscription)
+        private static void SetResourceFilterIfEmpty(Subscription eventsSubscription)
         {
             eventsSubscription.ResourceFilter ??= GetResourceFilterFromSource(eventsSubscription.SourceFilter);
         }

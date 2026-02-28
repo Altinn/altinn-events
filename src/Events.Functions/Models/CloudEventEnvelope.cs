@@ -56,8 +56,10 @@ namespace Altinn.Platform.Events.Functions.Models
         /// Deserializes a serialized cloud event envelope using a specialized deserializer for the cloud event property.
         /// </summary>
         /// <returns>The cloud event envelope object</returns>
-        public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string serializedEnvelope)
+        public static CloudEventEnvelope DeserializeToCloudEventEnvelope(string? serializedEnvelope)
         {
+            ArgumentException.ThrowIfNullOrEmpty(serializedEnvelope);
+
             var n = JsonNode.Parse(serializedEnvelope, _jsonNodeOptions);
             if (n == null)
             {

@@ -1,32 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<UserSecretsId>a4f2b926-afa9-4af7-a7a5-5ddbaccb203e</UserSecretsId>
 		<!-- SonarCloud needs this -->
 		<ProjectGuid>{6599d6d0-228d-4057-87c3-31cd33068bbd}</ProjectGuid>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Altinn.Common.AccessTokenClient" Version="3.0.15" />
-		<PackageReference Include="Altinn.Common.PEP" Version="4.2.2" />
-		<PackageReference Include="Altinn.Common.AccessToken" Version="5.0.5" />
+		<PackageReference Include="Altinn.Common.AccessTokenClient" Version="3.2.0" />
+		<PackageReference Include="Altinn.Common.PEP" Version="4.2.3" />
+		<PackageReference Include="Altinn.Common.AccessToken" Version="5.1.0" />
 		<PackageReference Include="Altinn.Platform.Models" Version="1.6.1" />
 		<PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
 		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
-		<PackageReference Include="Azure.Storage.Queues" Version="12.24.0" />
-		<PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.4.0" />
-		<PackageReference Include="Npgsql.DependencyInjection" Version="9.0.4" />
-		<PackageReference Include="Npgsql.OpenTelemetry" Version="9.0.4" />
-		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.13.1" />
-		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
-		<PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
+		<PackageReference Include="Azure.Storage.Queues" Version="12.25.0" />
+		<PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.6.0" />
+		<PackageReference Include="Npgsql.DependencyInjection" Version="10.0.1" />
+		<PackageReference Include="Npgsql.OpenTelemetry" Version="10.0.1" />
+		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
 		<PackageReference Include="CloudNative.CloudEvents.AspNetCore" Version="2.8.0" />
 		<PackageReference Include="CloudNative.CloudEvents.SystemTextJson" Version="2.8.0" />
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
 		<PackageReference Include="JWTCookieAuthentication" Version="4.0.4" />
-		<PackageReference Include="Scrutor" Version="6.1.0" />
-		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
-		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="9.0.6" />
+		<PackageReference Include="Scrutor" Version="7.0.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.4" />
+		<PackageReference Include="WolverineFx" Version="5.16.2" />
+		<PackageReference Include="WolverineFx.AzureServiceBus" Version="5.16.2" />		
 		<PackageReference Include="Yuniql.AspNetCore" Version="1.2.25" />
 		<PackageReference Include="Yuniql.PostgreSql" Version="1.3.15" />
 	</ItemGroup>

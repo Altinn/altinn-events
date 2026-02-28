@@ -1,0 +1,18 @@
+meta {
+  name: Events
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{PlatformToken}}
+}
+
+vars:pre-request {
+  TokenGeneratorUserName: {{process.env.TOKEN_BASIC_AUTH_USER}}
+  TokenGeneratorPassword: {{process.env.TOKEN_BASIC_AUTH_PW}}
+  TokenGeneratorBaseUrl: {{process.env.TOKEN_URL}}
+  AltinnSlackWebHook: {{process.env.ALTINN_SLACK_WEBHOOK}}
+}
