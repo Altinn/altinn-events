@@ -43,7 +43,7 @@ public class WebhookServiceTest
         _ = new WebhookService(actualClient, null, _eventsOutboundSettings, loggerMock.Object);
 
         // Assert
-        Assert.Equal(300, actualClient.Timeout.TotalSeconds);
+        Assert.Equal(45, actualClient.Timeout.TotalSeconds);
     }
 
     [Fact]
