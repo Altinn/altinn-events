@@ -12,7 +12,7 @@ WORKDIR /Events
 RUN dotnet build ./Altinn.Platform.Events.csproj -c Release -o /app_output
 RUN dotnet publish ./Altinn.Platform.Events.csproj -c Release -o /app_output
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0.4-alpine3.23@sha256:051a1ec764d16c141f029a3ff90d81bd541c6cb51d29b5416688ff5336037be1 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.4-alpine3.23@sha256:512d643dce0e7daa25c85407eb4e14dbea33b72e4a7792427949666636934019 AS final
 
 EXPOSE 5080
 WORKDIR /app
