@@ -1,0 +1,23 @@
+meta {
+  name: generic subscription (org)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{PlatformHostUrl}}/events/api/v1/subscriptions
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "resourceFilter": "urn:altinn:resource:this-is-my-resource",
+    "endpoint": "https://webhook.site/73e46e5f-e905-4375-8ab6-12986525007e"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

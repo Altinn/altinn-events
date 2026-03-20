@@ -1,18 +1,27 @@
 ﻿using Altinn.Platform.Events.Models;
 
-namespace Altinn.Platform.Events.Mappers
+namespace Altinn.Platform.Events.Mappers;
+
+/// <summary>
+/// A class that holds the subscription mapper configurations
+/// </summary>
+public static class SubscriptionMapper
 {
     /// <summary>
-    /// A class that holds the subscription mapper configurations
+    /// Maps a <see cref="SubscriptionRequestModel"/> to a <see cref="Subscription"/>
     /// </summary>
-    public class SubscriptionMapper : AutoMapper.Profile
+    /// <param name="subscriptionRequest">The subscription request to map</param>
+    /// <returns>A mapped subscription</returns>
+    public static Subscription MapToSubscription(this SubscriptionRequestModel subscriptionRequest)
     {
-        /// <summary>
-        /// The subscription mapper configuration
-        /// </summary>
-        public SubscriptionMapper()
+        return new Subscription
         {
-            CreateMap<SubscriptionRequestModel, Subscription>();
-        }
+            EndPoint = subscriptionRequest.EndPoint,
+            SourceFilter = subscriptionRequest.SourceFilter,
+            SubjectFilter = subscriptionRequest.SubjectFilter,
+            ResourceFilter = subscriptionRequest.ResourceFilter,
+            AlternativeSubjectFilter = subscriptionRequest.AlternativeSubjectFilter,
+            TypeFilter = subscriptionRequest.TypeFilter,
+        };
     }
 }

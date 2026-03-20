@@ -1,0 +1,34 @@
+meta {
+  name: person subscribe
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{TokenGeneratorBaseUrl}}/api/GetPersonalToken?env={{Environment}}&scopes=altinn:events.subscribe&userId={{AuthN_UserId}}&partyId={{AuthN_PartyId}}&pid={{AuthN_Pid}}
+  body: none
+  auth: basic
+}
+
+params:query {
+  env: {{Environment}}
+  scopes: altinn:events.subscribe
+  userId: {{AuthN_UserId}}
+  partyId: {{AuthN_PartyId}}
+  pid: {{AuthN_Pid}}
+}
+
+auth:basic {
+  username: {{TokenGeneratorUserName}}
+  password: {{TokenGeneratorPassword}}
+}
+
+script:post-response {
+  const token = res.getBody();
+  bru.setVar("BearerToken", token);
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
