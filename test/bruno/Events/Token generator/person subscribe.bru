@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{TokenGeneratorBaseUrl}}/api/GetPersonalToken?env={{Environment}}&scopes=altinn:events.subscribe&userId=20734816&partyId=50884402&pid=03827099790
+  url: {{TokenGeneratorBaseUrl}}/api/GetPersonalToken?env={{Environment}}&scopes=altinn:events.subscribe&userId={{AuthN_UserId}}&partyId={{AuthN_PartyId}}&pid={{AuthN_Pid}}
   body: none
   auth: basic
 }
@@ -13,9 +13,9 @@ get {
 params:query {
   env: {{Environment}}
   scopes: altinn:events.subscribe
-  userId: 20734816
-  partyId: 50884402
-  pid: 03827099790
+  userId: {{AuthN_UserId}}
+  partyId: {{AuthN_PartyId}}
+  pid: {{AuthN_Pid}}
 }
 
 auth:basic {
