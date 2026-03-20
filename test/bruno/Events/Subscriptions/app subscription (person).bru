@@ -1,0 +1,24 @@
+meta {
+  name: app subscription (person)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{PlatformHostUrl}}/events/api/v1/subscriptions
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "sourceFilter": "https://ttd.apps.altinn.no/ttd/apps-test",
+    "endpoint": "https://webhook.site/73e46e5f-e905-4375-8ab6-12986525007e",
+    "subjectFilter": "/party/50884402"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
