@@ -1,7 +1,7 @@
 meta {
-  name: POST subscription
+  name: app subscription (person)
   type: http
-  seq: 2
+  seq: 3
 }
 
 post {
@@ -13,11 +13,12 @@ post {
 body:json {
   {
     "sourceFilter": "https://ttd.apps.at22.altinn.cloud/ttd/apps-test",
-    "subjectFilter": "/party/1337",
-    "endpoint": "{{AltinnSlackWebHook}}"
+    "endpoint": "https://webhook.site/73e46e5f-e905-4375-8ab6-12986525007e",
+    "subjectFilter": "/party/{{AuthN_PartyId}}"
   }
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

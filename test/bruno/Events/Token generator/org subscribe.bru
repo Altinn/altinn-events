@@ -1,20 +1,20 @@
 meta {
-  name: GET Platform Token
+  name: org subscribe
   type: http
   seq: 1
 }
 
 get {
-  url: {{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken?env={{Environment}}&scopes=altinn:serviceowner/instances.read&org=ttd&orgNo=991825827
+  url: {{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken?env={{Environment}}&scopes=altinn:events.subscribe&orgNo=991825827&org=ttd
   body: none
   auth: basic
 }
 
 params:query {
   env: {{Environment}}
-  scopes: altinn:serviceowner/instances.read
-  org: ttd
+  scopes: altinn:events.subscribe
   orgNo: 991825827
+  org: ttd
 }
 
 auth:basic {
@@ -24,9 +24,10 @@ auth:basic {
 
 script:post-response {
   const token = res.getBody();
-  bru.setVar("PlatformToken", token);
+  bru.setVar("BearerToken", token);
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

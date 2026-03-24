@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
+using Altinn.Platform.Events.Mappers;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
-
-using AutoMapper;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -28,7 +27,6 @@ namespace Altinn.Platform.Events.Controllers
         private readonly ISubscriptionService _subscriptionService;
         private readonly IAppSubscriptionService _appSubscriptionService;
         private readonly IGenericSubscriptionService _genericSubscriptionService;
-        private readonly IMapper _mapper;
         private readonly PlatformSettings _settings;
 
         /// <summary>
@@ -38,13 +36,11 @@ namespace Altinn.Platform.Events.Controllers
             ISubscriptionService eventsSubscriptionService,
             IAppSubscriptionService appSubscriptionService,
             IGenericSubscriptionService genericSubscriptionService,
-            IMapper mapper,
             IOptions<PlatformSettings> settings)
         {
             _subscriptionService = eventsSubscriptionService;
             _appSubscriptionService = appSubscriptionService;
             _genericSubscriptionService = genericSubscriptionService;
-            _mapper = mapper;
             _settings = settings.Value;
         }
 
@@ -87,7 +83,7 @@ namespace Altinn.Platform.Events.Controllers
                 return StatusCode(400, "Resource filter must be a valid urn");
             }
 
-            Subscription eventsSubscription = _mapper.Map<Subscription>(subscriptionRequest);
+            Subscription eventsSubscription = subscriptionRequest.MapToSubscription();
 
             (Subscription createdSubscription, ServiceError error) = isAppSubscription ?
                 await _appSubscriptionService.CreateSubscription(eventsSubscription) :

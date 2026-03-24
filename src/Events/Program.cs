@@ -192,7 +192,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         AddAzureMonitorTelemetryExporters(services, applicationInsightsConnectionString);
     }
 
-    services.AddAutoMapper(typeof(Program));
     services.AddSingleton<TelemetryClient>();
 
     services.AddMemoryCache();

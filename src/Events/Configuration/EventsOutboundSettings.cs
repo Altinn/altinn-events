@@ -8,5 +8,5 @@ public class EventsOutboundSettings
     /// <summary>
     /// The number of seconds the event push http client will wait for a response before timing out.
     /// </summary>
-    public int RequestTimeout { get; set; } = 300;
+    public int RequestTimeout { get; set; } = 45;
 }
