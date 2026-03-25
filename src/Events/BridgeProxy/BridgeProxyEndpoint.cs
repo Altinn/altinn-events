@@ -96,7 +96,8 @@ namespace Altinn.Platform.Events.BridgeProxy
 
                 if (isError)
                 {
-                    _logger.LogError("BridgeProxy: RC {StatusCode} {Method} {AbsolutePath} {Headers}", response.StatusCode, ctx.Request.Method, outbound.RequestUri.AbsolutePath, headers);
+                    string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    _logger.LogError("BridgeProxy: RC {StatusCode} {Method} {AbsolutePath}, content: {Content}, headers: {Headers} ", response.StatusCode, ctx.Request.Method, outbound.RequestUri.AbsolutePath, content, headers);
                 }
 
                 if (response.Content != null)
