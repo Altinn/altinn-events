@@ -1,0 +1,33 @@
+meta {
+  name: platform access token
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{TokenGeneratorBaseUrl}}/api/GetPlatformAccessToken?env={{Environment}}&app=events
+  body: none
+  auth: basic
+}
+
+params:query {
+  env: {{Environment}}
+  app: events
+}
+
+auth:basic {
+  username: {{TokenGeneratorUserName}}
+  password: {{TokenGeneratorPassword}}
+}
+
+script:post-response {
+  let data = res.getBody();
+  
+  // Check if the response contains a valid token
+  if (!data || data.trim() === '') {
+    console.error('Failed to retrieve a valid platform access token');
+    return;
+  }
+  
+  bru.setEnvVar("AccessToken", data);
+}

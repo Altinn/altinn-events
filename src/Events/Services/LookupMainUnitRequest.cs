@@ -10,12 +10,12 @@ namespace Altinn.Platform.Events.Services;
 /// <remarks>
 /// Initializes a new instance of the <see cref="LookupMainUnitRequest"/> class.
 /// </remarks>
-/// <param name="orgNumber">Organization Number of the organization to lookup parent units for</param>
-public class LookupMainUnitRequest(string orgNumber)
+/// <param name="organizationUrnValue">Any URN that uniquely identifies an organization.</param>
+public class LookupMainUnitRequest(string organizationUrnValue)
 {
     /// <summary>
     /// Data containing the urn of the organization with either orgNumber, partyId or PartyUuid.
     /// </summary>
     [JsonPropertyName("data")]
-    public string Data { get; init; } = $"urn:altinn:organization:identifier-no:{orgNumber}";
+    public string Data { get; init; } = organizationUrnValue;
 }

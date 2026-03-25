@@ -134,9 +134,9 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<OrganizationRecord> GetMainUnit(string orgNumber, CancellationToken cancellationToken)
+        public async Task<OrganizationRecord> GetMainUnit(string organizationUrnValue, CancellationToken cancellationToken)
         {
-            var request = new LookupMainUnitRequest(orgNumber);
+            var request = new LookupMainUnitRequest(organizationUrnValue);
 
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
 
