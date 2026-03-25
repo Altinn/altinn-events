@@ -82,14 +82,21 @@ namespace Altinn.Platform.Events.BridgeProxy
                 var response = await _forwarder.ForwardAsync(outbound, ctx.RequestAborted).ConfigureAwait(false);
 
                 ctx.Response.StatusCode = (int)response.StatusCode;
-                if ((int)response.StatusCode > 299)
-                {
-                    _logger.LogError("BridgeProxy: Received non-success status code {StatusCode} from target for {Method} {Path}", response.StatusCode, ctx.Request.Method, ctx.Request.Path);
-                }
-
+                bool isError = (int)response.StatusCode > 299;
+                string headers = null;
                 foreach (var header in response.Headers)
                 {
+                    if (isError)
+                    {
+                        headers += header.Value + "|";
+                    }
+
                     ctx.Response.Headers[header.Key] = header.Value.ToArray();
+                }
+
+                if (isError)
+                {
+                    _logger.LogError("BridgeProxy: RC {StatusCode} {Method} {AbsolutePath} {Headers}", response.StatusCode, ctx.Request.Method, outbound.RequestUri.AbsolutePath, headers);
                 }
 
                 if (response.Content != null)
