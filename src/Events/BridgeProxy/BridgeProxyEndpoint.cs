@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -72,7 +73,9 @@ namespace Altinn.Platform.Events.BridgeProxy
                 // Body
                 if (ctx.Request.ContentLength.GetValueOrDefault() > 0)
                 {
-                    outbound.Content = new StreamContent(ctx.Request.Body);
+                    string body = ctx.Request.Body.ToString();
+                    _logger.LogError("BridgeProxy: Method: {Method}, path: {Path}, body: {Body}", ctx.Request.Method, ctx.Request.Path, body);
+                    outbound.Content = new StringContent(body, Encoding.UTF8, "application/json");
                     if (!string.IsNullOrEmpty(ctx.Request.ContentType))
                     {
                         outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
