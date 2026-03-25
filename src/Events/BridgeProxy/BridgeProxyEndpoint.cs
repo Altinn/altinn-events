@@ -88,7 +88,7 @@ namespace Altinn.Platform.Events.BridgeProxy
                 {
                     if (isError)
                     {
-                        headers += header.Value + "|";
+                        headers += string.Join(",", header.Value) + "|";
                     }
 
                     ctx.Response.Headers[header.Key] = header.Value.ToArray();
