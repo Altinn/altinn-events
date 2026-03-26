@@ -94,12 +94,12 @@ namespace Altinn.Platform.Events.BridgeProxy
                     }
                     else
                     {
-                        _logger.LogError("BridgeProxy: No body found for {Method} {AbsolutePath}", ctx.Request.Method, outbound.RequestUri.AbsolutePath);
+                        _logger.LogError("BridgeProxy: No body found for {Method} {TargetPathAndQuery}", ctx.Request.Method, targetPathAndQuery);
                     }
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "BridgeProxy: Error reading body for {Method} {AbsolutePath}", ctx.Request.Method, outbound.RequestUri.AbsolutePath);
+                    _logger.LogError(e, "BridgeProxy: Error reading body for {Method} {TargetPathAndQuery}", ctx.Request.Method, targetPathAndQuery);
                     ctx.Response.StatusCode = 400;
                     await ctx.Response.Body.WriteAsync(Encoding.UTF8.GetBytes("Invalid body")).ConfigureAwait(false);
                     return;
@@ -123,7 +123,7 @@ namespace Altinn.Platform.Events.BridgeProxy
                 if (isError)
                 {
                     string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    _logger.LogError("BridgeProxy: RC {StatusCode} {Method} {AbsolutePath}, content: {Content}, headers: {Headers} ", response.StatusCode, ctx.Request.Method, outbound.RequestUri.AbsolutePath, content, headers);
+                    _logger.LogError("BridgeProxy: RC {StatusCode} {Method} {TargetPathAndQuery}, content: {Content}, headers: {Headers} ", response.StatusCode, ctx.Request.Method, targetPathAndQuery, content, headers);
                 }
 
                 if (response.Content != null)
