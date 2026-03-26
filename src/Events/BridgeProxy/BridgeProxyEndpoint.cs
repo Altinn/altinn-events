@@ -86,6 +86,7 @@ namespace Altinn.Platform.Events.BridgeProxy
                     {
                         string body = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(bodyFromQuery));
                         outbound.Content = new StringContent(body);
+                        outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentLength, Encoding.UTF8.GetByteCount(body).ToString());
                         if (!string.IsNullOrEmpty(ctx.Request.ContentType))
                         {
                             outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
