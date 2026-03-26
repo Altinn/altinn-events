@@ -72,22 +72,36 @@ namespace Altinn.Platform.Events.BridgeProxy
                 }
 
                 // Body
-                if (ctx.Request.ContentLength.GetValueOrDefault() > 0)
+                try
                 {
-                    outbound.Content = new StreamContent(ctx.Request.Body);
-                    if (!string.IsNullOrEmpty(ctx.Request.ContentType))
+                    if (ctx.Request.ContentLength.GetValueOrDefault() > 0)
                     {
-                        outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
+                        outbound.Content = new StreamContent(ctx.Request.Body);
+                        if (!string.IsNullOrEmpty(ctx.Request.ContentType))
+                        {
+                            outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
+                        }
+                    }
+                    else if (ctx.Request.Query.TryGetValue("body", out var bodyFromQuery))
+                    {
+                        string body = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(bodyFromQuery));
+                        outbound.Content = new StringContent(body);
+                        if (!string.IsNullOrEmpty(ctx.Request.ContentType))
+                        {
+                            outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogError("BridgeProxy: No body found for {Method} {AbsolutePath}", ctx.Request.Method, outbound.RequestUri.AbsolutePath);
                     }
                 }
-                else if (ctx.Request.Query.TryGetValue("body", out var bodyFromQuery))
+                catch (Exception e)
                 {
-                    string body = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(bodyFromQuery));
-                    outbound.Content = new StringContent(body);
-                    if (!string.IsNullOrEmpty(ctx.Request.ContentType))
-                    {
-                        outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
-                    }
+                    _logger.LogError(e, "BridgeProxy: Error reading body for {Method} {AbsolutePath}", ctx.Request.Method, outbound.RequestUri.AbsolutePath);
+                    ctx.Response.StatusCode = 400;
+                    await ctx.Response.Body.WriteAsync(Encoding.UTF8.GetBytes("Invalid body")).ConfigureAwait(false);
+                    return;
                 }
 
                 var response = await _forwarder.ForwardAsync(outbound, ctx.RequestAborted).ConfigureAwait(false);
