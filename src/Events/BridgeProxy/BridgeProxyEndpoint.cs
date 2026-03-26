@@ -1,13 +1,14 @@
-﻿using System;
+﻿using JasperFx.Events.Grouping;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.Net.Http.Headers;
 
 namespace Altinn.Platform.Events.BridgeProxy
 {
@@ -84,6 +85,9 @@ namespace Altinn.Platform.Events.BridgeProxy
                 else
                 {
                     _logger.LogError("BridgeProxy: Method: {Method}, path: {Path}, body: {Body}", ctx.Request.Method, ctx.Request.Path, "no body");
+                    StreamReader reader = new StreamReader(ctx.Response.Body, Encoding.UTF8);
+                    string body = await reader.ReadToEndAsync().ConfigureAwait(false);
+                    _logger.LogError("BridgeProxy body: {Body}", body);
                 }
 
                 var response = await _forwarder.ForwardAsync(outbound, ctx.RequestAborted).ConfigureAwait(false);
