@@ -1,14 +1,14 @@
-﻿using JasperFx.Events.Grouping;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.Net.Http.Headers;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using JasperFx.Events.Grouping;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 
 namespace Altinn.Platform.Events.BridgeProxy
 {
@@ -74,20 +74,20 @@ namespace Altinn.Platform.Events.BridgeProxy
                 // Body
                 if (ctx.Request.ContentLength.GetValueOrDefault() > 0)
                 {
-                    //string body = ctx.Request.Body.ToString();
-                    //_logger.LogError("BridgeProxy: Method: {Method}, path: {Path}, body: {Body}", ctx.Request.Method, ctx.Request.Path, body);
                     outbound.Content = new StreamContent(ctx.Request.Body);
                     if (!string.IsNullOrEmpty(ctx.Request.ContentType))
                     {
                         outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
                     }
                 }
-                else
+                else if (ctx.Request.Query.TryGetValue("body", out var bodyFromQuery))
                 {
-                    _logger.LogError("BridgeProxy: Method: {Method}, path: {Path}, body: {Body}", ctx.Request.Method, ctx.Request.Path, "no body");
-                    StreamReader reader = new StreamReader(ctx.Response.Body, Encoding.UTF8);
-                    string body = await reader.ReadToEndAsync().ConfigureAwait(false);
-                    _logger.LogError("BridgeProxy body: {Body}", body);
+                    string body = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(bodyFromQuery));
+                    outbound.Content = new StringContent(body);
+                    if (!string.IsNullOrEmpty(ctx.Request.ContentType))
+                    {
+                        outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
+                    }
                 }
 
                 var response = await _forwarder.ForwardAsync(outbound, ctx.RequestAborted).ConfigureAwait(false);
