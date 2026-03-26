@@ -73,17 +73,13 @@ namespace Altinn.Platform.Events.BridgeProxy
                 // Body
                 if (ctx.Request.ContentLength.GetValueOrDefault() > 0)
                 {
-                    string body = ctx.Request.Body.ToString();
-                    _logger.LogError("BridgeProxy: Method: {Method}, path: {Path}, body: {Body}", ctx.Request.Method, ctx.Request.Path, body);
-                    outbound.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                    //string body = ctx.Request.Body.ToString();
+                    //_logger.LogError("BridgeProxy: Method: {Method}, path: {Path}, body: {Body}", ctx.Request.Method, ctx.Request.Path, body);
+                    outbound.Content = new StreamContent(ctx.Request.Body);
                     if (!string.IsNullOrEmpty(ctx.Request.ContentType))
                     {
                         outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
                     }
-                }
-                else
-                {
-                    _logger.LogError("BridgeProxy: Method: {Method}, path: {Path}, body: {Body}", ctx.Request.Method, ctx.Request.Path, "no body");
                 }
 
                 var response = await _forwarder.ForwardAsync(outbound, ctx.RequestAborted).ConfigureAwait(false);
