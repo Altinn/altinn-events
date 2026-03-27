@@ -272,6 +272,168 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(HttpStatusCode.BadRequest, actualException.Response.StatusCode);
         }
 
+        [Fact]
+        public async Task GetMainUnit_MainUnitFound_ReturnsOrganizationRecord()
+        {
+            // Arrange
+            var expectedRecord = new OrganizationRecord
+            {
+                OrganizationIdentifier = "311443755",
+                ExternalUrn = "urn:altinn:organization:identifier-no:311443755",
+                PartyId = 51326197
+            };
+
+            DelegatingHandlerStub messageHandler = new(async (request, token) =>
+            {
+                await Task.CompletedTask;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new LookupMainUnitResponse { Data = [expectedRecord] })
+                };
+            });
+
+            InitializeMocks(10);
+
+            RegisterService target = new(
+                new HttpClient(messageHandler),
+                _contextAccessor.Object,
+                _accessTokenGenerator.Object,
+                _generalSettings.Object,
+                _platformSettings.Object,
+                new Mock<ILogger<RegisterService>>().Object);
+
+            // Act
+            OrganizationRecord actual = await target.GetMainUnit(
+                "urn:altinn:party:id:51326197", CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(expectedRecord.OrganizationIdentifier, actual.OrganizationIdentifier);
+            Assert.Equal(expectedRecord.ExternalUrn, actual.ExternalUrn);
+            Assert.Equal(expectedRecord.PartyId, actual.PartyId);
+        }
+
+        [Fact]
+        public async Task GetMainUnit_EmptyDataList_ReturnsNull()
+        {
+            // Arrange
+            DelegatingHandlerStub messageHandler = new(async (request, token) =>
+            {
+                await Task.CompletedTask;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new LookupMainUnitResponse())
+                };
+            });
+
+            InitializeMocks(10);
+
+            RegisterService target = new(
+                new HttpClient(messageHandler),
+                _contextAccessor.Object,
+                _accessTokenGenerator.Object,
+                _generalSettings.Object,
+                _platformSettings.Object,
+                new Mock<ILogger<RegisterService>>().Object);
+
+            // Act
+            OrganizationRecord actual = await target.GetMainUnit(
+                "urn:altinn:organization:identifier-no:000000000", CancellationToken.None);
+
+            // Assert
+            Assert.Null(actual);
+        }
+
+        [Fact]
+        public async Task GetMainUnit_MultipleResults_ReturnsFirstAndLogsWarning()
+        {
+            // Arrange
+            var firstRecord = new OrganizationRecord { OrganizationIdentifier = "311443755", PartyId = 51326197 };
+            var secondRecord = new OrganizationRecord { OrganizationIdentifier = "314249879", PartyId = 51326198 };
+
+            DelegatingHandlerStub messageHandler = new(async (request, token) =>
+            {
+                await Task.CompletedTask;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new LookupMainUnitResponse { Data = [firstRecord, secondRecord] })
+                };
+            });
+
+            InitializeMocks(10);
+
+            var loggerMock = new Mock<ILogger<RegisterService>>();
+
+            RegisterService target = new(
+                new HttpClient(messageHandler),
+                _contextAccessor.Object,
+                _accessTokenGenerator.Object,
+                _generalSettings.Object,
+                _platformSettings.Object,
+                loggerMock.Object);
+
+            // Act
+            OrganizationRecord actual = await target.GetMainUnit(
+                "urn:altinn:party:id:51326197", CancellationToken.None);
+
+            // Assert — first record returned
+            Assert.NotNull(actual);
+            Assert.Equal(firstRecord.OrganizationIdentifier, actual.OrganizationIdentifier);
+
+            // Assert — warning was logged
+            loggerMock.Verify(
+                l => l.Log(
+                    LogLevel.Warning,
+                    It.IsAny<EventId>(),
+                    It.IsAny<It.IsAnyType>(),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task GetMainUnit_ValidRequest_PostsToCorrectEndpointWithOrgUrn()
+        {
+            // Arrange
+            const string OrgUrn = "urn:altinn:party:id:51326197";
+            const string ExpectedRequestUri =
+                "http://localhost:5101/register/api/v2/internal/parties/main-units";
+
+            HttpRequestMessage requestMessage = null;
+            DelegatingHandlerStub messageHandler = new(async (request, token) =>
+            {
+                requestMessage = request;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new LookupMainUnitResponse
+                    {
+                        Data = [new OrganizationRecord { OrganizationIdentifier = "311443755", PartyId = 50001337 }]
+                    })
+                };
+            });
+
+            InitializeMocks(10);
+
+            RegisterService target = new(
+                new HttpClient(messageHandler),
+                _contextAccessor.Object,
+                _accessTokenGenerator.Object,
+                _generalSettings.Object,
+                _platformSettings.Object,
+                new Mock<ILogger<RegisterService>>().Object);
+
+            // Act
+            await target.GetMainUnit(OrgUrn, CancellationToken.None);
+
+            // Assert — correct endpoint and body
+            Assert.NotNull(requestMessage);
+            Assert.Equal(HttpMethod.Post, requestMessage.Method);
+            Assert.Equal(ExpectedRequestUri, requestMessage.RequestUri.ToString());
+
+            var bodyJson = await requestMessage.Content.ReadAsStringAsync();
+            Assert.Contains($"\"{OrgUrn}\"", bodyJson);
+        }
+
         private void InitializeMocks(HttpResponseMessage httpResponseMessage, Action<HttpRequestMessage> callback)
         {
             InitializeMocks(10);
