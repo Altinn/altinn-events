@@ -132,5 +132,39 @@ namespace Altinn.Platform.Events.Services
 
             return partyIdentifiers;
         }
+
+        /// <inheritdoc/>
+        public async Task<OrganizationRecord> GetMainUnit(string organizationUrnValue, CancellationToken cancellationToken)
+        {
+            var request = new LookupMainUnitRequest(organizationUrnValue);
+
+            string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
+
+            StringContent content = new(JsonSerializer.Serialize(request));
+            content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+
+            const string RequestUri = "v2/internal/parties/main-units";
+            HttpResponseMessage response = await _client.PostAsync(
+                RequestUri, content, accessToken, cancellationToken);
+
+            if (response == null)
+            {
+                return null;
+            }
+
+            var responseObject = await response.Content.ReadFromJsonAsync<LookupMainUnitResponse>(cancellationToken);
+            if (!(responseObject?.Data?.Count > 0))
+            {
+                return null;
+            }
+
+            // The response is a list, but assuming the list contains only one item in all cases
+            if (responseObject.Data.Count > 1)
+            {
+                _logger.LogWarning("Get main units for organization returned multiple results. Using the first one.");
+            }
+
+            return responseObject.Data[0];
+        }
     }
 }

@@ -1,0 +1,33 @@
+meta {
+  name: organization number identified subunit
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{PlatformHostUrl}}/events/api/v1/outbound
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/cloudevents+json
+}
+
+body:json {
+  {
+    "id": "1a23eb3a-7e1c-4ae8-aec1-68e65b631a4c",
+    "time": "2026-03-27T00:00:00.3626667Z",
+    "type": "no.altinn.correspondence.correspondencereceiverneverread",
+    "source": "https://platform.tt02.altinn.no/correspondence/api/v1/correspondence",
+    "subject": "urn:altinn:organization:identifier-no:311443755",
+    "resource": "urn:altinn:resource:nabovarsel",
+    "specversion": "1.0",
+    "resourceinstance": "019ce781-a5c0-7d03-8f51-3e7dda66dd74"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

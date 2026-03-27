@@ -1,12 +1,13 @@
 CREATE OR REPLACE FUNCTION events.insert_subscription(
-    resourcefilter character varying,
+	resourcefilter character varying,
 	sourcefilter character varying,
 	subjectfilter character varying,
 	typefilter character varying,
 	consumer character varying,
 	endpointurl character varying,
 	createdby character varying,
-	validated boolean)
+	validated boolean,
+	includesubunits boolean)
 	RETURNS SETOF events.subscription
 	LANGUAGE 'plpgsql'
 
@@ -18,8 +19,8 @@ BEGIN
 	currentTime := NOW();
 
 	RETURN QUERY
-	INSERT INTO events.subscription(resourcefilter, sourcefilter, subjectfilter, typefilter, consumer, endpointurl, createdby, "time", validated)
-	VALUES ($1, $2, $3, $4, $5, $6, $7,  currentTime, $8) RETURNING *;
+	INSERT INTO events.subscription(resourcefilter, sourcefilter, subjectfilter, typefilter, consumer, endpointurl, createdby, "time", validated, includesubunits)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, currentTime, $8, $9) RETURNING *;
 
 END
 $BODY$;
