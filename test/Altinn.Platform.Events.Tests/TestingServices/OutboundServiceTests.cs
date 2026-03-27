@@ -623,11 +623,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario: Subject is a /party/ path, GetMainUnit returns a main unit organization,
-        /// and there are subscriptions registered on the main unit's party ID.
-        /// Expected result: Subscriptions for both the original subject and the main unit are combined and pushed.
+        /// but the main unit subscriptions do not have IncludeSubunits enabled.
+        /// Expected result: Only the original subject's subscription is pushed.
         /// </summary>
         [Fact]
-        public async Task PostOutbound_PartySubjectWithMainUnitOrganization_SubscriptionsCombined()
+        public async Task PostOutbound_PartySubjectWithMainUnitOrganization_MainUnitSubscriptionsWithoutIncludeSubunitsNotPushed()
         {
             // Arrange
             string originalSubject = "/party/50001337";
@@ -658,7 +658,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync([new Subscription { Id = 1, Consumer = "/org/nav" }]);
             repositoryMock
                 .Setup(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync([new Subscription { Id = 2, Consumer = "/org/ttd" }]);
+                .ReturnsAsync([new Subscription { Id = 2, Consumer = "/org/ttd", IncludeSubunits = null },
+                               new Subscription { Id = 3, Consumer = "/org/skd", IncludeSubunits = false }]);
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
@@ -680,7 +681,71 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Act
             await service.PostOutbound(cloudEvent, CancellationToken.None);
 
-            // Assert
+            // Assert — only the subscription for the original subject is pushed
+            queueMock.Verify(q => q.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(1));
+        }
+
+        /// <summary>
+        /// Scenario: Subject is a /party/ path, GetMainUnit returns a main unit organization,
+        /// and the main unit subscriptions have IncludeSubunits enabled.
+        /// Expected result: Subscriptions for both the original subject and the main unit are combined and pushed.
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_PartySubjectWithMainUnitOrganization_IncludeSubunitsSubscriptionsCombined()
+        {
+            // Arrange
+            string originalSubject = "/party/50001337";
+            string mainUnitSubject = "/party/50009999";
+
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                originalSubject,
+                "test.automated",
+                "urn:altinn:resource:testresource",
+                alternativeSubject: "/org/testorg");
+
+            var mainUnit = new OrganizationRecord
+            {
+                OrganizationIdentifier = "991825827",
+                PartyId = 50009999,
+                ExternalUrn = "urn:altinn:organization:identifier-no:991825827"
+            };
+
+            var registerMock = new Mock<IRegisterService>();
+            registerMock
+                .Setup(r => r.GetMainUnit("urn:altinn:party:id:50001337", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mainUnit);
+
+            var repositoryMock = new Mock<ISubscriptionRepository>();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), originalSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new Subscription { Id = 1, Consumer = "/org/nav" }]);
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new Subscription { Id = 2, Consumer = "/org/ttd", IncludeSubunits = true },
+                               new Subscription { Id = 3, Consumer = "/org/skd", IncludeSubunits = null }]);
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
+                    consumers.ToDictionary(c => c, _ => true));
+
+            var queueMock = new Mock<IEventsQueueClient>();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authorizationMock.Object,
+                registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert — original subject subscription + the one main unit subscription with IncludeSubunits = true
             repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
             queueMock.Verify(q => q.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(2));
         }

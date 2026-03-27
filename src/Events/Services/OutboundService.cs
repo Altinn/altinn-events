@@ -105,7 +105,7 @@ public class OutboundService : IOutboundService
                         cloudEvent.Type,
                         cancellationToken);
 
-                    subscriptions.AddRange(mainUnitSubscriptions);
+                    subscriptions.AddRange(mainUnitSubscriptions.Where(s => s.IncludeSubunits == true));
                 }
             }
         }
