@@ -4,13 +4,13 @@
 -- Main unit (party id: 51326198, organization number: 314249879)
 -- Sub unit (party id: 51326197, organization number: 311443755)
 
-SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, '/party/51326197',                                 NULL, '/org/nav',    'https://webhook.example.com/nav',          '/org/nav',    true);
-SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, 'urn:altinn:organization:identifier-no:311443755', NULL, '/org/digdir', 'https://webhook.example.com/digdir-sub',   '/org/digdir', true);
-SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, '/party/51326198',                                 NULL, '/org/skd',    'https://webhook.example.com/skd',          '/org/skd',    true);
-SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, 'urn:altinn:organization:identifier-no:314249879', NULL, '/org/ttd',    'https://webhook.example.com/ttd-main',     '/org/ttd',    true);
+SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, '/party/51326197',                                 NULL, '/org/nav',    'https://webhook.example.com/nav',          '/org/nav',    true,  false);
+SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, 'urn:altinn:organization:identifier-no:311443755', NULL, '/org/digdir', 'https://webhook.example.com/digdir-sub',   '/org/digdir', true,  false);
+SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, '/party/51326198',                                 NULL, '/org/skd',    'https://webhook.example.com/skd',          '/org/skd',    true,  true);
+SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, 'urn:altinn:organization:identifier-no:314249879', NULL, '/org/ttd',    'https://webhook.example.com/ttd-main',     '/org/ttd',    true,  false);
 
 -- A few extra filler subscriptions.
-SELECT events.insert_subscription('urn:altinn:resource:app_ttd_other-app',    NULL, '/party/52326192', NULL,  '/org/nav',   'https://webhook.example.com/nav-other',       '/org/nav',   true);
-SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test',    NULL, '/party/53326193', NULL,  '/org/nav',   'https://webhook.example.com/nav-wrong-type',  '/org/nav',   true);
-SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test',    NULL, '/party/54326194', NULL,  '/org/nav',   'https://webhook.example.com/nav-unvalidated', '/org/nav',   false);
-SELECT events.insert_subscription('urn:altinn:resource:some_other_resource',  NULL, '/party/99999999', NULL,  '/org/other', 'https://webhook.example.com/other',           '/org/other', true);
+SELECT events.insert_subscription('urn:altinn:resource:app_ttd_other-app',    NULL, '/party/52326192', NULL,  '/org/nav',   'https://webhook.example.com/nav-other',       '/org/nav',   true,  false);
+SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test',    NULL, '/party/53326193', NULL,  '/org/nav',   'https://webhook.example.com/nav-wrong-type',  '/org/nav',   true,  false);
+SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test',    NULL, '/party/54326194', NULL,  '/org/nav',   'https://webhook.example.com/nav-unvalidated', '/org/nav',   false, false);
+SELECT events.insert_subscription('urn:altinn:resource:some_other_resource',  NULL, '/party/99999999', NULL,  '/org/other', 'https://webhook.example.com/other',           '/org/other', true,  false);

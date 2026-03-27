@@ -42,6 +42,11 @@ namespace Altinn.Platform.Events.Models
         public string TypeFilter { get; set; }
 
         /// <summary>
+        /// Indicates whether events for sub-units of the subject should be included.
+        /// </summary>
+        public bool? IncludeSubunits { get; set; }
+
+        /// <summary>
         /// Serializes the subscription request to a JSON string.
         /// </summary>
         /// <returns>Serialized cloud event</returns>
