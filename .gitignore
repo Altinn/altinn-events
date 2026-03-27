@@ -1,10 +1,5 @@
 syntax: glob
 
-### VisualStudio ###
-
-# Tool Runtime Dir
-[Tt]ools/
-
 # User-specific files
 *.suo
 *.user
