@@ -83,6 +83,7 @@ RETURN query
 END
 $BODY$;
 
+
 -- getappevents.sql:
 CREATE OR REPLACE FUNCTION events.getappevents_v2(
 	_subject character varying,
@@ -190,6 +191,7 @@ return query
 END;
 $BODY$;
 
+
 -- getsubscriptions.sql:
 CREATE OR REPLACE FUNCTION events.getsubscriptions_v2(
 	resource character varying,
@@ -235,6 +237,7 @@ return query
 
 END
 $BODY$;
+
 
 -- insertsubscription.sql:
 CREATE OR REPLACE FUNCTION events.insert_subscription(

@@ -119,6 +119,53 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
         }
 
+        [Fact]
+        public async Task CreateSubscription_IncludeSubunitsWithoutSubjectFilter_ReturnsError()
+        {
+            // Arrange 
+            string expectedErrorMessage = "IncludeSubunits requires a subject filter.";
+
+            var input = new Subscription
+            {
+                ResourceFilter = "urn:altinn:resource:some-service",
+                EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
+                IncludeSubunits = true
+            };
+
+            var sut = GetGenericSubscriptionService();
+
+            // Act
+            (var _, ServiceError actual) = await sut.CreateSubscription(input);
+
+            // Assert
+            Assert.Equal(400, actual.ErrorCode);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task CreateSubscription_IncludeSubunitsWithSubjectFilter_ReturnsNewSubscription()
+        {
+            // Arrange
+            var input = new Subscription
+            {
+                ResourceFilter = "urn:altinn:resource:some-service",
+                SubjectFilter = "/party/50001337",
+                EndPoint = new Uri("https://fantastiske-hundepassere.no/events"),
+                IncludeSubunits = true
+            };
+
+            Mock<ISubscriptionRepository> repoMock = new();
+            var sut = GetGenericSubscriptionService(repoMock);
+
+            // Act
+            (var actual, ServiceError _) = await sut.CreateSubscription(input);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(true, actual.IncludeSubunits);
+            repoMock.VerifyAll();
+        }
+
         private static GenericSubscriptionService GetGenericSubscriptionService(
             Mock<ISubscriptionRepository> repoMock = null,
             IMessageBus messageBus = null,
