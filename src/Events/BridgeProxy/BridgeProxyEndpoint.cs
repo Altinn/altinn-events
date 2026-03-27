@@ -51,11 +51,12 @@ namespace Altinn.Platform.Events.BridgeProxy
                             continue;
                         }
 
-                        if (!outbound.Headers.TryAddWithoutValidation(h.Key, h.Value.ToArray()))
+                        if (h.Key.Equals(HeaderNames.ContentLength, System.StringComparison.OrdinalIgnoreCase))
                         {
-                            outbound.Content ??= new StreamContent(Stream.Null);
-                            outbound.Content.Headers.TryAddWithoutValidation(h.Key, h.Value.ToArray());
+                            continue;
                         }
+
+                        outbound.Headers.TryAddWithoutValidation(h.Key, h.Value.ToArray());
                     }
                 }
                 else
@@ -77,6 +78,7 @@ namespace Altinn.Platform.Events.BridgeProxy
                     if (ctx.Request.ContentLength.GetValueOrDefault() > 0)
                     {
                         outbound.Content = new StreamContent(ctx.Request.Body);
+                        outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentLength, ctx.Request.Headers.ContentLength.ToString());
                         if (!string.IsNullOrEmpty(ctx.Request.ContentType))
                         {
                             outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
@@ -86,15 +88,11 @@ namespace Altinn.Platform.Events.BridgeProxy
                     {
                         string body = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(bodyFromQuery));
                         outbound.Content = new StringContent(body);
-                        outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentLength, Encoding.UTF8.GetByteCount(body).ToString());
+                        outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentLength, ctx.Request.Headers.ContentLength.ToString());
                         if (!string.IsNullOrEmpty(ctx.Request.ContentType))
                         {
                             outbound.Content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, ctx.Request.ContentType);
                         }
-                    }
-                    else
-                    {
-                        _logger.LogError("BridgeProxy: No body found for {Method} {TargetPathAndQuery}", ctx.Request.Method, targetPathAndQuery);
                     }
                 }
                 catch (Exception e)
