@@ -9,7 +9,7 @@ SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL,
 SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, '/party/51326197',                                 NULL, '/org/nav',    'https://webhook.example.com/nav',          '/org/nav',    true,  true);
  -- Main unit subscription that should also get subunit events.
 SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, '/party/51326198',                                 NULL, '/org/skd',    'https://webhook.example.com/skd',          '/org/skd',    true,  true);
- -- Maiin unit that should only get main unit events.
+ -- Main unit that should only get main unit events.
 SELECT events.insert_subscription('urn:altinn:resource:app_ttd_apps-test', NULL, '/party/51326198',                                 NULL, '/org/skd',    'https://webhook.example.com/skd',          '/org/skd',    true,  false);
 
 -- Subunit subscriptions should only get subunit events.

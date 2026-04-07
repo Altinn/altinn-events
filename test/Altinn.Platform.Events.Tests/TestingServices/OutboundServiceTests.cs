@@ -885,7 +885,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
         }
 
-        private static CloudEvent GetCloudEvent(Uri source, string subject, string type, string resoure = "urn:altinn:resource:testresource", string alternativeSubject = null)
+        private static CloudEvent GetCloudEvent(Uri source, string subject, string type, string resource = "urn:altinn:resource:testresource", string alternativeSubject = null)
         {
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
@@ -897,7 +897,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Data = "something/extra",
             };
 
-            cloudEvent.SetResourceIfNotDefined(resoure);
+            cloudEvent.SetResourceIfNotDefined(resource);
 
             if (alternativeSubject != null)
             {

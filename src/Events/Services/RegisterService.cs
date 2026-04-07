@@ -147,9 +147,9 @@ namespace Altinn.Platform.Events.Services
             HttpResponseMessage response = await _client.PostAsync(
                 RequestUri, content, accessToken, cancellationToken);
 
-            if (response == null)
+            if (!response.IsSuccessStatusCode)
             {
-                return null;
+                throw await PlatformHttpException.CreateAsync(response);
             }
 
             var responseObject = await response.Content.ReadFromJsonAsync<LookupMainUnitResponse>(cancellationToken);

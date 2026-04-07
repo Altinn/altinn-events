@@ -434,6 +434,47 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Contains($"\"{OrgUrn}\"", bodyJson);
         }
 
+        [Fact]
+        public async Task GetMainUnit_NonSuccessfullRegisterRequest_ThrowsPlatformHttpException()
+        {
+            // Arrange
+            const string OrgUrn = "urn:altinn:party:id:51326197";
+
+            HttpRequestMessage requestMessage = null;
+            DelegatingHandlerStub messageHandler = new(async (request, token) =>
+            {
+                requestMessage = request;
+                return new HttpResponseMessage(HttpStatusCode.BadGateway)
+                {
+                    Content = JsonContent.Create(new LookupMainUnitResponse())
+                };
+            });
+
+            InitializeMocks(10);
+
+            RegisterService target = new(
+                new HttpClient(messageHandler),
+                _contextAccessor.Object,
+                _accessTokenGenerator.Object,
+                _generalSettings.Object,
+                _platformSettings.Object,
+                new Mock<ILogger<RegisterService>>().Object);
+
+            // Act
+            PlatformHttpException actual = null;
+            try
+            {
+                await target.GetMainUnit(OrgUrn, CancellationToken.None);
+            }
+            catch (PlatformHttpException ex)
+            {
+                actual = ex;
+            }
+
+            // Assert
+            Assert.NotNull(actual);
+        }
+
         private void InitializeMocks(HttpResponseMessage httpResponseMessage, Action<HttpRequestMessage> callback)
         {
             InitializeMocks(10);
