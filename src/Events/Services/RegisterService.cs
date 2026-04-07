@@ -152,7 +152,7 @@ namespace Altinn.Platform.Events.Services
                 throw await PlatformHttpException.CreateAsync(response);
             }
 
-            var responseObject = await response.Content.ReadFromJsonAsync<LookupMainUnitResponse>(cancellationToken);
+            var responseObject = await response.Content.ReadFromJsonAsync<LookupMainUnitResponse>(_serializerOptions, cancellationToken);
             if (!(responseObject?.Data?.Count > 0))
             {
                 return null;
@@ -161,7 +161,7 @@ namespace Altinn.Platform.Events.Services
             // The response is a list, but assuming the list contains only one item in all cases
             if (responseObject.Data.Count > 1)
             {
-                _logger.LogWarning("Get main units for organization returned multiple results. Using the first one.");
+                _logger.LogWarning("Get main units for organization {OrganizationUrn} returned multiple results. Using the first one.", organizationUrnValue);
             }
 
             return responseObject.Data[0];
