@@ -65,7 +65,7 @@ public class SubscriptionTableEntry
     /// <summary>
     /// Indicates whether events for sub-units of the subject should be included.
     /// </summary>
-    public bool? IncludeSubunits { get; set; }
+    public bool IncludeSubunits { get; set; }
 
     /// <summary>
     /// MD5 hashed source filter

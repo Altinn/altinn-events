@@ -319,7 +319,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.NotNull(actual);
-            Assert.Equal(true, actual.IncludeSubunits);
+            Assert.True(actual.IncludeSubunits);
         }
 
         [Fact]
@@ -347,7 +347,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.NotNull(actual);
-            Assert.Equal(true, actual.IncludeSubunits);
+            Assert.True(actual.IncludeSubunits);
         }
 
         private static AppSubscriptionService GetAppSubscriptionService(

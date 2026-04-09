@@ -162,7 +162,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.NotNull(actual);
-            Assert.Equal(true, actual.IncludeSubunits);
+            Assert.True(actual.IncludeSubunits);
             repoMock.VerifyAll();
         }
 

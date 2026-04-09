@@ -79,7 +79,7 @@ RETURN query
         AND ((_typefilter IS NULL AND s.typefilter IS NULL) OR s.typefilter = _typefilter)
         AND s.consumer = _consumer
         AND s.endpointurl = _endpointurl
-        AND COALESCE(s.includesubunits, false) = COALESCE(_includesubunits, false);
+        AND s.includesubunits =_includesubunits;
 END
 $BODY$;
 

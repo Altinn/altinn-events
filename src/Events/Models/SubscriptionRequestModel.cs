@@ -44,7 +44,7 @@ namespace Altinn.Platform.Events.Models
         /// <summary>
         /// Indicates whether events for sub-units of the subject should be included.
         /// </summary>
-        public bool? IncludeSubunits { get; set; }
+        public bool IncludeSubunits { get; set; }
 
         /// <summary>
         /// Serializes the subscription request to a JSON string.

@@ -66,7 +66,7 @@ public class GenericSubscriptionService : SubscriptionService, IGenericSubscript
             return false;
         }
 
-        if (eventsSubscription.IncludeSubunits != null && string.IsNullOrEmpty(eventsSubscription.SubjectFilter))
+        if (eventsSubscription.IncludeSubunits && string.IsNullOrEmpty(eventsSubscription.SubjectFilter))
         {
             message = "IncludeSubunits requires a subject filter.";
             return false;

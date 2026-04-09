@@ -51,7 +51,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
         pgcom.Parameters.AddWithValue("createdby", eventsSubscription.CreatedBy);
         pgcom.Parameters.AddWithValue("validated", false);
-        pgcom.Parameters.AddWithNullableBoolean("includesubunits", eventsSubscription.IncludeSubunits);
+        pgcom.Parameters.AddWithValue("includesubunits", eventsSubscription.IncludeSubunits);
 
         await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();
         await reader.ReadAsync();
@@ -73,7 +73,7 @@ public class SubscriptionRepository : ISubscriptionRepository
 
         pgcom.Parameters.AddWithValue("consumer", eventsSubscription.Consumer);
         pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
-        pgcom.Parameters.AddWithNullableBoolean("includesubunits", eventsSubscription.IncludeSubunits);
+        pgcom.Parameters.AddWithValue("includesubunits", eventsSubscription.IncludeSubunits);
 
         await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync(cancellationToken);
 
@@ -178,7 +178,7 @@ public class SubscriptionRepository : ISubscriptionRepository
             CreatedBy = reader.GetValue<string>("createdby"),
             Created = reader.GetValue<DateTime>("time").ToUniversalTime(),
             Validated = reader.GetValue<bool>("validated"),
-            IncludeSubunits = reader.GetValue<bool?>("includesubunits"),
+            IncludeSubunits = reader.GetValue<bool>("includesubunits"),
         };
         return subscription;
     }
