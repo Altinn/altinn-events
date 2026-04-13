@@ -36,4 +36,10 @@ public class PlatformSettings
     /// The lifetime to cache subscriptions
     /// </summary>
     public int SubscriptionCachingLifetimeInSeconds { get; set; }
+
+    /// <summary>
+    /// The lifetime in seconds to cache main unit lookups from the Register API.
+    /// Default value is 3600 (1 hour).
+    /// </summary>
+    public int MainUnitCachingLifetimeInSeconds { get; set; } = 3600;
 }
