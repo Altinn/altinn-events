@@ -19,13 +19,13 @@ namespace Altinn.Platform.Events.Repository;
 [ExcludeFromCodeCoverage]
 public class SubscriptionRepository : ISubscriptionRepository
 {
-    private readonly string _findSubscriptionSql = "select * from events.find_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl)";
-    private readonly string _insertSubscriptionSql = "select * from events.insert_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated)";
-    private readonly string _getSubscriptionSql = "select * from events.getsubscription_v2(@_id)";
+    private readonly string _findSubscriptionSql = "select * from events.find_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @includesubunits)";
+    private readonly string _insertSubscriptionSql = "select * from events.insert_subscription(@resourcefilter, @sourcefilter, @subjectfilter, @typefilter, @consumer, @endpointurl, @createdby, @validated, @includesubunits)";
+    private readonly string _getSubscriptionSql = "select * from events.getsubscription_v3(@_id)";
     private readonly string _deleteSubscription = "call events.deletesubscription(@_id)";
     private readonly string _setValidSubscription = "call events.setvalidsubscription(@_id)";
-    private readonly string _getSubscriptionsSql = "select * from events.getsubscriptions($1, $2, $3)";
-    private readonly string _getSubscriptionByConsumerSql = "select * from events.getsubscriptionsbyconsumer_v2(@_consumer, @_includeInvalid)";
+    private readonly string _getSubscriptionsSql = "select * from events.getsubscriptions_v2($1, $2, $3)";
+    private readonly string _getSubscriptionByConsumerSql = "select * from events.getsubscriptionsbyconsumer_v3(@_consumer, @_includeInvalid)";
 
     private readonly NpgsqlDataSource _dataSource;
 
@@ -51,6 +51,7 @@ public class SubscriptionRepository : ISubscriptionRepository
         pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
         pgcom.Parameters.AddWithValue("createdby", eventsSubscription.CreatedBy);
         pgcom.Parameters.AddWithValue("validated", false);
+        pgcom.Parameters.AddWithValue("includesubunits", eventsSubscription.IncludeSubunits);
 
         await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();
         await reader.ReadAsync();
@@ -72,6 +73,7 @@ public class SubscriptionRepository : ISubscriptionRepository
 
         pgcom.Parameters.AddWithValue("consumer", eventsSubscription.Consumer);
         pgcom.Parameters.AddWithValue("endpointurl", eventsSubscription.EndPoint.AbsoluteUri);
+        pgcom.Parameters.AddWithValue("includesubunits", eventsSubscription.IncludeSubunits);
 
         await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync(cancellationToken);
 
@@ -175,7 +177,8 @@ public class SubscriptionRepository : ISubscriptionRepository
             EndPoint = new Uri(reader.GetValue<string>("endpointurl")),
             CreatedBy = reader.GetValue<string>("createdby"),
             Created = reader.GetValue<DateTime>("time").ToUniversalTime(),
-            Validated = reader.GetValue<bool>("validated")
+            Validated = reader.GetValue<bool>("validated"),
+            IncludeSubunits = reader.GetValue<bool>("includesubunits"),
         };
         return subscription;
     }

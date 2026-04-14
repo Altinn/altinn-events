@@ -13,72 +13,76 @@ using Altinn.Platform.Register.Models;
 
 using Newtonsoft.Json;
 
-namespace Altinn.Platform.Events.Tests.Mocks
+namespace Altinn.Platform.Events.Tests.Mocks;
+
+public class RegisterServiceMock : IRegisterService
 {
-    public class RegisterServiceMock : IRegisterService
+    private readonly int _partiesCollection;
+
+    public RegisterServiceMock(int partiesCollection = 1)
     {
-        private readonly int _partiesCollection;
+        _partiesCollection = partiesCollection;
+    }
 
-        public RegisterServiceMock(int partiesCollection = 1)
+    public async Task<Party> GetParty(int partyId)
+    {
+        Party party = null;
+        string partyPath = GetPartyPath(partyId);
+        if (File.Exists(partyPath))
         {
-            _partiesCollection = partiesCollection;
+            string content = File.ReadAllText(partyPath);
+            party = JsonConvert.DeserializeObject<Party>(content);
         }
 
-        public async Task<Party> GetParty(int partyId)
+        return await Task.FromResult(party);
+    }
+
+    public async Task<int> PartyLookup(string orgNo, string person)
+    {
+        string eventsPath = Path.Combine(GetPartiesPath(), $@"{_partiesCollection}.json");
+        int partyId = 0;
+
+        if (File.Exists(eventsPath))
         {
-            Party party = null;
-            string partyPath = GetPartyPath(partyId);
-            if (File.Exists(partyPath))
+            string content = File.ReadAllText(eventsPath);
+            List<Party> parties = JsonConvert.DeserializeObject<List<Party>>(content);
+
+            if (!string.IsNullOrEmpty(orgNo))
             {
-                string content = File.ReadAllText(partyPath);
-                party = JsonConvert.DeserializeObject<Party>(content);
+                partyId = parties.Where(p => p.OrgNumber != null && p.OrgNumber.Equals(orgNo)).Select(p => p.PartyId).FirstOrDefault();
             }
-
-            return await Task.FromResult(party);
-        }
-
-        public async Task<int> PartyLookup(string orgNo, string person)
-        {
-            string eventsPath = Path.Combine(GetPartiesPath(), $@"{_partiesCollection}.json");
-            int partyId = 0;
-
-            if (File.Exists(eventsPath))
+            else
             {
-                string content = File.ReadAllText(eventsPath);
-                List<Party> parties = JsonConvert.DeserializeObject<List<Party>>(content);
-
-                if (!string.IsNullOrEmpty(orgNo))
-                {
-                    partyId = parties.Where(p => p.OrgNumber != null && p.OrgNumber.Equals(orgNo)).Select(p => p.PartyId).FirstOrDefault();
-                }
-                else
-                {
-                    partyId = parties.Where(p => p.SSN != null && p.SSN.Equals(person)).Select(p => p.PartyId).FirstOrDefault();
-                }
+                partyId = parties.Where(p => p.SSN != null && p.SSN.Equals(person)).Select(p => p.PartyId).FirstOrDefault();
             }
-
-            return partyId > 0
-                ? partyId
-                : throw await PlatformHttpException.CreateAsync(new HttpResponseMessage
-                { Content = new StringContent(string.Empty), StatusCode = System.Net.HttpStatusCode.NotFound });
         }
 
-        public Task<IEnumerable<PartyIdentifiers>> PartyLookup(
-            IEnumerable<string> partyUrnList, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+        return partyId > 0
+            ? partyId
+            : throw await PlatformHttpException.CreateAsync(new HttpResponseMessage
+            { Content = new StringContent(string.Empty), StatusCode = System.Net.HttpStatusCode.NotFound });
+    }
 
-        private static string GetPartiesPath()
-        {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(RegisterServiceMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "parties");
-        }
+    public Task<IEnumerable<PartyIdentifiers>> PartyLookup(
+        IEnumerable<string> partyUrnList, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 
-        private static string GetPartyPath(int partyId)
-        {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(RegisterServiceMock).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Register", "Party", partyId.ToString() + ".json");
-        }
+    public Task<OrganizationRecord> GetMainUnit(string orgNumber, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static string GetPartiesPath()
+    {
+        string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(RegisterServiceMock).Assembly.Location).LocalPath);
+        return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "parties");
+    }
+
+    private static string GetPartyPath(int partyId)
+    {
+        string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(RegisterServiceMock).Assembly.Location).LocalPath);
+        return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Register", "Party", partyId.ToString() + ".json");
     }
 }
