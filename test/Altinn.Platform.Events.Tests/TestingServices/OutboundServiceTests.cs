@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -487,12 +488,321 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Null(resultEmpty);
         }
 
+        /// <summary>
+        /// Scenario: Subject is a person URN - not an organization
+        /// Expected result: GetMainUnit is never called
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_SubjectIsPersonUrn_GetMainUnitNotCalled()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                "urn:altinn:person:identifier-no:16069412345",
+                "test.automated",
+                "urn:altinn:resource:testresource");
+
+            var registerMock = new Mock<IRegisterService>();
+
+            var service = GetOutboundService(registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            registerMock.Verify(r => r.GetMainUnit(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario: Subject is an organization URN
+        /// Expected result: GetMainUnit is called with the URN directly
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_SubjectIsOrganizationUrn_GetMainUnitCalledWithUrn()
+        {
+            // Arrange
+            string orgUrn = "urn:altinn:organization:identifier-no:991825827";
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                orgUrn,
+                "test.automated",
+                "urn:altinn:resource:testresource");
+
+            var registerMock = new Mock<IRegisterService>();
+            registerMock
+                .Setup(r => r.GetMainUnit(orgUrn, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((OrganizationRecord)null);
+
+            var service = GetOutboundService(registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            registerMock.Verify(r => r.GetMainUnit(orgUrn, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario: Subject is a /party/ path
+        /// Expected result: GetMainUnit is called with the converted URN urn:altinn:party:id:{partyId}
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_SubjectIsPartyPath_GetMainUnitCalledWithConvertedUrn()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                "/party/50001337",
+                "test.automated",
+                "urn:altinn:resource:testresource",
+                alternativeSubject: "/org/testorg");
+
+            var registerMock = new Mock<IRegisterService>();
+            registerMock
+                .Setup(r => r.GetMainUnit("urn:altinn:party:id:50001337", It.IsAny<CancellationToken>()))
+                .ReturnsAsync((OrganizationRecord)null);
+
+            var service = GetOutboundService(registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            registerMock.Verify(r => r.GetMainUnit("urn:altinn:party:id:50001337", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario: Subject is a /party/ path but AlternativeSubject indicates a person
+        /// Expected result: GetMainUnit is never called — persons cannot have sub-units
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_PartySubjectWithPersonAlternativeSubject_GetMainUnitNotCalled()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                "/party/50001337",
+                "test.automated",
+                "urn:altinn:resource:testresource",
+                alternativeSubject: "/person/16069412345");
+
+            var registerMock = new Mock<IRegisterService>();
+
+            var service = GetOutboundService(registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            registerMock.Verify(r => r.GetMainUnit(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario: Subject is a /party/ path with no AlternativeSubject
+        /// Expected result: GetMainUnit is never called — party type cannot be determined
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_PartySubjectWithNoAlternativeSubject_GetMainUnitNotCalled()
+        {
+            // Arrange
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                "/party/50001337",
+                "test.automated");
+
+            var registerMock = new Mock<IRegisterService>();
+
+            var service = GetOutboundService(registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            registerMock.Verify(r => r.GetMainUnit(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Scenario: Subject is a /party/ path, GetMainUnit returns a main unit organization,
+        /// but the main unit subscriptions do not have IncludeSubunits enabled.
+        /// Expected result: Only the original subject's subscription is pushed.
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_PartySubjectWithMainUnitOrganization_MainUnitSubscriptionsWithoutIncludeSubunitsNotPushed()
+        {
+            // Arrange
+            string originalSubject = "/party/50001337";
+            string mainUnitSubject = "/party/50009999";
+
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                originalSubject,
+                "test.automated",
+                "urn:altinn:resource:testresource",
+                alternativeSubject: "/org/testorg");
+
+            var mainUnit = new OrganizationRecord
+            {
+                OrganizationIdentifier = "991825827",
+                PartyId = 50009999,
+                ExternalUrn = "urn:altinn:organization:identifier-no:991825827"
+            };
+
+            var registerMock = new Mock<IRegisterService>();
+            registerMock
+                .Setup(r => r.GetMainUnit("urn:altinn:party:id:50001337", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mainUnit);
+
+            var repositoryMock = new Mock<ISubscriptionRepository>();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), originalSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new Subscription { Id = 1, Consumer = "/org/nav" }]);
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new Subscription { Id = 2, Consumer = "/org/ttd", IncludeSubunits = false },
+                               new Subscription { Id = 3, Consumer = "/org/skd", IncludeSubunits = false }]);
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
+                    consumers.ToDictionary(c => c, _ => true));
+
+            var queueMock = new Mock<IEventsQueueClient>();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authorizationMock.Object,
+                registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert — only the subscription for the original subject is pushed
+            queueMock.Verify(q => q.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(1));
+        }
+
+        /// <summary>
+        /// Scenario: Subject is a /party/ path, GetMainUnit returns a main unit organization,
+        /// and the main unit subscriptions have IncludeSubunits enabled.
+        /// Expected result: Subscriptions for both the original subject and the main unit are combined and pushed.
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_PartySubjectWithMainUnitOrganization_IncludeSubunitsSubscriptionsCombined()
+        {
+            // Arrange
+            string originalSubject = "/party/50001337";
+            string mainUnitSubject = "/party/50009999";
+
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                originalSubject,
+                "test.automated",
+                "urn:altinn:resource:testresource",
+                alternativeSubject: "/org/testorg");
+
+            var mainUnit = new OrganizationRecord
+            {
+                OrganizationIdentifier = "991825827",
+                PartyId = 50009999,
+                ExternalUrn = "urn:altinn:organization:identifier-no:991825827"
+            };
+
+            var registerMock = new Mock<IRegisterService>();
+            registerMock
+                .Setup(r => r.GetMainUnit("urn:altinn:party:id:50001337", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mainUnit);
+
+            var repositoryMock = new Mock<ISubscriptionRepository>();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), originalSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new Subscription { Id = 1, Consumer = "/org/nav" }]);
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new Subscription { Id = 2, Consumer = "/org/ttd", IncludeSubunits = true },
+                               new Subscription { Id = 3, Consumer = "/org/skd", IncludeSubunits = false }]);
+
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
+                    consumers.ToDictionary(c => c, _ => true));
+
+            var queueMock = new Mock<IEventsQueueClient>();
+            queueMock
+                .Setup(q => q.EnqueueOutbound(It.IsAny<string>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+            var service = GetOutboundService(
+                queueMock: queueMock.Object,
+                repositoryMock: repositoryMock.Object,
+                authorizationMock: authorizationMock.Object,
+                registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert — original subject subscription + the one main unit subscription with IncludeSubunits = true
+            repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            queueMock.Verify(q => q.EnqueueOutbound(It.IsAny<string>()), Times.Exactly(2));
+        }
+
+        /// <summary>
+        /// Scenario: Subject is an organization URN, GetMainUnit returns a main unit organization,
+        /// and there are subscriptions registered on the main unit's external URN.
+        /// Expected result: The extra subscription lookup uses the main unit's ExternalUrn (URN format preserved).
+        /// </summary>
+        [Fact]
+        public async Task PostOutbound_OrgUrnSubjectWithMainUnitOrganization_ExtraLookupUsesUrn()
+        {
+            // Arrange
+            string originalSubject = "urn:altinn:organization:identifier-no:910075918";
+            string mainUnitUrn = "urn:altinn:organization:identifier-no:991825827";
+
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://domstol.no"),
+                originalSubject,
+                "test.automated",
+                "urn:altinn:resource:testresource");
+
+            var mainUnit = new OrganizationRecord
+            {
+                OrganizationIdentifier = "991825827",
+                PartyId = 50009999,
+                ExternalUrn = mainUnitUrn
+            };
+
+            var registerMock = new Mock<IRegisterService>();
+            registerMock
+                .Setup(r => r.GetMainUnit(originalSubject, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mainUnit);
+
+            var repositoryMock = new Mock<ISubscriptionRepository>();
+            repositoryMock
+                .Setup(r => r.GetSubscriptions(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
+
+            var service = GetOutboundService(
+                repositoryMock: repositoryMock.Object,
+                registerServiceMock: registerMock.Object);
+
+            // Act
+            await service.PostOutbound(cloudEvent, CancellationToken.None);
+
+            // Assert
+            repositoryMock.Verify(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitUrn, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
         private static IOutboundService GetOutboundService(
             IEventsQueueClient queueMock = null,
             Mock<IMessageBus> messageBusMock = null,
             Mock<ITraceLogService> traceLogServiceMock = null,
             ISubscriptionRepository repositoryMock = null,
             IAuthorization authorizationMock = null,
+            IRegisterService registerServiceMock = null,
             MemoryCache memoryCache = null,
             ILogger<OutboundService> logger = null,
             TelemetryClient telemetryClient = null)
@@ -525,9 +835,18 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             if (authorizationMock == null)
             {
                 Mock<IClaimsPrincipalProvider> claimsPrincipalMock = new();
-                Mock<IRegisterService> registerServiceMock = new();
+                Mock<IRegisterService> registerMockForAuth = new();
 
-                authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object, registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+                authorizationMock = new AuthorizationService(new PepWithPDPAuthorizationMockSI(), claimsPrincipalMock.Object, registerMockForAuth.Object, NullLogger<AuthorizationService>.Instance);
+            }
+
+            if (registerServiceMock == null)
+            {
+                var defaultRegisterMock = new Mock<IRegisterService>();
+                defaultRegisterMock
+                    .Setup(r => r.GetMainUnit(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync((OrganizationRecord)null);
+                registerServiceMock = defaultRegisterMock.Object;
             }
 
             if (memoryCache == null)
@@ -541,6 +860,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 traceLogServiceMock.Object,
                 repositoryMock,
                 authorizationMock,
+                registerServiceMock,
                 Options.Create(new PlatformSettings
                 {
                     SubscriptionCachingLifetimeInSeconds = 60,
@@ -565,7 +885,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
         }
 
-        private static CloudEvent GetCloudEvent(Uri source, string subject, string type, string resoure = "urn:altinn:resource:testresource")
+        private static CloudEvent GetCloudEvent(Uri source, string subject, string type, string resource = "urn:altinn:resource:testresource", string alternativeSubject = null)
         {
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
@@ -577,7 +897,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Data = "something/extra",
             };
 
-            cloudEvent.SetResourceIfNotDefined(resoure);
+            cloudEvent.SetResourceIfNotDefined(resource);
+
+            if (alternativeSubject != null)
+            {
+                cloudEvent["alternativesubject"] = alternativeSubject;
+            }
 
             return cloudEvent;
         }

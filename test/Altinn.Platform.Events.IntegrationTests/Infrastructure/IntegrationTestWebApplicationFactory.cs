@@ -2,11 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
+using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Messaging.ServiceBus;
@@ -95,6 +97,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
             services.Replace(ServiceDescriptor.Singleton<IPostConfigureOptions<JwtCookieOptions>>(
                 new Mocks.Authentication.JwtCookiePostConfigureOptionsStub()));
             services.Replace(ServiceDescriptor.Singleton(CreateEventsQueueClientMock()));
+            services.Replace(ServiceDescriptor.Singleton(CreateRegisterServiceMock()));
 
             // Apply any additional test service configuration
             foreach (var configure in _configureTestServices)
@@ -119,6 +122,14 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         mock.Setup(x => x.EnqueueOutbound(It.IsAny<string>())).ReturnsAsync(successReceipt);
         mock.Setup(x => x.EnqueueSubscriptionValidation(It.IsAny<string>())).ReturnsAsync(successReceipt);
 
+        return mock.Object;
+    }
+
+    private static IRegisterService CreateRegisterServiceMock()
+    {
+        var mock = new Mock<IRegisterService>();
+        mock.Setup(r => r.GetMainUnit(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((OrganizationRecord?)null);
         return mock.Object;
     }
 

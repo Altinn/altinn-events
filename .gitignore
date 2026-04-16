@@ -1,5 +1,7 @@
 syntax: glob
 
+### VisualStudio ###
+
 # User-specific files
 *.suo
 *.user
