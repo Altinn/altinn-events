@@ -10,6 +10,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'src/**'
+      - 'tools/**'
       - '.github/workflows/**'
   schedule:
     - cron: '18 22 * * 3'
