@@ -22,6 +22,7 @@ public static class SubscriptionMapper
             ResourceFilter = subscriptionRequest.ResourceFilter,
             AlternativeSubjectFilter = subscriptionRequest.AlternativeSubjectFilter,
             TypeFilter = subscriptionRequest.TypeFilter,
+            IncludeSubunits = subscriptionRequest.IncludeSubunits,
         };
     }
 }

@@ -100,7 +100,8 @@ namespace Altinn.Platform.Events.Tests.Mocks
                         SourceFilter = s.SourceFilter,
                         AlternativeSubjectFilter = s.AlternativeSubjectFilter,
                         Consumer = s.Consumer,
-                        EndPoint = s.EndPoint
+                        EndPoint = s.EndPoint,
+                        IncludeSubunits = s.IncludeSubunits,
                     })
                 .ToList();
 

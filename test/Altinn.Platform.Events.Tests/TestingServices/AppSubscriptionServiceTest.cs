@@ -272,6 +272,84 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(expected, subscription.ResourceFilter);
         }
 
+        [Fact]
+        public async Task CreateSubscription_IncludeSubunitsWithoutSubjectFilter_ReturnsError()
+        {
+            // Arrange — org principal can subscribe without a subject, so the IncludeSubunits check fires
+            string expectedErrorMessage = "IncludeSubunits requires a subject filter.";
+
+            var subs = new Subscription
+            {
+                SourceFilter = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
+                ResourceFilter = "urn:altinn:resource:app_ttd_apps-test",
+                IncludeSubunits = true
+            };
+
+            var orgPrincipalMock = new Mock<IClaimsPrincipalProvider>();
+            orgPrincipalMock.Setup(s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "991825827"));
+
+            var sut = GetAppSubscriptionService(
+                authorization: _authTrueMock.Object,
+                claimsPrincipalProvider: orgPrincipalMock.Object);
+
+            // Act
+            (Subscription _, ServiceError actual) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.Equal(400, actual.ErrorCode);
+            Assert.Equal(expectedErrorMessage, actual.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task CreateSubscription_IncludeSubunitsWithSubjectFilter_ReturnsNewSubscription()
+        {
+            // Arrange
+            var subs = new Subscription
+            {
+                SourceFilter = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
+                SubjectFilter = "/party/50001337",
+                IncludeSubunits = true
+            };
+
+            var sut = GetAppSubscriptionService(authorization: _authTrueMock.Object);
+
+            // Act
+            (Subscription actual, ServiceError _) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.True(actual.IncludeSubunits);
+        }
+
+        [Fact]
+        public async Task CreateSubscription_IncludeSubunitsWithAlternativeSubjectThatResolvesToSubject_ReturnsNewSubscription()
+        {
+            // Arrange — AlternativeSubject resolves to a SubjectFilter, so IncludeSubunits is valid
+            var subs = new Subscription
+            {
+                SourceFilter = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test"),
+                AlternativeSubjectFilter = "/person/01039012345",
+                IncludeSubunits = true
+            };
+
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<string>(), It.Is<string>(s => s.Equals("01039012345"))))
+                .ReturnsAsync(1337);
+
+            var sut = GetAppSubscriptionService(
+                register: registerMock.Object,
+                authorization: _authTrueMock.Object);
+
+            // Act
+            (Subscription actual, ServiceError _) = await sut.CreateSubscription(subs);
+
+            // Assert
+            Assert.NotNull(actual);
+            Assert.True(actual.IncludeSubunits);
+        }
+
         private static AppSubscriptionService GetAppSubscriptionService(
             IRegisterService register = null,
             IAuthorization authorization = null,

@@ -322,6 +322,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddBridgeProxy(builder.Configuration);
 
     services.AddHttpClient<IRegisterService, RegisterService>();
+    services.Decorate<IRegisterService, RegisterServiceCachingDecorator>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddScoped<IEventsService, EventsService>();
     services.AddScoped<IOutboundService, OutboundService>();

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -32,6 +34,7 @@ public class OutboundService : IOutboundService
     private readonly ITraceLogService _traceLogService;
     private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly IAuthorization _authorizationService;
+    private readonly IRegisterService _registerService;
     private readonly PlatformSettings _platformSettings;
 
     private readonly IMemoryCache _memoryCache;
@@ -49,6 +52,7 @@ public class OutboundService : IOutboundService
         ITraceLogService traceLogService,
         ISubscriptionRepository repository,
         IAuthorization authorizationService,
+        IRegisterService registerService,
         IOptions<PlatformSettings> platformSettings,
         IMemoryCache memoryCache,
         ILogger<OutboundService> logger,
@@ -59,6 +63,7 @@ public class OutboundService : IOutboundService
         _traceLogService = traceLogService;
         _subscriptionRepository = repository;
         _authorizationService = authorizationService;
+        _registerService = registerService;
         _platformSettings = platformSettings.Value;
         _memoryCache = memoryCache;
         _logger = logger;
@@ -79,7 +84,75 @@ public class OutboundService : IOutboundService
              cloudEvent.Type,
              cancellationToken);
 
+        string? alternativeSubject = cloudEvent["alternativesubject"]?.ToString();
+        var (mainUnitLookupUrn, originalFormat) = GetSubjectLookupDetails(cloudEvent.Subject, alternativeSubject);
+
+        if (mainUnitLookupUrn != null)
+        {
+            var mainUnit = await _registerService.GetMainUnit(mainUnitLookupUrn, cancellationToken);
+
+            if (mainUnit?.OrganizationIdentifier != null)
+            {
+                string? mainUnitSubject = originalFormat == SubjectFormat.Urn
+                    ? mainUnit.ExternalUrn
+                    : $"/party/{mainUnit.PartyId}";
+
+                if (mainUnitSubject != null)
+                {
+                    List<Subscription> mainUnitSubscriptions = await _subscriptionRepository.GetSubscriptions(
+                        cloudEvent.GetResource(),
+                        mainUnitSubject,
+                        cloudEvent.Type,
+                        cancellationToken);
+
+                    subscriptions.AddRange(mainUnitSubscriptions.Where(s => s.IncludeSubunits));
+                }
+            }
+        }
+
         await AuthorizeAndPush(cloudEvent, subscriptions, cancellationToken, useAzureServiceBus);
+    }
+
+    private enum SubjectFormat
+    {
+        Urn,
+        Party
+    }
+
+    private static (string? UrnForLookup, SubjectFormat? Format) GetSubjectLookupDetails(string? subject, string? alternativeSubject)
+    {
+        if (subject == null)
+        {
+            return (null, null);
+        }
+
+        if (UriExtensions.IsValidUrn(subject))
+        {
+            return subject.StartsWith("urn:altinn:organization:", StringComparison.OrdinalIgnoreCase)
+                ? (subject, SubjectFormat.Urn)
+                : (null, null);
+        }
+
+        if (subject.StartsWith("/party/", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!IsOrganizationAlternativeSubject(alternativeSubject))
+            {
+                return (null, null);
+            }
+
+            string partyId = subject["/party/".Length..].TrimEnd('/');
+            return ($"urn:altinn:party:id:{partyId}", SubjectFormat.Party);
+        }
+
+        return (null, null);
+    }
+
+    private static bool IsOrganizationAlternativeSubject(string? alternativeSubject)
+    {
+        return alternativeSubject != null
+            && (alternativeSubject.StartsWith("/org/", StringComparison.OrdinalIgnoreCase)
+                || alternativeSubject.StartsWith("/organisation/", StringComparison.OrdinalIgnoreCase)
+                || alternativeSubject.StartsWith("/organization/", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -129,7 +202,7 @@ public class OutboundService : IOutboundService
         // Determine event type and get appropriate cache key mappings
         bool isAppEvent = IsAppEvent(cloudEvent);
         var mappedItems = isAppEvent
-            ? GetAltinnAppAuthorizationCacheKeys(GetSourceFilter(cloudEvent.Source).ToString(), consumers)
+            ? GetAltinnAppAuthorizationCacheKeys(GetSourceFilter(cloudEvent.Source!).ToString(), consumers)
             : GetAuthorizationCacheKeys(cloudEvent.GetResource(), consumers);
 
         // Check cache for each consumer

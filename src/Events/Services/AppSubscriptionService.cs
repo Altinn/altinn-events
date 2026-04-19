@@ -112,6 +112,12 @@ namespace Altinn.Platform.Events.Services
                 return false;
             }
 
+            if (eventsSubscription.IncludeSubunits && string.IsNullOrEmpty(eventsSubscription.SubjectFilter))
+            {
+                message = "IncludeSubunits requires a subject filter.";
+                return false;
+            }
+
             if (string.IsNullOrEmpty(eventsSubscription.Consumer))
             {
                 message = "Missing event consumer";
