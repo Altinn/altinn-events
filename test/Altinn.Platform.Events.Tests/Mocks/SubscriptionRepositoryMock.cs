@@ -105,7 +105,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     })
                 .ToList();
 
-            return Task.FromResult((IReadOnlyList<Subscription>)subscriptions);
+            return Task.FromResult((IReadOnlyList<Subscription>)subscriptions.AsReadOnly());
         }
 
         private static string GetSubscriptionPath()
