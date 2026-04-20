@@ -38,12 +38,12 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<List<Subscription>> GetSubscriptions(
+        public async Task<IReadOnlyList<Subscription>> GetSubscriptions(
             string resource, string subject, string eventType, CancellationToken cancellationToken)
         {
             string cacheKey = GetSubscriptionCacheKey(resource, subject, eventType);
 
-            if (!_memoryCache.TryGetValue(cacheKey, out List<Subscription> subscriptions))
+            if (!_memoryCache.TryGetValue(cacheKey, out IReadOnlyList<Subscription> subscriptions))
             {
                 subscriptions = 
                     await _decoratedService.GetSubscriptions(resource, subject, eventType, cancellationToken);

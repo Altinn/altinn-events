@@ -73,7 +73,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.CompletedTask;
         }
 
-        public Task<List<Subscription>> GetSubscriptions(string resource, string subject, string type, CancellationToken ct)
+        public Task<IReadOnlyList<Subscription>> GetSubscriptions(string resource, string subject, string type, CancellationToken ct)
         {
             List<Subscription> subscriptions = new();
 
@@ -105,7 +105,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
                     })
                 .ToList();
 
-            return Task.FromResult(subscriptions);
+            return Task.FromResult((IReadOnlyList<Subscription>)subscriptions);
         }
 
         private static string GetSubscriptionPath()
