@@ -78,11 +78,15 @@ public class OutboundService : IOutboundService
     /// <inheritdoc/>
     public async Task PostOutbound(CloudEvent cloudEvent, CancellationToken cancellationToken, bool useAzureServiceBus = false)
     {
-        List<Subscription> subscriptions = await _subscriptionRepository.GetSubscriptions(
+        List<Subscription> allSubscriptions = [];
+        
+        IReadOnlyList<Subscription> directSubscriptions = await _subscriptionRepository.GetSubscriptions(
              cloudEvent.GetResource(),
              cloudEvent.Subject,
              cloudEvent.Type,
              cancellationToken);
+
+        allSubscriptions.AddRange(directSubscriptions);
 
         string? alternativeSubject = cloudEvent["alternativesubject"]?.ToString();
         var (mainUnitLookupUrn, originalFormat) = GetSubjectLookupDetails(cloudEvent.Subject, alternativeSubject);
@@ -99,18 +103,18 @@ public class OutboundService : IOutboundService
 
                 if (mainUnitSubject != null)
                 {
-                    List<Subscription> mainUnitSubscriptions = await _subscriptionRepository.GetSubscriptions(
+                    IReadOnlyList<Subscription> mainUnitSubscriptions = await _subscriptionRepository.GetSubscriptions(
                         cloudEvent.GetResource(),
                         mainUnitSubject,
                         cloudEvent.Type,
                         cancellationToken);
 
-                    subscriptions.AddRange(mainUnitSubscriptions.Where(s => s.IncludeSubunits));
+                    allSubscriptions.AddRange(mainUnitSubscriptions.Where(s => s.IncludeSubunits));
                 }
             }
         }
 
-        await AuthorizeAndPush(cloudEvent, subscriptions, cancellationToken, useAzureServiceBus);
+        await AuthorizeAndPush(cloudEvent, allSubscriptions, cancellationToken, useAzureServiceBus);
     }
 
     private enum SubjectFormat

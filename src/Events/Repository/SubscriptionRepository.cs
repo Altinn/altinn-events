@@ -86,7 +86,7 @@ public class SubscriptionRepository : ISubscriptionRepository
     }
 
     /// <inheritdoc/>
-    public async Task<List<Subscription>> GetSubscriptions(
+    public async Task<IReadOnlyList<Subscription>> GetSubscriptions(
         string resource, string subject, string eventType, CancellationToken cancellationToken)
     {
         List<Subscription> searchResult = [];
@@ -103,7 +103,7 @@ public class SubscriptionRepository : ISubscriptionRepository
             searchResult.Add(GetSubscription(reader));
         }
 
-        return searchResult;
+        return searchResult.AsReadOnly();
     }
 
     /// <inheritdoc/>

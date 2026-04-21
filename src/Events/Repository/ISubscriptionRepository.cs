@@ -51,7 +51,7 @@ public interface ISubscriptionRepository
     /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
     /// </param>
     /// <returns>A task representing the asynchronous operation with a list of subscriptions.</returns>
-    Task<List<Subscription>> GetSubscriptions(
+    Task<IReadOnlyList<Subscription>> GetSubscriptions(
         string resource, string subject, string eventType, CancellationToken cancellationToken);
 
     /// <summary>
