@@ -166,7 +166,7 @@ export default async function runTests(data) {
 
             TC04_PostCloudEventWithoutBearerToken();
 
-            TC05_PostCloudEventWithoutRequiredScopes();
+            await TC05_PostCloudEventWithoutRequiredScopes();
         } else {
             // Limited test set for use case tests
 
