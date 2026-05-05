@@ -54,6 +54,14 @@ function base64urlEncode(obj) {
   return encoding.b64encode(JSON.stringify(obj), "rawurl");
 }
 
+function stringToBytes(str) {
+  const buf = new Uint8Array(str.length);
+  for (let i = 0; i < str.length; i++) {
+    buf[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
+
 async function createJwtGrant(scopes) {
   const header = {
     alg: "RS256",
@@ -83,7 +91,7 @@ async function createJwtGrant(scopes) {
   );
 
   const signingInput = base64urlEncode(header) + "." + base64urlEncode(payload);
-  const data = new TextEncoder().encode(signingInput);
+  const data = stringToBytes(signingInput);
   const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, data);
 
   return signingInput + "." + encoding.b64encode(new Uint8Array(signature), "rawurl");
