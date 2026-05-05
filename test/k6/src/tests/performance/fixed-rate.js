@@ -45,8 +45,8 @@ import {
 
 const eventType = `performancetest.fixed-rate.${runId}`;
 const targetRps = Number.parseInt(__ENV.targetRps || "20", 10);
-const duration  = __ENV.duration || "2m";
-const maxVus    = Number.parseInt(__ENV.maxVus || "50", 10);
+const duration = __ENV.duration || "2m";
+const maxVus = Number.parseInt(__ENV.maxVus || "50", 10);
 
 // Pre-allocate enough VUs to sustain targetRps assuming up to ~2s per request.
 // k6 will spin up more (up to maxVus) if needed mid-test.
@@ -56,24 +56,24 @@ warnIfUntagged();
 
 export const options = {
     thresholds: {
-        errors:         ["count<1"],
-        http_req_duration:  ["p(95)<5000"],
+        errors: ["count<1"],
+        http_req_duration: ["p(95)<5000"],
         dropped_iterations: ["count<1"],
     },
     scenarios: {
         fixed_rate: {
-            executor:        "constant-arrival-rate",
-            rate:            targetRps,
-            timeUnit:        "1s",
-            duration:        duration,
+            executor: "constant-arrival-rate",
+            rate: targetRps,
+            timeUnit: "1s",
+            duration: duration,
             preAllocatedVUs: preAllocatedVUs,
-            maxVUs:          maxVus,
+            maxVUs: maxVus,
         },
     },
 };
 
-export function setup() {
-    return performanceSetup(`Target rate: ${targetRps} events/s for ${duration} (preAllocated: ${preAllocatedVUs}, max: ${maxVus} VUs)`);
+export async function setup() {
+    return await performanceSetup(`Target rate: ${targetRps} events/s for ${duration} (preAllocated: ${preAllocatedVUs}, max: ${maxVus} VUs)`);
 }
 
 export default function runTests(data) {
@@ -87,9 +87,9 @@ export function teardown(data) {
 export function handleSummary(data) {
     const { durationSec } = getTimeWindow(data);
     const { successCount, errorCount, p95Ms } = getBaseMetrics(data);
-    const droppedCount  = data.metrics["dropped_iterations"]?.values?.count ?? 0;
-    const effectiveRps  = durationSec > 0 ? (successCount / durationSec).toFixed(1) : "N/A";
-    const targetMet     = droppedCount === 0 ? "YES" : `NO — ${droppedCount} iterations dropped`;
+    const droppedCount = data.metrics["dropped_iterations"]?.values?.count ?? 0;
+    const effectiveRps = durationSec > 0 ? (successCount / durationSec).toFixed(1) : "N/A";
+    const targetMet = droppedCount === 0 ? "YES" : `NO — ${droppedCount} iterations dropped`;
 
     return buildSummary("Fixed-Rate Throughput Test — Summary                 ║", [
         "  k6 results:",

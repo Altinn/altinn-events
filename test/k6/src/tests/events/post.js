@@ -26,8 +26,8 @@ export const options = {
     },
 };
 
-export function setup() {
-    const token = setupToken.getAltinnTokenForOrg(scopes);
+export async function setup() {
+    const token = await setupToken.getAltinnTokenForOrg(scopes);
 
     const runFullTestSet = __ENV.runFullTestSet
         ? __ENV.runFullTestSet.toLowerCase().includes("true")
@@ -128,12 +128,12 @@ function TC04_PostCloudEventWithoutBearerToken() {
 }
 
 // 05 - POST cloud event without required scope
-function TC05_PostCloudEventWithoutRequiredScopes() {
+async function TC05_PostCloudEventWithoutRequiredScopes() {
     let response, success, cloudEvent;
 
     cloudEvent = createCloudEvent();
 
-    let incorrectScopeToken = setupToken.getAltinnTokenForOrg('altinn:serviceowner');
+    let incorrectScopeToken = await setupToken.getAltinnTokenForOrg('altinn:serviceowner');
 
     response = eventsApi.postCloudEvent(
         JSON.stringify(cloudEvent),
@@ -155,7 +155,7 @@ function TC05_PostCloudEventWithoutRequiredScopes() {
  * 04 - POST cloud event without bearer token
  * 05 - POST cloud event without required scope
  */
-export default function runTests(data) {
+export default async function runTests(data) {
     try {
         if (data.runFullTestSet) {
             TC01_POstValidCloudEventWithAllParameters(data);

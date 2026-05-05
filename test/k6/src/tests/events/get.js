@@ -26,8 +26,8 @@ export const options = {
     },
 };
 
-export function setup() {
-    let token = setupToken.getAltinnTokenForOrg(scopes);
+export async function setup() {
+    let token = await setupToken.getAltinnTokenForOrg(scopes);
 
     let cloudEvent = eventJson;
     cloudEvent.id = uuidv4();

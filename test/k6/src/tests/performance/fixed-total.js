@@ -28,9 +28,9 @@ import {
     warnIfUntagged, getTimeWindow, getBaseMetrics, buildSummary,
 } from "./helpers.js";
 
-const eventType   = `performancetest.fixed-total.${runId}`;
+const eventType = `performancetest.fixed-total.${runId}`;
 const totalEvents = Number.parseInt(__ENV.totalEvents || "500", 10);
-const vus         = Number.parseInt(__ENV.vus || "10", 10);
+const vus = Number.parseInt(__ENV.vus || "10", 10);
 
 warnIfUntagged();
 
@@ -49,8 +49,8 @@ export const options = {
     },
 };
 
-export function setup() {
-    return performanceSetup(`Will post ${totalEvents} events across ${vus} VUs`);
+export async function setup() {
+    return await performanceSetup(`Will post ${totalEvents} events across ${vus} VUs`);
 }
 
 export default function runTests(data) {

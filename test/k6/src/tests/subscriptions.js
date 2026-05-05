@@ -50,9 +50,9 @@ export const options = {
   },
 };
 
-export function setup() {
-  let orgToken = setupToken.getAltinnTokenForOrg(scopes);
-  let incorrectScopeToken = setupToken.getAltinnTokenForOrg(
+export async function setup() {
+  let orgToken = await setupToken.getAltinnTokenForOrg(scopes);
+  let incorrectScopeToken = await setupToken.getAltinnTokenForOrg(
     "altinn:serviceowner"
   );
 
