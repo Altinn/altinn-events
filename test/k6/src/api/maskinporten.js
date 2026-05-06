@@ -12,6 +12,8 @@ const encodedJwk = __ENV.encodedJwk;
 const mpClientId = __ENV.mpClientId;
 const mpKid = __ENV.mpKid;
 
+let memoizedSigningKeyPromise;
+
 /**
  * Authenticates with Maskinporten and returns an access token.
  * @param {string} scopes - Space-separated list of scopes to request.
@@ -54,6 +56,33 @@ export async function generateAccessToken(scopes) {
   const accessToken = JSON.parse(res.body)['access_token'];
   return accessToken;
 }
+
+/**
+ * Imports the RSA signing key from the base64-encoded JWK environment variable.
+ * @returns {Promise<CryptoKey>} The imported signing key.
+ */
+async function importSigningKey() {
+  const jwk = JSON.parse(encoding.b64decode(encodedJwk, "std", "s"));
+  return crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+}
+
+/**
+ * Returns the memoized signing key, importing it on first call. Caching the promise (rather than the resolved value) allows concurrent calls to share the same in-flight import rather than triggering duplicates.
+ * @returns {Promise<CryptoKey>} The signing key.
+ */
+function getSigningKey() {
+  if (!memoizedSigningKeyPromise) {
+    memoizedSigningKeyPromise = importSigningKey();
+  }
+  return memoizedSigningKeyPromise;
+}
+
 
 /**
  * Base64url-encodes a JSON-serializable object without padding.
@@ -100,15 +129,7 @@ async function createJwtGrant(scopes) {
     jti: uuidv4(),
   };
 
-  const jwk = JSON.parse(encoding.b64decode(encodedJwk, "std", "s"));
-
-  const cryptoKey = await crypto.subtle.importKey(
-    "jwk",
-    jwk,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
+  const cryptoKey = await getSigningKey();
 
   const signingInput = base64urlEncode(header) + "." + base64urlEncode(payload);
   const data = stringToBytes(signingInput);
