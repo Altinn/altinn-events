@@ -12,6 +12,11 @@ const encodedJwk = __ENV.encodedJwk;
 const mpClientId = __ENV.mpClientId;
 const mpKid = __ENV.mpKid;
 
+/**
+ * Authenticates with Maskinporten and returns an access token.
+ * @param {string} scopes - Space-separated list of scopes to request.
+ * @returns {string} The Maskinporten access token.
+ */
 export async function generateAccessToken(scopes) {
   if (!encodedJwk) {
     stopIterationOnFail("Required environment variable Encoded JWK (encodedJWK) was not provided", false);
@@ -50,10 +55,20 @@ export async function generateAccessToken(scopes) {
   return accessToken;
 }
 
+/**
+ * Base64url-encodes a JSON-serializable object without padding.
+ * @param {object} obj - The object to encode.
+ * @returns {string} The base64url-encoded string.
+ */
 function base64urlEncode(obj) {
   return encoding.b64encode(JSON.stringify(obj), "rawurl");
 }
 
+/**
+ * Converts an ASCII string to a Uint8Array.
+ * @param {string} str - The input string (ASCII only).
+ * @returns {Uint8Array} The byte representation.
+ */
 function stringToBytes(str) {
   const buf = new Uint8Array(str.length);
   for (let i = 0; i < str.length; i++) {
@@ -62,6 +77,11 @@ function stringToBytes(str) {
   return buf;
 }
 
+/**
+ * Creates a signed JWT grant for the Maskinporten token request.
+ * @param {string} scopes - Space-separated list of scopes to include in the grant.
+ * @returns {Promise<string>} The signed JWT string.
+ */
 async function createJwtGrant(scopes) {
   const header = {
     alg: "RS256",
