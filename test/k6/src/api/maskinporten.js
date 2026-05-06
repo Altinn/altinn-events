@@ -17,7 +17,7 @@ let memoizedSigningKeyPromise;
 /**
  * Authenticates with Maskinporten and returns an access token.
  * @param {string} scopes - Space-separated list of scopes to request.
- * @returns {string} The Maskinporten access token.
+ * @returns {Promise<string>} The Maskinporten access token.
  */
 export async function generateAccessToken(scopes) {
   if (!encodedJwk) {
