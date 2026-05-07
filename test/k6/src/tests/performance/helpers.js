@@ -16,8 +16,8 @@ export function warnIfUntagged() {
     }
 }
 
-export function performanceSetup(setupLogLine) {
-    const token = setupToken.getAltinnTokenForOrg(scopes);
+export async function performanceSetup(setupLogLine) {
+    const token = await setupToken.getAltinnTokenForOrg(scopes);
 
     const subscription = {
         endPoint: config.platformEvents.webhookReceiver,
@@ -79,12 +79,12 @@ export function performanceTeardown(data) {
 }
 
 export function getTimeWindow(data) {
-    const testEndTime    = new Date();
+    const testEndTime = new Date();
     const testDurationMs = data.state.testRunDurationMs;
-    const testStartTime  = new Date(testEndTime.getTime() - testDurationMs);
+    const testStartTime = new Date(testEndTime.getTime() - testDurationMs);
 
     const offsetMinutes = Number.parseInt(__ENV.queryOffsetMinutes || "15", 10);
-    const queryEndTime  = new Date(testEndTime.getTime() + offsetMinutes * 60 * 1000);
+    const queryEndTime = new Date(testEndTime.getTime() + offsetMinutes * 60 * 1000);
 
     const durationSec = testDurationMs / 1000;
 
@@ -96,8 +96,8 @@ export function getTimeWindow(data) {
 
 export function getBaseMetrics(data) {
     const eventsPosted = data.metrics["iterations"]?.values?.count ?? 0;
-    const errorCount   = data.metrics["errors"]?.values?.count ?? 0;
-    const p95Ms        = data.metrics["http_req_duration"]?.values?.["p(95)"] ?? 0;
+    const errorCount = data.metrics["errors"]?.values?.count ?? 0;
+    const p95Ms = data.metrics["http_req_duration"]?.values?.["p(95)"] ?? 0;
     const successCount = Math.max(eventsPosted - errorCount, 0);
 
     return { eventsPosted, errorCount, p95Ms, successCount };

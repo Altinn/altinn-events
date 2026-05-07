@@ -10,9 +10,9 @@ const environment = (__ENV.altinn_env || '').toLowerCase(); // Fallback value fo
  * If org is not provided TTD will be used.
  * @returns altinn token with the provided scopes for an org
  */
-export function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "991825827") {
+export async function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "991825827") {
   if ((environment == "prod" || environment == "tt02") && org == "ttd") {
-    let accessToken = maskinporten.generateAccessToken(scopes);
+    let accessToken = await maskinporten.generateAccessToken(scopes);
     return authentication.exchangeToAltinnToken(accessToken, true);
   }
 

@@ -28,7 +28,7 @@ export const options = {
   },
 };
 
-export function setup() {
+export async function setup() {
   let scopes = "altinn:serviceowner";
   const app = __ENV.app.toLowerCase();
   const org = "ttd";
@@ -44,7 +44,7 @@ export function setup() {
     partyId = setupToken.getPartyIdFromTokenClaim(userToken);
   }
 
-  let orgToken = setupToken.getAltinnTokenForOrg(scopes, org);
+  let orgToken = await setupToken.getAltinnTokenForOrg(scopes, org);
 
   let data = {
     runFullTestSet: runFullTestSet,
