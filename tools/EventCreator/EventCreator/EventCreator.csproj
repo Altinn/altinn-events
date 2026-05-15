@@ -10,14 +10,14 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Queues" Version="12.25.0" />
-    <PackageReference Include="Altinn.Platform.Storage.Interface" Version="4.5.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.json" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
-    <PackageReference Include="Npgsql" Version="10.0.1" />
-    <PackageReference Include="Npgsql.DependencyInjection" Version="10.0.1" />
+    <PackageReference Include="Altinn.Platform.Storage.Interface" Version="4.7.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.json" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
+    <PackageReference Include="Npgsql" Version="10.0.2" />
+    <PackageReference Include="Npgsql.DependencyInjection" Version="10.0.2" />
     <PackageReference Include="CloudNative.CloudEvents.AspNetCore" Version="2.8.0" />
     <PackageReference Include="CloudNative.CloudEvents.SystemTextJson" Version="2.8.0" />
   </ItemGroup>
