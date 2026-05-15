@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION events.insert_subscription(
+CREATE OR REPLACE FUNCTION events.insert_subscription_v2(
 	resourcefilter character varying,
 	sourcefilter character varying,
 	subjectfilter character varying,

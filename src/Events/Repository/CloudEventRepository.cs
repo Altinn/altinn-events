@@ -5,11 +5,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Configuration;
-
 using CloudNative.CloudEvents;
-
-using Microsoft.Extensions.Options;
 
 using Npgsql;
 
@@ -27,7 +23,7 @@ namespace Altinn.Platform.Events.Repository
             ON CONFLICT ((cloudevent -> 'id'), (cloudevent -> 'source')) DO NOTHING";
 
         private readonly string _getAppEventsSql = "select events.getappevents_v2(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
-        private readonly string _getEventsSql = "select events.getevents($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
+        private readonly string _getEventsSql = "select events.getevents_v2($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
 
         private readonly NpgsqlDataSource _dataSource;
 
