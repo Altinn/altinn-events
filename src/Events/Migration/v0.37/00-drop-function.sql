@@ -1,1 +1,0 @@
-drop function if exists events.getevents(_subject character varying, _alternativesubject character varying, _after character varying, _type text[], _source character varying, _size integer);

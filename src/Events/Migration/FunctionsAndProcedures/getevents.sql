@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION events.getevents(
+CREATE OR REPLACE FUNCTION events.getevents_v2(
 	_resource character varying,
 	_subject character varying,
 	_alternativesubject character varying,

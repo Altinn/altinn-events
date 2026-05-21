@@ -53,6 +53,36 @@ BEGIN
 END;
 $BODY$;
 
+-- findsubscription.sql:
+CREATE OR REPLACE FUNCTION events.find_subscription(
+    _resourcefilter character varying,
+	_sourcefilter character varying,
+	_subjectfilter character varying,
+	_typefilter character varying,
+	_consumer character varying,
+	_endpointurl character varying,
+	_includesubunits boolean)
+    RETURNS TABLE(id bigint, resourcefilter character varying, sourcefilter character varying, subjectfilter character varying, typefilter character varying, consumer character varying, endpointurl character varying, createdby character varying, validated boolean, "time" timestamp with time zone, includesubunits boolean)
+    LANGUAGE 'plpgsql'
+AS $BODY$
+
+BEGIN
+RETURN query
+    SELECT
+        s.id, s.resourcefilter, s.sourcefilter, s.subjectfilter, s.typefilter, s.consumer, s.endpointurl, s.createdby, s.validated, s."time", s.includesubunits
+    FROM
+        events.subscription s
+    WHERE
+        s.resourcefilter = _resourcefilter
+        AND ((_sourcefilter IS NULL AND s.sourcefilter IS NULL) OR s.sourcefilter = _sourcefilter)
+        AND ((_subjectfilter IS NULL AND s.subjectfilter IS NULL) OR s.subjectfilter = _subjectfilter)
+        AND ((_typefilter IS NULL AND s.typefilter IS NULL) OR s.typefilter = _typefilter)
+        AND s.consumer = _consumer
+        AND s.endpointurl = _endpointurl
+        AND s.includesubunits =_includesubunits;
+END
+$BODY$;
+
 
 -- getappevents.sql:
 CREATE OR REPLACE FUNCTION events.getappevents_v2(
@@ -90,8 +120,8 @@ return query
 	SELECT cast(cloudevent as text) as cloudevents
 		FROM events.events
 		WHERE (_subject IS NULL OR cloudevent->>'subject' = _subject)
-			AND (_from IS NULL OR cloudevent->>'time' >= _from::text)
-			AND (_to IS NULL OR cloudevent->>'time' <= _to::text)
+			AND (_from IS NULL OR cloudevent->>'time' >= to_json(_from)::text)
+			AND (_to IS NULL OR cloudevent->>'time' <= to_json(_to)::text)
 			AND (_type IS NULL OR cloudevent->>'type' ILIKE ANY(_type))
 			AND (_source IS NULL OR cloudevent->>'source' ILIKE ANY(_source))
 			AND (_resource IS NULL OR cloudevent->>'resource' = _resource)
@@ -104,7 +134,7 @@ $BODY$;
 
 
 -- getevents.sql:
-CREATE OR REPLACE FUNCTION events.getevents(
+CREATE OR REPLACE FUNCTION events.getevents_v2(
 	_resource character varying,
 	_subject character varying,
 	_alternativesubject character varying,
@@ -145,19 +175,35 @@ return query
 END;
 $BODY$;
 
+-- getsubscription.sql:
+CREATE OR REPLACE FUNCTION events.getsubscription_v3(
+	_id integer)
+	RETURNS TABLE(id bigint, resourcefilter character varying, sourcefilter character varying, subjectfilter character varying, typefilter character varying, consumer character varying, endpointurl character varying, createdby character varying, validated boolean, "time" timestamp with time zone, includesubunits boolean)
+	LANGUAGE 'plpgsql'
+AS $BODY$
+
+BEGIN
+return query
+	SELECT s.id, s.resourcefilter, s.sourcefilter, s.subjectfilter, s.typefilter, s.consumer, s.endpointurl, s.createdby, s.validated, s."time", s.includesubunits
+	FROM events.subscription s
+	where s.id = _id;
+
+END;
+$BODY$;
+
 
 -- getsubscriptions.sql:
-CREATE OR REPLACE FUNCTION events.getsubscriptions(
+CREATE OR REPLACE FUNCTION events.getsubscriptions_v2(
 	resource character varying,
 	subject character varying,
 	type character varying)
-	RETURNS TABLE(id bigint, resourcefilter character varying, sourcefilter character varying, subjectfilter character varying, typefilter character varying, consumer character varying, endpointurl character varying, createdby character varying, validated boolean, "time" timestamp with time zone) 
+	RETURNS TABLE(id bigint, resourcefilter character varying, sourcefilter character varying, subjectfilter character varying, typefilter character varying, consumer character varying, endpointurl character varying, createdby character varying, validated boolean, "time" timestamp with time zone, includesubunits boolean)
 	LANGUAGE 'plpgsql'
 
 AS $BODY$
 BEGIN
 return query
-	SELECT s.id, s.resourcefilter, s.sourcefilter, s.subjectfilter, s.typefilter, s.consumer, s.endpointurl, s.createdby, s.validated, s."time"
+	SELECT s.id, s.resourcefilter, s.sourcefilter, s.subjectfilter, s.typefilter, s.consumer, s.endpointurl, s.createdby, s.validated, s."time", s.includesubunits
 	FROM events.subscription s
 	WHERE  s.resourcefilter = resource
 		AND (s.subjectfilter is NULL OR s.subjectfilter = subject)
@@ -167,16 +213,43 @@ return query
 END;
 $BODY$;
 
+
+-- getsubscriptionsbyconsumer.sql:
+CREATE OR REPLACE FUNCTION events.getsubscriptionsbyconsumer_v3(
+	_consumer character varying,
+	_includeinvalid boolean)
+	RETURNS TABLE(id bigint, resourcefilter character varying, sourcefilter character varying, subjectfilter character varying, typefilter character varying, consumer character varying, endpointurl character varying, createdby character varying, validated boolean, "time" timestamp with time zone, includesubunits boolean)
+	LANGUAGE 'plpgsql'
+AS $BODY$
+
+
+BEGIN
+return query
+	SELECT s.id, s.resourcefilter, s.sourcefilter, s.subjectfilter, s.typefilter, s.consumer, s.endpointurl, s.createdby, s.validated, s."time", s.includesubunits
+	FROM events.subscription s
+	WHERE s.consumer LIKE _consumer
+	AND s.validated =
+		CASE WHEN _includeInvalid THEN
+			false or s.validated = true
+		ELSE
+			true
+		END;
+
+END
+$BODY$;
+
+
 -- insertsubscription.sql:
-CREATE OR REPLACE FUNCTION events.insert_subscription(
-    resourcefilter character varying,
+CREATE OR REPLACE FUNCTION events.insert_subscription_v2(
+	resourcefilter character varying,
 	sourcefilter character varying,
 	subjectfilter character varying,
 	typefilter character varying,
 	consumer character varying,
 	endpointurl character varying,
 	createdby character varying,
-	validated boolean)
+	validated boolean,
+	includesubunits boolean)
 	RETURNS SETOF events.subscription
 	LANGUAGE 'plpgsql'
 
@@ -188,8 +261,8 @@ BEGIN
 	currentTime := NOW();
 
 	RETURN QUERY
-	INSERT INTO events.subscription(resourcefilter, sourcefilter, subjectfilter, typefilter, consumer, endpointurl, createdby, "time", validated)
-	VALUES ($1, $2, $3, $4, $5, $6, $7,  currentTime, $8) RETURNING *;
+	INSERT INTO events.subscription(resourcefilter, sourcefilter, subjectfilter, typefilter, consumer, endpointurl, createdby, "time", validated, includesubunits)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, currentTime, $8, $9) RETURNING *;
 
 END
 $BODY$;
