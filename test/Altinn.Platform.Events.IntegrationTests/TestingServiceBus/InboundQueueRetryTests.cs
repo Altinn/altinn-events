@@ -74,7 +74,7 @@ public class InboundQueueRetryTests(IntegrationTestContainersFixture fixture)
                 () => Task.FromResult(!webhookCalls.IsEmpty),
                 maxAttempts: 30,
                 delayMs: 500,
-                TestContext.Current.CancellationToken);
+                cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(delivered, "Event should be delivered to webhook via outbound queue");
 
             // Assert - Verify delivered event matches

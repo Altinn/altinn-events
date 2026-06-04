@@ -90,7 +90,7 @@ public class EndToEndEventFlowTests(IntegrationTestContainersFixture fixture)
                     c.CloudEvent.Type == "platform.events.validatesubscription")),
                 maxAttempts: 30,
                 delayMs: 500,
-                TestContext.Current.CancellationToken);
+                cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(validationReceived, "Subscription validation webhook should be received");
 
             // Step 3: Post event via HTTP
@@ -112,7 +112,7 @@ public class EndToEndEventFlowTests(IntegrationTestContainersFixture fixture)
                     c.CloudEvent.Type == "app.instance.created")),
                 maxAttempts: 30,
                 delayMs: 500,
-                TestContext.Current.CancellationToken);
+                cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(eventDelivered, "Event should be delivered to webhook after processing through all queues");
 
             // Step 5: Verify delivered event content
