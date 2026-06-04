@@ -1,3 +1,7 @@
+#nullable enable
+
+using System.Runtime.CompilerServices;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Functions.Tests.IntegrationTests;
@@ -11,7 +15,9 @@ namespace Altinn.Platform.Events.Functions.Tests.IntegrationTests;
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 public sealed class RequiresAzuriteFactAttribute : FactAttribute
 {
-    public RequiresAzuriteFactAttribute()
+    public RequiresAzuriteFactAttribute(
+        [CallerFilePath] string? sourceFilePath = null,
+        [CallerLineNumber] int sourceLineNumber = -1) : base(sourceFilePath, sourceLineNumber)
     {
         if (!AzuriteTestsEnabled())
         {

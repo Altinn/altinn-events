@@ -58,7 +58,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
     /// <summary>
     /// Initializes the fixture by starting PostgreSQL, MSSQL, and Azure Service Bus Emulator containers.
     /// </summary>
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         try
         {
@@ -149,7 +149,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
     /// <summary>
     /// Disposes the fixture by stopping and removing all containers.
     /// </summary>
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         static async Task SafeDisposeContainerAsync(IContainer? container)
         {

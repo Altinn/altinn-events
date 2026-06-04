@@ -55,7 +55,8 @@ public class ValidationQueueRetryTests(IntegrationTestContainersFixture fixture)
                     return sub?.Validated == true;
                 },
                 maxAttempts: 30,
-                delayMs: 500);
+                delayMs: 500,
+                TestContext.Current.CancellationToken);
             Assert.True(validated, "Subscription should be validated after successful webhook delivery");
 
             // Assert - Validation queue should be empty

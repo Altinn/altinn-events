@@ -83,7 +83,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.True(response.IsSuccessStatusCode);
@@ -114,7 +114,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
@@ -140,7 +140,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri) { Content = content };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -168,7 +168,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri) { Content = content };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);

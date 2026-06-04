@@ -81,7 +81,7 @@ public class OutboundControllerTests : IClassFixture<WebApplicationFactory<Outbo
         httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
         // Act
-        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -115,7 +115,7 @@ public class OutboundControllerTests : IClassFixture<WebApplicationFactory<Outbo
         httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
         // Act
-        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
@@ -141,7 +141,7 @@ public class OutboundControllerTests : IClassFixture<WebApplicationFactory<Outbo
         HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
 
         // Act
-        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -169,7 +169,7 @@ public class OutboundControllerTests : IClassFixture<WebApplicationFactory<Outbo
         HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
 
         // Act
-        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);

@@ -80,7 +80,8 @@ public class EndToEndEventFlowTests(IntegrationTestContainersFixture fixture)
 
             var createResponse = await subscribeClient.PostAsync(
                 "/events/api/v1/subscriptions",
-                new StringContent(subscriptionRequest.Serialize(), Encoding.UTF8, "application/json"));
+                new StringContent(subscriptionRequest.Serialize(), Encoding.UTF8, "application/json"),
+                TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
 
             // Step 2: Wait for subscription validation webhook
@@ -88,7 +89,8 @@ public class EndToEndEventFlowTests(IntegrationTestContainersFixture fixture)
                 () => Task.FromResult(webhookCalls.Any(c =>
                     c.CloudEvent.Type == "platform.events.validatesubscription")),
                 maxAttempts: 30,
-                delayMs: 500);
+                delayMs: 500,
+                TestContext.Current.CancellationToken);
             Assert.True(validationReceived, "Subscription validation webhook should be received");
 
             // Step 3: Post event via HTTP
@@ -100,7 +102,8 @@ public class EndToEndEventFlowTests(IntegrationTestContainersFixture fixture)
                 {
                     Content = new StringContent(
                         cloudEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
-                });
+                },
+                TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, postResponse.StatusCode);
 
             // Step 4: Wait for event delivery to webhook
@@ -108,7 +111,8 @@ public class EndToEndEventFlowTests(IntegrationTestContainersFixture fixture)
                 () => Task.FromResult(webhookCalls.Any(c =>
                     c.CloudEvent.Type == "app.instance.created")),
                 maxAttempts: 30,
-                delayMs: 500);
+                delayMs: 500,
+                TestContext.Current.CancellationToken);
             Assert.True(eventDelivered, "Event should be delivered to webhook after processing through all queues");
 
             // Step 5: Verify delivered event content
