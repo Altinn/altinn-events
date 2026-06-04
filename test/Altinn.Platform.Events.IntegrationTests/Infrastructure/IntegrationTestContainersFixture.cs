@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
 /// This acts like a docker-compose setup, starting all infrastructure containers together.
 /// The fixture is shared across all tests in the collection to avoid starting/stopping containers repeatedly.
 /// </summary>
-public class IntegrationTestContainersFixture : IAsyncLifetime
+public sealed class IntegrationTestContainersFixture : IAsyncLifetime
 {
     private const string _mssqlSaPassword = "YourStrong!Passw0rd";
     private INetwork? _network;
