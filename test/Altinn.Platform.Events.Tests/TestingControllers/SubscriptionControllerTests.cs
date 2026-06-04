@@ -75,7 +75,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -98,7 +98,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -114,7 +114,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -131,8 +131,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string content = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                 SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
 
                 // Assert
@@ -152,8 +152,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string content = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                 SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
 
                 // Assert
@@ -173,8 +173,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string content = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                 SubscriptionList actual = JsonSerializer.Deserialize<SubscriptionList>(content, _jsonOptions);
 
                 // Assert
@@ -200,7 +200,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -221,7 +221,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri);
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -239,7 +239,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("platform", "events"));
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -267,7 +267,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -294,7 +294,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -324,8 +324,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseMessage = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseMessage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -356,8 +356,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-                string responseMessage = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseMessage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -383,7 +383,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -414,7 +414,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 serivceMock.Verify(s => s.CreateSubscription(It.IsAny<Subscription>()), Times.Once);
@@ -446,7 +446,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 serivceMock.Verify(s => s.CreateSubscription(It.IsAny<Subscription>()), Times.Once);
@@ -476,12 +476,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-                string content = await response.Content.ReadAsStringAsync();
+                string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
                 Assert.Contains(cloudEventSubscription.SourceFilter.AbsoluteUri, content);
             }
 
@@ -511,7 +511,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 };
 
                 // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);

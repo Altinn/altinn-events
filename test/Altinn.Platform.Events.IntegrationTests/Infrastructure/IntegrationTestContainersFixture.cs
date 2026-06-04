@@ -20,7 +20,7 @@ namespace Altinn.Platform.Events.IntegrationTests.Infrastructure;
 /// This acts like a docker-compose setup, starting all infrastructure containers together.
 /// The fixture is shared across all tests in the collection to avoid starting/stopping containers repeatedly.
 /// </summary>
-public class IntegrationTestContainersFixture : IAsyncLifetime
+public sealed class IntegrationTestContainersFixture : IAsyncLifetime
 {
     private const string _mssqlSaPassword = "YourStrong!Passw0rd";
     private INetwork? _network;
@@ -58,7 +58,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
     /// <summary>
     /// Initializes the fixture by starting PostgreSQL, MSSQL, and Azure Service Bus Emulator containers.
     /// </summary>
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         try
         {
@@ -149,7 +149,7 @@ public class IntegrationTestContainersFixture : IAsyncLifetime
     /// <summary>
     /// Disposes the fixture by stopping and removing all containers.
     /// </summary>
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         static async Task SafeDisposeContainerAsync(IContainer? container)
         {

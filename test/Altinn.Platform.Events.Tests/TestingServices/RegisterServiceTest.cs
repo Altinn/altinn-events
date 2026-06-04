@@ -150,7 +150,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 "http://localhost:5101/register/api/v2/internal/parties/query?fields=identifiers";
             Assert.Equal(ExpectedRequestUri, requestMessage.RequestUri.ToString());
 
-            var requestContent = await requestMessage.Content.ReadFromJsonAsync<PartiesRegisterQueryRequest>();
+            var requestContent = await requestMessage.Content.ReadFromJsonAsync<PartiesRegisterQueryRequest>(TestContext.Current.CancellationToken);
             Assert.NotNull(requestContent);
             Assert.Equal(2, requestContent.Data.Length);
 
@@ -210,7 +210,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(HttpMethod.Post, firstRequestMessage.Method);
             Assert.Equal(ExpectedRequestUri, firstRequestMessage.RequestUri.ToString());
 
-            var firstRequestContent = await firstRequestMessage.Content.ReadFromJsonAsync<PartiesRegisterQueryRequest>();
+            var firstRequestContent = await firstRequestMessage.Content.ReadFromJsonAsync<PartiesRegisterQueryRequest>(TestContext.Current.CancellationToken);
             Assert.NotNull(firstRequestContent);
             Assert.Equal(2, firstRequestContent.Data.Length);
 
@@ -218,7 +218,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(HttpMethod.Post, secondRequestMessage.Method);
             Assert.Equal(ExpectedRequestUri, secondRequestMessage.RequestUri.ToString());
 
-            var secondRequestContent = await secondRequestMessage.Content.ReadFromJsonAsync<PartiesRegisterQueryRequest>();
+            var secondRequestContent = await secondRequestMessage.Content.ReadFromJsonAsync<PartiesRegisterQueryRequest>(TestContext.Current.CancellationToken);
             Assert.NotNull(secondRequestContent);
             Assert.Single(secondRequestContent.Data);
         }
@@ -430,7 +430,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(HttpMethod.Post, requestMessage.Method);
             Assert.Equal(ExpectedRequestUri, requestMessage.RequestUri.ToString());
 
-            var bodyJson = await requestMessage.Content.ReadAsStringAsync();
+            var bodyJson = await requestMessage.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Contains($"\"{OrgUrn}\"", bodyJson);
         }
 

@@ -54,7 +54,8 @@ public class OutboundQueueRetryTests(IntegrationTestContainersFixture fixture)
             var delivered = await WaitForUtils.WaitForAsync(
                 () => Task.FromResult(!webhookCalls.IsEmpty),
                 maxAttempts: 30,
-                delayMs: 500);
+                delayMs: 500,
+                cancellationToken: TestContext.Current.CancellationToken);
             Assert.True(delivered, "Event should be delivered to webhook");
 
             // Assert - Verify delivered event matches

@@ -44,7 +44,7 @@ public class CloudEventJsonOutputFormatterTests
 
         // Assert
         httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
-        string result = await new StreamReader(httpContext.Response.Body).ReadToEndAsync();
+        string result = await new StreamReader(httpContext.Response.Body).ReadToEndAsync(TestContext.Current.CancellationToken);
         Assert.Contains("test-id", result);
     }
 
@@ -83,7 +83,7 @@ public class CloudEventJsonOutputFormatterTests
 
         // Assert
         httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
-        string result = await new StreamReader(httpContext.Response.Body).ReadToEndAsync();
+        string result = await new StreamReader(httpContext.Response.Body).ReadToEndAsync(TestContext.Current.CancellationToken);
         Assert.StartsWith("[", result);
         Assert.EndsWith("]", result);
         Assert.Contains("event-1", result);
@@ -120,7 +120,7 @@ public class CloudEventJsonOutputFormatterTests
 
         // Assert
         httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
-        string result = await new StreamReader(httpContext.Response.Body).ReadToEndAsync();
+        string result = await new StreamReader(httpContext.Response.Body).ReadToEndAsync(TestContext.Current.CancellationToken);
         Assert.DoesNotContain(", ", result);
     }
 
