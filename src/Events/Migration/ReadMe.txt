@@ -1,7 +1,7 @@
 ﻿Usage/rules:
 
 - The tool DbTools is used to autogenerate a Yuniql deploy file for functions and procedures. Other artifacts
-  like tables and index must currently be maintained manually.
+  like tables and indexes must currently be maintained manually.
 
 - Each function/proc has a separate file in the Migration/FunctionsAndProcedures folder.
 
@@ -16,3 +16,6 @@
 
 - A new vx.xx folder must be created when a func/proc is created/updated after last deploy. If not the current
   vx.xx will be used, and the migration will not be executed by yuniql.
+
+- Always give a new version of a function or procedure a new version number. This makes it easier to perform cleanup
+  of old versions later on. Identifying old versions based on the function signature is a lot harder.
