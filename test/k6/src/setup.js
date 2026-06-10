@@ -26,12 +26,12 @@ export async function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "9918258
   return tokenGenerator.generateEnterpriseToken(queryParams);
 }
 
-export function getAltinnTokenForUser() {
-  if (environment == "prod" || environment == "tt02") {
+export async function getAltinnTokenForUser() {
+  if (environment == "prod") {
     return authentication.authenticateUser();
   }
 
-  return tokenGenerator.generatePersonalToken();
+  return await tokenGenerator.generatePersonalToken();
 }
 
 export function getPartyIdFromTokenClaim(jwtToken) {

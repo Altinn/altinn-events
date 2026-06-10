@@ -2,12 +2,8 @@
     Test script to platform events api with user token
     Command:
     docker-compose run k6 run /src/tests/events/get.js `
-    -e tokenGeneratorUserName=autotest `
-    -e tokenGeneratorUserPwd=*** `
-    -e mpClientId=*** `
-    -e mpKid=altinn-usecase-events `
-    -e encodedJwk=*** `
-    -e env=*** `
+    --secret-source=file=/.secrets `
+    -e altinn_env=*** `
     -e runFullTestSet=true
 
     For use case tests omit environment variable runFullTestSet or set value to false

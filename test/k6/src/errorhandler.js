@@ -23,3 +23,11 @@ export function stopIterationOnFail(testName, success, res) {
     fail(testName);
   }
 }
+
+/**
+ * Interrupts the test run(s) by flagging an invalid k6 configuration that is fundamental.
+ * @param {String} message A description of the faulty configuration parameter
+ */
+export function throwConfigurationError(message) {
+    throw new Error(`Invalid k6 configuration: ${message}`)
+}

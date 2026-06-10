@@ -7,10 +7,7 @@ import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 import { buildHeaderWithContentType } from "../apiHelpers.js";
 import * as config from "../config.js";
 import { stopIterationOnFail, addErrorCount } from "../errorhandler.js";
-
-const encodedJwk = __ENV.encodedJwk;
-const mpClientId = __ENV.mpClientId;
-const mpKid = __ENV.mpKid;
+import { getFromSecretSource } from "../secret-reader.js";
 
 let memoizedSigningKeyPromise;
 
@@ -20,6 +17,10 @@ let memoizedSigningKeyPromise;
  * @returns {Promise<string>} The Maskinporten access token.
  */
 export async function generateAccessToken(scopes) {
+  const encodedJwk = await getFromSecretSource("encodedJwk");
+  const mpClientId = await getFromSecretSource("mpClientId");
+  const mpKid = await getFromSecretSource("mpKid");
+
   if (!encodedJwk) {
     stopIterationOnFail("Required environment variable Encoded JWK (encodedJWK) was not provided", false);
   }
@@ -32,7 +33,7 @@ export async function generateAccessToken(scopes) {
     stopIterationOnFail("Required environment variable maskinporten kid (mpKid) was not provided", false);
   }
 
-  const grant = await createJwtGrant(scopes);
+  const grant = await createJwtGrant(scopes, encodedJwk, mpClientId, mpKid);
 
   const body = {
     alg: "RS256",
@@ -61,7 +62,7 @@ export async function generateAccessToken(scopes) {
  * Imports the RSA signing key from the base64-encoded JWK environment variable.
  * @returns {Promise<CryptoKey>} The imported signing key.
  */
-async function importSigningKey() {
+async function importSigningKey(encodedJwk) {
   const jwk = JSON.parse(encoding.b64decode(encodedJwk, "std", "s"));
   return crypto.subtle.importKey(
     "jwk",
@@ -76,9 +77,9 @@ async function importSigningKey() {
  * Returns the memoized signing key, importing it on first call. Caching the promise (rather than the resolved value) allows concurrent calls to share the same in-flight import rather than triggering duplicates.
  * @returns {Promise<CryptoKey>} The signing key.
  */
-function getSigningKey() {
+function getSigningKey(encodedJWK) {
   if (!memoizedSigningKeyPromise) {
-    memoizedSigningKeyPromise = importSigningKey();
+    memoizedSigningKeyPromise = importSigningKey(encodedJWK);
   }
   return memoizedSigningKeyPromise;
 }
@@ -111,7 +112,8 @@ function stringToBytes(str) {
  * @param {string} scopes - Space-separated list of scopes to include in the grant.
  * @returns {Promise<string>} The signed JWT string.
  */
-async function createJwtGrant(scopes) {
+async function createJwtGrant(scopes, encodedJwk, mpClientId, mpKid) {
+
   const header = {
     alg: "RS256",
     typ: "JWT",
@@ -129,7 +131,7 @@ async function createJwtGrant(scopes) {
     jti: uuidv4(),
   };
 
-  const cryptoKey = await getSigningKey();
+  const cryptoKey = await getSigningKey(encodedJwk);
 
   const signingInput = base64urlEncode(header) + "." + base64urlEncode(payload);
   const data = stringToBytes(signingInput);

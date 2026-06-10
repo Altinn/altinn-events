@@ -2,14 +2,9 @@
     Test script to platform subscriptions api with user token
     Command:
       docker-compose run k6 run /src/tests/subscriptions.js `
-      -e env=*** `
-      -e tokenGeneratorUserName=autotest `
-      -e tokenGeneratorUserPwd=*** `
-      -e mpClientId=*** `
-      -e mpKid=altinn-usecase-events `
-      -e encodedJwk=*** `
+      --secret-source=file=/.secrets `
+      -e altinn_env=*** `
       -e app=apps-test `
-      -e webhookEndpoint=***** `
       -e runFullTestSet=true
 
     For use case tests omit environment variable runFullTestSet or set value to false
@@ -19,7 +14,8 @@ import { check, sleep } from "k6";
 import * as subscriptionsApi from "../api/subscriptions.js";
 import * as config from "../config.js";
 import { addErrorCount } from "../errorhandler.js";
-import * as setupToken from "../setup.js";
+import { getAltinnTokenForOrg } from "../setup.js";
+import { getFromSecretSource } from "../secret-reader.js";
 
 const appSubscription = JSON.parse(
   open("../data/subscriptions/01-app-subscription.json")
@@ -32,17 +28,13 @@ const genericSubscription = JSON.parse(
 const scopes =
   "altinn:serviceowner altinn:events.publish altinn:events.subscribe";
 
-const webhookEndpoint = __ENV.webhookEndpoint;
+
 
 const org = "ttd";
 const app = (__ENV.app || '').toLowerCase(); // Fallback value for when k6 inspect is run in script validation (env var evaluation yields 'undefined' in this phase)
 const runFullTestSet = __ENV.runFullTestSet
   ? __ENV.runFullTestSet.toLowerCase().includes("true")
   : false;
-
-appSubscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${app}`;
-appSubscription.endPoint = webhookEndpoint;
-genericSubscription.endPoint = webhookEndpoint;
 
 export const options = {
   thresholds: {
@@ -51,8 +43,13 @@ export const options = {
 };
 
 export async function setup() {
-  let orgToken = await setupToken.getAltinnTokenForOrg(scopes);
-  let incorrectScopeToken = await setupToken.getAltinnTokenForOrg(
+  const webhookEndpoint = await getFromSecretSource("webhookEndpoint");
+  appSubscription.sourceFilter = `https://${org}.apps.${config.baseUrl}/${org}/${app}`;
+  appSubscription.endPoint = webhookEndpoint;
+  genericSubscription.endPoint = webhookEndpoint;
+
+  let orgToken = await getAltinnTokenForOrg(scopes);
+  let incorrectScopeToken = await getAltinnTokenForOrg(
     "altinn:serviceowner"
   );
 
@@ -264,12 +261,3 @@ export default function runTests(data) {
     throw error;
   }
 }
-
-/*
-export function handleSummary(data) {
-  let result = {};
-  result[reportPath("events.xml")] = generateJUnitXML(data, "events");
-
-  return result;
-}
-*/

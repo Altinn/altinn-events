@@ -20,6 +20,13 @@ Alternatively, it is possible to run the tests directly on your machine as well.
 
 [General installation instructions are available here.](https://k6.io/docs/get-started/installation/)
 
+## Configuring the secret source
+
+**Never put secrets on the command line** - sensitive values should be passed to the k6 script via a secret source, as this provides full k6 redaction. In other words, secrets loaded via k6/secrets are automatically redacted from all k6 log output as `***SECRET_REDACTED***`, effectively preventing the values to leak into logs.
+
+1. Create a `.secrets` file in the k6 folder
+2. Copy contents from `.secrets.sample`
+3. Assign valid values to the variables
 
 ## Running tests
 
@@ -33,7 +40,7 @@ Run test suite by specifying filename.
 
 For example:
 
->$> podman compose run k6 run /src/tests/events/post.js -e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***
+>$> podman compose run k6 run /src/tests/events/post.js --secret-source=file=/.secrets -e altinn_env=***
 
 The command consists of three sections
 
@@ -42,7 +49,7 @@ The command consists of three sections
 `k6 run {path to test file}` pointing to the test file you want to run e.g. `/src/tests/events/post.js`
 
 
-`-e tokenGeneratorUserName=*** -e tokenGeneratorUserPwd=*** -e env=***` all environment variables that should be included in the request.
+`--secret-source=file=/.secrets -e altinn_env=***` all environment variables that should be included in the request.
 
 
 ### Webhook for subscriptions
