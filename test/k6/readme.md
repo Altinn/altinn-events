@@ -40,7 +40,7 @@ Run test suite by specifying filename.
 
 For example:
 
->$> podman compose run k6 run /src/tests/events/post.js --secret-source=file=/.secrets -e env=***
+>$> podman compose run k6 run /src/tests/events/post.js --secret-source=file=/.secrets -e altinn_env=***
 
 The command consists of three sections
 
@@ -49,7 +49,7 @@ The command consists of three sections
 `k6 run {path to test file}` pointing to the test file you want to run e.g. `/src/tests/events/post.js`
 
 
-`--secret-source=file=/.secrets -e env=***` all environment variables that should be included in the request.
+`--secret-source=file=/.secrets -e altinn_env=***` all environment variables that should be included in the request.
 
 
 ### Webhook for subscriptions
