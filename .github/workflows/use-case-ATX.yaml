@@ -43,7 +43,7 @@ jobs:
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
         with:
           path: test/k6/src/tests/app-events.js
-          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test -e userId=${{ secrets.USER_ID }} -e partyId=${{ secrets.PARTY_ID }}
+          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test -e partyId=${{ secrets.PARTY_ID }}
       - name: Run events use case tests (POST)
         if: always()
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0

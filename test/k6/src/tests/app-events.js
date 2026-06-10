@@ -5,7 +5,6 @@
     --secret-source=file=/.secrets
     -e altinn_env=*** `
     -e app=apps-test `
-    -e userId=*** `
     -e partyId=*** `
     -e userName=*** `
     -e userPassword=*** `
