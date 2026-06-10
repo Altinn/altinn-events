@@ -2,14 +2,9 @@
     Test script to platform subscriptions api with user token
     Command:
       docker-compose run k6 run /src/tests/subscriptions.js `
-      -e env=*** `
-      -e tokenGeneratorUserName=autotest `
-      -e tokenGeneratorUserPwd=*** `
-      -e mpClientId=*** `
-      -e mpKid=altinn-usecase-events `
-      -e encodedJwk=*** `
+      --secret-source=file=/.secrets `
+      -e altinn_env=*** `
       -e app=apps-test `
-      -e webhookEndpoint=***** `
       -e runFullTestSet=true
 
     For use case tests omit environment variable runFullTestSet or set value to false
@@ -266,12 +261,3 @@ export default function runTests(data) {
     throw error;
   }
 }
-
-/*
-export function handleSummary(data) {
-  let result = {};
-  result[reportPath("events.xml")] = generateJUnitXML(data, "events");
-
-  return result;
-}
-*/

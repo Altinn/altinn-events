@@ -1,4 +1,2 @@
-#Junit reports
-**/reports/*.xml
 .env
 .secrets

@@ -2,11 +2,7 @@
     Test script to platform events api with user token
     Command:
     docker-compose run k6 run /src/tests/events/post.js `
-    -e tokenGeneratorUserName=autotest `
-    -e tokenGeneratorUserPwd=*** `
-    -e mpClientId=*** `
-    -e mpKid=altinn-usecase-events `
-    -e encodedJwk=*** `
+    --secret-source=file=/.secrets `
     -e env=*** `
     -e runFullTestSet=true
 
@@ -185,12 +181,3 @@ function removePropFromCloudEvent(cloudEvent, propertyname) {
 
     return modifiedEvent;
 }
-
-/*
-export function handleSummary(data) {
-  let result = {};
-  result[reportPath("events.xml")] = generateJUnitXML(data, "events");
-
-  return result;
-}
-*/

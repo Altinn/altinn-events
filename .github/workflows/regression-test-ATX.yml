@@ -26,9 +26,6 @@ jobs:
           TOKEN_GENERATOR_USERNAME: ${{ secrets.TOKENGENERATOR_USERNAME }}
           TOKEN_GENERATOR_USERPASSWORD: ${{ secrets.TOKENGENERATOR_USERPASSWORD }}
           PID: ${{ secrets.PERSON_NUMBER }}
-          MP_CLIENT_ID: ${{ secrets.MP_CLIENT_ID }}
-          MP_KID: ${{ secrets.MP_KID }}
-          ENCODED_JWK: ${{ secrets.ENCODED_JWK }}
           WEBHOOK_ENDPOINT: ${{ secrets.WEBHOOK_ENDPOINT }}
         run: |
           umask 077
@@ -36,9 +33,6 @@ jobs:
           printf 'tokenGeneratorUserName=%s\n' "$TOKEN_GENERATOR_USERNAME" > "$SECRETS_FILE"
           printf 'tokenGeneratorUserPwd=%s\n' "$TOKEN_GENERATOR_USERPASSWORD" >> "$SECRETS_FILE"
           printf 'pid=%s\n' "$PID" >> "$SECRETS_FILE"
-          printf 'mpClientId=%s\n' "$MP_CLIENT_ID" >> "$SECRETS_FILE"
-          printf 'mpKid=%s\n' "$MP_KID" >> "$SECRETS_FILE"
-          printf 'encodedJwk=%s\n' "$ENCODED_JWK" >> "$SECRETS_FILE"
           printf 'webhookEndpoint=%s\n' "$WEBHOOK_ENDPOINT" >> "$SECRETS_FILE"
           echo "file=$SECRETS_FILE" >> "$GITHUB_OUTPUT"
       - name: Run app-events regression tests

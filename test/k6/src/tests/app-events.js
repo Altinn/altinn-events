@@ -2,16 +2,11 @@
     Test script to platform events api with user token
     Command:
     docker-compose run k6 run /src/tests/app-events.js `
-    -e env=*** `
-    -e tokenGeneratorUserName=*** `
-    -e tokenGeneratorUserPwd=*** `
-    -e mpClientId=*** `
-    -e mpKid=altinn-usecase-events `
-    -e encodedJwk=*** `
+    --secret-source=file=/.secrets
+    -e altinn_env=*** `
     -e app=apps-test `
     -e userId=*** `
     -e partyId=*** `
-    -e personNumber=*** `
     -e userName=*** `
     -e userPassword=*** `
     -e runFullTestSet=true
@@ -159,11 +154,3 @@ export default function runTests(data) {
     throw error;
   }
 }
-
-/*
-export function handleSummary(data) {
-  let result = {};
-  result[reportPath("events.xml")] = generateJUnitXML(data, "platform-events");
-  return result;
-}
-*/

@@ -14,9 +14,8 @@
 
     Command:
     podman compose run k6 run /src/tests/performance/fixed-total.js \
+      --secret-source=file=/.secrets \
       -e altinn_env=yt01 \
-      -e tokenGeneratorUserName=autotest \
-      -e tokenGeneratorUserPwd=*** \
       -e runId=$(date +%Y%m%d-%H%M%S) \
       -e totalEvents=500 \
       -e vus=10 \
