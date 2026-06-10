@@ -24,14 +24,18 @@ jobs:
           MP_KID: ${{ secrets.MP_KID }}
           ENCODED_JWK: ${{ secrets.MP_ENCODEDJWK }}
           WEBHOOK_ENDPOINT: ${{ secrets.WEBHOOK_ENDPOINT }}
+          PID: ${{ secrets.PERSON_NUMBER }}
         run: |
           umask 077
           SECRETS_FILE="${{ runner.temp }}/k6.secrets"
+          printf 'pid=%s\n' "$PID" >> "$SECRETS_FILE"
           printf 'mpClientId=%s\n' "$MP_CLIENT_ID" >> "$SECRETS_FILE"
           printf 'mpKid=%s\n' "$MP_KID" >> "$SECRETS_FILE"
           printf 'encodedJwk=%s\n' "$ENCODED_JWK" >> "$SECRETS_FILE"
           printf 'webhookEndpoint=%s\n' "$WEBHOOK_ENDPOINT" >> "$SECRETS_FILE"
           echo "file=$SECRETS_FILE" >> "$GITHUB_OUTPUT"
+      - name: Validate secrets file
+        run: cat ${{ steps.k6-secrets.outputs.file }} | sed 's/=.*/=***/'
       - name: Run app-events use case tests
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
         with:
