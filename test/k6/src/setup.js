@@ -13,10 +13,10 @@ export async function getFromSecretSource(secretName) {
         secretValue = await secrets.get(secretName);
     }
     catch (error) {
-        if (error == "no secret sources are configured") {
+        if (error.message == "no secret sources are configured") {
             stopIterationOnFail("The secret source is not configured", false);
         }
-        else if (error == "no value") {
+        else if (error.message == "no value") {
             stopIterationOnFail(`Secret ${secretName} does not exist in the secret source`, false);
         }
         console.log(error);
