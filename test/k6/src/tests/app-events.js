@@ -38,7 +38,7 @@ export async function setup() {
     ? __ENV.runFullTestSet.toLowerCase().includes("true")
     : false;
 
-  let userToken = setupToken.getAltinnTokenForUser();
+  let userToken = await setupToken.getAltinnTokenForUser();
 
   if (!partyId) {
     partyId = setupToken.getPartyIdFromTokenClaim(userToken);
