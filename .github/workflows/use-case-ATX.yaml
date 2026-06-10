@@ -30,6 +30,7 @@ jobs:
           TOKEN_GENERATOR_USERNAME: ${{ secrets.TOKENGENERATOR_USERNAME }}
           TOKEN_GENERATOR_USERPASSWORD: ${{ secrets.TOKENGENERATOR_USERPASSWORD }}
           PID: ${{ secrets.PERSON_NUMBER }}
+          TESTIDPPWD: ${{ secrets.TESTIDPPWD }}
           WEBHOOK_ENDPOINT: ${{ secrets.WEBHOOK_ENDPOINT }}
         run: |
           umask 077
@@ -37,6 +38,7 @@ jobs:
           printf 'tokenGeneratorUserName=%s\n' "$TOKEN_GENERATOR_USERNAME" > "$SECRETS_FILE"
           printf 'tokenGeneratorUserPwd=%s\n' "$TOKEN_GENERATOR_USERPASSWORD" >> "$SECRETS_FILE"
           printf 'pid=%s\n' "$PID" >> "$SECRETS_FILE"
+          printf 'testidppwd=%s\n' "$TESTIDPPWD" >> "$SECRETS_FILE"
           printf 'webhookEndpoint=%s\n' "$WEBHOOK_ENDPOINT" >> "$SECRETS_FILE"
           echo "file=$SECRETS_FILE" >> "$GITHUB_OUTPUT"
       - name: Run app-events use case tests
