@@ -69,3 +69,20 @@ export function buildHeaderWithCookie(name, value) {
 
   return params;
 }
+
+/**
+ *
+ * @param {*} altinnStudioRuntimeCookie Token to send in header as bearer token
+ * @param {String} api platform or app
+ * @returns {JSON} a JSON object with the header values for Authorization and content-type: multipart/formdata
+ */
+export function buildHeaderWithRuntimeForMultipart(altinnStudioRuntimeCookie, api) {
+  var params = {
+    headers: {
+      Authorization: 'Bearer ' + altinnStudioRuntimeCookie,
+      'Content-Type': 'multipart/form-data; boundary="abcdefg"',
+    },
+  };
+  params = addSubscriptionKey(params, appsAccessSubscriptionKey, api);
+  return params;
+}

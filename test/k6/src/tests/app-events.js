@@ -15,6 +15,7 @@ import { check } from "k6";
 import * as setupToken from "../setup.js";
 import * as appEventsApi from "../api/app-events.js";
 import { addErrorCount } from "../errorhandler.js";
+import * as appInstances from "../api/appinstances.js";
 
 export const options = {
   thresholds: {
@@ -50,6 +51,21 @@ export async function setup() {
   };
 
   return data;
+}
+
+function PostInstance(data){
+  let partyId = data.userPartyId;
+  let appOwner = data.org;
+  let appName = data.app;
+  let runtimeToken = data.userToken;
+  
+  let instanceFormDataXml = open('../data/app-events/' + appName + '.xml');
+
+  let  res = appInstances.postInstanceWithMultipartData(runtimeToken, partyId, appOwner, appName, instanceFormDataXml);
+  check(res, {
+    'App POST Create Instance with Multipart data status is 201': (r) => r.status === 201,
+    'App POST Create Instance with Multipart data Instace Id is not null': (r) => JSON.parse(r.body).id != null,
+  });
 }
 
 // 01 - GET events for org. Query parameter 'after'
@@ -135,6 +151,9 @@ function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
  */
 export default function runTests(data) {
   try {
+    // setup instance with app events
+    PostInstance(data);
+
     if (data.runFullTestSet) {
       let nextUrl = TC01_GetAppEventsForOrg(data);
 

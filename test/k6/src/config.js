@@ -62,6 +62,11 @@ export const portalAuthentication = {
     "https://" + baseUrl + "/api/authentication/authenticatewithpassword",
 };
 
+export function appApiBaseUrl(appOwner, appName) {
+  var url = 'https://' + appOwner + '.apps.' + baseUrl + '/' + appOwner + '/' + appName;
+  return url;
+}
+
 // Maskinporten
 export const maskinporten = {
   audience: maskinportenBaseUrl,

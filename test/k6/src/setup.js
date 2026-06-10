@@ -62,6 +62,9 @@ export async function loginWithMockporten() {
   addErrorCount(success);
   stopIterationOnFail("Mockporten login form not loaded", success, res);
 
+
+  console.log(res)
+
   res = res.submitForm({ fields: { Pid: pid, Password: testidppwd } });
   success = check(res, { "Mockporten authentication success": (r) => r.status === 200 });
   addErrorCount(success);
