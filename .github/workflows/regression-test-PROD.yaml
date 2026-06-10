@@ -21,7 +21,6 @@ jobs:
       - name: Create k6 secrets file
         id: k6-secrets
         env:
-          PID: ${{ secrets.PERSON_NUMBER }}
           MP_CLIENT_ID: ${{ secrets.MP_CLIENT_ID }}
           MP_KID: ${{ secrets.MP_KID }}
           ENCODED_JWK: ${{ secrets.MP_ENCODEDJWK }}
@@ -29,7 +28,6 @@ jobs:
         run: |
           umask 077
           SECRETS_FILE="${{ runner.temp }}/k6.secrets"
-          printf 'pid=%s\n' "$PID" >> "$SECRETS_FILE"
           printf 'mpClientId=%s\n' "$MP_CLIENT_ID" >> "$SECRETS_FILE"
           printf 'mpKid=%s\n' "$MP_KID" >> "$SECRETS_FILE"
           printf 'encodedJwk=%s\n' "$ENCODED_JWK" >> "$SECRETS_FILE"
