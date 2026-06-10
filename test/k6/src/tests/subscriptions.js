@@ -14,8 +14,8 @@ import { check, sleep } from "k6";
 import * as subscriptionsApi from "../api/subscriptions.js";
 import * as config from "../config.js";
 import { addErrorCount } from "../errorhandler.js";
-import { getFromSecretSource, getAltinnTokenForOrg } from "../setup.js";
-import { get } from "k6/http";
+import { getAltinnTokenForOrg } from "../setup.js";
+import { getFromSecretSource } from "../secret-reader.js";
 
 const appSubscription = JSON.parse(
   open("../data/subscriptions/01-app-subscription.json")

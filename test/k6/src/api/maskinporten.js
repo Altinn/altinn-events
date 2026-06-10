@@ -7,7 +7,7 @@ import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 import { buildHeaderWithContentType } from "../apiHelpers.js";
 import * as config from "../config.js";
 import { stopIterationOnFail, addErrorCount } from "../errorhandler.js";
-import { getFromSecretSource } from "../setup.js";
+import { getFromSecretSource } from "../secret-reader.js";
 
 let memoizedSigningKeyPromise;
 
