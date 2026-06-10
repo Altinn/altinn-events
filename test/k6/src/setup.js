@@ -2,8 +2,31 @@ import * as tokenGenerator from "./api/token-generator.js";
 import * as maskinporten from "./api/maskinporten.js";
 import * as authentication from "./api/authentication.js";
 import { b64decode } from "k6/encoding";
+import { stopIterationOnFail } from "./errorhandler.js";
+import secrets from "k6/secrets";
 
 const environment = (__ENV.altinn_env || '').toLowerCase(); // Fallback value for when k6 inspect is run in script validation (env var evaluation yields 'undefined' in this phase)
+
+export async function getFromSecretSource(secretName) {
+    let secretValue;
+    try {
+        secretValue = await secrets.get(secretName);
+    }
+    catch (error) {
+        if (error == "no secret sources are configured") {
+            stopIterationOnFail("The secret sources is not configured", false);
+        }
+        else if (error == "no value") {
+            stopIterationOnFail(`Secret ${secretName} does not exist in the secret source`, false);
+        }
+        console.log(error);
+        stopIterationOnFail("Unknown error occurred in the attempt to get secret from source", false);
+    }
+    if (!secretValue) {
+        stopIterationOnFail(`Secret ${secretName} is not properly assigned in the secret source`, false);
+    }
+    return secretValue;
+}
 
 /*
  * generate an altinn token for org based on the environment using AltinnTestTools
@@ -27,7 +50,7 @@ export async function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "9918258
 }
 
 export function getAltinnTokenForUser() {
-  if (environment == "prod" || environment == "tt02") {
+  if (environment == "prod") {
     return authentication.authenticateUser();
   }
 

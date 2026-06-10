@@ -7,10 +7,7 @@ import { uuidv4 } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
 import { buildHeaderWithContentType } from "../apiHelpers.js";
 import * as config from "../config.js";
 import { stopIterationOnFail, addErrorCount } from "../errorhandler.js";
-
-const encodedJwk = __ENV.encodedJwk;
-const mpClientId = __ENV.mpClientId;
-const mpKid = __ENV.mpKid;
+import { getFromSecretSource } from "../setup.js";
 
 let memoizedSigningKeyPromise;
 
@@ -20,6 +17,10 @@ let memoizedSigningKeyPromise;
  * @returns {Promise<string>} The Maskinporten access token.
  */
 export async function generateAccessToken(scopes) {
+  const encodedJwk = await getFromSecretSource("encodedJwk");
+  const mpClientId = await getFromSecretSource("mpClientId");
+  const mpKid = await getFromSecretSource("mpKid");
+
   if (!encodedJwk) {
     stopIterationOnFail("Required environment variable Encoded JWK (encodedJWK) was not provided", false);
   }
@@ -62,6 +63,8 @@ export async function generateAccessToken(scopes) {
  * @returns {Promise<CryptoKey>} The imported signing key.
  */
 async function importSigningKey() {
+  const encodedJwk = await getFromSecretSource("encodedJwk");
+
   const jwk = JSON.parse(encoding.b64decode(encodedJwk, "std", "s"));
   return crypto.subtle.importKey(
     "jwk",
@@ -112,6 +115,9 @@ function stringToBytes(str) {
  * @returns {Promise<string>} The signed JWT string.
  */
 async function createJwtGrant(scopes) {
+  const mpKid = await getFromSecretSource("mpKid");
+  const mpClientId = await getFromSecretSource("mpClientId");
+
   const header = {
     alg: "RS256",
     typ: "JWT",
