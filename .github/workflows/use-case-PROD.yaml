@@ -55,7 +55,7 @@ jobs:
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
         with:
           path: test/k6/src/tests/subscriptions.js
-          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=${{ secrets.APP_NAME}}
+          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=${{ secrets.APP_NAME }}
 
   slack-notify:
     if: failure()
