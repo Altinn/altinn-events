@@ -33,8 +33,6 @@ jobs:
           printf 'webhookEndpoint=%s\n' "$WEBHOOK_ENDPOINT" >> "$SECRETS_FILE"
           truncate -s -1 "$SECRETS_FILE"  # remove the last byte (the trailing newline)
           echo "file=$SECRETS_FILE" >> "$GITHUB_OUTPUT"
-      - name: Validate secrets file
-        run: cat ${{ steps.k6-secrets.outputs.file }} | sed 's/=.*/=***/'
       - name: Run app-events use case tests
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
         with:
