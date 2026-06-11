@@ -1,5 +1,7 @@
 import * as config from '../config.js';
 import { buildHeaderWithRuntimeForMultipart } from '../apiHelpers.js';
+import { getFromSecretSource } from '../secret-reader.js';
+import http from 'k6/http';
 
 /**
  * Api call to App Api:Instances to create an app instance for a party with multipart data including form data xml and returns response
@@ -10,17 +12,18 @@ import { buildHeaderWithRuntimeForMultipart } from '../apiHelpers.js';
  * @param {XMLDocument} formDataXml xml form data
  */
 export function postInstanceWithMultipartData(altinnStudioRuntimeCookie, partyId, appOwner, appName, formDataXml) {
-  var endpoint = config.appApiBaseUrl(appOwner, appName) + '/instances';
-  var params = buildHeaderWithRuntimeForMultipart(altinnStudioRuntimeCookie, 'app');
+  const endpoint = config.appApiBaseUrl(appOwner, appName) + '/instances';
+  const appsAccessSubscriptionKey = getFromSecretSource('appsAccessSubscriptionKey');
+  const params = buildHeaderWithRuntimeForMultipart(altinnStudioRuntimeCookie, 'app', appsAccessSubscriptionKey);
 
-  var instanceJson = {
+  let instanceJson = {
     instanceOwner: {
       partyId: partyId,
     },
   };
   instanceJson = JSON.stringify(instanceJson);
 
-  var requestBody =
+  const requestBody =
     `--abcdefg\r\n` +
     `Content-Type: application/json; charset=utf-8\r\n` +
     `Content-Disposition: form-data; name=\"instance\"\r\n\r\n${instanceJson}\r\n\r\n` +

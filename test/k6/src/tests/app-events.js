@@ -5,9 +5,6 @@
     --secret-source=file=/.secrets
     -e altinn_env=*** `
     -e app=apps-test `
-    -e partyId=*** `
-    -e userName=*** `
-    -e userPassword=*** `
     -e runFullTestSet=true
 */
 
@@ -22,6 +19,11 @@ export const options = {
     errors: ["count<1"],
   },
 };
+
+const appName = __ENV.app.toLowerCase();
+
+let instanceFormDataXml = open('../data/app-events/' + appName + '.xml');
+
 
 export async function setup() {
   let scopes = "altinn:serviceowner";
@@ -59,8 +61,6 @@ function PostInstance(data){
   let appName = data.app;
   let runtimeToken = data.userToken;
   
-  let instanceFormDataXml = open('../data/app-events/' + appName + '.xml');
-
   let  res = appInstances.postInstanceWithMultipartData(runtimeToken, partyId, appOwner, appName, instanceFormDataXml);
   check(res, {
     'App POST Create Instance with Multipart data status is 201': (r) => r.status === 201,
