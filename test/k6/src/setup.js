@@ -56,9 +56,9 @@ export async function loginWithMockporten() {
   const testidppwd = await getFromSecretSource("testidppwd");
 
   http.cookieJar().clear(platformAuthentication.refresh);
-  var endpoint = platformAuthentication.refresh + "&iss=mockporten";
-  var res = http.get(endpoint);
-  var success = check(res, { "Mockporten login form loaded": (r) => r.status === 200 });
+  let endpoint = platformAuthentication.refresh + "&iss=mockporten";
+  let res = http.get(endpoint);
+  let success = check(res, { "Mockporten login form loaded": (r) => r.status === 200 });
   addErrorCount(success);
   stopIterationOnFail("Mockporten login form not loaded", success, res);
 

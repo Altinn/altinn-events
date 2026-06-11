@@ -21,6 +21,7 @@ export const options = {
 };
 
 const appName = __ENV.app.toLowerCase();
+const environment = (__ENV.altinn_env || '').toLowerCase();
 
 let instanceFormDataXml = open('../data/app-events/' + appName + '.xml');
 
@@ -56,6 +57,10 @@ export async function setup() {
 }
 
 function PostInstance(data){
+  if (environment == "prod") {
+    return;
+  }
+
   let partyId = data.userPartyId;
   let appOwner = data.org;
   let appName = data.app;
