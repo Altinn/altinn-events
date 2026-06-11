@@ -1,6 +1,5 @@
 import * as config from '../config.js';
 import { buildHeaderWithRuntimeForMultipart } from '../apiHelpers.js';
-import { getFromSecretSource } from '../secret-reader.js';
 import http from 'k6/http';
 
 /**
@@ -13,8 +12,7 @@ import http from 'k6/http';
  */
 export function postInstanceWithMultipartData(altinnStudioRuntimeCookie, partyId, appOwner, appName, formDataXml) {
   const endpoint = config.appApiBaseUrl(appOwner, appName) + '/instances';
-  const appsAccessSubscriptionKey = getFromSecretSource('appsAccessSubscriptionKey');
-  const params = buildHeaderWithRuntimeForMultipart(altinnStudioRuntimeCookie, 'app', appsAccessSubscriptionKey);
+  const params = buildHeaderWithRuntimeForMultipart(altinnStudioRuntimeCookie);
 
   let instanceJson = {
     instanceOwner: {

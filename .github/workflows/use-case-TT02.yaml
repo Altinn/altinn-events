@@ -26,7 +26,6 @@ jobs:
           ENCODED_JWK: ${{ secrets.MP_ENCODEDJWK }}
           WEBHOOK_ENDPOINT: ${{ secrets.WEBHOOK_ENDPOINT }}
           TESTIDPPWD: ${{ secrets.TESTIDPPWD }}
-          APPS_ACCESS_SUBSCRIPTION_KEY: ${{ secrets.APPS_ACCESS_SUBSCRIPTION_KEY }}
         run: |
           umask 077
           SECRETS_FILE="${{ runner.temp }}/k6.secrets"
@@ -36,7 +35,6 @@ jobs:
           printf 'mpKid=%s\n' "$MP_KID" >> "$SECRETS_FILE"
           printf 'encodedJwk=%s\n' "$ENCODED_JWK" >> "$SECRETS_FILE"
           printf 'webhookEndpoint=%s\n' "$WEBHOOK_ENDPOINT" >> "$SECRETS_FILE"
-          printf 'appsAccessSubscriptionKey=%s\n' "$APPS_ACCESS_SUBSCRIPTION_KEY" >> "$SECRETS_FILE"
           echo "file=$SECRETS_FILE" >> "$GITHUB_OUTPUT"
       - name: Run app-events use case tests
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0

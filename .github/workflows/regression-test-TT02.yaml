@@ -27,13 +27,11 @@ jobs:
           ENCODED_JWK: ${{ secrets.MP_ENCODEDJWK }}
           WEBHOOK_ENDPOINT: ${{ secrets.WEBHOOK_ENDPOINT }}
           TESTIDPPWD: ${{ secrets.TESTIDPPWD }}
-          APPS_ACCESS_SUBSCRIPTION_KEY: ${{ secrets.APPS_ACCESS_SUBSCRIPTION_KEY }}
         run: |
           umask 077
           SECRETS_FILE="${{ runner.temp }}/k6.secrets"
           printf 'pid=%s\n' "$PID" >> "$SECRETS_FILE"
           printf 'testidppwd=%s\n' "$TESTIDPPWD" >> "$SECRETS_FILE"
-          printf 'appsAccessSubscriptionKey=%s\n' "$APPS_ACCESS_SUBSCRIPTION_KEY" >> "$SECRETS_FILE"
           printf 'mpClientId=%s\n' "$MP_CLIENT_ID" >> "$SECRETS_FILE"
           printf 'mpKid=%s\n' "$MP_KID" >> "$SECRETS_FILE"
           printf 'encodedJwk=%s\n' "$ENCODED_JWK" >> "$SECRETS_FILE"
