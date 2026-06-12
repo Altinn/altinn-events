@@ -20,7 +20,7 @@ export const options = {
   },
 };
 
-const appName = __ENV.app.toLowerCase();
+const appName = (__ENV.app || '').toLowerCase();
 const environment = (__ENV.altinn_env || '').toLowerCase();
 
 let instanceFormDataXml = open('../data/app-events/' + appName + '.xml');
