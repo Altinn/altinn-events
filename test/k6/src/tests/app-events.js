@@ -32,7 +32,6 @@ const instanceFormDataXml = instanceFormDataByApp[appName];
 
 export async function setup() {
   let scopes = "altinn:serviceowner";
-  const app = __ENV.app.toLowerCase();
   const org = "ttd";
   let partyId = __ENV.partyId;
 
@@ -54,7 +53,7 @@ export async function setup() {
     userPartyId: partyId,
     orgToken: orgToken,
     org: org,
-    app: app,
+    app: appName,
   };
 
   return data;
