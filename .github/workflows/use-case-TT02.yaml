@@ -25,10 +25,12 @@ jobs:
           MP_KID: ${{ secrets.MP_KID }}
           ENCODED_JWK: ${{ secrets.MP_ENCODEDJWK }}
           WEBHOOK_ENDPOINT: ${{ secrets.WEBHOOK_ENDPOINT }}
+          TESTIDPPWD: ${{ secrets.TESTIDPPWD }}
         run: |
           umask 077
           SECRETS_FILE="${{ runner.temp }}/k6.secrets"
           printf 'pid=%s\n' "$PID" >> "$SECRETS_FILE"
+          printf 'testidppwd=%s\n' "$TESTIDPPWD" >> "$SECRETS_FILE"
           printf 'mpClientId=%s\n' "$MP_CLIENT_ID" >> "$SECRETS_FILE"
           printf 'mpKid=%s\n' "$MP_KID" >> "$SECRETS_FILE"
           printf 'encodedJwk=%s\n' "$ENCODED_JWK" >> "$SECRETS_FILE"
@@ -56,7 +58,7 @@ jobs:
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
         with:
           path: test/k6/src/tests/subscriptions.js
-          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test -e webhookEndpoint=${{ secrets.WEBHOOK_ENDPOINT }}
+          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test
 
   slack-notify:
     if: failure()

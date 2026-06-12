@@ -28,6 +28,9 @@ Alternatively, it is possible to run the tests directly on your machine as well.
 2. Copy contents from `.secrets.sample`
 3. Assign valid values to the variables
 
+- `pid`\* the person number (SSN) for the test user — must be a synthetic Tenor fødselsnummer (month 81–92)
+- `testidppwd`\* the shared Mockporten password for the synthetic test user
+
 ## Running tests
 
 All tests are defined in `src/tests` and in the top of each test file an example of the cmd to run the test is available.

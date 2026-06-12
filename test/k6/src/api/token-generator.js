@@ -19,38 +19,6 @@ export function generateEnterpriseToken(queryParams) {
   return generateToken(endpoint);
 }
 
-export async function generatePersonalToken() {
-
-  let userId = __ENV.userId;
-  let partyId = __ENV.partyId;
-  let pid = await getFromSecretSource("pid");
-
-  if (!userId) {
-    stopIterationOnFail("Required environment variable user id (userId) was not provided", false);
-  }
-
-  if (!partyId) {
-    stopIterationOnFail("Required environment variable party id (partyId) was not provided", false);
-  }
-
-  if (!pid) {
-    stopIterationOnFail("Required environment variable person number (pid) was not provided", false);
-  }
-
-  let queryParams = {
-    env: environment,
-    userId: userId,
-    partyId: partyId,
-    pid: pid,
-  };
-
-  let endpoint =
-    config.tokenGenerator.getPersonalToken +
-    apiHelpers.buildQueryParametersForEndpoint(queryParams);
-
-  return await generateToken(endpoint);
-}
-
 async function generateToken(endpoint) {
   const tokenGeneratorUserName = await getFromSecretSource("tokenGeneratorUserName");
   const tokenGeneratorUserPwd = await getFromSecretSource("tokenGeneratorUserPwd");

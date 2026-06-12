@@ -5,10 +5,6 @@
     --secret-source=file=/.secrets
     -e altinn_env=*** `
     -e app=apps-test `
-    -e userId=*** `
-    -e partyId=*** `
-    -e userName=*** `
-    -e userPassword=*** `
     -e runFullTestSet=true
 */
 
@@ -16,12 +12,19 @@ import { check } from "k6";
 import * as setupToken from "../setup.js";
 import * as appEventsApi from "../api/app-events.js";
 import { addErrorCount } from "../errorhandler.js";
+import * as appInstances from "../api/appinstances.js";
 
 export const options = {
   thresholds: {
     errors: ["count<1"],
   },
 };
+
+const appName = __ENV.app.toLowerCase();
+const environment = (__ENV.altinn_env || '').toLowerCase();
+
+let instanceFormDataXml = open('../data/app-events/' + appName + '.xml');
+
 
 export async function setup() {
   let scopes = "altinn:serviceowner";
@@ -51,6 +54,23 @@ export async function setup() {
   };
 
   return data;
+}
+
+function PostInstance(data){
+  if (environment == "prod") {
+    return;
+  }
+
+  let partyId = data.userPartyId;
+  let appOwner = data.org;
+  let appName = data.app;
+  let runtimeToken = data.userToken;
+  
+  let  res = appInstances.postInstanceWithMultipartData(runtimeToken, partyId, appOwner, appName, instanceFormDataXml);
+  check(res, {
+    'App POST Create Instance with Multipart data status is 201': (r) => r.status === 201,
+    'App POST Create Instance with Multipart data Instance Id is not null': (r) => JSON.parse(r.body).id != null,
+  });
 }
 
 // 01 - GET events for org. Query parameter 'after'
@@ -136,6 +156,9 @@ function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
  */
 export default function runTests(data) {
   try {
+    // setup instance with app events
+    PostInstance(data);
+
     if (data.runFullTestSet) {
       let nextUrl = TC01_GetAppEventsForOrg(data);
 
