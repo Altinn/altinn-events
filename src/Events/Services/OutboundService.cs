@@ -114,6 +114,12 @@ public class OutboundService : IOutboundService
             }
         }
 
+        if (cloudEvent.Source is not null)
+        {
+            allSubscriptions.RemoveAll(
+                sub => sub.SourceFilter is not null && !sub.SourceFilter.IsBaseOf(cloudEvent.Source));
+        }
+
         await AuthorizeAndPush(cloudEvent, allSubscriptions, cancellationToken, useAzureServiceBus);
     }
 

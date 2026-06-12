@@ -341,8 +341,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             
             queueMock.Verify(
                 r => r.EnqueueOutbound(It.IsAny<string>()), 
-                Times.Exactly(4),
-                "Should enqueue 4 times - one for each subscription");
+                Times.Exactly(3),
+                "Should enqueue 3 times - one for each subscription, the forth subscription is filtered out due to source mismatch");
         }
 
         /// <summary>
@@ -1404,8 +1404,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 m => m.PublishAsync(
                     It.IsAny<Contracts.OutboundEventCommand>(),
                     It.IsAny<DeliveryOptions>()),
-                Times.Exactly(3),
-                "MessageBus should be called 3 times - for authorized subscriptions (2 for /org/ttd, 1 for /user/1337)");
+                Times.Exactly(2),
+                "MessageBus should be called 2 times - for authorized subscriptions (1 for /org/ttd, 1 for /user/1337), 0 for /org/nav");
 
             queueMock.Verify(
                 q => q.EnqueueOutbound(It.IsAny<string>()),
