@@ -23,8 +23,12 @@ export const options = {
 const appName = (__ENV.app || '').toLowerCase();
 const environment = (__ENV.altinn_env || '').toLowerCase();
 
-let instanceFormDataXml = open('../data/app-events/' + appName + '.xml');
+const instanceFormDataByApp = {
+  "apps-test": open("../data/app-events/apps-test.xml"),
+  "apps-test-prod": open("../data/app-events/apps-test-prod.xml"),
+};
 
+const instanceFormDataXml = instanceFormDataByApp[appName];
 
 export async function setup() {
   let scopes = "altinn:serviceowner";
