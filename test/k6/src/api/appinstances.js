@@ -1,5 +1,5 @@
 import * as config from '../config.js';
-import { buildHeaderWithRuntimeForMultipart } from '../apiHelpers.js';
+import { buildHeaderWithRuntimeForMultipart, MULTIPART_BOUNDARY } from '../apiHelpers.js';
 import http from 'k6/http';
 
 /**
@@ -22,13 +22,13 @@ export function postInstanceWithMultipartData(altinnStudioRuntimeCookie, partyId
   instanceJson = JSON.stringify(instanceJson);
 
   const requestBody =
-    `--abcdefg\r\n` +
+    `--${MULTIPART_BOUNDARY}\r\n` +
     `Content-Type: application/json; charset=utf-8\r\n` +
     `Content-Disposition: form-data; name=\"instance\"\r\n\r\n${instanceJson}\r\n\r\n` +
-    `--abcdefg\r\n` +
+    `--${MULTIPART_BOUNDARY}\r\n` +
     `Content-Type: application/xml\r\n` +
     `Content-Disposition: form-data; name=\"default\"\r\n\r\n${formDataXml}\r\n\r\n` +
-    `--abcdefg--`;
+    `--${MULTIPART_BOUNDARY}--`;
 
   return http.post(endpoint, requestBody, params);
 }
