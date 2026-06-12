@@ -43,11 +43,9 @@ jobs:
           echo "file=$SECRETS_FILE" >> "$GITHUB_OUTPUT"
       - name: Run app-events use case tests
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
-        env:
-          app: apps-test
         with:
           path: test/k6/src/tests/app-events.js
-          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }}
+          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test
       - name: Run events use case tests (POST)
         if: always()
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
