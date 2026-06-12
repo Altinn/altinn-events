@@ -20,15 +20,18 @@ export const options = {
   },
 };
 
-const appName = __ENV.app.toLowerCase();
+const appName = (__ENV.app || '').toLowerCase();
 const environment = (__ENV.altinn_env || '').toLowerCase();
 
-let instanceFormDataXml = open('../data/app-events/' + appName + '.xml');
+const instanceFormDataByApp = {
+  "apps-test": open("../data/app-events/apps-test.xml"),
+  "apps-test-prod": open("../data/app-events/apps-test-prod.xml"),
+};
 
+const instanceFormDataXml = instanceFormDataByApp[appName];
 
 export async function setup() {
   let scopes = "altinn:serviceowner";
-  const app = __ENV.app.toLowerCase();
   const org = "ttd";
   let partyId = __ENV.partyId;
 
@@ -50,7 +53,7 @@ export async function setup() {
     userPartyId: partyId,
     orgToken: orgToken,
     org: org,
-    app: app,
+    app: appName,
   };
 
   return data;
