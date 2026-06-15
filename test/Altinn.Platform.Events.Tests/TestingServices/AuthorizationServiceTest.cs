@@ -38,7 +38,7 @@ public class AuthorizationServiceTest
         _cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
         {
             Id = Guid.NewGuid().ToString(),
-            Type = "system.event.occurred",
+            Type = "app.instance.created",
             Subject = "/party/1337",
             Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd")
         };
@@ -60,7 +60,7 @@ public class AuthorizationServiceTest
             new(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/1337"]);
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/1337"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -78,7 +78,7 @@ public class AuthorizationServiceTest
             new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -97,12 +97,13 @@ public class AuthorizationServiceTest
 
         CloudEvent cloudEvent = new()
         {
-            Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Type = "app.instance.created",
             Subject = "/party/1337"
         };
 
         // Act
-        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/org/nav"]);
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/org/nav"], TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Single(result);
@@ -529,7 +530,7 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -573,7 +574,7 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/12345"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/12345"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -618,7 +619,7 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, [$"/systemuser/{systemUserUuid}"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, [$"/systemuser/{systemUserUuid}"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -700,7 +701,7 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd", "/org/nav", "/user/12345678"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd", "/org/nav", "/user/12345678"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);

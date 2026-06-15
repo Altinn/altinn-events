@@ -24,12 +24,16 @@ using Altinn.Platform.Events.UnitTest.Mocks;
 
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+
 using Moq;
+
 using Wolverine;
+
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -48,7 +52,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task PostOutbound_AppEvent_SourceFilterIsSimplified()
         {
             // Arrange
-            CloudEvent cloudEvent = GetCloudEvent(new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/123124"), "/party/1337/", "app.instance.process.completed", "urn:altinn:resource:app_ttd_endring-av-navn-v2");
+            CloudEvent cloudEvent = GetCloudEvent(
+                new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/01f66e22-33bb-4b14-8059-f2d7a8d16dc8"),
+                "/party/1337", 
+                "app.instance.process.completed", 
+                "urn:altinn:resource:app_ttd_endring-av-navn-v2");
 
             Mock<ISubscriptionRepository> repositoryMock = new();
             repositoryMock
@@ -92,7 +100,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync([]);
             Mock<IEventsQueueClient> queueMock = new();
             queueMock
@@ -105,7 +113,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             repositoryMock.VerifyAll();
-            authorizationMock.Verify(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()), Times.Never);
+            authorizationMock.Verify(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()), Times.Never);
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
         }
 
@@ -252,7 +260,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.IsAny<List<string>>()))
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Dictionary<string, bool> { { "/org/nav", false } });
 
             var service = GetOutboundService(
@@ -268,7 +277,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock.Verify(
                 a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.Is<List<string>>(list => list.Contains("/org/nav"))),
+                    It.Is<List<string>>(list => list.Contains("/org/nav")),
+                    It.IsAny<CancellationToken>()),
                 Times.Once);
             queueMock.Verify(r => r.EnqueueOutbound(It.IsAny<string>()), Times.Never);
         }
@@ -303,12 +313,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(), 
-                    It.IsAny<List<string>>()))
-                .Callback<CloudEvent, List<string>>((ce, consumers) => 
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()))
+                .Callback<CloudEvent, List<string>, CancellationToken>((ce, consumers, ct) => 
                 {
                     capturedConsumers = consumers;
                 })
-                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
                 {
                     // Return true for all consumers that were passed in
                     var results = new Dictionary<string, bool>();
@@ -329,7 +340,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock.Verify(
                 a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(), 
-                    It.IsAny<List<string>>()), 
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()),
                 Times.Once,
                 "Authorization should be called once with distinct consumers");
             
@@ -342,7 +354,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock.Verify(
                 r => r.EnqueueOutbound(It.IsAny<string>()), 
                 Times.Exactly(3),
-                "Should enqueue 3 times - one for each subscription, the forth subscription is filtered out due to source mismatch");
+                "Should enqueue 3 times, the forth subscription is filtered out due to source mismatch");
         }
 
         /// <summary>
@@ -365,7 +377,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
-                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
+                .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Dictionary<string, bool>
                 {
                     { "/user/1337", true }
@@ -429,8 +441,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.IsAny<List<string>>()))
-                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
                 {
                     // Return true for all consumers
                     var results = new Dictionary<string, bool>();
@@ -1002,7 +1015,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.Is<List<string>>(list => list.Contains(consumer))))
+                    It.Is<List<string>>(list => list.Contains(consumer)),
+                    It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Dictionary<string, bool> { { consumer, true } });
 
             Mock<IEventsQueueClient> queueMock = new();
@@ -1024,7 +1038,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authMock.Verify(
                 a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.IsAny<List<string>>()),
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()),
                 Times.Once);
 
             Assert.True(cache.TryGetValue(expectedCacheKey, out bool cachedValue));
@@ -1078,7 +1093,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authMock.Verify(
                 a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.IsAny<List<string>>()),
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()),
                 Times.Never);
         }
 
@@ -1266,8 +1282,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.IsAny<List<string>>()))
-                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
                 {
                     var results = new Dictionary<string, bool>();
                     foreach (var consumer in consumers)
@@ -1322,8 +1339,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.IsAny<List<string>>()))
-                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
                 {
                     var results = new Dictionary<string, bool>();
                     foreach (var consumer in consumers)
@@ -1378,8 +1396,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.IsAny<List<string>>()))
-                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
                 {
                     // Authorize only /org/ttd and /user/1337, not /org/nav
                     var results = new Dictionary<string, bool>
@@ -1438,8 +1457,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             authorizationMock
                 .Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
                     It.IsAny<CloudEvent>(),
-                    It.IsAny<List<string>>()))
-                .ReturnsAsync((CloudEvent ce, List<string> consumers) =>
+                    It.IsAny<List<string>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((CloudEvent ce, List<string> consumers, CancellationToken ct) =>
                 {
                     var results = new Dictionary<string, bool>();
                     foreach (var consumer in consumers)

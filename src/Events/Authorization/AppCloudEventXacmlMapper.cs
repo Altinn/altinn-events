@@ -76,8 +76,29 @@ public static class AppCloudEventXacmlMapper
             AccessSubject = [],
         };
 
-        (string applicationOwnerId, string appName, string instanceOwnerPartyId, string instanceGuid) = AppCloudEventExtensions.GetPropertiesFromAppSource(cloudEvent.Source);
-        
+        /* There are two possible publishers of events where the resource is an App: 
+         * The App itself and Dialogporten. The two publishers provide different properties, values and formats.
+         * See issue #930 for more details.
+         * */
+
+        string applicationOwnerId = null;
+        string appName = null;
+        string instanceId = null;
+        string subject = cloudEvent.Subject;
+
+        if (cloudEvent.Type?.StartsWith("app.") == true)
+        {
+            (applicationOwnerId, appName, var instanceOwnerPartyId, var instanceGuid) =
+                AppCloudEventExtensions.GetPropertiesFromAppSource(cloudEvent.Source);
+            instanceId = $"{instanceOwnerPartyId}/{instanceGuid}";
+        }
+        else
+        {
+            string[] appIdComponents = cloudEvent.GetResource().Split("_", 3);
+            applicationOwnerId = appIdComponents[1];
+            appName = appIdComponents[2];
+        }
+
         List<XacmlJsonCategory> subjectCategories = CreateMultipleSubjectCategories(consumers);
         request.AccessSubject.AddRange(subjectCategories);
 
@@ -85,7 +106,7 @@ public static class AppCloudEventXacmlMapper
         actionCategory.Id = $"{CloudEventXacmlMapper.ActionId}1";
         request.Action.Add(actionCategory);
 
-        var resourceCategory = CreateEventsResourceCategory(applicationOwnerId, appName, instanceOwnerPartyId, instanceGuid, true);
+        var resourceCategory = CreateEventsResourceCategory(applicationOwnerId, appName, subject, instanceId, true);
         resourceCategory.Id = $"{CloudEventXacmlMapper.ResourceId}1";
         request.Resource.Add(resourceCategory);
 
@@ -103,11 +124,11 @@ public static class AppCloudEventXacmlMapper
     /// </summary>
     /// <param name="applicationOwnerId">The identifier of the application owner.</param>
     /// <param name="appName">The name of the application.</param>
-    /// <param name="instanceOwnerPartyId">The identifier of the instance owner party.</param>
-    /// <param name="instanceGuid">The GUID of the instance.</param>
+    /// <param name="subject">The subject of the event.</param>
+    /// <param name="instanceId">The full instance id on the format {instanceOwnerPartyId}/{instanceGuid}.</param>
     /// <param name="includeResult">A boolean indicating whether to include the result in the attributes.</param>
     /// <returns>A <see cref="XacmlJsonCategory"/> object representing the resource category for events.</returns>
-    private static XacmlJsonCategory CreateEventsResourceCategory(string applicationOwnerId, string appName, string instanceOwnerPartyId, string instanceGuid, bool includeResult = false)
+    private static XacmlJsonCategory CreateEventsResourceCategory(string applicationOwnerId, string appName, string subject, string instanceId, bool includeResult = false)
     {
         string defaultType = CloudEventXacmlMapper.DefaultType;
         string defaultIssuer = CloudEventXacmlMapper.DefaultIssuer;
@@ -117,14 +138,14 @@ public static class AppCloudEventXacmlMapper
             Attribute = []
         };
 
-        if (!string.IsNullOrWhiteSpace(instanceOwnerPartyId))
+        if (!string.IsNullOrWhiteSpace(subject))
         {
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.PartyId, instanceOwnerPartyId, defaultType, defaultIssuer, includeResult));
+            resourceCategory.AddSubjectAttribute(subject, includeResult);
         }
 
-        if (!string.IsNullOrWhiteSpace(instanceGuid) && !string.IsNullOrWhiteSpace(instanceOwnerPartyId))
+        if (!string.IsNullOrWhiteSpace(instanceId))
         {
-            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.InstanceId, instanceOwnerPartyId + "/" + instanceGuid, defaultType, defaultIssuer, includeResult));
+            resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.InstanceId, instanceId, defaultType, defaultIssuer, includeResult));
         }
 
         if (!string.IsNullOrWhiteSpace(applicationOwnerId))
