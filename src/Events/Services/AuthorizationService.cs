@@ -188,7 +188,7 @@ public class AuthorizationService : IAuthorization
 
         RestoreSubject(cloudEvent);
 
-        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest, cancellationToken);
             
         foreach (var r in response.Response)
         {

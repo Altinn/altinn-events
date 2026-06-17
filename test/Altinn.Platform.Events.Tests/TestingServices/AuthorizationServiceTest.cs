@@ -111,6 +111,43 @@ public class AuthorizationServiceTest
     }
 
     [Fact]
+    public async Task AuthorizeConsumerForAltinnAppEvent_EventPublishedByApp_HandleUnsupportedSubject()
+    {
+        PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
+
+        _registerServiceMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
+            {
+                Assert.Single(requestedUrnList);
+                Assert.Equal("urn:altinn:person:identifier-no:11913049472", requestedUrnList.ElementAt(0));
+            })
+            .ReturnsAsync([new PartyIdentifiers
+            {
+                PartyId = 50301578,
+                PartyType = "person",
+                PersonIdentifier = "11913049472"
+            }
+            ]);
+
+        CloudEvent cloudEvent = new()
+        {
+            Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/50301578/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Type = "app.instance.created",
+            Subject = "/party/50301578"
+        };
+
+        AuthorizationService authzHelper =
+            new(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/user/1337"], TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/user/1337"]);
+    }
+
+    [Fact]
     public async Task AuthorizeConsumerForGenericEvent_PdpIsCalledWithXacmlRequestRoot()
     {
         // Arrange
@@ -500,7 +537,7 @@ public class AuthorizationServiceTest
         // Arrange
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =
@@ -544,7 +581,7 @@ public class AuthorizationServiceTest
         // Arrange
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =
@@ -589,7 +626,7 @@ public class AuthorizationServiceTest
         var systemUserUuid = Guid.NewGuid().ToString();
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =
@@ -633,7 +670,7 @@ public class AuthorizationServiceTest
         // Arrange
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =
