@@ -111,23 +111,9 @@ public class AuthorizationServiceTest
     }
 
     [Fact]
-    public async Task AuthorizeConsumerForAltinnAppEvent_EventPublishedByApp_HandleUnsupportedSubject()
+    public async Task AuthorizeConsumerForAltinnAppEvent_EventPublishedByApp()
     {
         PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
-
-        _registerServiceMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
-            {
-                Assert.Single(requestedUrnList);
-                Assert.Equal("urn:altinn:person:identifier-no:11913049472", requestedUrnList.ElementAt(0));
-            })
-            .ReturnsAsync([new PartyIdentifiers
-            {
-                PartyId = 50301578,
-                PartyType = "person",
-                PersonIdentifier = "11913049472"
-            }
-            ]);
 
         CloudEvent cloudEvent = new()
         {
@@ -145,6 +131,80 @@ public class AuthorizationServiceTest
         // Assert
         Assert.Single(result);
         Assert.True(result["/user/1337"]);
+    }
+
+    [Fact]
+    public async Task AuthorizeConsumerForAltinnAppEvent_EventPublishedByDialogporten_HandleUnsupportedSubject()
+    {
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), TestContext.Current.CancellationToken))
+            .Callback((XacmlJsonRequestRoot authRequest, CancellationToken cancellationToken) =>
+            {
+                List<XacmlJsonCategory> resources = authRequest.Request.Resource;
+                Assert.Single(resources);
+                Assert.Equal(4, resources[0].Attribute.Count); // Normally 5 attributes, but the instance id is missing for dialogporten events.
+            })
+            .ReturnsAsync(new XacmlJsonResponse
+            {
+                Response =
+                [
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:userid",
+                                        Value = "1337"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        _registerServiceMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
+            {
+                Assert.Single(requestedUrnList);
+                Assert.Equal("urn:altinn:person:identifier-no:11913049472", requestedUrnList.ElementAt(0));
+            })
+            .ReturnsAsync([new PartyIdentifiers
+            {
+                PartyId = 50301578,
+                PartyType = "person",
+                PersonIdentifier = "11913049472",
+                PartyUuid = Guid.Parse("4a80af94-14be-4af5-9f95-a6a0824c5b55")
+            }
+            ]);
+
+        CloudEvent cloudEvent = new()
+        {
+            Source = new Uri("https://platform.altinn.no/dialogporten/api/v1/enduser/dialogs/321e249a-60a4-78de-9957-ae631b24e23f"),
+            Type = "dialogporten.dialog.created.v1",
+            Subject = "urn:altinn:person:identifier-no:11913049472"
+        };
+        cloudEvent["resource"] = "urn:altinn:resource:app_ttd_endring-av-navn-v2";
+
+        AuthorizationService authzHelper =
+            new(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/user/1337"], TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/user/1337"]);
+
+        _registerServiceMock.VerifyAll();
     }
 
     [Fact]
