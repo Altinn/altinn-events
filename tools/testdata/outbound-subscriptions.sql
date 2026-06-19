@@ -27,3 +27,9 @@ SELECT events.insert_subscription_v2('urn:altinn:resource:app_ttd_other-app',   
 SELECT events.insert_subscription_v2('urn:altinn:resource:app_ttd_apps-test',    NULL, '/party/53326193',                                 NULL,  '/org/nav',   'https://webhook.example.com/nav-wrong-type',  '/org/nav',   true,  false);
 SELECT events.insert_subscription_v2('urn:altinn:resource:nabovarsel',           NULL, 'urn:altinn:organization:identifier-no:324259572', NULL,  '/org/nav',   'https://webhook.example.com/nav-unvalidated', '/org/nav',   false, false);
 SELECT events.insert_subscription_v2('urn:altinn:resource:some_other_resource',  NULL, 'urn:altinn:organization:identifier-no:313133745', NULL,  '/org/other', 'https://webhook.example.com/other',           '/org/other', true,  false);
+
+-- Subscriptions for testing of source filtering.
+SELECT events.insert_subscription_v2('urn:altinn:resource:app_ttd_apps-test',  'https://ttd.apps.at23.altinn.cloud/ttd/apps-test',                       NULL, NULL,  '/org/ttd', 'https://webhook.example.com/ttd', '/org/ttd', true,  false);
+SELECT events.insert_subscription_v2('urn:altinn:resource:app_ttd_apps-test',  NULL,                                                                     NULL, NULL,  '/org/ttd', 'https://webhook.example.com/ttd', '/org/ttd', true,  false);
+SELECT events.insert_subscription_v2('urn:altinn:resource:app_ttd_apps-test',  'https://platform.at23.altinn.cloud/dialogporten/api/v1/enduser/dialogs', NULL, NULL,  '/org/ttd', 'https://webhook.example.com/ttd', '/org/ttd', true,  false);
+

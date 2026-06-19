@@ -106,6 +106,7 @@ public class AppCloudEventXacmlMapperTests
         CloudEvent cloudEvent = new()
         {
             Source = new Uri("https://skd.apps.altinn.no/skd/skattemelding/instances/1234324/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Type = "app.instance.created",
             Subject = "/party/1234324"
         };
         
@@ -116,6 +117,31 @@ public class AppCloudEventXacmlMapperTests
         Assert.NotNull(xacmlJsonProfile);
         Assert.Single(xacmlJsonProfile.Request.Action);
         Assert.Single(xacmlJsonProfile.Request.Resource);
+        Assert.Equal(5, xacmlJsonProfile.Request.Resource[0].Attribute.Count);
+        Assert.Equal(3, xacmlJsonProfile.Request.AccessSubject.Count);
+    }
+
+    [Fact]
+    public void CreateMultiDecisionRequest_DialogportenEvent_ShouldReturnValidXACMLRequest_ForMultipleConsumers()
+    {
+        // Arrange
+        List<string> consumers = ["/org/a", "/org/b", "/org/c"];
+        CloudEvent cloudEvent = new()
+        {
+            Source = new Uri("https://platform.altinn.no/dialogporten/api/v1/enduser/dialogs/321e249a-60a4-78de-9957-ae631b24e23f"),
+            Type = "dialogporten.dialog.created.v1",
+            Subject = "urn:altinn:organization:identifier-no:312508729"
+        };
+        cloudEvent["resource"] = "urn:altinn:resource:app_ssb_ra1000-02";
+
+        // Act
+        XacmlJsonRequestRoot xacmlJsonProfile = AppCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers);
+
+        // Assert.
+        Assert.NotNull(xacmlJsonProfile);
+        Assert.Single(xacmlJsonProfile.Request.Action);
+        Assert.Single(xacmlJsonProfile.Request.Resource);
+        Assert.Equal(4, xacmlJsonProfile.Request.Resource[0].Attribute.Count); // Missing instanceId
         Assert.Equal(3, xacmlJsonProfile.Request.AccessSubject.Count);
     }
 

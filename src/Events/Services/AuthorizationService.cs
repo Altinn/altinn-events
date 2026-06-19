@@ -170,11 +170,25 @@ public class AuthorizationService : IAuthorization
 
     /// <inheritdoc/>
     public async Task<Dictionary<string, bool>> AuthorizeMultipleConsumersForAltinnAppEvent(
-        CloudEvent cloudEvent, List<string> consumers)
+        CloudEvent cloudEvent, List<string> consumers, CancellationToken cancellationToken)
     {
-        var results = new Dictionary<string, bool>();
+        var results = new Dictionary<string, bool>(); 
+
+        if (UnsupportedSubject(cloudEvent))
+        {
+            /* App events published by Dialogportan might contain subjects not supported by Authorization. */
+
+            IEnumerable<PartyIdentifiers> partyIdentifiersList =
+                await _registerService.PartyLookup([cloudEvent.Subject!], cancellationToken);
+
+            ReplaceSubject(cloudEvent, partyIdentifiersList);
+        }
+
         XacmlJsonRequestRoot xacmlJsonRequest = AppCloudEventXacmlMapper.CreateMultiDecisionRequestForMultipleConsumers(cloudEvent, consumers);
-        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+
+        RestoreSubject(cloudEvent);
+
+        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest, cancellationToken);
             
         foreach (var r in response.Response)
         {
@@ -239,6 +253,7 @@ public class AuthorizationService : IAuthorization
 
     private static bool UnsupportedSubject(CloudEvent e)
     {
+        // The internal Authorization endpoints doesn't allow the use of national identity number as subject.
         return e.Subject is not null && e.Subject.StartsWith("urn:altinn:person:identifier-no:");
     }
 

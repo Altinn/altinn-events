@@ -114,6 +114,12 @@ public class OutboundService : IOutboundService
             }
         }
 
+        if (cloudEvent.Source is not null)
+        {
+            allSubscriptions.RemoveAll(
+                sub => sub.SourceFilter is not null && !sub.SourceFilter.IsBaseOf(cloudEvent.Source));
+        }
+
         await AuthorizeAndPush(cloudEvent, allSubscriptions, cancellationToken, useAzureServiceBus);
     }
 
@@ -277,12 +283,14 @@ public class OutboundService : IOutboundService
         if (isAppEvent)
         {
             // App events are authorized for action "read" on app resource "events"
-            authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, unauthorizedConsumers);
+            authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForAltinnAppEvent(
+                cloudEvent, unauthorizedConsumers, cancellationToken);
         }
         else
         {
             // Generic events use "subscribe" action for authorization
-            authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, unauthorizedConsumers, cancellationToken);
+            authorizationResult = await _authorizationService.AuthorizeMultipleConsumersForGenericEvent(
+                cloudEvent, unauthorizedConsumers, cancellationToken);
         }
             
         CacheResults(authorizationResult, cacheKeys);

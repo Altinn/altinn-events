@@ -38,7 +38,7 @@ public class AuthorizationServiceTest
         _cloudEvent = new CloudEvent(CloudEventsSpecVersion.V1_0)
         {
             Id = Guid.NewGuid().ToString(),
-            Type = "system.event.occurred",
+            Type = "app.instance.created",
             Subject = "/party/1337",
             Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd")
         };
@@ -60,7 +60,7 @@ public class AuthorizationServiceTest
             new(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/1337"]);
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/1337"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -78,7 +78,7 @@ public class AuthorizationServiceTest
             new AuthorizationService(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -97,16 +97,114 @@ public class AuthorizationServiceTest
 
         CloudEvent cloudEvent = new()
         {
-            Source = new Uri("https://skd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/1337/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Type = "app.instance.created",
             Subject = "/party/1337"
         };
 
         // Act
-        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/org/nav"]);
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/org/nav"], TestContext.Current.CancellationToken);
 
         // Assert.
         Assert.Single(result);
         Assert.False(result["/org/nav"]);
+    }
+
+    [Fact]
+    public async Task AuthorizeConsumerForAltinnAppEvent_EventPublishedByApp()
+    {
+        PepWithPDPAuthorizationMockSI pdp = new PepWithPDPAuthorizationMockSI();
+
+        CloudEvent cloudEvent = new()
+        {
+            Source = new Uri("https://ttd.apps.altinn.no/ttd/endring-av-navn-v2/instances/50301578/6fb3f738-6800-4f29-9f3e-1c66862656cd"),
+            Type = "app.instance.created",
+            Subject = "/party/50301578"
+        };
+
+        AuthorizationService authzHelper =
+            new(pdp, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/user/1337"], TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/user/1337"]);
+    }
+
+    [Fact]
+    public async Task AuthorizeConsumerForAltinnAppEvent_EventPublishedByDialogporten_HandleUnsupportedSubject()
+    {
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), TestContext.Current.CancellationToken))
+            .Callback((XacmlJsonRequestRoot authRequest, CancellationToken cancellationToken) =>
+            {
+                List<XacmlJsonCategory> resources = authRequest.Request.Resource;
+                Assert.Single(resources);
+                Assert.Equal(4, resources[0].Attribute.Count); // Normally 5 attributes, but the instance id is missing for dialogporten events.
+            })
+            .ReturnsAsync(new XacmlJsonResponse
+            {
+                Response =
+                [
+                    new XacmlJsonResult
+                    {
+                        Decision = "Permit",
+                        Category =
+                        [
+                            new XacmlJsonCategory
+                            {
+                                CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                                Attribute =
+                                [
+                                    new XacmlJsonAttribute
+                                    {
+                                        AttributeId = "urn:altinn:userid",
+                                        Value = "1337"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+        _registerServiceMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
+            {
+                Assert.Single(requestedUrnList);
+                Assert.Equal("urn:altinn:person:identifier-no:11913049472", requestedUrnList.ElementAt(0));
+            })
+            .ReturnsAsync([new PartyIdentifiers
+            {
+                PartyId = 50301578,
+                PartyType = "person",
+                PersonIdentifier = "11913049472",
+                PartyUuid = Guid.Parse("4a80af94-14be-4af5-9f95-a6a0824c5b55")
+            }
+            ]);
+
+        CloudEvent cloudEvent = new()
+        {
+            Source = new Uri("https://platform.altinn.no/dialogporten/api/v1/enduser/dialogs/321e249a-60a4-78de-9957-ae631b24e23f"),
+            Type = "dialogporten.dialog.created.v1",
+            Subject = "urn:altinn:person:identifier-no:11913049472"
+        };
+        cloudEvent["resource"] = "urn:altinn:resource:app_ttd_endring-av-navn-v2";
+
+        AuthorizationService authzHelper =
+            new(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        var result = await authzHelper.AuthorizeMultipleConsumersForAltinnAppEvent(cloudEvent, ["/user/1337"], TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/user/1337"]);
+
+        _registerServiceMock.VerifyAll();
     }
 
     [Fact]
@@ -499,7 +597,7 @@ public class AuthorizationServiceTest
         // Arrange
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =
@@ -529,7 +627,7 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -543,7 +641,7 @@ public class AuthorizationServiceTest
         // Arrange
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =
@@ -573,7 +671,7 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/12345"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/user/12345"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -588,7 +686,7 @@ public class AuthorizationServiceTest
         var systemUserUuid = Guid.NewGuid().ToString();
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =
@@ -618,7 +716,7 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, [$"/systemuser/{systemUserUuid}"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, [$"/systemuser/{systemUserUuid}"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -632,7 +730,7 @@ public class AuthorizationServiceTest
         // Arrange
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =
@@ -700,7 +798,7 @@ public class AuthorizationServiceTest
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd", "/org/nav", "/user/12345678"]);
+        var result = await sut.AuthorizeMultipleConsumersForAltinnAppEvent(_cloudEvent, ["/org/ttd", "/org/nav", "/user/12345678"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Count);

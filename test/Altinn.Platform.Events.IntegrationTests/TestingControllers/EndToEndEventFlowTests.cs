@@ -53,8 +53,8 @@ public class EndToEndEventFlowTests(IntegrationTestContainersFixture fixture)
         authMock.Setup(a => a.AuthorizeConsumerForEventsSubscription(It.IsAny<Subscription>()))
             .ReturnsAsync(true);
         authMock.Setup(a => a.AuthorizeMultipleConsumersForAltinnAppEvent(
-                It.IsAny<CloudEvent>(), It.IsAny<List<string>>()))
-            .ReturnsAsync((CloudEvent _, List<string> consumers) =>
+                It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CloudEvent _, List<string> consumers, CancellationToken _) =>
                 consumers.ToDictionary(c => c, _ => true));
         authMock.Setup(a => a.AuthorizeMultipleConsumersForGenericEvent(
                 It.IsAny<CloudEvent>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
