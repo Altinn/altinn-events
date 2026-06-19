@@ -15,140 +15,148 @@ import { addErrorCount } from "../errorhandler.js";
 import * as appInstances from "../api/appinstances.js";
 
 export const options = {
-  thresholds: {
-    errors: ["count<1"],
-  },
+    thresholds: {
+        errors: ["count<1"],
+    },
 };
 
-const appName = (__ENV.app || '').toLowerCase();
-const environment = (__ENV.altinn_env || '').toLowerCase();
+const appName = (__ENV.app || "").toLowerCase();
+const environment = (__ENV.altinn_env || "").toLowerCase();
 
 const instanceFormDataByApp = {
-  "apps-test": open("../data/app-events/apps-test.xml"),
-  "apps-test-prod": open("../data/app-events/apps-test-prod.xml"),
+    "apps-test": open("../data/app-events/apps-test.xml"),
+    "apps-test-prod": open("../data/app-events/apps-test-prod.xml"),
 };
 
 const instanceFormDataXml = instanceFormDataByApp[appName];
 
 export async function setup() {
-  let scopes = "altinn:serviceowner";
-  const org = "ttd";
-  let partyId = __ENV.partyId;
+    let scopes = "altinn:serviceowner";
+    const org = "ttd";
+    let partyId = __ENV.partyId;
 
-  const runFullTestSet = __ENV.runFullTestSet
-    ? __ENV.runFullTestSet.toLowerCase().includes("true")
-    : false;
+    const runFullTestSet = __ENV.runFullTestSet
+        ? __ENV.runFullTestSet.toLowerCase().includes("true")
+        : false;
 
-  let userToken = await setupToken.getAltinnTokenForUser();
+    let userToken = await setupToken.getAltinnTokenForUser();
 
-  if (!partyId) {
-    partyId = setupToken.getPartyIdFromTokenClaim(userToken);
-  }
+    if (!partyId) {
+        partyId = setupToken.getPartyIdFromTokenClaim(userToken);
+    }
 
-  let orgToken = await setupToken.getAltinnTokenForOrg(scopes, org);
+    let orgToken = await setupToken.getAltinnTokenForOrg(scopes, org);
 
-  let data = {
-    runFullTestSet: runFullTestSet,
-    userToken: userToken,
-    userPartyId: partyId,
-    orgToken: orgToken,
-    org: org,
-    app: appName,
-  };
+    let data = {
+        runFullTestSet: runFullTestSet,
+        userToken: userToken,
+        userPartyId: partyId,
+        orgToken: orgToken,
+        org: org,
+        app: appName,
+    };
 
-  return data;
+    return data;
 }
 
-function PostInstance(data){
-  if (environment == "prod") {
-    return;
-  }
+function PostInstance(data) {
+    if (environment == "prod") {
+        return;
+    }
 
-  let partyId = data.userPartyId;
-  let appOwner = data.org;
-  let appName = data.app;
-  let runtimeToken = data.userToken;
-  
-  let  res = appInstances.postInstanceWithMultipartData(runtimeToken, partyId, appOwner, appName, instanceFormDataXml);
-  check(res, {
-    'App POST Create Instance with Multipart data status is 201': (r) => r.status === 201,
-    'App POST Create Instance with Multipart data Instance Id is not null': (r) => JSON.parse(r.body).id != null,
-  });
+    let partyId = data.userPartyId;
+    let appOwner = data.org;
+    let appName = data.app;
+    let runtimeToken = data.userToken;
+
+    let res = appInstances.postInstanceWithMultipartData(
+        runtimeToken,
+        partyId,
+        appOwner,
+        appName,
+        instanceFormDataXml
+    );
+    check(res, {
+        "App POST Create Instance with Multipart data status is 201": (r) =>
+            r.status === 201,
+        "App POST Create Instance with Multipart data Instance Id is not null":
+            (r) => JSON.parse(r.body).id != null,
+    });
 }
 
 // 01 - GET events for org. Query parameter 'after'
 function TC01_GetAppEventsForOrg(data) {
-  let response = appEventsApi.getEventsForOrg(
-    data.org,
-    data.app,
-    { after: 1 },
-    data.orgToken
-  );
+    let response = appEventsApi.getEventsForOrg(
+        data.org,
+        data.app,
+        { after: 1 },
+        data.orgToken
+    );
 
-  let nextUrl = response.headers["Next"];
+    let nextUrl = response.headers["Next"];
 
-  let success = check(response, {
-    "01 - GET app events for org. Query parameter 'after'. Status is 200": (
-      r
-    ) => r.status === 200,
-    "01 - GET app events for org. Query parameter 'after'. List contains minimum one element":
-      (r) => JSON.parse(r.body).length >= 1,
-    "01 - GET app events for org. Query parameter 'after'. Next url provided":
-      nextUrl,
-  });
+    let success = check(response, {
+        "01 - GET app events for org. Query parameter 'after'. Status is 200": (
+            r
+        ) => r.status === 200,
+        "01 - GET app events for org. Query parameter 'after'. List contains minimum one element":
+            (r) => JSON.parse(r.body).length >= 1,
+        "01 - GET app events for org. Query parameter 'after'. Next url provided":
+            nextUrl,
+    });
 
-  addErrorCount(success);
-  return nextUrl;
+    addErrorCount(success);
+    return nextUrl;
 }
 
 // 02 - GET events for org from next url
 function TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl) {
-  let response = appEventsApi.getEventsFromNextLink(nextUrl, data.orgToken);
+    let response = appEventsApi.getEventsFromNextLink(nextUrl, data.orgToken);
 
-  let success = check(response, {
-    "02 - GET app events for org from next url. Status is 200": (r) =>
-      r.status === 200,
-  });
+    let success = check(response, {
+        "02 - GET app events for org from next url. Status is 200": (r) =>
+            r.status === 200,
+    });
 
-  addErrorCount(success);
+    addErrorCount(success);
 }
 
 // 03 -  GET app events for party. Query parameters: partyId, from.
 function TC03_GetAppEventsForParty(data) {
-  const today = new Date();
-  const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
+    const today = new Date();
+    const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
 
-  let response = appEventsApi.getEventsForParty(
-    { from: sevenDaysAgo.toISOString(), party: data.userPartyId },
-    data.userToken
-  );
+    let response = appEventsApi.getEventsForParty(
+        { from: sevenDaysAgo.toISOString(), party: data.userPartyId },
+        data.userToken
+    );
 
-  let nextUrl = response.headers["Next"];
+    let nextUrl = response.headers["Next"];
 
-  let success = check(response, {
-    "03 - GET app events for party. Query parameters: partyId, from. Status is 200":
-      (r) => r.status === 200,
-    "03 - GET app events for party. Query parameters: partyId, from. List contains minimum one element":
-      (r) => JSON.parse(r.body).length >= 1,
-    "03 - GET app events for party. Query parameters: partyId, from. Next url provided":
-      nextUrl,
-  });
+    let success = check(response, {
+        "03 - GET app events for party. Query parameters: partyId, from. Status is 200":
+            (r) => r.status === 200,
+        "03 - GET app events for party. Query parameters: partyId, from. List contains minimum one element":
+            (r) => JSON.parse(r.body).length >= 1,
+        "03 - GET app events for party. Query parameters: partyId, from. Next url provided":
+            nextUrl,
+    });
 
-  addErrorCount(success);
+    addErrorCount(success);
 
-  return nextUrl;
+    return nextUrl;
 }
 
 // 04 - GET events for party from 'next' url
 function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
-  let response = appEventsApi.getEventsFromNextLink(nextUrl, data.userToken);
+    let response = appEventsApi.getEventsFromNextLink(nextUrl, data.userToken);
 
-  let success = check(response, {
-    "04 - GET app events for party from 'next' url. Status is 200": (r) =>
-      r.status === 200,
-  });
+    let success = check(response, {
+        "04 - GET app events for party from 'next' url. Status is 200": (r) =>
+            r.status === 200,
+    });
 
-  addErrorCount(success);
+    addErrorCount(success);
 }
 
 /*
@@ -158,25 +166,25 @@ function TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl) {
  * 04 - GET app events for party from 'next'
  */
 export default function runTests(data) {
-  try {
-    // setup instance with app events
-    PostInstance(data);
+    try {
+        // setup instance with app events
+        PostInstance(data);
 
-    if (data.runFullTestSet) {
-      let nextUrl = TC01_GetAppEventsForOrg(data);
+        if (data.runFullTestSet) {
+            let nextUrl = TC01_GetAppEventsForOrg(data);
 
-      TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl);
+            TC02_GetAppEventsForOrgFromNextUrl(data, nextUrl);
 
-      nextUrl = TC03_GetAppEventsForParty(data);
+            nextUrl = TC03_GetAppEventsForParty(data);
 
-      TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
-    } else {
-      // Limited test set for use case tests
-      let nextUrl = TC03_GetAppEventsForParty(data);
-      TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
+            TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
+        } else {
+            // Limited test set for use case tests
+            let nextUrl = TC03_GetAppEventsForParty(data);
+            TC04_GetAppEventsForPartyFromNextUrl(data, nextUrl);
+        }
+    } catch (error) {
+        addErrorCount(false);
+        throw error;
     }
-  } catch (error) {
-    addErrorCount(false);
-    throw error;
-  }
 }
