@@ -23,7 +23,7 @@ GeneralSettings generalSettings = new();
 config.GetRequiredSection("GeneralSettings").Bind(generalSettings);
 
 EventsQueueClient eventsQueueClient = new(queueStorageSettings, generalSettings.SourceBaseAddress);
-PgClient pgClient = new(postgreSqlSettings.ConnectionString);
+StorageClient pgClient = new(postgreSqlSettings.ConnectionString);
 
 using FileStream logStream = File.OpenWrite("log.txt");
 using StreamWriter logWriter = new(logStream);
