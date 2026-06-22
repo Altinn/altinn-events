@@ -32,10 +32,6 @@ export async function getAltinnTokenForOrg(scopes, org = "ttd", orgNo = "9918258
 }
 
 export async function getAltinnTokenForUser() {
-  if (environment == "prod") {
-    return authentication.authenticateUser();
-  }
-
   return await loginWithMockporten();
 }
 
