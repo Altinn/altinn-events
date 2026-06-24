@@ -8,7 +8,7 @@ using EventCreator.Configuration;
 
 using Microsoft.Extensions.Configuration;
 
-bool interactiveMode = args.Contains("-i") || args.Contains("--interactive");
+bool batchMode = args.Contains("-b") || args.Contains("--batch");
 
 var builder = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.json", true, true)
@@ -31,15 +31,8 @@ EventsQueueClient eventsQueueClient = new(queueStorageSettings, generalSettings.
 StorageClient storageClient = new(postgreSqlSettings.ConnectionString);
 EventsClient eventsClient = new(eventsDbSettings.ConnectionString, eventsDbSettings.CommandTimeoutSeconds);
 
-if (interactiveMode)
+if (batchMode)
 {
-    await RunInteractiveMenu(storageClient, eventsClient, eventsQueueClient);
-}
-else
-{
-    Console.WriteLine("Tip: Run with -i or --interactive for an interactive session.");
-    Console.WriteLine();
-
     using FileStream logStream = File.OpenWrite("log.txt");
     using StreamWriter logWriter = new(logStream);
 
@@ -73,6 +66,10 @@ else
     }
 
     logWriter.WriteLine($"[{DateTime.Now}]: Finished processing");
+}
+else
+{
+    await RunInteractiveMenu(storageClient, eventsClient, eventsQueueClient);
 }
 
 static async Task RunInteractiveMenu(StorageClient storageClient, EventsClient eventsClient, EventsQueueClient eventsQueueClient)
