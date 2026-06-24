@@ -37,6 +37,9 @@ if (interactiveMode)
 }
 else
 {
+    Console.WriteLine("Tip: Run with -i or --interactive for an interactive session.");
+    Console.WriteLine();
+
     using FileStream logStream = File.OpenWrite("log.txt");
     using StreamWriter logWriter = new(logStream);
 
