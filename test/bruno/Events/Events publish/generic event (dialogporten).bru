@@ -27,6 +27,11 @@ body:json {
   }
 }
 
+script:pre-request {
+  await bru.runRequest("Token generator/publish admin (dialogporten)");
+  
+}
+
 settings {
   encodeUrl: true
   timeout: 0

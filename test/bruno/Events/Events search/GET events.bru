@@ -5,14 +5,18 @@ meta {
 }
 
 get {
-  url: {{PlatformHostUrl}}/events/api/v1/app/party?from=2022-11-17T11:00:53.3917Z&party=50002108
+  url: {{PlatformHostUrl}}/events/api/v1/app/party?from=2026-06-20T11:00:53.3917Z&party={{AuthN_PartyId}}
   body: none
   auth: inherit
 }
 
 params:query {
-  from: 2022-11-17T11:00:53.3917Z
-  party: 50002108
+  from: 2026-06-20T11:00:53.3917Z
+  party: {{AuthN_PartyId}}
+}
+
+script:post-response {
+  await bru.runRequest("Token generator/subscribe (user)");
 }
 
 settings {

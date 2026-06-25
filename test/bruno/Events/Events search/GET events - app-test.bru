@@ -14,6 +14,10 @@ params:query {
   after: 5b9a8887-0023-4f07-8791-d98e15a3542b
 }
 
+script:post-response {
+  await bru.runRequest("Token generator/subscribe (ttd)");
+}
+
 settings {
   encodeUrl: true
   timeout: 0

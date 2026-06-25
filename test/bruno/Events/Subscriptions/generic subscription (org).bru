@@ -12,9 +12,14 @@ post {
 
 body:json {
   {
-    "resourceFilter": "urn:altinn:resource:this-is-my-resource",
+    "resourceFilter": "urn:altinn:resource:ttd-altinn-events-automated-tests",
     "endpoint": "https://webhook.site/73e46e5f-e905-4375-8ab6-12986525007e"
   }
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/subscribe (ttd)");
+  
 }
 
 settings {

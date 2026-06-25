@@ -12,13 +12,14 @@ post {
 
 headers {
   Content-Type: application/cloudevents+json
+  PlatformAccessToken: {{AccessToken}}
 }
 
 body:json {
   {
     "specversion": "1.0",
-    "id": "9611d8c2-b1b2-4491-9133-b21680a7cbc4",
-    "time": "2022-11-15T10:46:53.5339928Z",
+    "id": "{{$randomUUID}}",
+    "time": "{{$isoTimestamp}}",
     "type": "app.instance.created",
     "source": "https://ttd.apps.at23.altinn.cloud/ttd/apps-test/instances/50660768/428a4575-2c04-4400-89a3-1aaadd2579cd",
     "resource": "urn:altinn:resource:app_ttd_apps-test",
@@ -26,6 +27,11 @@ body:json {
     "subject": "/party/50660768",
     "alternativesubject": "/person/07837399275"
   }
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/platform access token");
+  
 }
 
 settings {

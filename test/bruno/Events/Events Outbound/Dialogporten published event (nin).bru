@@ -12,19 +12,25 @@ post {
 
 headers {
   Content-Type: application/cloudevents+json
+  PlatformAccessToken: {{AccessToken}}
 }
 
 body:json {
   {
     "specversion": "1.0",
     "id": "{{$randomUUID}}",
-    "time": "2022-11-15T10:46:53.5339928Z",
+    "time": "{{$isoTimestamp}}",
     "type": "dialogporten.dialog.created.v1",
     "source": "https://platform.at23.altinn.cloud/dialogporten/api/v1/enduser/dialogs/019ea49a-60a4-78de-9957-ae626abacd3f",
     "resource": "urn:altinn:resource:app_ttd_apps-test",
     "resourceinstance": "019ea49a-60a4-78de-9957-ae626abacd3f",
     "subject": "urn:altinn:person:identifier-no:07837399275"
   }
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/platform access token");
+  
 }
 
 settings {

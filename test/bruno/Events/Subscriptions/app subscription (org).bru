@@ -12,10 +12,14 @@ post {
 
 body:json {
   {
-    "sourceFilter": "https://ttd.apps.at23.altinn.cloud/ttd/apps-test",
+    "sourceFilter": "https://ttd.apps.at22.altinn.cloud/ttd/apps-test",
     "endpoint": "https://webhook.site/a637c7c2-4c9c-419b-8ea5-49c8ae84126e",
     "includeSubunits": false
   }
+}
+
+script:post-response {
+  await bru.runRequest("Token generator/subscribe (ttd)");
 }
 
 settings {
