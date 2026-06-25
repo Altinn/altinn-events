@@ -1,7 +1,7 @@
 meta {
   name: app subscription (org)
   type: http
-  seq: 2
+  seq: 3
 }
 
 post {
@@ -12,9 +12,9 @@ post {
 
 body:json {
   {
-    "resourceFilter": "urn:altinn:resource:app_ttd_apps-test",
-    "endpoint": "https://webhook.site/73e46e5f-e905-4375-8ab6-12986525007e",
-    "includeSubunits": true  
+    "sourceFilter": "https://ttd.apps.at23.altinn.cloud/ttd/apps-test",
+    "endpoint": "https://webhook.site/a637c7c2-4c9c-419b-8ea5-49c8ae84126e",
+    "includeSubunits": false
   }
 }
 
