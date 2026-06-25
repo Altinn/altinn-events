@@ -38,8 +38,14 @@
 */
 
 import {
-    runId, performanceSetup, postCloudEvent, performanceTeardown,
-    warnIfUntagged, getTimeWindow, getBaseMetrics, buildSummary,
+    runId,
+    performanceSetup,
+    postCloudEvent,
+    performanceTeardown,
+    warnIfUntagged,
+    getTimeWindow,
+    getBaseMetrics,
+    buildSummary,
 } from "./helpers.js";
 
 const eventType = `performancetest.fixed-rate.${runId}`;
@@ -72,7 +78,9 @@ export const options = {
 };
 
 export async function setup() {
-    return await performanceSetup(`Target rate: ${targetRps} events/s for ${duration} (preAllocated: ${preAllocatedVUs}, max: ${maxVus} VUs)`);
+    return await performanceSetup(
+        `Target rate: ${targetRps} events/s for ${duration} (preAllocated: ${preAllocatedVUs}, max: ${maxVus} VUs)`
+    );
 }
 
 export default function runTests(data) {
@@ -87,17 +95,24 @@ export function handleSummary(data) {
     const { durationSec } = getTimeWindow(data);
     const { successCount, errorCount, p95Ms } = getBaseMetrics(data);
     const droppedCount = data.metrics["dropped_iterations"]?.values?.count ?? 0;
-    const effectiveRps = durationSec > 0 ? (successCount / durationSec).toFixed(1) : "N/A";
-    const targetMet = droppedCount === 0 ? "YES" : `NO — ${droppedCount} iterations dropped`;
+    const effectiveRps =
+        durationSec > 0 ? (successCount / durationSec).toFixed(1) : "N/A";
+    const targetMet =
+        droppedCount === 0 ? "YES" : `NO — ${droppedCount} iterations dropped`;
 
-    return buildSummary("Fixed-Rate Throughput Test — Summary                 ║", [
-        "  k6 results:",
-        `    Target rate               : ${targetRps} events/s`,
-        `    Effective rate            : ${effectiveRps} events/s`,
-        `    Target rate sustained     : ${targetMet}`,
-        `    Events posted (HTTP 200)  : ${successCount}`,
-        `    Errors                    : ${errorCount}`,
-        `    Dropped iterations        : ${droppedCount}`,
-        `    p(95) POST latency        : ${p95Ms.toFixed(0)} ms`,
-    ], eventType, data);
+    return buildSummary(
+        "Fixed-Rate Throughput Test — Summary                 ║",
+        [
+            "  k6 results:",
+            `    Target rate               : ${targetRps} events/s`,
+            `    Effective rate            : ${effectiveRps} events/s`,
+            `    Target rate sustained     : ${targetMet}`,
+            `    Events posted (HTTP 200)  : ${successCount}`,
+            `    Errors                    : ${errorCount}`,
+            `    Dropped iterations        : ${droppedCount}`,
+            `    p(95) POST latency        : ${p95Ms.toFixed(0)} ms`,
+        ],
+        eventType,
+        data
+    );
 }

@@ -74,3 +74,18 @@ $webhookToken =((Invoke-Webrequest @params).Content  | ConvertFrom-Json).uuid
 
 $webhookEndpoint= "https://webhook.site/" + $webhookToken + "/"
 ```
+## Code formatting
+
+JavaScript files are formatted with [Prettier](https://prettier.io/). To format all k6 test files, run the following from the `k6` folder:
+
+```bash
+npx prettier --write "src/**/*.js"
+```
+
+To check formatting without making changes:
+
+```bash
+npx prettier --check "src/**/*.js"
+```
+
+---

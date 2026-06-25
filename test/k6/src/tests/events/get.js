@@ -102,7 +102,8 @@ function TC02_GetEventsAndFollowNextLink(data) {
 
     response = eventsApi.getEventsFromNextLink(nextUrl, data.token);
     success = check(response, {
-        "GET cloud events from next link: status is 200": (r) => r.status === 200,
+        "GET cloud events from next link: status is 200": (r) =>
+            r.status === 200,
     });
 
     addErrorCount(success);

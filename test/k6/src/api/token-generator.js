@@ -6,34 +6,38 @@ import { stopIterationOnFail } from "../errorhandler.js";
 import * as apiHelpers from "../apiHelpers.js";
 import { getFromSecretSource } from "../secret-reader.js";
 
-const environment = (__ENV.altinn_env || '').toLowerCase(); // Fallback value for when k6 inspect is run in script validation (env var evaluation yields 'undefined' in this phase)
+const environment = (__ENV.altinn_env || "").toLowerCase(); // Fallback value for when k6 inspect is run in script validation (env var evaluation yields 'undefined' in this phase)
 
 /*
 Generate enterprise token for test environment
 */
 export function generateEnterpriseToken(queryParams) {
-  let endpoint =
-    config.tokenGenerator.getEnterpriseToken +
-    apiHelpers.buildQueryParametersForEndpoint(queryParams);
+    let endpoint =
+        config.tokenGenerator.getEnterpriseToken +
+        apiHelpers.buildQueryParametersForEndpoint(queryParams);
 
-  return generateToken(endpoint);
+    return generateToken(endpoint);
 }
 
 async function generateToken(endpoint) {
-  const tokenGeneratorUserName = await getFromSecretSource("tokenGeneratorUserName");
-  const tokenGeneratorUserPwd = await getFromSecretSource("tokenGeneratorUserPwd");
+    const tokenGeneratorUserName = await getFromSecretSource(
+        "tokenGeneratorUserName"
+    );
+    const tokenGeneratorUserPwd = await getFromSecretSource(
+        "tokenGeneratorUserPwd"
+    );
 
-  const credentials = `${tokenGeneratorUserName}:${tokenGeneratorUserPwd}`;
-  const encodedCredentials = encoding.b64encode(credentials);
+    const credentials = `${tokenGeneratorUserName}:${tokenGeneratorUserPwd}`;
+    const encodedCredentials = encoding.b64encode(credentials);
 
-  let params = apiHelpers.buildHeaderWithBasic(encodedCredentials);
+    let params = apiHelpers.buildHeaderWithBasic(encodedCredentials);
 
-  let response = http.get(endpoint, params);
+    let response = http.get(endpoint, params);
 
-  if (response.status != 200) {
-    stopIterationOnFail("Token generation failed", false, response);
-  }
+    if (response.status != 200) {
+        stopIterationOnFail("Token generation failed", false, response);
+    }
 
-  let token = response.body;
-  return token;
+    let token = response.body;
+    return token;
 }

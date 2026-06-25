@@ -5,9 +5,9 @@ let ErrorCount = new Counter("errors");
 
 //Adds a count to the error counter when value of success is false
 export function addErrorCount(success) {
-  if (!success) {
-    ErrorCount.add(1);
-  }
+    if (!success) {
+        ErrorCount.add(1);
+    }
 }
 
 /**
@@ -17,11 +17,17 @@ export function addErrorCount(success) {
  * @param {JSON} res
  */
 export function stopIterationOnFail(testName, success, res) {
-  if (!success && res != null) {
-    fail(testName + ": Response code: " + res.status + ". Response message: " + res.body);
-  } else if (!success) {
-    fail(testName);
-  }
+    if (!success && res != null) {
+        fail(
+            testName +
+                ": Response code: " +
+                res.status +
+                ". Response message: " +
+                res.body
+        );
+    } else if (!success) {
+        fail(testName);
+    }
 }
 
 /**
@@ -29,5 +35,5 @@ export function stopIterationOnFail(testName, success, res) {
  * @param {String} message A description of the faulty configuration parameter
  */
 export function throwConfigurationError(message) {
-    throw new Error(`Invalid k6 configuration: ${message}`)
+    throw new Error(`Invalid k6 configuration: ${message}`);
 }

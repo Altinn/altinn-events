@@ -49,10 +49,7 @@ function TC01_POstValidCloudEventWithAllParameters(data) {
 
     cloudEvent = createCloudEvent();
 
-    response = eventsApi.postCloudEvent(
-        JSON.stringify(cloudEvent),
-        data.token
-    );
+    response = eventsApi.postCloudEvent(JSON.stringify(cloudEvent), data.token);
 
     success = check(response, {
         "POST valid cloud event with all parameters. Status is 200": (r) =>
@@ -129,7 +126,9 @@ async function TC05_PostCloudEventWithoutRequiredScopes() {
 
     cloudEvent = createCloudEvent();
 
-    let incorrectScopeToken = await setupToken.getAltinnTokenForOrg('altinn:serviceowner');
+    let incorrectScopeToken = await setupToken.getAltinnTokenForOrg(
+        "altinn:serviceowner"
+    );
 
     response = eventsApi.postCloudEvent(
         JSON.stringify(cloudEvent),

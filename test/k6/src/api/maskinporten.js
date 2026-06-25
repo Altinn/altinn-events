@@ -17,45 +17,58 @@ let memoizedSigningKeyPromise;
  * @returns {Promise<string>} The Maskinporten access token.
  */
 export async function generateAccessToken(scopes) {
-  const encodedJwk = await getFromSecretSource("encodedJwk");
-  const mpClientId = await getFromSecretSource("mpClientId");
-  const mpKid = await getFromSecretSource("mpKid");
+    const encodedJwk = await getFromSecretSource("encodedJwk");
+    const mpClientId = await getFromSecretSource("mpClientId");
+    const mpKid = await getFromSecretSource("mpKid");
 
-  if (!encodedJwk) {
-    stopIterationOnFail("Required environment variable Encoded JWK (encodedJWK) was not provided", false);
-  }
+    if (!encodedJwk) {
+        stopIterationOnFail(
+            "Required environment variable Encoded JWK (encodedJWK) was not provided",
+            false
+        );
+    }
 
-  if (!mpClientId) {
-    stopIterationOnFail("Required environment variable maskinporten client id (mpClientId) was not provided", false);
-  }
+    if (!mpClientId) {
+        stopIterationOnFail(
+            "Required environment variable maskinporten client id (mpClientId) was not provided",
+            false
+        );
+    }
 
-  if (!mpKid) {
-    stopIterationOnFail("Required environment variable maskinporten kid (mpKid) was not provided", false);
-  }
+    if (!mpKid) {
+        stopIterationOnFail(
+            "Required environment variable maskinporten kid (mpKid) was not provided",
+            false
+        );
+    }
 
-  const grant = await createJwtGrant(scopes, encodedJwk, mpClientId, mpKid);
+    const grant = await createJwtGrant(scopes, encodedJwk, mpClientId, mpKid);
 
-  const body = {
-    alg: "RS256",
-    grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-    assertion: grant,
-  };
+    const body = {
+        alg: "RS256",
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: grant,
+    };
 
-  const res = http.post(config.maskinporten.token, body, buildHeaderWithContentType("application/x-www-form-urlencoded"));
+    const res = http.post(
+        config.maskinporten.token,
+        body,
+        buildHeaderWithContentType("application/x-www-form-urlencoded")
+    );
 
-  const success = check(res, {
-    "// Setup // Authentication towards Maskinporten Success": (r) =>
-      r.status === 200,
-  });
-  addErrorCount(success);
-  stopIterationOnFail(
-    "// Setup // Authentication towards Maskinporten Failed",
-    success,
-    res
-  );
+    const success = check(res, {
+        "// Setup // Authentication towards Maskinporten Success": (r) =>
+            r.status === 200,
+    });
+    addErrorCount(success);
+    stopIterationOnFail(
+        "// Setup // Authentication towards Maskinporten Failed",
+        success,
+        res
+    );
 
-  const accessToken = JSON.parse(res.body)['access_token'];
-  return accessToken;
+    const accessToken = JSON.parse(res.body)["access_token"];
+    return accessToken;
 }
 
 /**
@@ -63,14 +76,14 @@ export async function generateAccessToken(scopes) {
  * @returns {Promise<CryptoKey>} The imported signing key.
  */
 async function importSigningKey(encodedJwk) {
-  const jwk = JSON.parse(encoding.b64decode(encodedJwk, "std", "s"));
-  return crypto.subtle.importKey(
-    "jwk",
-    jwk,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
+    const jwk = JSON.parse(encoding.b64decode(encodedJwk, "std", "s"));
+    return crypto.subtle.importKey(
+        "jwk",
+        jwk,
+        { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+        false,
+        ["sign"]
+    );
 }
 
 /**
@@ -78,12 +91,11 @@ async function importSigningKey(encodedJwk) {
  * @returns {Promise<CryptoKey>} The signing key.
  */
 function getSigningKey(encodedJWK) {
-  if (!memoizedSigningKeyPromise) {
-    memoizedSigningKeyPromise = importSigningKey(encodedJWK);
-  }
-  return memoizedSigningKeyPromise;
+    if (!memoizedSigningKeyPromise) {
+        memoizedSigningKeyPromise = importSigningKey(encodedJWK);
+    }
+    return memoizedSigningKeyPromise;
 }
-
 
 /**
  * Base64url-encodes a JSON-serializable object without padding.
@@ -91,7 +103,7 @@ function getSigningKey(encodedJWK) {
  * @returns {string} The base64url-encoded string.
  */
 function base64urlEncode(obj) {
-  return encoding.b64encode(JSON.stringify(obj), "rawurl");
+    return encoding.b64encode(JSON.stringify(obj), "rawurl");
 }
 
 /**
@@ -100,11 +112,11 @@ function base64urlEncode(obj) {
  * @returns {Uint8Array} The byte representation.
  */
 function stringToBytes(str) {
-  const buf = new Uint8Array(str.length);
-  for (let i = 0; i < str.length; i++) {
-    buf[i] = str.charCodeAt(i);
-  }
-  return buf;
+    const buf = new Uint8Array(str.length);
+    for (let i = 0; i < str.length; i++) {
+        buf[i] = str.charCodeAt(i);
+    }
+    return buf;
 }
 
 /**
@@ -113,29 +125,37 @@ function stringToBytes(str) {
  * @returns {Promise<string>} The signed JWT string.
  */
 async function createJwtGrant(scopes, encodedJwk, mpClientId, mpKid) {
+    const header = {
+        alg: "RS256",
+        typ: "JWT",
+        kid: mpKid,
+    };
 
-  const header = {
-    alg: "RS256",
-    typ: "JWT",
-    kid: mpKid,
-  };
+    const now = Math.floor(Date.now() / 1000);
 
-  const now = Math.floor(Date.now() / 1000);
+    const payload = {
+        aud: config.maskinporten.audience,
+        scope: scopes,
+        iss: mpClientId,
+        iat: now,
+        exp: now + 120,
+        jti: uuidv4(),
+    };
 
-  const payload = {
-    aud: config.maskinporten.audience,
-    scope: scopes,
-    iss: mpClientId,
-    iat: now,
-    exp: now + 120,
-    jti: uuidv4(),
-  };
+    const cryptoKey = await getSigningKey(encodedJwk);
 
-  const cryptoKey = await getSigningKey(encodedJwk);
+    const signingInput =
+        base64urlEncode(header) + "." + base64urlEncode(payload);
+    const data = stringToBytes(signingInput);
+    const signature = await crypto.subtle.sign(
+        "RSASSA-PKCS1-v1_5",
+        cryptoKey,
+        data
+    );
 
-  const signingInput = base64urlEncode(header) + "." + base64urlEncode(payload);
-  const data = stringToBytes(signingInput);
-  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, data);
-
-  return signingInput + "." + encoding.b64encode(new Uint8Array(signature), "rawurl");
+    return (
+        signingInput +
+        "." +
+        encoding.b64encode(new Uint8Array(signature), "rawurl")
+    );
 }
