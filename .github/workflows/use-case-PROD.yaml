@@ -14,13 +14,14 @@ jobs:
     env: # Shared environment vars for k6 test scripts
       altinn_env: prod
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Set up k6
         uses: grafana/setup-k6-action@db07bd9765aac508ef18982e52ab937fe633a065 # v1.2.1
       - name: Create k6 secrets file
         id: k6-secrets
         env:
           PID: ${{ secrets.PERSON_NUMBER }}
+          TESTIDPPWD: ${{ secrets.TESTIDPPWD }}
           MP_CLIENT_ID: ${{ secrets.MP_CLIENT_ID }}
           MP_KID: ${{ secrets.MP_KID }}
           ENCODED_JWK: ${{ secrets.MP_ENCODEDJWK }}
@@ -29,6 +30,7 @@ jobs:
           umask 077
           SECRETS_FILE="${{ runner.temp }}/k6.secrets"
           printf 'pid=%s\n' "$PID" >> "$SECRETS_FILE"
+          printf 'testidppwd=%s\n' "$TESTIDPPWD" >> "$SECRETS_FILE"
           printf 'mpClientId=%s\n' "$MP_CLIENT_ID" >> "$SECRETS_FILE"
           printf 'mpKid=%s\n' "$MP_KID" >> "$SECRETS_FILE"
           printf 'encodedJwk=%s\n' "$ENCODED_JWK" >> "$SECRETS_FILE"
@@ -38,7 +40,7 @@ jobs:
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
         with:
           path: test/k6/src/tests/app-events.js
-          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test-prod -e userName=${{ secrets.USER_NAME }} -e userPassword=${{ secrets.USER_PASSWORD }}
+          flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test-prod
       - name: Run events use case tests (POST)
         if: always()
         uses: grafana/run-k6-action@de51a7390bdf0ac85a3bef493691bd71d4c7c158 # v1.4.0
