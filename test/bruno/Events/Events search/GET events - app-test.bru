@@ -14,7 +14,7 @@ params:query {
   after: 5b9a8887-0023-4f07-8791-d98e15a3542b
 }
 
-script:post-response {
+script:pre-request {
   await bru.runRequest("Token generator/subscribe (ttd)");
 }
 

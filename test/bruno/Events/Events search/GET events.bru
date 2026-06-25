@@ -15,7 +15,7 @@ params:query {
   party: {{AuthN_PartyId}}
 }
 
-script:post-response {
+script:pre-request {
   await bru.runRequest("Token generator/subscribe (user)");
 }
 
