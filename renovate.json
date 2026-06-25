@@ -29,8 +29,7 @@
       "matchStrings": [
         "\"(?<depName>[^:\"]+):(?<currentValue>[^@\"]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?\""
       ],
-      "datasourceTemplate": "docker",
-      "pinDigests": true
+      "datasourceTemplate": "docker"
     }
   ]
 }
