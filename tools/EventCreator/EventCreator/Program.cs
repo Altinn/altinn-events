@@ -179,7 +179,8 @@ static async Task<Instance?> AnalyzeAppInstance(StorageClient storageClient, Eve
     Console.WriteLine($"  App:          {instance.AppId}");
     Console.WriteLine($"  Created:      {ToLocal(instance.Created)}");
     Console.WriteLine($"  Last changed: {ToLocal(instance.LastChanged)}");
-    Console.WriteLine($"  Status:       {instance.Status?.IsArchived switch { true => $"Archived ({ToLocal(instance.Status.Archived)})", _ => "Active" }}");
+    Console.WriteLine($"  Process Step: {instance.Process?.CurrentTask?.ElementId ?? "None"}");
+    Console.WriteLine($"  Archived:     {instance.Status?.IsArchived switch { true => $"{ToLocal(instance.Status.Archived)}", _ => "No" }}");
 
     bool confirmed = instance.CompleteConfirmations?.Any(
         cc => cc.StakeholderId?.Equals(instance.Org, StringComparison.OrdinalIgnoreCase) == true) == true;
