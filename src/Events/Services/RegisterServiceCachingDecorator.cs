@@ -17,7 +17,7 @@ namespace Altinn.Platform.Events.Services;
 /// </summary>
 public class RegisterServiceCachingDecorator : IRegisterService
 {
-    private readonly IRegisterService _decoratedService;
+    private readonly RegisterService _decoratedService;
     private readonly IMemoryCache _memoryCache;
     private readonly MemoryCacheEntryOptions _cacheOptions;
 
@@ -25,7 +25,7 @@ public class RegisterServiceCachingDecorator : IRegisterService
     /// Initializes a new instance of the <see cref="RegisterServiceCachingDecorator"/> class.
     /// </summary>
     public RegisterServiceCachingDecorator(
-        IRegisterService decoratedService,
+        RegisterService decoratedService,
         IOptions<PlatformSettings> platformSettings,
         IMemoryCache memoryCache)
     {

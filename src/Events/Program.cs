@@ -284,8 +284,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-    services.AddHttpClient<IRegisterService, RegisterService>();
-    services.Decorate<IRegisterService, RegisterServiceCachingDecorator>();
+    services.AddHttpClient(RegisterService._httpClientName);
+    services.AddScoped<RegisterService>();
+    services.AddScoped<IRegisterService, RegisterServiceCachingDecorator>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddScoped<IEventsService, EventsService>();
     services.AddScoped<IOutboundService, OutboundService>();
@@ -302,7 +303,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddHttpClient(WebhookService._httpClientName);
     services.AddScoped<IWebhookService, WebhookService>();
 
-    services.AddTransient<IAuthorization, AuthorizationService>();
+    services.AddScoped<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
 
     services.AddSwaggerGen(c =>

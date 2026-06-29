@@ -40,18 +40,21 @@ namespace Altinn.Platform.Events.Services
 
         private readonly int _chunkSize;
 
+        /// <summary>Name of the named <see cref="HttpClient"/> used by this service.</summary>
+        internal const string _httpClientName = nameof(RegisterService);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="RegisterService"/> class.
         /// </summary>
         public RegisterService(
-            HttpClient httpClient,
+            IHttpClientFactory httpClientFactory,
             IHttpContextAccessor httpContextAccessor,
             IAccessTokenGenerator accessTokenGenerator,
             IOptions<GeneralSettings> generalSettings,
             IOptions<PlatformSettings> platformSettings,
             ILogger<RegisterService> logger)
         {
-            _client = httpClient;
+            _client = httpClientFactory.CreateClient(_httpClientName);
             _httpContextAccessor = httpContextAccessor;
             _generalSettings = generalSettings.Value;
             _accessTokenGenerator = accessTokenGenerator;
