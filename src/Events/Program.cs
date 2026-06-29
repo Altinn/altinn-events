@@ -300,7 +300,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
-    services.AddHttpClient<IWebhookService, WebhookService>();
+    services.AddHttpClient(WebhookService._httpClientName);
+    services.AddScoped<IWebhookService, WebhookService>();
 
     services.AddTransient<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
