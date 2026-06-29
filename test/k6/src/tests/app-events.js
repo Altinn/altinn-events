@@ -60,10 +60,6 @@ export async function setup() {
 }
 
 function PostInstance(data) {
-    if (environment == "prod") {
-        return;
-    }
-
     let partyId = data.userPartyId;
     let appOwner = data.org;
     let appName = data.app;
