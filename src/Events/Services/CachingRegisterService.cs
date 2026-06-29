@@ -12,24 +12,24 @@ using Microsoft.Extensions.Options;
 namespace Altinn.Platform.Events.Services;
 
 /// <summary>
-/// Decorates <see cref="Interfaces.IRegisterService"/> by caching responses from the Register API.
+/// Wraps <see cref="IRegisterApiClient"/> with caching for Register API responses.
 /// Only <see cref="GetMainUnit"/> responses are cached; other methods are passed through directly.
 /// </summary>
-public class RegisterServiceCachingDecorator : IRegisterService
+public class CachingRegisterService : IRegisterService
 {
-    private readonly RegisterService _decoratedService;
+    private readonly IRegisterApiClient _inner;
     private readonly IMemoryCache _memoryCache;
     private readonly MemoryCacheEntryOptions _cacheOptions;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RegisterServiceCachingDecorator"/> class.
+    /// Initializes a new instance of the <see cref="CachingRegisterService"/> class.
     /// </summary>
-    public RegisterServiceCachingDecorator(
-        RegisterService decoratedService,
+    public CachingRegisterService(
+        IRegisterApiClient inner,
         IOptions<PlatformSettings> platformSettings,
         IMemoryCache memoryCache)
     {
-        _decoratedService = decoratedService;
+        _inner = inner;
         _memoryCache = memoryCache;
         _cacheOptions = new MemoryCacheEntryOptions()
             .SetPriority(CacheItemPriority.Normal)
@@ -39,12 +39,12 @@ public class RegisterServiceCachingDecorator : IRegisterService
 
     /// <inheritdoc/>
     public Task<int> PartyLookup(string orgNo, string person)
-        => _decoratedService.PartyLookup(orgNo, person);
+        => _inner.PartyLookup(orgNo, person);
 
     /// <inheritdoc/>
     public Task<IEnumerable<PartyIdentifiers>> PartyLookup(
         IEnumerable<string> partyUrnList, CancellationToken cancellationToken)
-        => _decoratedService.PartyLookup(partyUrnList, cancellationToken);
+        => _inner.PartyLookup(partyUrnList, cancellationToken);
 
     /// <inheritdoc/>
     public async Task<OrganizationRecord> GetMainUnit(
@@ -54,7 +54,7 @@ public class RegisterServiceCachingDecorator : IRegisterService
 
         if (!_memoryCache.TryGetValue(cacheKey, out OrganizationRecord mainUnit))
         {
-            mainUnit = await _decoratedService.GetMainUnit(organizationUrnValue, cancellationToken);
+            mainUnit = await _inner.GetMainUnit(organizationUrnValue, cancellationToken);
             _memoryCache.Set(cacheKey, mainUnit, _cacheOptions);
         }
 

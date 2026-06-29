@@ -284,9 +284,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-    services.AddHttpClient(RegisterService._httpClientName);
-    services.AddScoped<RegisterService>();
-    services.AddScoped<IRegisterService, RegisterServiceCachingDecorator>();
+    services.AddHttpClient(RegisterApiClient._httpClientName);
+    services.AddScoped<IRegisterApiClient, RegisterApiClient>();
+    services.AddScoped<IRegisterService, CachingRegisterService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddScoped<IEventsService, EventsService>();
     services.AddScoped<IOutboundService, OutboundService>();

@@ -40,7 +40,7 @@ public class WebhookServiceTest
         HttpClient actualClient = new();
 
         // Act
-        _ = new WebhookService(actualClient, null, _eventsOutboundSettings, loggerMock.Object);
+        _ = new WebhookService(CreateFactory(actualClient), null, _eventsOutboundSettings, loggerMock.Object);
 
         // Assert
         Assert.Equal(45, actualClient.Timeout.TotalSeconds);
@@ -79,7 +79,7 @@ public class WebhookServiceTest
             Pushed = DateTime.UtcNow
         };
 
-        var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+        var sut = new WebhookService(CreateFactory(new HttpClient()), null, _eventsOutboundSettings, null);
 
         // Act
         var actual = sut.GetPayload(input);
@@ -117,7 +117,7 @@ public class WebhookServiceTest
             Pushed = DateTime.UtcNow
         };
 
-        var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+        var sut = new WebhookService(CreateFactory(new HttpClient()), null, _eventsOutboundSettings, null);
 
         // Act
         var actual = sut.GetPayload(input);
@@ -154,7 +154,7 @@ public class WebhookServiceTest
             Pushed = DateTime.UtcNow
         };
 
-        var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+        var sut = new WebhookService(CreateFactory(new HttpClient()), null, _eventsOutboundSettings, null);
 
         // Act
         var actual = sut.GetPayload(input);
@@ -176,7 +176,7 @@ public class WebhookServiceTest
                 Content = new StringContent("Service unavailable")
             });
 
-        var sut = new WebhookService(new HttpClient(handlerMock.Object), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
+        var sut = new WebhookService(CreateFactory(new HttpClient(handlerMock.Object)), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
         var cloudEventEnvelope = new CloudEventEnvelope()
         {
@@ -199,7 +199,7 @@ public class WebhookServiceTest
         Mock<ILogger<WebhookService>> loggerMock = new();
         var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
-        var sut = new WebhookService(new HttpClient(handlerMock.Object), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
+        var sut = new WebhookService(CreateFactory(new HttpClient(handlerMock.Object)), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
         var cloudEventEnvelope = new CloudEventEnvelope()
         {
@@ -227,7 +227,7 @@ public class WebhookServiceTest
             Endpoint = new Uri("https://skd.mottakssystem.no/events"),
         };
 
-        var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+        var sut = new WebhookService(CreateFactory(new HttpClient()), null, _eventsOutboundSettings, null);
 
         // Act
         var actual = sut.GetPayload(input);
@@ -248,7 +248,7 @@ public class WebhookServiceTest
             Endpoint = null,
         };
 
-        var sut = new WebhookService(new HttpClient(), null, _eventsOutboundSettings, null);
+        var sut = new WebhookService(CreateFactory(new HttpClient()), null, _eventsOutboundSettings, null);
 
         // Act
         var actual = sut.GetPayload(input);
@@ -267,7 +267,7 @@ public class WebhookServiceTest
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
-        var sut = new WebhookService(new HttpClient(handlerMock.Object), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
+        var sut = new WebhookService(CreateFactory(new HttpClient(handlerMock.Object)), _traceLogServiceMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
         var cloudEventEnvelope = new CloudEventEnvelope()
         {
@@ -279,6 +279,13 @@ public class WebhookServiceTest
         await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.Send(cloudEventEnvelope, CancellationToken.None));
 
         loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+    }
+
+    private static IHttpClientFactory CreateFactory(HttpClient client)
+    {
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
+        return factory.Object;
     }
 
     private static Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpResponseMessage response)

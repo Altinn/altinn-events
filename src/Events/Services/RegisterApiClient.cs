@@ -26,9 +26,9 @@ using Microsoft.Extensions.Options;
 namespace Altinn.Platform.Events.Services
 {
     /// <summary>
-    /// Handles register service
+    /// Handles HTTP communication with the Register API.
     /// </summary>
-    public class RegisterService : IRegisterService
+    public class RegisterApiClient : IRegisterApiClient
     {
         private readonly HttpClient _client;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -41,18 +41,18 @@ namespace Altinn.Platform.Events.Services
         private readonly int _chunkSize;
 
         /// <summary>Name of the named <see cref="HttpClient"/> used by this service.</summary>
-        internal const string _httpClientName = nameof(RegisterService);
+        internal const string _httpClientName = nameof(RegisterApiClient);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RegisterService"/> class.
+        /// Initializes a new instance of the <see cref="RegisterApiClient"/> class.
         /// </summary>
-        public RegisterService(
+        public RegisterApiClient(
             IHttpClientFactory httpClientFactory,
             IHttpContextAccessor httpContextAccessor,
             IAccessTokenGenerator accessTokenGenerator,
             IOptions<GeneralSettings> generalSettings,
             IOptions<PlatformSettings> platformSettings,
-            ILogger<RegisterService> logger)
+            ILogger<RegisterApiClient> logger)
         {
             _client = httpClientFactory.CreateClient(_httpClientName);
             _httpContextAccessor = httpContextAccessor;
@@ -93,7 +93,7 @@ namespace Altinn.Platform.Events.Services
             else
             {
                 string reason = await response.Content.ReadAsStringAsync();
-                _logger.LogError("// RegisterService // PartyLookup // Failed to lookup party in platform register. Response {Response}. Reason {Reason}.", response, reason);
+                _logger.LogError("// RegisterApiClient // PartyLookup // Failed to lookup party in platform register. Response {Response}. Reason {Reason}.", response, reason);
 
                 throw await PlatformHttpException.CreateAsync(response);
             }
