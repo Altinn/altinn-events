@@ -40,6 +40,8 @@ namespace Altinn.Platform.Events.Services
 
         private readonly int _chunkSize;
 
+        private const string ApplicationJson = "application/json";
+
         /// <summary>Name of the named <see cref="HttpClient"/> used by this service.</summary>
         internal const string _httpClientName = nameof(RegisterApiClient);
 
@@ -61,7 +63,7 @@ namespace Altinn.Platform.Events.Services
             _logger = logger;
 
             _client.BaseAddress = new Uri(platformSettings.Value.RegisterApiBaseAddress);
-            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ApplicationJson));
             _chunkSize = platformSettings.Value.RegisterApiChunkSize;
 
             _serializerOptions = new()
@@ -82,7 +84,7 @@ namespace Altinn.Platform.Events.Services
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
 
             StringContent content = new StringContent(JsonSerializer.Serialize(partyLookup));
-            content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+            content.Headers.ContentType = MediaTypeHeaderValue.Parse(ApplicationJson);
 
             HttpResponseMessage response = await _client.PostAsync(bearerToken, endpointUrl, content, accessToken);
             if (response.StatusCode == HttpStatusCode.OK)
@@ -113,7 +115,7 @@ namespace Altinn.Platform.Events.Services
                 PartiesRegisterQueryRequest partyLookup = new() { Data = chunk };
 
                 StringContent content = new(JsonSerializer.Serialize(partyLookup));
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse(ApplicationJson);
 
                 const string RequestUri = "v2/internal/parties/query?fields=identifiers";
                 HttpResponseMessage response = await _client.PostAsync(
@@ -144,7 +146,7 @@ namespace Altinn.Platform.Events.Services
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "events");
 
             StringContent content = new(JsonSerializer.Serialize(request));
-            content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+            content.Headers.ContentType = MediaTypeHeaderValue.Parse(ApplicationJson);
 
             const string RequestUri = "v2/internal/parties/main-units";
             HttpResponseMessage response = await _client.PostAsync(
