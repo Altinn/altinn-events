@@ -181,10 +181,21 @@ static async Task<Instance?> AnalyzeAppInstance(StorageClient storageClient, Eve
     Console.WriteLine($"  Last changed: {ToLocal(instance.LastChanged)}");
     Console.WriteLine($"  Process Step: {instance.Process?.CurrentTask?.ElementId ?? "None"}");
     Console.WriteLine($"  Archived:     {instance.Status?.IsArchived switch { true => $"{ToLocal(instance.Status.Archived)}", _ => "No" }}");
+    
+    Console.WriteLine();
+    Console.WriteLine("  Confirmations:");
 
-    bool confirmed = instance.CompleteConfirmations?.Any(
-        cc => cc.StakeholderId?.Equals(instance.Org, StringComparison.OrdinalIgnoreCase) == true) == true;
-    Console.WriteLine($"  Confirmed:    {(confirmed ? "Yes" : "No")}");
+    if (instance.CompleteConfirmations is not null && instance.CompleteConfirmations.Count > 0)
+    {
+        foreach (var confirmation in instance.CompleteConfirmations)
+        {
+            Console.WriteLine($"    [{ToLocal(confirmation.ConfirmedOn)}] {confirmation.StakeholderId}");
+        }
+    }
+    else
+    {
+        Console.WriteLine("    None");
+    }
 
     Console.WriteLine();
     Console.WriteLine("  Events:");
