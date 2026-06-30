@@ -43,7 +43,7 @@ namespace Altinn.Platform.Events.Services
         private const string ApplicationJson = "application/json";
 
         /// <summary>Name of the named <see cref="HttpClient"/> used by this service.</summary>
-        internal const string _httpClientName = nameof(RegisterApiClient);
+        internal const string HttpClientName = nameof(RegisterApiClient);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RegisterApiClient"/> class.
@@ -56,7 +56,7 @@ namespace Altinn.Platform.Events.Services
             IOptions<PlatformSettings> platformSettings,
             ILogger<RegisterApiClient> logger)
         {
-            _client = httpClientFactory.CreateClient(_httpClientName);
+            _client = httpClientFactory.CreateClient(HttpClientName);
             _httpContextAccessor = httpContextAccessor;
             _generalSettings = generalSettings.Value;
             _accessTokenGenerator = accessTokenGenerator;

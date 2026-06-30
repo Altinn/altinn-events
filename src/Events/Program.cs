@@ -284,7 +284,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-    services.AddHttpClient(RegisterApiClient._httpClientName);
+    services.AddHttpClient(RegisterApiClient.HttpClientName);
     services.AddScoped<IRegisterApiClient, RegisterApiClient>();
     services.AddScoped<IRegisterService, CachingRegisterService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
@@ -300,7 +300,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
-    services.AddHttpClient(WebhookService._httpClientName);
+    services.AddHttpClient(WebhookService.HttpClientName);
     services.AddScoped<IWebhookService, WebhookService>();
 
     services.AddScoped<IAuthorization, AuthorizationService>();

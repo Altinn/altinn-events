@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Services
         private readonly string _slackUri = "hooks.slack.com";
 
         /// <summary>Name of the named <see cref="HttpClient"/> used by this service.</summary>
-        internal const string _httpClientName = nameof(WebhookService);
+        internal const string HttpClientName = nameof(WebhookService);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WebhookService"/> class.
@@ -32,7 +32,7 @@ namespace Altinn.Platform.Events.Services
         public WebhookService(
             IHttpClientFactory httpClientFactory, ITraceLogService traceLogService, IOptions<EventsOutboundSettings> eventOutboundSettings, ILogger<WebhookService> logger)
         {
-            _client = httpClientFactory.CreateClient(_httpClientName);
+            _client = httpClientFactory.CreateClient(HttpClientName);
             _traceLogService = traceLogService;
             _logger = logger;
             _client.Timeout = TimeSpan.FromSeconds(eventOutboundSettings.Value.RequestTimeout);
