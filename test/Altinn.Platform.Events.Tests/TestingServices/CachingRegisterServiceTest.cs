@@ -16,7 +16,7 @@ using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices;
 
-public class RegisterServiceCachingDecoratorTest
+public class CachingRegisterServiceTest
 {
     [Fact]
     public async Task GetMainUnit_FirstCall_DelegatesToInnerService()
@@ -25,11 +25,11 @@ public class RegisterServiceCachingDecoratorTest
         var expected = new OrganizationRecord { OrganizationIdentifier = "311443755", PartyId = 51326197 };
         const string urn = "urn:altinn:party:id:51326197";
 
-        var innerMock = new Mock<IRegisterService>();
+        var innerMock = new Mock<IRegisterApiClient>();
         innerMock.Setup(s => s.GetMainUnit(urn, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
-        var sut = GetDecorator(innerMock.Object);
+        var sut = GetSut(innerMock.Object);
 
         // Act
         var result = await sut.GetMainUnit(urn, CancellationToken.None);
@@ -46,11 +46,11 @@ public class RegisterServiceCachingDecoratorTest
         var expected = new OrganizationRecord { OrganizationIdentifier = "311443755", PartyId = 51326197 };
         const string urn = "urn:altinn:party:id:51326197";
 
-        var innerMock = new Mock<IRegisterService>();
+        var innerMock = new Mock<IRegisterApiClient>();
         innerMock.Setup(s => s.GetMainUnit(urn, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
-        var sut = GetDecorator(innerMock.Object);
+        var sut = GetSut(innerMock.Object);
 
         // Act
         await sut.GetMainUnit(urn, CancellationToken.None);
@@ -68,13 +68,13 @@ public class RegisterServiceCachingDecoratorTest
         const string urn1 = "urn:altinn:party:id:51326197";
         const string urn2 = "urn:altinn:party:id:51326198";
 
-        var innerMock = new Mock<IRegisterService>();
+        var innerMock = new Mock<IRegisterApiClient>();
         innerMock.Setup(s => s.GetMainUnit(urn1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new OrganizationRecord { OrganizationIdentifier = "311443755" });
         innerMock.Setup(s => s.GetMainUnit(urn2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new OrganizationRecord { OrganizationIdentifier = "314249879" });
 
-        var sut = GetDecorator(innerMock.Object);
+        var sut = GetSut(innerMock.Object);
 
         // Act
         await sut.GetMainUnit(urn1, CancellationToken.None);
@@ -91,11 +91,11 @@ public class RegisterServiceCachingDecoratorTest
         // Arrange — null means no main unit found; we still want to cache it
         const string urn = "urn:altinn:organization:identifier-no:000000000";
 
-        var innerMock = new Mock<IRegisterService>();
+        var innerMock = new Mock<IRegisterApiClient>();
         innerMock.Setup(s => s.GetMainUnit(urn, It.IsAny<CancellationToken>()))
             .ReturnsAsync((OrganizationRecord?)null);
 
-        var sut = GetDecorator(innerMock.Object);
+        var sut = GetSut(innerMock.Object);
 
         // Act
         var first = await sut.GetMainUnit(urn, CancellationToken.None);
@@ -114,12 +114,12 @@ public class RegisterServiceCachingDecoratorTest
         const string urn = "urn:altinn:party:id:51326197";
         var expected = new OrganizationRecord { OrganizationIdentifier = "311443755" };
 
-        var innerMock = new Mock<IRegisterService>();
+        var innerMock = new Mock<IRegisterApiClient>();
         innerMock.Setup(s => s.GetMainUnit(urn, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expected);
 
         var cache = new MemoryCache(new MemoryCacheOptions());
-        var sut = GetDecorator(innerMock.Object, cache, lifetimeSeconds: 1);
+        var sut = GetSut(innerMock.Object, cache, lifetimeSeconds: 1);
 
         // Act — first call populates the cache
         await sut.GetMainUnit(urn, CancellationToken.None);
@@ -138,11 +138,11 @@ public class RegisterServiceCachingDecoratorTest
     public async Task PartyLookup_SingleOrg_DelegatesToInner()
     {
         // Arrange
-        var innerMock = new Mock<IRegisterService>();
+        var innerMock = new Mock<IRegisterApiClient>();
         innerMock.Setup(s => s.PartyLookup("311443755", null))
             .ReturnsAsync(51326197);
 
-        var sut = GetDecorator(innerMock.Object);
+        var sut = GetSut(innerMock.Object);
 
         // Act
         var result = await sut.PartyLookup("311443755", null);
@@ -152,8 +152,8 @@ public class RegisterServiceCachingDecoratorTest
         innerMock.Verify(s => s.PartyLookup("311443755", null), Times.Once);
     }
 
-    private static RegisterServiceCachingDecorator GetDecorator(
-        IRegisterService inner,
+    private static CachingRegisterService GetSut(
+        IRegisterApiClient inner,
         IMemoryCache? cache = null,
         int lifetimeSeconds = 3600)
     {
@@ -164,6 +164,6 @@ public class RegisterServiceCachingDecoratorTest
             MainUnitCachingLifetimeInSeconds = lifetimeSeconds
         });
 
-        return new RegisterServiceCachingDecorator(inner, settings, cache);
+        return new CachingRegisterService(inner, settings, cache);
     }
 }
