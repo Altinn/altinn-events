@@ -56,6 +56,7 @@ if (batchMode)
 
         logWriter.WriteLine($"[{DateTime.Now}]:[{line}]: Instance FOUND, generating and sending event");
 
+        //// await eventsQueueClient.AddEvent("app.instance.created", instance);
         //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_2", instance);
         //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_2Revisor", instance);
         //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_3", instance);
@@ -179,8 +180,8 @@ static async Task<Instance?> AnalyzeAppInstance(StorageClient storageClient, Eve
     Console.WriteLine($"  App:          {instance.AppId}");
     Console.WriteLine($"  Created:      {ToLocal(instance.Created)}");
     Console.WriteLine($"  Last changed: {ToLocal(instance.LastChanged)}");
-    Console.WriteLine($"  Process Step: {instance.Process?.CurrentTask?.ElementId ?? "None"}");
-    Console.WriteLine($"  Archived:     {instance.Status?.IsArchived switch { true => $"{ToLocal(instance.Status.Archived)}", _ => "No" }}");
+    Console.WriteLine($"  Process Step: {instance.Process?.CurrentTask?.ElementId ?? "-"}");
+    Console.WriteLine($"  Archived:     {ToLocal(instance.Status?.Archived)}");
     
     Console.WriteLine();
     Console.WriteLine("  Confirmations:");
@@ -194,7 +195,7 @@ static async Task<Instance?> AnalyzeAppInstance(StorageClient storageClient, Eve
     }
     else
     {
-        Console.WriteLine("    None");
+        Console.WriteLine("    No confirmations");
     }
 
     Console.WriteLine();
