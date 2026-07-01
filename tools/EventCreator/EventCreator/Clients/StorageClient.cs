@@ -7,13 +7,13 @@ using NpgsqlTypes;
 
 namespace EventCreator.Clients;
 
-public class PgClient
+public class StorageClient
 {
     private readonly string _readSqlNoElements = "select * from storage.readinstancenoelements ($1)";
 
     private readonly NpgsqlDataSource _dataSource;
 
-    public PgClient(string _pgConnectionString)
+    public StorageClient(string _pgConnectionString)
     {
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(_pgConnectionString);
         dataSourceBuilder.EnableDynamicJson();

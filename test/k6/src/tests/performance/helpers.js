@@ -6,13 +6,17 @@ import * as subscriptionsApi from "../../api/subscriptions.js";
 import * as config from "../../config.js";
 import { addErrorCount } from "../../errorhandler.js";
 
-export const scopes = "altinn:events.publish altinn:serviceowner altinn:events.subscribe";
-export const resourceFilter = "urn:altinn:resource:ttd-altinn-events-automated-tests";
+export const scopes =
+    "altinn:events.publish altinn:serviceowner altinn:events.subscribe";
+export const resourceFilter =
+    "urn:altinn:resource:ttd-altinn-events-automated-tests";
 export const runId = __ENV.runId || "untagged";
 
 export function warnIfUntagged() {
     if (runId === "untagged") {
-        throw new Error("[CONFIG] Missing runId. Pass -e runId=$(date +%Y%m%d-%H%M%S) to isolate this run safely.");
+        throw new Error(
+            "[CONFIG] Missing runId. Pass -e runId=$(date +%Y%m%d-%H%M%S) to isolate this run safely."
+        );
     }
 }
 
@@ -24,25 +28,34 @@ export async function performanceSetup(setupLogLine) {
         resourceFilter: resourceFilter,
     };
 
-    const response = subscriptionsApi.postSubscription(JSON.stringify(subscription), token);
+    const response = subscriptionsApi.postSubscription(
+        JSON.stringify(subscription),
+        token
+    );
 
     const success = check(response, {
         "Setup: subscription created. Status is 201": (r) => r.status === 201,
     });
 
     if (!success) {
-        throw new Error(`[SETUP] Failed to create subscription: HTTP ${response.status} – ${response.body}`);
+        throw new Error(
+            `[SETUP] Failed to create subscription: HTTP ${response.status} – ${response.body}`
+        );
     }
 
     let parsedBody;
     try {
         parsedBody = JSON.parse(response.body);
     } catch {
-        throw new Error(`[SETUP] Subscription created with HTTP 201, but body was not valid JSON: ${response.body}`);
+        throw new Error(
+            `[SETUP] Subscription created with HTTP 201, but body was not valid JSON: ${response.body}`
+        );
     }
     const subscriptionId = parsedBody?.id;
     if (!subscriptionId) {
-        throw new Error(`[SETUP] Subscription response missing 'id': ${response.body}`);
+        throw new Error(
+            `[SETUP] Subscription response missing 'id': ${response.body}`
+        );
     }
     console.log(`[SETUP] Subscription ${subscriptionId} created`);
     if (setupLogLine) {
@@ -63,7 +76,10 @@ export function postCloudEvent(eventType, token) {
         time: new Date().toISOString(),
     };
 
-    const response = eventsApi.postCloudEvent(JSON.stringify(cloudEvent), token);
+    const response = eventsApi.postCloudEvent(
+        JSON.stringify(cloudEvent),
+        token
+    );
 
     const success = check(response, {
         "POST event. Status is 200": (r) => r.status === 200,
@@ -74,7 +90,9 @@ export function postCloudEvent(eventType, token) {
 
 export function performanceTeardown(data) {
     if (data.subscriptionId) {
-        console.log(`[TEARDOWN] Subscription ${data.subscriptionId} left active. Delete after reviewing the SQL results:\n  DELETE FROM events.subscription WHERE id = ${data.subscriptionId};`);
+        console.log(
+            `[TEARDOWN] Subscription ${data.subscriptionId} left active. Delete after reviewing the SQL results:\n  DELETE FROM events.subscription WHERE id = ${data.subscriptionId};`
+        );
     }
 }
 
@@ -84,14 +102,30 @@ export function getTimeWindow(data) {
     const testStartTime = new Date(testEndTime.getTime() - testDurationMs);
 
     const offsetMinutes = Number.parseInt(__ENV.queryOffsetMinutes || "15", 10);
-    const queryEndTime = new Date(testEndTime.getTime() + offsetMinutes * 60 * 1000);
+    const queryEndTime = new Date(
+        testEndTime.getTime() + offsetMinutes * 60 * 1000
+    );
 
     const durationSec = testDurationMs / 1000;
 
-    const sPg = testStartTime.toISOString().replace("T", " ").replace("Z", "+00");
-    const ePg = queryEndTime.toISOString().replace("T", " ").replace("Z", "+00");
+    const sPg = testStartTime
+        .toISOString()
+        .replace("T", " ")
+        .replace("Z", "+00");
+    const ePg = queryEndTime
+        .toISOString()
+        .replace("T", " ")
+        .replace("Z", "+00");
 
-    return { testStartTime, testEndTime, queryEndTime, offsetMinutes, durationSec, sPg, ePg };
+    return {
+        testStartTime,
+        testEndTime,
+        queryEndTime,
+        offsetMinutes,
+        durationSec,
+        sPg,
+        ePg,
+    };
 }
 
 export function getBaseMetrics(data) {
@@ -103,7 +137,12 @@ export function getBaseMetrics(data) {
     return { eventsPosted, errorCount, p95Ms, successCount };
 }
 
-export function buildMetaLines(eventType, testStartTime, queryEndTime, offsetMinutes) {
+export function buildMetaLines(
+    eventType,
+    testStartTime,
+    queryEndTime,
+    offsetMinutes
+) {
     return [
         `  Run ID    : ${runId}${runId === "untagged" ? "  ⚠ pass -e runId=... to isolate this run" : ""}`,
         `  Event type: ${eventType}`,
@@ -198,7 +237,12 @@ export function buildSummary(title, k6ResultLines, eventType, data) {
         "",
         ...k6ResultLines,
         "",
-        ...buildMetaLines(eventType, tw.testStartTime, tw.queryEndTime, tw.offsetMinutes),
+        ...buildMetaLines(
+            eventType,
+            tw.testStartTime,
+            tw.queryEndTime,
+            tw.offsetMinutes
+        ),
         "",
         "",
         ...buildSqlSection(eventType, tw.sPg, tw.ePg),

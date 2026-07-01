@@ -32,7 +32,6 @@ using Altinn.Platform.Events.Telemetry;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.Exporter;
-using Azure.Security.KeyVault.Secrets;
 using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -285,8 +284,9 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-    services.AddHttpClient<IRegisterService, RegisterService>();
-    services.Decorate<IRegisterService, RegisterServiceCachingDecorator>();
+    services.AddHttpClient(RegisterApiClient.HttpClientName);
+    services.AddScoped<IRegisterApiClient, RegisterApiClient>();
+    services.AddScoped<IRegisterService, CachingRegisterService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
     services.AddScoped<IEventsService, EventsService>();
     services.AddScoped<IOutboundService, OutboundService>();
@@ -300,9 +300,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
-    services.AddHttpClient<IWebhookService, WebhookService>();
+    services.AddHttpClient(WebhookService.HttpClientName);
+    services.AddScoped<IWebhookService, WebhookService>();
 
-    services.AddTransient<IAuthorization, AuthorizationService>();
+    services.AddScoped<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
 
     services.AddSwaggerGen(c =>

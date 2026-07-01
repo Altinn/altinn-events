@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -29,7 +28,7 @@ using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
 {
-    public class RegisterServiceTest
+    public class RegisterApiClientTest
     {
         private readonly Mock<IOptions<PlatformSettings>> _platformSettings;
         private readonly Mock<IOptions<GeneralSettings>> _generalSettings;
@@ -37,7 +36,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly Mock<IHttpContextAccessor> _contextAccessor;
         private readonly Mock<IAccessTokenGenerator> _accessTokenGenerator;
 
-        public RegisterServiceTest()
+        public RegisterApiClientTest()
         {
             _platformSettings = new Mock<IOptions<PlatformSettings>>();
             _generalSettings = new Mock<IOptions<GeneralSettings>>();
@@ -69,13 +68,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             HttpClient httpClient = new HttpClient(_handlerMock.Object);
 
-            RegisterService target = new RegisterService(
-                httpClient,
+            RegisterApiClient target = new RegisterApiClient(
+                CreateFactory(httpClient),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             // Act
             int actual = await target.PartyLookup("897069650", null);
@@ -100,13 +99,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             HttpClient httpClient = new HttpClient(_handlerMock.Object);
 
-            RegisterService target = new RegisterService(
-                httpClient,
+            RegisterApiClient target = new RegisterApiClient(
+                CreateFactory(httpClient),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             // Act & Assert
             await Assert.ThrowsAsync<PlatformHttpException>(async () => { await target.PartyLookup("16069412345", null); });
@@ -128,13 +127,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             InitializeMocks(5);
 
-            RegisterService target = new(
-                new HttpClient(messageHandler),
+            RegisterApiClient target = new(
+                CreateFactory(new HttpClient(messageHandler)),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             List<string> partyUrnList = [
                 "urn:altinn:person:identifier-no:02056241046", 
@@ -186,13 +185,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             
             InitializeMocks(2);
 
-            RegisterService target = new(
-                new HttpClient(messageHandler),
+            RegisterApiClient target = new(
+                CreateFactory(new HttpClient(messageHandler)),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             List<string> partyUrnList = [
                 "urn:altinn:person:identifier-no:02056241046",
@@ -237,13 +236,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             InitializeMocks(10);
 
-            RegisterService target = new(
-                new HttpClient(messageHandler),
+            RegisterApiClient target = new(
+                CreateFactory(new HttpClient(messageHandler)),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             List<string> partyUrnList = [
                 "urn:altinn:person:identifier-no:02056241046"];
@@ -294,13 +293,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             InitializeMocks(10);
 
-            RegisterService target = new(
-                new HttpClient(messageHandler),
+            RegisterApiClient target = new(
+                CreateFactory(new HttpClient(messageHandler)),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             // Act
             OrganizationRecord actual = await target.GetMainUnit(
@@ -328,13 +327,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             InitializeMocks(10);
 
-            RegisterService target = new(
-                new HttpClient(messageHandler),
+            RegisterApiClient target = new(
+                CreateFactory(new HttpClient(messageHandler)),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             // Act
             OrganizationRecord actual = await target.GetMainUnit(
@@ -362,10 +361,10 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             InitializeMocks(10);
 
-            var loggerMock = new Mock<ILogger<RegisterService>>();
+            var loggerMock = new Mock<ILogger<RegisterApiClient>>();
 
-            RegisterService target = new(
-                new HttpClient(messageHandler),
+            RegisterApiClient target = new(
+                CreateFactory(new HttpClient(messageHandler)),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
@@ -414,13 +413,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             InitializeMocks(10);
 
-            RegisterService target = new(
-                new HttpClient(messageHandler),
+            RegisterApiClient target = new(
+                CreateFactory(new HttpClient(messageHandler)),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             // Act
             await target.GetMainUnit(OrgUrn, CancellationToken.None);
@@ -452,13 +451,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             InitializeMocks(10);
 
-            RegisterService target = new(
-                new HttpClient(messageHandler),
+            RegisterApiClient target = new(
+                CreateFactory(new HttpClient(messageHandler)),
                 _contextAccessor.Object,
                 _accessTokenGenerator.Object,
                 _generalSettings.Object,
                 _platformSettings.Object,
-                new Mock<ILogger<RegisterService>>().Object);
+                new Mock<ILogger<RegisterApiClient>>().Object);
 
             // Act
             PlatformHttpException actual = null;
@@ -473,6 +472,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.NotNull(actual);
+        }
+
+        private static IHttpClientFactory CreateFactory(HttpClient client)
+        {
+            var factory = new Mock<IHttpClientFactory>();
+            factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
+            return factory.Object;
         }
 
         private void InitializeMocks(HttpResponseMessage httpResponseMessage, Action<HttpRequestMessage> callback)
