@@ -26,6 +26,11 @@ body:json {
   }
 }
 
+script:pre-request {
+  await bru.runRequest("Token generator/access token (ttd_apps-test)")
+  await bru.runRequest("Token generator/publish (ttd)")
+}
+
 settings {
   encodeUrl: true
   timeout: 0
