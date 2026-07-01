@@ -1,7 +1,7 @@
 meta {
-  name: POST app event
+  name: app event (apps-test)
   type: http
-  seq: 3
+  seq: 1
 }
 
 post {
@@ -12,17 +12,23 @@ post {
 
 headers {
   Content-Type: application/cloudevents+json
+  PlatformAccessToken: {{AccessToken}}
 }
 
 body:json {
   {
-    "time": "2022-11-18T12:00:00.000Z",
+    "specversion": "1.0",
+    "time": "{{$isoTimestamp}}",
     "type": "app.instance.created",
     "source": "https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/50019855/428a4575-2c04-4400-89a3-1aaadd2579cd",
-    "subject": "/party/50019855",
-    "specversion": "1.0",
-    "alternativesubject": "/person/123456"
+    "subject": "/party/51282358",
+    "alternativesubject": "/org/311085972"
   }
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/access token (ttd_apps-test)")
+  await bru.runRequest("Token generator/publish (ttd)")
 }
 
 settings {

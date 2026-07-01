@@ -1,0 +1,38 @@
+meta {
+  name: generic event (dialogporten)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{PlatformHostUrl}}/events/api/v1/events
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/cloudevents+json
+}
+
+body:json {
+  {
+    "specversion": "1.0",
+    "id": "{{$randomUUID}}",
+    "time": "{{$isoTimestamp}}",
+    "type": "dialogporten.dialog.updated.v1",
+    "source": "https://platform.tt02.altinn.no/dialogporten/api/v1/enduser/dialogs/019d4665-e739-7c1a-84ca-9df248032097",
+    "subject": "urn:altinn:person:identifier-no:15036202391",
+    "resource": "urn:altinn:resource:app_ttd_apps-test",
+    "resourceinstance": "019d4665-e739-7c1a-84ca-9df248032097"
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/publish admin (dialogporten)");
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,25 @@
+meta {
+  name: GET events
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{PlatformHostUrl}}/events/api/v1/app/party?from=2026-06-20T11:00:53.3917Z&party={{AuthN_PartyId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  from: 2026-06-20T11:00:53.3917Z
+  party: {{AuthN_PartyId}}
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/subscribe (user)");
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

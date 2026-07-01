@@ -1,18 +1,18 @@
 meta {
-  name: org subscribe
+  name: publish admin (dialogporten)
   type: http
-  seq: 1
+  seq: 4
 }
 
 get {
-  url: {{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken?env={{Environment}}&scopes=altinn:events.subscribe&orgNo=991825827&org=ttd
+  url: {{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken?env={{Environment}}&scopes=altinn:events.publish altinn:events.publish.admin&orgNo=991825827&org=ttd
   body: none
   auth: basic
 }
 
 params:query {
   env: {{Environment}}
-  scopes: altinn:events.subscribe
+  scopes: altinn:events.publish altinn:events.publish.admin
   orgNo: 991825827
   org: ttd
 }

@@ -1,7 +1,7 @@
 meta {
   name: app subscription (person)
   type: http
-  seq: 3
+  seq: 4
 }
 
 post {
@@ -12,10 +12,14 @@ post {
 
 body:json {
   {
-    "sourceFilter": "https://ttd.apps.at22.altinn.cloud/ttd/apps-test",
-    "endpoint": "https://webhook.site/73e46e5f-e905-4375-8ab6-12986525007e",
+    "sourceFilter": "https://ttd.apps.at23.altinn.cloud/ttd/apps-test",
+    "endpoint": "https://webhook.site/a637c7c2-4c9c-419b-8ea5-49c8ae84126e",
     "subjectFilter": "/party/{{AuthN_PartyId}}"
   }
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/subscribe (user)");
 }
 
 settings {
