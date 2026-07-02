@@ -133,6 +133,48 @@ END;
 $BODY$;
 
 
+-- getevents.sql:
+CREATE OR REPLACE FUNCTION events.getevents_v2(
+	_resource character varying,
+	_subject character varying,
+	_alternativesubject character varying,
+	_after character varying,
+	_type text[],
+	_size integer)
+    RETURNS TABLE(cloudevents text) 
+    LANGUAGE 'plpgsql'
+AS $BODY$
+
+DECLARE
+_sequenceno bigint;
+BEGIN
+IF _after IS NOT NULL AND _after <> '' THEN
+	SELECT
+		case count(*)
+		when 0
+			then 0
+		else
+			(SELECT MIN(sequenceno) FROM events.events
+			WHERE cloudevent->>'id' = _after)
+		end
+	INTO _sequenceno
+	FROM events.events
+	WHERE cloudevent->>'id' = _after;
+END IF;
+return query
+	SELECT cast(cloudevent as text) as cloudevents
+	FROM events.events
+	WHERE  cloudevent->>'resource' = _resource
+	AND (_subject IS NULL OR cloudevent->>'subject' = _subject)
+	AND (_alternativeSubject IS NULL OR cloudevent->>'alternativesubject' = _alternativesubject)
+	AND (_type IS NULL OR cloudevent->>'type' LIKE ANY(_type) )
+	AND registeredtime <= now() - interval '30 second'
+	AND (_after IS NULL OR _after = '' OR sequenceno > _sequenceno)
+  ORDER BY sequenceno
+  limit _size;
+END;
+$BODY$;
+
 -- getsubscription.sql:
 CREATE OR REPLACE FUNCTION events.getsubscription_v3(
 	_id integer)
@@ -197,6 +239,35 @@ END
 $BODY$;
 
 
+-- insertsubscription.sql:
+CREATE OR REPLACE FUNCTION events.insert_subscription_v2(
+	resourcefilter character varying,
+	sourcefilter character varying,
+	subjectfilter character varying,
+	typefilter character varying,
+	consumer character varying,
+	endpointurl character varying,
+	createdby character varying,
+	validated boolean,
+	includesubunits boolean)
+	RETURNS SETOF events.subscription
+	LANGUAGE 'plpgsql'
+
+AS $BODY$
+DECLARE currentTime timestamptz;
+
+BEGIN
+	SET TIME ZONE UTC;
+	currentTime := NOW();
+
+	RETURN QUERY
+	INSERT INTO events.subscription(resourcefilter, sourcefilter, subjectfilter, typefilter, consumer, endpointurl, createdby, "time", validated, includesubunits)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, currentTime, $8, $9) RETURNING *;
+
+END
+$BODY$;
+
+
 -- setvalidsubscription.sql:
 CREATE OR REPLACE PROCEDURE events.setvalidsubscription(_id integer)
     LANGUAGE 'plpgsql'
@@ -210,4 +281,5 @@ BEGIN
 	WHERE id = _id;
 END;
 $BODY$;
+
 
