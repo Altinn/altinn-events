@@ -61,9 +61,9 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
-            if (subscriptionRequest.SourceFilter != null && !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
+            if (subscriptionRequest.SourceFilter != null && !(subscriptionRequest.SourceFilter.IsAbsoluteUri && subscriptionRequest.SourceFilter.Scheme == Uri.UriSchemeHttps))
             {
-                return StatusCode(400, "SourceFilter must be an absolute URI");
+                return StatusCode(400, "SourceFilter must be an absolute URL with the https scheme.");
             }
 
             bool isAppSubscription = IsAppSubscription(subscriptionRequest);
