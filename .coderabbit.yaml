@@ -1,4 +1,3 @@
 reviews:
   path_filters:
-    - "!src/Events/Migration/**"
-    - "src/Events/Migration/FunctionsAndProcedures/**"
+    - "!src/Events/Migration/v*/*functions-and-procedures.sql"
