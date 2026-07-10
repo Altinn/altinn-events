@@ -61,6 +61,11 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
+            if (subscriptionRequest.EndPoint == null || !(subscriptionRequest.EndPoint.IsAbsoluteUri && subscriptionRequest.EndPoint.Scheme == Uri.UriSchemeHttps))
+            {
+                return StatusCode(400, "Missing or invalid endpoint to push events towards");
+            }
+
             if (subscriptionRequest.SourceFilter != null && !(subscriptionRequest.SourceFilter.IsAbsoluteUri && subscriptionRequest.SourceFilter.Scheme == Uri.UriSchemeHttps))
             {
                 return StatusCode(400, "SourceFilter must be an absolute URL with the https scheme.");
@@ -71,11 +76,6 @@ namespace Altinn.Platform.Events.Controllers
             if (!isAppSubscription && !User.HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
             {
                 return Forbid();
-            }
-
-            if (subscriptionRequest.EndPoint == null || !Uri.IsWellFormedUriString(subscriptionRequest.EndPoint.ToString(), UriKind.Absolute))
-            {
-                return StatusCode(400, "Missing or invalid endpoint to push events towards");
             }
 
             if (subscriptionRequest.ResourceFilter != null && !UriExtensions.IsValidUrn(subscriptionRequest.ResourceFilter))
