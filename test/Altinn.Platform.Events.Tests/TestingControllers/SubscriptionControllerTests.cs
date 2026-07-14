@@ -401,9 +401,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
-            /// Scenario: Attempting to create a subscription with an invalid source filter value.
-            /// Expected: Returns bad request and appropriate error message.
-            /// Source filter isn't required so we're not testing for null or empty string.
+            /// Scenario: 
+            ///     Attempting to create a subscription with an invalid endpoint value.
+            /// Expected: 
+            ///     Returns response code 400 - Bad Request and specific error message.
+            /// Success criteria:
+            ///     The response has correct status and expected response message.
             /// </summary>
             [Theory]
             [InlineData("")]
