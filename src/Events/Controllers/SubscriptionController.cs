@@ -61,9 +61,14 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
-            if (subscriptionRequest.SourceFilter != null && !Uri.IsWellFormedUriString(subscriptionRequest.SourceFilter.ToString(), UriKind.Absolute))
+            if (!IsValidUri(subscriptionRequest.EndPoint))
             {
-                return StatusCode(400, "SourceFilter must be an absolute URI");
+                return StatusCode(400, "Missing or invalid endpoint to push events towards");
+            }
+
+            if (subscriptionRequest.SourceFilter is not null && !IsValidUri(subscriptionRequest.SourceFilter))
+            {
+                return StatusCode(400, "SourceFilter must be an absolute URL with the https scheme.");
             }
 
             bool isAppSubscription = IsAppSubscription(subscriptionRequest);
@@ -71,11 +76,6 @@ namespace Altinn.Platform.Events.Controllers
             if (!isAppSubscription && !User.HasRequiredScope(AuthorizationConstants.SCOPE_EVENTS_SUBSCRIBE))
             {
                 return Forbid();
-            }
-
-            if (subscriptionRequest.EndPoint == null || !Uri.IsWellFormedUriString(subscriptionRequest.EndPoint.ToString(), UriKind.Absolute))
-            {
-                return StatusCode(400, "Missing or invalid endpoint to push events towards");
             }
 
             if (subscriptionRequest.ResourceFilter != null && !UriExtensions.IsValidUrn(subscriptionRequest.ResourceFilter))
@@ -188,6 +188,16 @@ namespace Altinn.Platform.Events.Controllers
             return Ok();
         }
 
+        private static bool IsValidUri(Uri uri)
+        {
+            return uri is not null && uri.IsAbsoluteUri && uri.Scheme == Uri.UriSchemeHttps;
+        }
+
+        private static void AddQueryModelToTelemetry(SubscriptionRequestModel subscriptionRequest)
+        {
+            Activity.Current?.AddTag("subscription.request", JsonSerializer.Serialize(subscriptionRequest));
+        }
+
         private bool IsAppSubscription(SubscriptionRequestModel subscription)
         {
             if (subscription.ResourceFilter != null &&
@@ -202,11 +212,6 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             return false;
-        }
-
-        private static void AddQueryModelToTelemetry(SubscriptionRequestModel subscriptionRequest)
-        {
-            Activity.Current?.AddTag("subscription.request", JsonSerializer.Serialize(subscriptionRequest));
         }
     }
 }

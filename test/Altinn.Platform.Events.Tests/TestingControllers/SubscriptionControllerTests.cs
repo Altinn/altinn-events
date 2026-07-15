@@ -228,7 +228,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             [Fact]
-            public async Task ValidateSubscription_ReturnsOk()
+            public async Task Validate_ValidSubscription_ReturnsOk()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions/validate/16";
@@ -301,38 +301,6 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
-            /// Post invalid subscription for org with missing endpoint
-            /// Expected result:
-            /// Returns HttpStatus badrequest
-            /// Success criteria:
-            /// The response has correct status and expected response message.
-            /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionWithoutEndpoint_ReturnsBadRequest()
-            {
-                // Arrange
-                string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("https://skd.apps.altinn.no/skd/flyttemelding", null, subjectFilter: "/party/133");
-
-                cloudEventSubscription.EndPoint = null;
-
-                HttpClient client = GetTestClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-                {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
-                };
-
-                // Act
-                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
-                string responseMessage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
-                // Assert
-                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("\"Missing or invalid endpoint to push events towards\"", responseMessage);
-            }
-
-            /// <summary>
             /// Post invalid subscription with resource notfor user with persn as subject
             /// Expected result:
             /// Returns bad request 
@@ -365,21 +333,28 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             }
 
             /// <summary>
-            /// Scenario: Invalid source provided relative URI, absolute requied
-            /// Expected: Returns bad request
+            /// Scenario: Attempting to create a subscription with an invalid source filter value.
+            /// Expected: Returns bad request and appropriate error message.
+            /// Source filter isn't required so we're not testing for null or empty string.
             /// </summary>
-            [Fact]
-            public async Task Post_GivenSubscriptionWithRelativeUriSource_ReturnsBadRequest()
+            [Theory]
+            [InlineData("skd/flyttemelding")]
+            [InlineData("altinn.no/ttd/apps-test/")]
+            [InlineData("platform.altinn.no/")]
+            [InlineData("http://altinn.no/ttd/")]
+            [InlineData("sftp://altinn.no/ttd/")]
+            public async Task Post_SourceFilterIsNotAnAbsoluteHttpsUrl_ReturnsBadRequest(string source)
             {
                 // Arrange
                 string requestUri = $"{BasePath}/subscriptions";
-                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest("skd/flyttemelding", "https://www.skatteetaten.no/hook");
+                string subscription = "{ \"sourceFilter\": \"" + source + "\", \"endPoint\": \"https://altinn.no/hook\" }";
 
                 HttpClient client = GetTestClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
-                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+                
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
                 {
-                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                    Content = new StringContent(subscription, Encoding.UTF8, "application/json")
                 };
 
                 // Act
@@ -387,6 +362,82 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                
+                // Check that the bad request respons is actually about the source filter and not an other property.
+                string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                Assert.Equal("\"SourceFilter must be an absolute URL with the https scheme.\"", responseContent);
+            }
+
+            /// <summary>
+            /// Post a subscription without an endpoint.
+            /// Expected result: Returns HttpStatus badrequest
+            /// Success criteria: The response has correct status and expected response message.
+            /// </summary>
+            [Fact]
+            public async Task Post_GivenSubscriptionWithoutEndpoint_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+
+                SubscriptionRequestModel cloudEventSubscription = GetEventsSubscriptionRequest(
+                    "https://skd.apps.altinn.no/skd/flyttemelding", null, subjectFilter: "/party/133");
+
+                HttpClient client = GetTestClient();
+
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd", "950474084"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEventSubscription.Serialize(), Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseMessage = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("\"Missing or invalid endpoint to push events towards\"", responseMessage);
+            }
+
+            /// <summary>
+            /// Scenario: 
+            ///     Attempting to create a subscription with an invalid endpoint value.
+            /// Expected: 
+            ///     Returns response code 400 - Bad Request and specific error message.
+            /// Success criteria:
+            ///     The response has correct status and expected response message.
+            /// </summary>
+            [Theory]
+            [InlineData("")]
+            [InlineData("skd/flyttemelding")]
+            [InlineData("altinn.no/ttd/apps-test/")]
+            [InlineData("platform.altinn.no/")]
+            [InlineData("http://altinn.no/ttd/")]
+            [InlineData("sftp://altinn.no/ttd/")]
+            public async Task Post_EndPointIsNotAnAbsoluteHttpsUrl_ReturnsBadRequest(string endPoint)
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/subscriptions";
+                string subscription = "{ \"endPoint\": \"" + endPoint + "\" }";
+
+                HttpClient client = GetTestClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("skd"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(subscription, Encoding.UTF8, "application/json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+                // Check that the bad request respons is actually about the end point and not an other property.
+                string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                Assert.Equal("\"Missing or invalid endpoint to push events towards\"", responseContent);
             }
 
             /// <summary>
