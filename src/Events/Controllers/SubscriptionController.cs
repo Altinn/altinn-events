@@ -61,12 +61,12 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<Subscription>> Post([FromBody] SubscriptionRequestModel subscriptionRequest)
         {
-            if (subscriptionRequest.EndPoint == null || !(subscriptionRequest.EndPoint.IsAbsoluteUri && subscriptionRequest.EndPoint.Scheme == Uri.UriSchemeHttps))
+            if (!IsValidUri(subscriptionRequest.EndPoint))
             {
                 return StatusCode(400, "Missing or invalid endpoint to push events towards");
             }
 
-            if (subscriptionRequest.SourceFilter != null && !(subscriptionRequest.SourceFilter.IsAbsoluteUri && subscriptionRequest.SourceFilter.Scheme == Uri.UriSchemeHttps))
+            if (subscriptionRequest.SourceFilter is not null && !IsValidUri(subscriptionRequest.SourceFilter))
             {
                 return StatusCode(400, "SourceFilter must be an absolute URL with the https scheme.");
             }
@@ -188,6 +188,16 @@ namespace Altinn.Platform.Events.Controllers
             return Ok();
         }
 
+        private static bool IsValidUri(Uri uri)
+        {
+            return uri is not null && uri.IsAbsoluteUri && uri.Scheme == Uri.UriSchemeHttps;
+        }
+
+        private static void AddQueryModelToTelemetry(SubscriptionRequestModel subscriptionRequest)
+        {
+            Activity.Current?.AddTag("subscription.request", JsonSerializer.Serialize(subscriptionRequest));
+        }
+
         private bool IsAppSubscription(SubscriptionRequestModel subscription)
         {
             if (subscription.ResourceFilter != null &&
@@ -202,11 +212,6 @@ namespace Altinn.Platform.Events.Controllers
             }
 
             return false;
-        }
-
-        private static void AddQueryModelToTelemetry(SubscriptionRequestModel subscriptionRequest)
-        {
-            Activity.Current?.AddTag("subscription.request", JsonSerializer.Serialize(subscriptionRequest));
         }
     }
 }
