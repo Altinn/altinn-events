@@ -83,7 +83,8 @@ static async Task RunInteractiveMenu(StorageClient storageClient, EventsClient e
         Console.WriteLine("=== EventCreator Menu ===");
         Console.WriteLine("1. Analyze app instance");
         Console.WriteLine($"2. Generate event for instance {(currentInstance is not null ? $" ({currentInstance.Id})" : string.Empty)}");
-        Console.WriteLine("3. Exit");
+        Console.WriteLine("3. Compare with similar archived instances");
+        Console.WriteLine("4. Exit");
         Console.Write("Select an option: ");
 
         string? input = Console.ReadLine();
@@ -96,6 +97,9 @@ static async Task RunInteractiveMenu(StorageClient storageClient, EventsClient e
                 await GenerateEventForInstance(storageClient, eventsQueueClient, currentInstance);
                 break;
             case "3":
+                currentInstance = await CompareSimilarInstances(storageClient, eventsClient, currentInstance);
+                break;
+            case "4":
                 Console.WriteLine("Exiting...");
                 return;
             default:
@@ -200,20 +204,82 @@ static async Task<Instance?> AnalyzeAppInstance(StorageClient storageClient, Eve
 
     Console.WriteLine();
     Console.WriteLine("  Events:");
+    await PrintInstanceEvents(eventsClient, instance);
+
+    return instance;
+}
+
+static async Task<Instance?> CompareSimilarInstances(StorageClient storageClient, EventsClient eventsClient, Instance? currentInstance)
+{
+    string previousGuid = currentInstance?.Id ?? string.Empty;
+    string prompt = string.IsNullOrEmpty(previousGuid)
+        ? "Enter instance GUID: "
+        : $"Enter instance GUID [{previousGuid}]: ";
+
+    Console.Write(prompt);
+    string? guidInput = Console.ReadLine()?.Trim();
+
+    if (string.IsNullOrEmpty(guidInput))
+        guidInput = previousGuid;
+
+    if (!Guid.TryParse(guidInput, out Guid instanceGuid))
+    {
+        Console.WriteLine("Invalid GUID format.");
+        return null;
+    }
+
+    Console.WriteLine($"Fetching instance {instanceGuid}...");
+    Instance? instance = await storageClient.GetOne(instanceGuid);
+
+    if (instance is null)
+    {
+        Console.WriteLine("Instance not found.");
+        return null;
+    }
+
+    const int defaultLimit = 5;
+    Console.Write($"How many similar archived instances to compare against [{defaultLimit}]: ");
+    string? limitInput = Console.ReadLine()?.Trim();
+    int limit = int.TryParse(limitInput, out int parsedLimit) && parsedLimit > 0 ? parsedLimit : defaultLimit;
+
+    Console.WriteLine($"Looking for archived instances of '{instance.AppId}' similar to {instance.Id}...");
+    List<Instance> similarInstances = await storageClient.GetSimilarArchivedInstances(instance.AppId, instanceGuid, limit);
+
+    Console.WriteLine();
+    Console.WriteLine($"  Target instance {instance.Id} (Process Step: {instance.Process?.CurrentTask?.ElementId ?? "-"}, Archived: {ToLocal(instance.Status?.Archived)}):");
+    await PrintInstanceEvents(eventsClient, instance);
+
+    if (similarInstances.Count == 0)
+    {
+        Console.WriteLine();
+        Console.WriteLine("  No similar archived instances found for this app.");
+        return instance;
+    }
+
+    foreach (Instance similar in similarInstances)
+    {
+        Console.WriteLine();
+        Console.WriteLine($"  Similar archived instance {similar.Id} (Archived: {ToLocal(similar.Status?.Archived)}):");
+        await PrintInstanceEvents(eventsClient, similar);
+    }
+
+    return instance;
+}
+
+static async Task PrintInstanceEvents(EventsClient eventsClient, Instance instance)
+{
     List<AppInstanceEvent> events = await eventsClient.GetInstanceEvents(instance);
 
     if (events.Count == 0)
     {
         Console.WriteLine("    No events found.");
-        return instance;
+        return;
     }
 
     foreach (AppInstanceEvent e in events)
     {
         Console.WriteLine($"    [{ToLocal(e.RegisteredTime)}] {e.EventType} ({e.EventId})");
     }
-
-    return instance;
 }
 
 static string ToLocal(DateTime? utc) => utc?.ToLocalTime().ToString() ?? "-";
