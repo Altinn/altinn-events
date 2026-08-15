@@ -278,8 +278,10 @@ static async Task PrintInstanceEvents(EventsClient eventsClient, Instance instan
 
     foreach (AppInstanceEvent e in events)
     {
-        Console.WriteLine($"    [{ToLocal(e.RegisteredTime)}] {e.EventType} ({e.EventId})");
+        Console.WriteLine($"    [{ToLocalPrecise(e.RegisteredTime)}] (seq {e.SequenceNo}) {e.EventType} ({e.EventId})");
     }
 }
 
 static string ToLocal(DateTime? utc) => utc?.ToLocalTime().ToString() ?? "-";
+
+static string ToLocalPrecise(DateTime utc) => utc.ToLocalTime().ToString("dd.MM.yyyy HH.mm.ss.fff");

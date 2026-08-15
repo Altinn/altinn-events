@@ -6,6 +6,7 @@ using NpgsqlTypes;
 namespace EventCreator.Clients;
 
 public record AppInstanceEvent(
+    long SequenceNo,
     DateTime RegisteredTime,
     string EventId,
     string EventType);
@@ -13,12 +14,12 @@ public record AppInstanceEvent(
 public class EventsClient
 {
     private const string _getInstanceEventsSql = """
-        SELECT registeredtime, cloudevent->>'id' AS eventid, cloudevent->>'type' AS eventtype
+        SELECT sequenceno, registeredtime, cloudevent->>'id' AS eventid, cloudevent->>'type' AS eventtype
         FROM events.events
         WHERE registeredtime > $1
         AND cloudevent->>'resource' = $2
         AND cloudevent->>'resourceinstance' = $3
-        ORDER BY registeredtime
+        ORDER BY sequenceno
         LIMIT 100
         """;
 
@@ -50,9 +51,10 @@ public class EventsClient
         while (await reader.ReadAsync())
         {
             events.Add(new AppInstanceEvent(
-                RegisteredTime: reader.GetDateTime(0),
-                EventId: reader.GetString(1),
-                EventType: reader.GetString(2)));
+                SequenceNo: reader.GetInt64(0),
+                RegisteredTime: reader.GetDateTime(1),
+                EventId: reader.GetString(2),
+                EventType: reader.GetString(3)));
         }
 
         return events;
