@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -21,6 +20,7 @@ using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Telemetry;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.UnitTest.Mocks;
+using Altinn.Platform.Events.Wolverine.Commands;
 
 using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
@@ -1262,7 +1262,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario: PostOutbound with useAzureServiceBus=true and authorized consumer
-        /// Expected result: IMessageBus.PublishAsync is called with OutboundEventCommand
+        /// Expected result: IMessageBus.SendAsync is called with OutboundEventCommand
         /// Success criteria: MessageBus is called once, queue client is never called
         /// </summary>
         [Fact]
@@ -1305,7 +1305,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             messageBusMock.Verify(
-                m => m.PublishAsync(
+                m => m.SendAsync(
                     It.IsAny<OutboundEventCommand>(),
                     null),
                 Times.AtLeastOnce,
@@ -1319,7 +1319,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario: PostOutbound with useAzureServiceBus=true but consumer is not authorized
-        /// Expected result: IMessageBus.PublishAsync is never called
+        /// Expected result: IMessageBus.SendAsync is never called
         /// Success criteria: MessageBus and queue client are never called
         /// </summary>
         [Fact]
@@ -1362,7 +1362,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             messageBusMock.Verify(
-                m => m.PublishAsync(
+                m => m.SendAsync(
                     It.IsAny<OutboundEventCommand>(),
                     It.IsAny<DeliveryOptions>()),
                 Times.Never,
@@ -1376,7 +1376,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario: PostOutbound with useAzureServiceBus=true and multiple subscriptions with mixed authorization
-        /// Expected result: IMessageBus.PublishAsync is called only for authorized consumers
+        /// Expected result: IMessageBus.SendAsync is called only for authorized consumers
         /// Success criteria: MessageBus called correct number of times based on authorization results
         /// </summary>
         [Fact]
@@ -1420,8 +1420,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             messageBusMock.Verify(
-                m => m.PublishAsync(
-                    It.IsAny<Contracts.OutboundEventCommand>(),
+                m => m.SendAsync(
+                    It.IsAny<OutboundEventCommand>(),
                     It.IsAny<DeliveryOptions>()),
                 Times.Exactly(2),
                 "MessageBus should be called 2 times - for authorized subscriptions (1 for /org/ttd, 1 for /user/1337), 0 for /org/nav");
@@ -1485,8 +1485,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 "Queue client should be called when not using Azure Service Bus");
 
             messageBusMock.Verify(
-                m => m.PublishAsync(
-                    It.IsAny<Contracts.OutboundEventCommand>(),
+                m => m.SendAsync(
+                    It.IsAny<OutboundEventCommand>(),
                     It.IsAny<DeliveryOptions>()),
                 Times.Never,
                 "MessageBus should not be called when using queue client");
@@ -1494,7 +1494,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario: PostOutbound with useAzureServiceBus=true and generic event (no subject)
-        /// Expected result: IMessageBus.PublishAsync is called for authorized consumers
+        /// Expected result: IMessageBus.SendAsync is called for authorized consumers
         /// Success criteria: MessageBus called for generic event authorization
         /// </summary>
         [Fact]
@@ -1537,8 +1537,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             messageBusMock.Verify(
-                m => m.PublishAsync(
-                    It.IsAny<Contracts.OutboundEventCommand>(),
+                m => m.SendAsync(
+                    It.IsAny<OutboundEventCommand>(),
                     It.IsAny<DeliveryOptions>()),
                 Times.Once,
                 "MessageBus should be called for authorized generic event");

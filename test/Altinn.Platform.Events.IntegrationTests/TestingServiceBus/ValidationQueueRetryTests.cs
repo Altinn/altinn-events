@@ -3,12 +3,12 @@ using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.IntegrationTests.Data;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Wolverine.Commands;
 using Moq;
 using Xunit;
 
@@ -24,7 +24,7 @@ public class ValidationQueueRetryTests(IntegrationTestContainersFixture fixture)
 
     /// <summary>
     /// Tests the normal flow where the webhook is available.
-    /// ValidateSubscriptionCommand -> ValidateSubscriptionHandler -> webhook called -> subscription validated in DB.
+    /// ValidateSubscriptionCommand -> ValidationEventHandler -> webhook called -> subscription validated in DB.
     /// </summary>
     [Fact]
     public async Task ValidateSubscriptionCommand_WhenWebhookAvailable_SubscriptionValidatedInDb()
@@ -40,7 +40,7 @@ public class ValidationQueueRetryTests(IntegrationTestContainersFixture fixture)
 
         await using (factory)
         {
-            // Create subscription in DB first (ValidateSubscriptionHandler calls SetValidSubscription)
+            // Create subscription in DB first (ValidationEventHandler calls SetValidSubscription)
             var subscription = await SubscriptionTestData.CreateTestSubscriptionInDb(factory);
             var command = new ValidateSubscriptionCommand(subscription);
 

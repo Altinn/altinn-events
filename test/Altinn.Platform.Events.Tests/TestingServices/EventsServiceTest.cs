@@ -4,18 +4,17 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
-using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
+using Altinn.Platform.Events.Wolverine.Commands;
+using Altinn.Platform.Events.Wolverine.Publishers;
 
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 using Moq;
 using Wolverine;
@@ -35,6 +34,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly Mock<IAuthorization> _authorizationMock;
         private readonly Mock<IMessageBus> _messageBusMock;
         private readonly Mock<ILogger<EventsService>> _loggerMock;
+        private readonly Mock<IRegistrationEventPublisher> _registrationPublisherMock;
 
         public EventsServiceTest()
         {
@@ -45,6 +45,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _authorizationMock = new();
             _messageBusMock = new();
             _loggerMock = new();
+            _registrationPublisherMock = new();
         }
 
         /// <summary>
@@ -80,11 +81,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task RegisterNewEvent_PushEventFails_ErrorIsLogged()
         {
             // Arrange
-            Mock<IMessageBus> messageBus = new();
-            messageBus.Setup(m => m.PublishAsync(It.IsAny<RegisterEventCommand>())).ThrowsAsync(new Exception("The bus failed due to something"));
+            Mock<IRegistrationEventPublisher> registrationPublisher = new();
+            registrationPublisher.Setup(p => p.PublishRegistrationEvent(It.IsAny<CloudEvent>())).ThrowsAsync(new Exception("The bus failed due to something"));
 
             Mock<ILogger<EventsService>> logger = new Mock<ILogger<EventsService>>();
-            EventsService eventsService = GetEventsService(loggerMock: logger, messageBusMock: messageBus);
+            EventsService eventsService = GetEventsService(loggerMock: logger, registrationPublisherMock: registrationPublisher);
 
             // Act
             await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEventFromApp()));
@@ -105,13 +106,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task RegisterNewEvent_PushEventSucceeds_LogIsCreated()
         {
             // Arrange
-            Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<RegisterEventCommand>())).Returns(ValueTask.CompletedTask);
+            Mock<IRegistrationEventPublisher> registrationPublisher = new();
+            registrationPublisher.Setup(p => p.PublishRegistrationEvent(It.IsAny<CloudEvent>())).Returns(Task.CompletedTask);
 
             Mock<ILogger<EventsService>> logger = new();
             Mock<ITraceLogService> traceLogServiceMock = new();
             traceLogServiceMock.Setup(t => t.CreateRegisteredEntry(It.IsAny<CloudEvent>()));
-            EventsService eventsService = GetEventsService(traceLogServiceMock: traceLogServiceMock, loggerMock: logger, messageBusMock: messageBusMock);
+            EventsService eventsService = GetEventsService(traceLogServiceMock: traceLogServiceMock, loggerMock: logger, registrationPublisherMock: registrationPublisher);
 
             // Act
             await eventsService.RegisterNew(GetCloudEventFromApp());
@@ -119,87 +120,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Never);
             traceLogServiceMock.Verify(t => t.CreateRegisteredEntry(It.IsAny<CloudEvent>()), Times.Once);
-            messageBusMock.Verify(m => m.PublishAsync(It.IsAny<RegisterEventCommand>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Scenario:
-        ///   RegisterNew with EnableServiceBus=false (use Storage Queue).
-        /// Expected result:
-        ///   Event is enqueued to Storage Queue instead of publishing to Service Bus.
-        /// Success criteria:
-        ///   QueueClient.EnqueueRegistration is called once, MessageBus.PublishAsync is not called.
-        /// </summary>
-        [Fact]
-        public async Task RegisterNewEvent_UseStorageQueue_EnqueuesSuccessfully()
-        {
-            // Arrange
-            Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>()))
-                .ReturnsAsync(new QueuePostReceipt { Success = true });
-
-            Mock<IMessageBus> messageBusMock = new();
-            Mock<ILogger<EventsService>> logger = new();
-            Mock<ITraceLogService> traceLogServiceMock = new();
-            
-            var wolverineSettingsMock = new Mock<IOptions<WolverineSettings>>();
-            wolverineSettingsMock.Setup(x => x.Value).Returns(new WolverineSettings { EnableServiceBus = false });
-
-            var eventsService = new EventsService(
-                _repositoryMock,
-                traceLogServiceMock.Object,
-                queueMock.Object,
-                _registerMock.Object,
-                _authorizationMock.Object,
-                messageBusMock.Object,
-                logger.Object,
-                wolverineSettingsMock.Object);
-
-            // Act
-            await eventsService.RegisterNew(GetCloudEventFromApp());
-
-            // Assert
-            queueMock.Verify(q => q.EnqueueRegistration(It.IsAny<string>()), Times.Once);
-            messageBusMock.Verify(m => m.PublishAsync(It.IsAny<RegisterEventCommand>()), Times.Never);
-            traceLogServiceMock.Verify(t => t.CreateRegisteredEntry(It.IsAny<CloudEvent>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Scenario:
-        ///   RegisterNew with EnableServiceBus=false and queue fails.
-        /// Expected result:
-        ///   Error is thrown and logged.
-        /// Success criteria:
-        ///   Exception is thrown and error is logged.
-        /// </summary>
-        [Fact]
-        public async Task RegisterNewEvent_UseStorageQueue_QueueFails_ErrorIsLogged()
-        {
-            // Arrange
-            Mock<IEventsQueueClient> queueMock = new Mock<IEventsQueueClient>();
-            queueMock.Setup(q => q.EnqueueRegistration(It.IsAny<string>()))
-                .ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("Queue failed") });
-
-            Mock<IMessageBus> messageBusMock = new();
-            Mock<ILogger<EventsService>> logger = new();
-            Mock<ITraceLogService> traceLogServiceMock = new();
-            
-            var wolverineSettingsMock = new Mock<IOptions<WolverineSettings>>();
-            wolverineSettingsMock.Setup(x => x.Value).Returns(new WolverineSettings { EnableServiceBus = false });
-
-            var eventsService = new EventsService(
-                _repositoryMock,
-                traceLogServiceMock.Object,
-                queueMock.Object,
-                _registerMock.Object,
-                _authorizationMock.Object,
-                messageBusMock.Object,
-                logger.Object,
-                wolverineSettingsMock.Object);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => eventsService.RegisterNew(GetCloudEventFromApp()));
-            logger.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            registrationPublisher.Verify(p => p.PublishRegistrationEvent(It.IsAny<CloudEvent>()), Times.Once);
         }
 
         /// <summary>
@@ -565,7 +486,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>())).Returns(Task.CompletedTask);
 
             Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
+            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
 
@@ -574,7 +495,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
-            messageBusMock.Verify(m => m.PublishAsync(It.IsAny<InboundEventCommand>()), Times.Once);
+            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
         }
 
         /// <summary>
@@ -596,7 +517,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Returns(Task.CompletedTask);
 
             Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
+            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
 
@@ -617,7 +538,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.NotNull(capturedEvent);
             Assert.Contains("urn:altinn:resource:app_ttd_apps-test", capturedEvent);
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
-            messageBusMock.Verify(m => m.PublishAsync(It.IsAny<InboundEventCommand>()), Times.Once);
+            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
         }
 
         /// <summary>
@@ -639,7 +560,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Returns(Task.CompletedTask);
 
             Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
+            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
 
@@ -660,7 +581,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.NotNull(capturedEvent);
             Assert.Contains("urn:altinn:resource:some-other-resource", capturedEvent);
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
-            messageBusMock.Verify(m => m.PublishAsync(It.IsAny<InboundEventCommand>()), Times.Once);
+            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
         }
 
         /// <summary>
@@ -692,7 +613,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 () => eventsService.SaveAndPublish(GetCloudEventFromApp(), CancellationToken.None));
 
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>()), Times.Once);
-            messageBusMock.Verify(m => m.PublishAsync(It.IsAny<InboundEventCommand>()), Times.Never);
+            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Never);
             logger.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -854,7 +775,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Returns(Task.CompletedTask);
 
             Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
+            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
 
@@ -914,7 +835,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Returns(Task.CompletedTask);
 
             Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.PublishAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
+            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
 
@@ -943,7 +864,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
             Mock<IMessageBus> messageBusMock = null,
-            Mock<ILogger<EventsService>> loggerMock = null)
+            Mock<ILogger<EventsService>> loggerMock = null,
+            Mock<IRegistrationEventPublisher> registrationPublisherMock = null)
         {
             repositoryMock ??= _repositoryMock;
             traceLogServiceMock ??= _traceLogServiceMock;
@@ -951,6 +873,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             queueMock ??= _queueMock;
             messageBusMock ??= _messageBusMock;
             loggerMock ??= _loggerMock;
+            registrationPublisherMock ??= _registrationPublisherMock;
 
             // default mocked authorization logic. All elements are returned
             if (authorizationMock == null)
@@ -966,10 +889,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorizationMock = _authorizationMock;
             }
 
-            // Mock WolverineSettings with EnableServiceBus = true (default)
-            var wolverineSettingsMock = new Mock<IOptions<WolverineSettings>>();
-            wolverineSettingsMock.Setup(x => x.Value).Returns(new WolverineSettings { EnableServiceBus = true });
-
             return new EventsService(
                 repositoryMock,
                 traceLogServiceMock.Object,
@@ -978,7 +897,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorizationMock.Object,
                 messageBusMock.Object,
                 loggerMock.Object,
-                wolverineSettingsMock.Object);
+                registrationPublisherMock.Object);
         }
 
         private static CloudEvent GetCloudEventFromApp()

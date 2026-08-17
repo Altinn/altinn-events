@@ -582,7 +582,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                         config.AddConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.unittest.json").Build());
                     });
 
-                    builder.UseSetting("WolverineSettings:EnableServiceBus", "false");
+                    builder.UseSetting("WolverineSettings:EnableRegistrationPublisher", "false");
+                    builder.UseSetting("WolverineSettings:EnableValidationPublisher", "false");
 
                     builder.ConfigureTestServices(services =>
                     {

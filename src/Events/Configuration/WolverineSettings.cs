@@ -6,9 +6,40 @@
 public class WolverineSettings
 {
     /// <summary>
-    /// Indicates whether Azure Service Bus should be configured.
+    /// Enables the Azure Service Bus publisher for the registration event, instead of the legacy Storage Queue.
     /// </summary>
-    public bool EnableServiceBus { get; set; } = false;
+    public bool EnableRegistrationPublisher { get; set; } = false;
+
+    /// <summary>
+    /// Enables the Azure Service Bus publisher for the subscription validation event, instead of the legacy Storage Queue.
+    /// </summary>
+    public bool EnableValidationPublisher { get; set; } = false;
+
+    /// <summary>
+    /// Enables the Wolverine listener on the registration queue.
+    /// </summary>
+    public bool EnableRegistrationListener { get; set; } = false;
+
+    /// <summary>
+    /// Enables the Wolverine listener on the inbound queue.
+    /// </summary>
+    public bool EnableInboundListener { get; set; } = false;
+
+    /// <summary>
+    /// Enables the Wolverine listener on the outbound queue.
+    /// </summary>
+    public bool EnableOutboundListener { get; set; } = false;
+
+    /// <summary>
+    /// Enables the Wolverine listener on the subscription validation queue.
+    /// </summary>
+    public bool EnableValidationListener { get; set; } = false;
+
+    /// <summary>
+    /// True when either publisher flag is enabled. Drives whether Wolverine's Azure Service Bus
+    /// transport is configured at all.
+    /// </summary>
+    public bool IsAzureServiceBusEnabled => EnableRegistrationPublisher || EnableValidationPublisher;
 
     /// <summary>
     /// Connection string for Azure Service Bus.

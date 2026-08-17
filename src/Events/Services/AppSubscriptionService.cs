@@ -1,15 +1,14 @@
 using System;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Wolverine.Publishers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Wolverine;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -30,14 +29,12 @@ namespace Altinn.Platform.Events.Services
             ISubscriptionRepository repository,
             IAuthorization authorization,
             IRegisterService register,
-            IMessageBus bus,
-            IEventsQueueClient queueClient,
             IClaimsPrincipalProvider claimsPrincipalProvider,
             IOptions<PlatformSettings> platformSettings,
-            IOptions<WolverineSettings> wolverineSettings,
+            ISubscriptionValidationPublisher publisher,
             IWebhookService webhookService,
             ILogger<AppSubscriptionService> logger)
-            : base(repository, authorization, bus, queueClient, claimsPrincipalProvider, platformSettings, wolverineSettings, webhookService, logger)
+            : base(repository, authorization, claimsPrincipalProvider, platformSettings, publisher, webhookService, logger)
         {
             _register = register;
             _claimsPrincipalProvider = claimsPrincipalProvider;
