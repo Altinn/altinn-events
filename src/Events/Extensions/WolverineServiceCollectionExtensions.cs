@@ -140,7 +140,13 @@ public static class WolverineServiceCollectionExtensions
         opts.Policies.Add(new ValidationEventHandlerPolicy(settings));
     }
 
-    private static void RegisterRegistrationEventPublisher(IServiceCollection services, WolverineSettings settings)
+    /// <summary>
+    /// Registers the ASB or legacy Storage Queue implementation of <see cref="IRegistrationEventPublisher"/>,
+    /// depending on <see cref="WolverineSettings.EnableRegistrationPublisher"/>. Internal (rather than private)
+    /// so it can be tested directly without going through <see cref="AddWolverineServices"/> and its Azure
+    /// Service Bus transport setup.
+    /// </summary>
+    internal static void RegisterRegistrationEventPublisher(IServiceCollection services, WolverineSettings settings)
     {
         if (settings.EnableRegistrationPublisher)
         {
@@ -152,7 +158,13 @@ public static class WolverineServiceCollectionExtensions
         }
     }
 
-    private static void RegisterSubscriptionValidationPublisher(IServiceCollection services, WolverineSettings settings)
+    /// <summary>
+    /// Registers the ASB or legacy Storage Queue implementation of <see cref="ISubscriptionValidationPublisher"/>,
+    /// depending on <see cref="WolverineSettings.EnableValidationPublisher"/>. Internal (rather than private)
+    /// so it can be tested directly without going through <see cref="AddWolverineServices"/> and its Azure
+    /// Service Bus transport setup.
+    /// </summary>
+    internal static void RegisterSubscriptionValidationPublisher(IServiceCollection services, WolverineSettings settings)
     {
         if (settings.EnableValidationPublisher)
         {
