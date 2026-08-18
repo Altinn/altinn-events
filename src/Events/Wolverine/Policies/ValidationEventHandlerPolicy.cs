@@ -19,7 +19,7 @@ namespace Altinn.Platform.Events.Wolverine.Policies;
 
 /// <summary>
 /// Configures error handling for the <see cref="ValidateSubscriptionCommand"/> handler chain.
-/// Retries on HTTP, database, and Service Bus exceptions.
+/// Retries on HTTP and database exceptions.
 /// </summary>
 public class ValidationEventHandlerPolicy(WolverineSettings settings) : IHandlerPolicy
 {

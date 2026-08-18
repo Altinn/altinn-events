@@ -5,11 +5,14 @@ using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Wolverine.Commands;
 
+using Wolverine.Attributes;
+
 namespace Altinn.Platform.Events.Wolverine.Handlers;
 
 /// <summary>
 /// Handles saving of event commands.
 /// </summary>
+[WolverineHandler]
 public static class RegistrationEventHandler
 {
     /// <summary>

@@ -36,10 +36,13 @@ public class WolverineSettings
     public bool EnableValidationListener { get; set; } = false;
 
     /// <summary>
-    /// True when either publisher flag is enabled. Drives whether Wolverine's Azure Service Bus
+    /// True when any publisher or listener flag is enabled. Drives whether Wolverine's Azure Service Bus
     /// transport is configured at all.
     /// </summary>
-    public bool IsAzureServiceBusEnabled => EnableRegistrationPublisher || EnableValidationPublisher;
+    public bool IsAzureServiceBusEnabled =>
+        EnableRegistrationPublisher || EnableValidationPublisher ||
+        EnableRegistrationListener || EnableInboundListener ||
+        EnableOutboundListener || EnableValidationListener;
 
     /// <summary>
     /// Connection string for Azure Service Bus.

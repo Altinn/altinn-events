@@ -13,6 +13,8 @@ using Azure.Messaging.ServiceBus;
 using JasperFx;
 using JasperFx.CodeGeneration;
 
+using Npgsql;
+
 using Wolverine.Configuration;
 using Wolverine.ErrorHandling;
 using Wolverine.Runtime.Handlers;
@@ -37,7 +39,8 @@ public class InboundEventHandlerPolicy(WolverineSettings settings) : IHandlerPol
             .OnException<HttpRequestException>() // Authorization service errors when validating event against subscriptions
             .Or<TimeoutException>() // HTTP or database timeout
             .Or<SocketException>() // Network connectivity issues
-            .Or<InvalidOperationException>() // PostgreSQL database errors when querying subscriptions
+            .Or<InvalidOperationException>() // Unexpected application-level errors
+            .Or<NpgsqlException>() // PostgreSQL database errors when querying subscriptions
             .Or<TaskCanceledException>() // Database timeout or cancellation
             .Or<ServiceBusException>() // Azure Service Bus errors when publishing to outbound queue
             .RetryWithCooldown(policy.GetCooldownDelays())

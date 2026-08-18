@@ -34,27 +34,58 @@ public static class WolverineServiceCollectionExtensions
             {
                 opts.ConfigureEventsDefaults(env, wolverineSettings.ServiceBusConnectionString);
 
-                opts.PublishMessage<RegisterEventCommand>()
-                    .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
-                opts.PublishMessage<InboundEventCommand>()
-                    .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
-                opts.PublishMessage<OutboundEventCommand>()
-                    .ToAzureServiceBusQueue(wolverineSettings.OutboundQueueName);
-                opts.PublishMessage<ValidateSubscriptionCommand>()
-                    .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
+                AddRegistrationPublisher(wolverineSettings, opts);
+                AddInboundPublisher(wolverineSettings, opts);
+                AddOutboundPublisher(wolverineSettings, opts);
+                AddValidationPublisher(wolverineSettings, opts);
 
                 AddRegistrationListener(wolverineSettings, opts);
                 AddInboundListener(wolverineSettings, opts);
                 AddOutboundListener(wolverineSettings, opts);
                 AddValidationListener(wolverineSettings, opts);
             }
-
-            opts.Policies.AllListeners(x => x.ProcessInline());
-            opts.Policies.AllSenders(x => x.SendInline());
         });
 
         RegisterRegistrationEventPublisher(services, wolverineSettings);
         RegisterSubscriptionValidationPublisher(services, wolverineSettings);
+    }
+
+    private static void AddRegistrationPublisher(WolverineSettings settings, WolverineOptions opts)
+    {
+        if (!settings.EnableRegistrationPublisher)
+        {
+            return;
+        }
+
+        opts.PublishMessage<RegisterEventCommand>()
+            .ToAzureServiceBusQueue(settings.RegistrationQueueName)
+            .SendInline();
+    }
+
+    private static void AddInboundPublisher(WolverineSettings settings, WolverineOptions opts)
+    {
+        opts.PublishMessage<InboundEventCommand>()
+            .ToAzureServiceBusQueue(settings.InboundQueueName)
+            .SendInline();
+    }
+
+    private static void AddOutboundPublisher(WolverineSettings settings, WolverineOptions opts)
+    {
+        opts.PublishMessage<OutboundEventCommand>()
+            .ToAzureServiceBusQueue(settings.OutboundQueueName)
+            .SendInline();
+    }
+
+    private static void AddValidationPublisher(WolverineSettings settings, WolverineOptions opts)
+    {
+        if (!settings.EnableValidationPublisher)
+        {
+            return;
+        }
+
+        opts.PublishMessage<ValidateSubscriptionCommand>()
+            .ToAzureServiceBusQueue(settings.ValidationQueueName)
+            .SendInline();
     }
 
     private static void AddRegistrationListener(WolverineSettings settings, WolverineOptions opts)
