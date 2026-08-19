@@ -82,8 +82,8 @@ static async Task RunInteractiveMenu(StorageClient storageClient, EventsClient e
         Console.WriteLine();
         Console.WriteLine("=== EventCreator Menu ===");
         Console.WriteLine("1. Analyze app instance");
-        Console.WriteLine($"2. Generate event for instance {(currentInstance is not null ? $" ({currentInstance.Id})" : string.Empty)}");
-        Console.WriteLine("3. Compare with similar archived instances");
+        Console.WriteLine("2. Compare with similar archived instances");
+        Console.WriteLine($"3. Generate event for instance {(currentInstance is not null ? $" ({currentInstance.Id})" : string.Empty)}");
         Console.WriteLine("4. Exit");
         Console.Write("Select an option: ");
 
@@ -94,10 +94,10 @@ static async Task RunInteractiveMenu(StorageClient storageClient, EventsClient e
                 currentInstance = await AnalyzeAppInstance(storageClient, eventsClient, currentInstance);
                 break;
             case "2":
-                await GenerateEventForInstance(storageClient, eventsQueueClient, currentInstance);
+                currentInstance = await CompareSimilarInstances(storageClient, eventsClient, currentInstance);
                 break;
             case "3":
-                currentInstance = await CompareSimilarInstances(storageClient, eventsClient, currentInstance);
+                await GenerateEventForInstance(storageClient, eventsQueueClient, currentInstance);
                 break;
             case "4":
                 Console.WriteLine("Exiting...");
@@ -246,7 +246,7 @@ static async Task<Instance?> CompareSimilarInstances(StorageClient storageClient
     List<Instance> similarInstances = await storageClient.GetSimilarArchivedInstances(instance.AppId, instanceGuid, limit);
 
     Console.WriteLine();
-    Console.WriteLine($"  Target instance {instance.Id} (Process Step: {instance.Process?.CurrentTask?.ElementId ?? "-"}, Archived: {ToLocal(instance.Status?.Archived)}):");
+    Console.WriteLine($"  Target instance {instance.Id} (Process Step: {instance.Process?.CurrentTask?.ElementId ?? "-"}, Archived: {ToLocal(instance.Status?.Archived)}, Confirmed: {FormatConfirmed(instance)}):");
     await PrintInstanceEvents(eventsClient, instance);
 
     if (similarInstances.Count == 0)
@@ -259,12 +259,15 @@ static async Task<Instance?> CompareSimilarInstances(StorageClient storageClient
     foreach (Instance similar in similarInstances)
     {
         Console.WriteLine();
-        Console.WriteLine($"  Similar archived instance {similar.Id} (Archived: {ToLocal(similar.Status?.Archived)}):");
+        Console.WriteLine($"  Similar archived instance {similar.Id} (Archived: {ToLocal(similar.Status?.Archived)}, Confirmed: {FormatConfirmed(similar)}):");
         await PrintInstanceEvents(eventsClient, similar);
     }
 
     return instance;
 }
+
+static string FormatConfirmed(Instance instance) =>
+    instance.CompleteConfirmations is { Count: > 0 } ? $"Yes ({instance.CompleteConfirmations.Count})" : "No";
 
 static async Task PrintInstanceEvents(EventsClient eventsClient, Instance instance)
 {
