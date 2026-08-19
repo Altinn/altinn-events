@@ -1,4 +1,4 @@
-﻿namespace Altinn.Platform.Events.Contracts;
+namespace Altinn.Platform.Events.Wolverine.Commands;
 
 /// <summary>
 /// Represents a command to register a new event using a serialized CloudEvent payload.

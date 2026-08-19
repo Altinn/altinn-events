@@ -6,13 +6,13 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.IntegrationTests.Data;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Wolverine.Commands;
 using CloudNative.CloudEvents;
 using Moq;
 using Xunit;
@@ -29,7 +29,7 @@ public class InboundQueueRetryTests(IntegrationTestContainersFixture fixture)
 
     /// <summary>
     /// Tests the normal flow where a subscription exists and authorization succeeds.
-    /// InboundEventCommand -> SendToOutboundHandler -> queries subscriptions -> authorizes -> outbound -> webhook.
+    /// InboundEventCommand -> InboundEventHandler -> queries subscriptions -> authorizes -> outbound -> webhook.
     /// </summary>
     [Fact]
     public async Task InboundEventCommand_WhenSubscriptionExists_EventDeliveredToWebhook()

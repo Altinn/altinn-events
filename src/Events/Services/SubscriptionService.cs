@@ -1,20 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Wolverine.Publishers;
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Wolverine;
 
 namespace Altinn.Platform.Events.Services;
 
@@ -22,12 +19,10 @@ namespace Altinn.Platform.Events.Services;
 public class SubscriptionService : ISubscriptionService
 {
     private readonly ISubscriptionRepository _repository;
-    private readonly IMessageBus _bus;
-    private readonly IEventsQueueClient _queueClient;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IAuthorization _authorization;
     private readonly PlatformSettings _platformSettings;
-    private readonly WolverineSettings _wolverineSettings;
+    private readonly ISubscriptionValidationPublisher _publisher;
     private readonly IWebhookService _webhookService;
     private readonly ILogger<SubscriptionService> _logger;
     private const string _organisationPrefix = "/organisation/";
@@ -42,21 +37,17 @@ public class SubscriptionService : ISubscriptionService
     public SubscriptionService(
         ISubscriptionRepository repository,
         IAuthorization authorization,
-        IMessageBus bus,
-        IEventsQueueClient queueClient,
         IClaimsPrincipalProvider claimsPrincipalProvider,
         IOptions<PlatformSettings> platformSettings,
-        IOptions<WolverineSettings> wolverineSettings,
+        ISubscriptionValidationPublisher publisher,
         IWebhookService webhookService,
         ILogger<SubscriptionService> logger)
     {
         _repository = repository;
         _authorization = authorization;
-        _bus = bus;
-        _queueClient = queueClient;
         _claimsPrincipalProvider = claimsPrincipalProvider;
         _platformSettings = platformSettings.Value;
-        _wolverineSettings = wolverineSettings.Value;
+        _publisher = publisher;
         _webhookService = webhookService;
         _logger = logger;
     }
@@ -76,7 +67,7 @@ public class SubscriptionService : ISubscriptionService
 
         subscription ??= await _repository.CreateSubscription(eventsSubscription);
 
-        await PublishSubscriptionValidationEvent(subscription);
+        await _publisher.PublishValidationEvent(subscription);
 
         return (subscription, null);
     }
@@ -225,22 +216,5 @@ public class SubscriptionService : ISubscriptionService
         };
 
         return cloudEventEnvelope;
-    }
-
-    private async Task PublishSubscriptionValidationEvent(Subscription subscription)
-    {
-        if (_wolverineSettings.EnableServiceBus)
-        {
-            await _bus.PublishAsync(new ValidateSubscriptionCommand(subscription));
-        }
-        else
-        {
-            QueuePostReceipt receipt = await _queueClient.EnqueueSubscriptionValidation(JsonSerializer.Serialize(subscription));
-
-            if (!receipt.Success)
-            {
-                throw receipt.Exception;
-            }
-        }
     }
 }

@@ -17,9 +17,7 @@ using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Authorization;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
-using Altinn.Platform.Events.Commands;
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Formatters;
 using Altinn.Platform.Events.Health;
@@ -49,8 +47,6 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using Wolverine;
-using Wolverine.AzureServiceBus;
 using Yuniql.AspNetCore;
 using Yuniql.PostgreSql;
 
@@ -180,55 +176,13 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                     .EnableFirstResponseEvent(false)));
     }
 
-    WolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<WolverineSettings>() ?? new WolverineSettings();
-
-    // Set static settings for handlers before Wolverine discovers them
-    SaveEventHandler.Settings = wolverineSettings;
-    SendToOutboundHandler.Settings = wolverineSettings;
-    SendEventToSubscriberHandler.Settings = wolverineSettings;
-    ValidateSubscriptionHandler.Settings = wolverineSettings;
-
-    services.AddWolverine(opts =>
-    {
-        if (wolverineSettings.EnableServiceBus)
-        {
-            opts.ConfigureEventsDefaults(
-                builder.Environment,
-                wolverineSettings.ServiceBusConnectionString);
-
-            opts.PublishMessage<RegisterEventCommand>()
-                .ToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName);
-            opts.PublishMessage<InboundEventCommand>()
-                .ToAzureServiceBusQueue(wolverineSettings.InboundQueueName);
-            opts.PublishMessage<OutboundEventCommand>()
-                .ToAzureServiceBusQueue(wolverineSettings.OutboundQueueName);                
-            opts.PublishMessage<ValidateSubscriptionCommand>()
-                .ToAzureServiceBusQueue(wolverineSettings.ValidationQueueName);
-
-            opts.ListenToAzureServiceBusQueue(wolverineSettings.RegistrationQueueName)
-                .ListenerCount(wolverineSettings.ListenerCount)
-                .ProcessInline();
-            opts.ListenToAzureServiceBusQueue(wolverineSettings.InboundQueueName)
-                .ListenerCount(wolverineSettings.ListenerCount)
-                .ProcessInline();
-            opts.ListenToAzureServiceBusQueue(wolverineSettings.OutboundQueueName)
-                .ListenerCount(wolverineSettings.ListenerCount)
-                .ProcessInline();
-            opts.ListenToAzureServiceBusQueue(wolverineSettings.ValidationQueueName)
-                .ListenerCount(wolverineSettings.ListenerCount)
-                .ProcessInline();
-        }
-
-        opts.Policies.AllListeners(x => x.ProcessInline());
-        opts.Policies.AllSenders(x => x.SendInline());
-    });
+    services.AddWolverineServices(config, builder.Environment);
 
     services.AddSingleton(config);
     services.Configure<PostgreSqlSettings>(config.GetSection("PostgreSQLSettings"));
     services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
     services.Configure<QueueStorageSettings>(config.GetSection("QueueStorageSettings"));
     services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
-    services.Configure<WolverineSettings>(config.GetSection("WolverineSettings"));
     services.Configure<EventsOutboundSettings>(config.GetSection("EventsOutboundSettings"));
     services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));

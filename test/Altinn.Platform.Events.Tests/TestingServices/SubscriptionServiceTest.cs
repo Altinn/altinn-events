@@ -6,9 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.AccessManagement.Core.Models;
-using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
@@ -16,11 +14,11 @@ using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
 using Altinn.Platform.Events.Tests.Utils;
+using Altinn.Platform.Events.Wolverine.Publishers;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -77,24 +75,22 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _repositoryMock.Setup(s => s.CreateSubscription(It.Is<Subscription>(p => p.Id == subscriptionId)))
                 .ReturnsAsync(subscription);
 
-            Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.PublishAsync(
-                It.Is<ValidateSubscriptionCommand>(cmd => cmd.Subscription.Id == subscriptionId), 
-                It.IsAny<DeliveryOptions>()))
-                .Returns(ValueTask.CompletedTask)
+            Mock<ISubscriptionValidationPublisher> publisherMock = new();
+            publisherMock.Setup(p => p.PublishValidationEvent(It.Is<Subscription>(s => s.Id == subscriptionId)))
+                .Returns(Task.CompletedTask)
                 .Verifiable();
 
             // Act
             SubscriptionService subscriptionService = GetSubscriptionService(
                 _repositoryMock.Object,
-                messageBus: messageBusMock.Object,
+                publisher: publisherMock.Object,
                 claimsPrincipalProvider: claimsPrincipalProviderMock.Object);
 
             await subscriptionService.CompleteSubscriptionCreation(subscription);
 
             // Assert
             _repositoryMock.VerifyAll();
-            messageBusMock.VerifyAll();
+            publisherMock.VerifyAll();
         }
 
         [Fact]
@@ -455,33 +451,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Null(result);
         }
 
-        [Fact]
-        public async Task PublishSubscriptionValidation_ServiceBusDisabled_QueueFails_Throws()
-        {
-            // Arrange
-            int subscriptionId = 100;
-            var subscription = new Subscription
-            {
-                Id = subscriptionId,
-                SourceFilter = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/apps-test")
-            };
-
-            Mock<IClaimsPrincipalProvider> claimsMock = new();
-            claimsMock.Setup(s => s.GetUser()).Returns(PrincipalUtil.GetClaimsPrincipal("ttd", "87364765"));
-
-            Mock<IEventsQueueClient> queueMock = new();
-            queueMock.Setup(q => q.EnqueueSubscriptionValidation(It.IsAny<string>()))
-                .ReturnsAsync(new QueuePostReceipt { Success = false, Exception = new Exception("Queue failed") });
-
-            SubscriptionService sut = GetSubscriptionService(
-                claimsPrincipalProvider: claimsMock.Object,
-                queueClient: queueMock.Object,
-                wolverineSettings: new WolverineSettings { EnableServiceBus = false });
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => sut.CompleteSubscriptionCreation(subscription));
-        }
-
         private static ClaimsPrincipal CreateClaimsPrincipal(SystemUserClaim systemUserClaim)
         {
             var claims = new List<Claim>
@@ -496,10 +465,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private static SubscriptionService GetSubscriptionService(
             ISubscriptionRepository repository = null,
             bool authorizationDecision = true,
-            IMessageBus messageBus = null,
-            IEventsQueueClient queueClient = null,
+            ISubscriptionValidationPublisher publisher = null,
             IClaimsPrincipalProvider claimsPrincipalProvider = null,
-            WolverineSettings wolverineSettings = null,
             IWebhookService webhookService = null,
             ILogger<SubscriptionService> logger = null)
         {
@@ -516,11 +483,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             return new SubscriptionService(
                 repository ?? new SubscriptionRepositoryMock(),
                 authoriationMock.Object,
-                messageBus ?? new Mock<IMessageBus>().Object,
-                queueClient ?? new Mock<IEventsQueueClient>().Object,
                 claimsPrincipalProvider ?? new Mock<IClaimsPrincipalProvider>().Object,
                 Options.Create(platformSettings),
-                Options.Create(wolverineSettings ?? new WolverineSettings { EnableServiceBus = true }),
+                publisher ?? new Mock<ISubscriptionValidationPublisher>().Object,
                 webhookService ?? new Mock<IWebhookService>().Object,
                 logger ?? new Mock<ILogger<SubscriptionService>>().Object);
         }

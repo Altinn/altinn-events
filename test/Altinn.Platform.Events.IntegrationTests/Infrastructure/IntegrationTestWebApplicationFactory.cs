@@ -77,7 +77,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
             WolverineSettings = context.Configuration.GetSection("WolverineSettings").Get<WolverineSettings>()
                 ?? throw new InvalidOperationException("WolverineSettings not found in configuration");
 
-            Console.WriteLine($"[Factory] Loaded WolverineSettings - EnableServiceBus: {WolverineSettings.EnableServiceBus}");
+            Console.WriteLine($"[Factory] Loaded WolverineSettings - EnableRegistrationPublisher: {WolverineSettings.EnableRegistrationPublisher}, EnableValidationPublisher: {WolverineSettings.EnableValidationPublisher}");
             Console.WriteLine($"[Factory] ServiceBus connection: {Truncate(WolverineSettings.ServiceBusConnectionString, 50)}...");
             Console.WriteLine($"[Factory] Postgres connection: {Truncate(_fixture.PostgresConnectionString, 50)}...");
 
@@ -198,7 +198,7 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
 
     private async Task DrainAllDeadLetterQueuesAsync()
     {
-        if (WolverineSettings == null || !WolverineSettings.EnableServiceBus)
+        if (WolverineSettings == null || !WolverineSettings.IsAzureServiceBusEnabled)
         {
             return;
         }

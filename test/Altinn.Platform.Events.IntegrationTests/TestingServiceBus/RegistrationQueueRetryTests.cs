@@ -2,12 +2,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.IntegrationTests.Data;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Repository;
+using Altinn.Platform.Events.Wolverine.Commands;
 using Moq;
 using Xunit;
 
@@ -24,7 +24,7 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
 
     /// <summary>
     /// Tests the normal flow where the database is available.
-    /// Message should flow: RegisterQueue -> SaveEventHandler -> Save to DB -> InboundQueue -> ...
+    /// Message should flow: RegisterQueue -> RegistrationEventHandler -> Save to DB -> InboundQueue -> ...
     /// Verifies event was saved to database (messages processed successfully).
     /// </summary>
     [Fact]

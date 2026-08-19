@@ -4,13 +4,13 @@ using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.IntegrationTests.Data;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Wolverine.Commands;
 using Moq;
 using Xunit;
 
@@ -26,7 +26,7 @@ public class OutboundQueueRetryTests(IntegrationTestContainersFixture fixture)
 
     /// <summary>
     /// Tests the normal flow where the webhook endpoint is available.
-    /// OutboundEventCommand -> SendEventToSubscriberHandler -> webhook called.
+    /// OutboundEventCommand -> OutboundEventHandler -> webhook called.
     /// </summary>
     [Fact]
     public async Task OutboundEventCommand_WhenWebhookAvailable_EventDelivered()
