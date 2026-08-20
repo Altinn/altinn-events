@@ -807,6 +807,66 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
+            ///   Get events with person header having wrong format (not 11 digits)
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying the person format requirement.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_WrongFormatHeaderPerson_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
+
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "1234567890");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("Value of 'Person' needs to be exactly 11 digits.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events with person header having wrong format (contains letters)
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying the person format requirement.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_WrongFormatHeaderPersonWithLetters_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
+
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "0103871234X");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("Value of 'Person' needs to be exactly 11 digits.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
             ///   Get events with  a valid set of query parameters, person as input
             /// Expected result:
             ///   Returns a list of events and a next header

@@ -238,6 +238,11 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "Only one of 'Party' or 'Person' can be defined.");
             }
 
+            if (!string.IsNullOrEmpty(person) && (person.Length != 11 || !person.All(char.IsDigit)))
+            {
+                return (false, "Value of 'Person' needs to be exactly 11 digits.");
+            }
+
             if (!string.IsNullOrEmpty(unit) && party > 0)
             {
                 return (false, "Only one of 'Party' or 'Unit' can be defined.");
