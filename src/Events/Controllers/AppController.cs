@@ -218,12 +218,12 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "The 'From' or 'After' parameter must be defined.");
             }
 
-            if (from != null && from.Value.Kind == DateTimeKind.Unspecified)
+            if (from != null && SpecifiesTimezone(from.Value))
             {
                 return (false, "The 'From' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
 
-            if (to != null && to.Value.Kind == DateTimeKind.Unspecified)
+            if (to != null && SpecifiesTimezone(to.Value))
             {
                 return (false, "The 'To' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
@@ -238,7 +238,7 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "Only one of 'Party' or 'Person' can be defined.");
             }
 
-            if (!string.IsNullOrEmpty(person) && (person.Length != 11 || !person.All(char.IsDigit)))
+            if (!string.IsNullOrEmpty(person) && HasValidFormat(person))
             {
                 return (false, "Value of 'Person' needs to be exactly 11 digits.");
             }
@@ -255,6 +255,13 @@ namespace Altinn.Platform.Events.Controllers
 
             return (true, null);
         }
+
+        private static bool SpecifiesTimezone(DateTime dt)
+        {
+            return dt.Kind != DateTimeKind.Unspecified;
+        }
+
+        private static bool HasValidFormat(string personStr) => personStr.Length != 11 || !personStr.All(char.IsDigit);
 
         private void SetNextLink(List<CloudEvent> events)
         {
