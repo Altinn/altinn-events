@@ -3,6 +3,7 @@ using Altinn.Platform.Events.Functions;
 using Altinn.Platform.Events.Functions.Clients;
 using Altinn.Platform.Events.Functions.Clients.Interfaces;
 using Altinn.Platform.Events.Functions.Configuration;
+using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Services.Interfaces;
 
@@ -34,5 +35,7 @@ builder.Services.AddHttpClient<IWebhookService, WebhookService>();
 
 builder.Services.AddQueueSenders(builder.Configuration);
 builder.Services.AddTransient<IRetryBackoffService, RetryBackoffService>();
+
+builder.Services.AddWolverineServices(builder.Configuration, builder.Environment);
 
 await builder.Build().RunAsync();
