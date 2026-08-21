@@ -218,12 +218,12 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "The 'From' or 'After' parameter must be defined.");
             }
 
-            if (from != null && SpecifiesTimezone(from.Value))
+            if (from != null && !from.Value.SpecifiesTimezone())
             {
                 return (false, "The 'From' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
 
-            if (to != null && SpecifiesTimezone(to.Value))
+            if (to != null && !to.Value.SpecifiesTimezone())
             {
                 return (false, "The 'To' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
@@ -238,7 +238,7 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "Only one of 'Party' or 'Person' can be defined.");
             }
 
-            if (!string.IsNullOrEmpty(person) && !HasValidFormat(person))
+            if (!string.IsNullOrEmpty(person) && !HasValidSsnFormat(person))
             {
                 return (false, "Value of 'Person' needs to be exactly 11 digits.");
             }
@@ -248,7 +248,7 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "Only one of 'Party' or 'Unit' can be defined.");
             }
 
-            if (!string.IsNullOrEmpty(unit) && !IsValidUnitFormat(unit))
+            if (!string.IsNullOrEmpty(unit) && !HasValidUnitFormat(unit))
             {
                 return (false, "Value of 'Unit' needs to be exactly 9 digits.");
             }
@@ -256,14 +256,9 @@ namespace Altinn.Platform.Events.Controllers
             return (true, null);
         }
 
-        private static bool SpecifiesTimezone(DateTime dt)
-        {
-            return dt.Kind != DateTimeKind.Unspecified;
-        }
+        private static bool HasValidSsnFormat(string personStr) => personStr.Length == 11 && personStr.All(char.IsDigit);
 
-        private static bool IsValidUnitFormat(string unit) => unit.Length == 9 && unit.All(char.IsDigit);
-
-        private static bool HasValidFormat(string personStr) => personStr.Length == 11 && personStr.All(char.IsDigit);
+        private static bool HasValidUnitFormat(string unit) => unit.Length == 9 && unit.All(char.IsDigit);
 
         private void SetNextLink(List<CloudEvent> events)
         {
