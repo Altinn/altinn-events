@@ -238,7 +238,7 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "Only one of 'Party' or 'Person' can be defined.");
             }
 
-            if (!string.IsNullOrEmpty(person) && HasValidFormat(person))
+            if (!string.IsNullOrEmpty(person) && !HasValidFormat(person))
             {
                 return (false, "Value of 'Person' needs to be exactly 11 digits.");
             }
@@ -248,7 +248,7 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "Only one of 'Party' or 'Unit' can be defined.");
             }
 
-            if (!string.IsNullOrEmpty(unit) && (unit.Length != 9 || !unit.All(char.IsDigit)))
+            if (!string.IsNullOrEmpty(unit) && !IsValidUnitFormat(unit))
             {
                 return (false, "Value of 'Unit' needs to be exactly 9 digits.");
             }
@@ -261,7 +261,9 @@ namespace Altinn.Platform.Events.Controllers
             return dt.Kind != DateTimeKind.Unspecified;
         }
 
-        private static bool HasValidFormat(string personStr) => personStr.Length != 11 || !personStr.All(char.IsDigit);
+        private static bool IsValidUnitFormat(string unit) => unit.Length == 9 && unit.All(char.IsDigit);
+
+        private static bool HasValidFormat(string personStr) => personStr.Length == 11 && personStr.All(char.IsDigit);
 
         private void SetNextLink(List<CloudEvent> events)
         {
