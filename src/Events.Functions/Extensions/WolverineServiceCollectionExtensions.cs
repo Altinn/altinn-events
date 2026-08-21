@@ -39,7 +39,11 @@ public static class WolverineServiceCollectionExtensions
             }
         });
 
-        services.AddHttpClient<IWebhookService, AsbWebhookService>();
+        // Split registration (named client + plain AddScoped), not AddHttpClient<TClient,TImpl>'s typed-client
+        // overload — Wolverine's handler code generation rejects that as an opaque factory registration.
+        // Matches Events' own WebhookService registration for the identical reason.
+        services.AddHttpClient(AsbWebhookService._httpClientName);
+        services.AddScoped<IWebhookService, AsbWebhookService>();
     }
 
     private static void AddOutboundListener(FunctionsWolverineSettings settings, WolverineOptions opts)

@@ -43,7 +43,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             HttpClient actualClient = new();
 
             // Act
-            _ = new AsbWebhookService(actualClient, _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
+            _ = new AsbWebhookService(CreateHttpClientFactory(actualClient), _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
             // Assert
             Assert.Equal(300, actualClient.Timeout.TotalSeconds);
@@ -73,7 +73,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new AsbWebhookService(new HttpClient(), _eventsClientMock.Object, _eventsOutboundSettings, null);
+            var sut = new AsbWebhookService(CreateHttpClientFactory(new HttpClient()), _eventsClientMock.Object, _eventsOutboundSettings, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -103,7 +103,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new AsbWebhookService(new HttpClient(), _eventsClientMock.Object, _eventsOutboundSettings, null);
+            var sut = new AsbWebhookService(CreateHttpClientFactory(new HttpClient()), _eventsClientMock.Object, _eventsOutboundSettings, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -124,7 +124,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 Pushed = DateTime.UtcNow
             };
 
-            var sut = new AsbWebhookService(new HttpClient(), _eventsClientMock.Object, _eventsOutboundSettings, null);
+            var sut = new AsbWebhookService(CreateHttpClientFactory(new HttpClient()), _eventsClientMock.Object, _eventsOutboundSettings, null);
 
             // Act
             var actual = sut.GetPayload(input);
@@ -140,7 +140,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             Mock<ILogger<AsbWebhookService>> loggerMock = new();
             var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable });
 
-            var sut = new AsbWebhookService(new HttpClient(handlerMock.Object), _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
+            var sut = new AsbWebhookService(CreateHttpClientFactory(new HttpClient(handlerMock.Object)), _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
             var cloudEventEnvelope = new CloudEventEnvelope
             {
@@ -167,7 +167,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             // Arrange
             var handlerMock = CreateMessageHandlerMock("https://vg.no", new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
-            var sut = new AsbWebhookService(new HttpClient(handlerMock.Object), _eventsClientMock.Object, _eventsOutboundSettings, null);
+            var sut = new AsbWebhookService(CreateHttpClientFactory(new HttpClient(handlerMock.Object)), _eventsClientMock.Object, _eventsOutboundSettings, null);
 
             var cloudEventEnvelope = new CloudEventEnvelope
             {
@@ -195,7 +195,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
             Mock<ILogger<AsbWebhookService>> loggerMock = new();
             var handlerMock = CreateThrowingMessageHandlerMock("https://vg.no", new HttpRequestException("boom"));
 
-            var sut = new AsbWebhookService(new HttpClient(handlerMock.Object), _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
+            var sut = new AsbWebhookService(CreateHttpClientFactory(new HttpClient(handlerMock.Object)), _eventsClientMock.Object, _eventsOutboundSettings, loggerMock.Object);
 
             var cloudEventEnvelope = new CloudEventEnvelope
             {
@@ -212,6 +212,13 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingServices
                 x => x.LogWebhookHttpStatusCode(It.IsAny<Altinn.Platform.Events.Functions.Models.CloudEventEnvelope>(), It.IsAny<HttpStatusCode>(), It.IsAny<bool>()),
                 Times.Never);
             handlerMock.VerifyAll();
+        }
+
+        private static IHttpClientFactory CreateHttpClientFactory(HttpClient client)
+        {
+            Mock<IHttpClientFactory> factoryMock = new();
+            factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
+            return factoryMock.Object;
         }
 
         private static Mock<HttpMessageHandler> CreateMessageHandlerMock(string clientEndpoint, HttpResponseMessage response)

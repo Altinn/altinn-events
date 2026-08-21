@@ -25,13 +25,20 @@ namespace Altinn.Platform.Events.Functions.Services
         private readonly ILogger<AsbWebhookService> _logger;
         private readonly string _slackUri = "hooks.slack.com";
 
+        /// <summary>Name of the named <see cref="HttpClient"/> used by this service.</summary>
+        internal const string _httpClientName = nameof(AsbWebhookService);
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="AsbWebhookService"/> class.
+        /// Initializes a new instance of the <see cref="AsbWebhookService"/> class. Takes
+        /// <see cref="IHttpClientFactory"/> (not a typed HttpClient) and is registered via a plain
+        /// AddScoped, matching the Events API's own WebhookService — Wolverine's handler code
+        /// generation rejects services registered through AddHttpClient's typed-client overload,
+        /// since that's an opaque factory registration its ServiceLocationPolicy won't allow.
         /// </summary>
         public AsbWebhookService(
-            HttpClient client, IEventsClient eventsClient, IOptions<EventsOutboundSettings> eventOutboundSettings, ILogger<AsbWebhookService> logger)
+            IHttpClientFactory httpClientFactory, IEventsClient eventsClient, IOptions<EventsOutboundSettings> eventOutboundSettings, ILogger<AsbWebhookService> logger)
         {
-            _client = client;
+            _client = httpClientFactory.CreateClient(_httpClientName);
             _eventsClient = eventsClient;
             _logger = logger;
             _client.Timeout = TimeSpan.FromSeconds(eventOutboundSettings.Value.RequestTimeout);

@@ -30,7 +30,8 @@ builder.Services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
 builder.Services.AddSingleton<ICertificateResolverService, CertificateResolverService>();
 builder.Services.AddSingleton<IKeyVaultService, KeyVaultService>();
 builder.Services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
-builder.Services.AddHttpClient<IEventsClient, EventsClient>();
+builder.Services.AddHttpClient(EventsClient._httpClientName);
+builder.Services.AddScoped<IEventsClient, EventsClient>();
 builder.Services.AddHttpClient<IWebhookService, WebhookService>();
 
 builder.Services.AddQueueSenders(builder.Configuration);
