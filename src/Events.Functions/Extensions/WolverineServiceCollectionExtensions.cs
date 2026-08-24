@@ -26,7 +26,8 @@ public static class WolverineServiceCollectionExtensions
     /// </summary>
     public static void AddWolverineServices(this IServiceCollection services, IConfiguration config, IHostEnvironment env)
     {
-        FunctionsWolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<FunctionsWolverineSettings>() ?? new FunctionsWolverineSettings();
+        FunctionsWolverineSettings wolverineSettings = config.GetSection("WolverineSettings").Get<FunctionsWolverineSettings>()
+            ?? throw new InvalidOperationException("Configuration section 'WolverineSettings' is missing entirely.");
 
         services.AddWolverine(opts =>
         {
@@ -53,7 +54,7 @@ public static class WolverineServiceCollectionExtensions
             return;
         }
 
-        opts.ListenToAzureServiceBusQueue(settings.OutboundQueueName!)
+        opts.ListenToAzureServiceBusQueue(settings.OutboundQueueName)
             .ListenerCount(settings.ListenerCount)
             .ProcessInline();
         opts.Policies.Add(new OutboundEventHandlerPolicy(settings));
@@ -66,7 +67,7 @@ public static class WolverineServiceCollectionExtensions
             return;
         }
 
-        opts.ListenToAzureServiceBusQueue(settings.ValidationQueueName!)
+        opts.ListenToAzureServiceBusQueue(settings.ValidationQueueName)
             .ListenerCount(settings.ListenerCount)
             .ProcessInline();
         opts.Policies.Add(new ValidationEventHandlerPolicy(settings));

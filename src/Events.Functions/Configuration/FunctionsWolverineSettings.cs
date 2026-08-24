@@ -33,25 +33,37 @@ public class FunctionsWolverineSettings
     /// <summary>
     /// Number of listeners to be used against Azure Service Bus queues (per pod).
     /// </summary>
-    public int ListenerCount { get; set; }
+    public int ListenerCount { get; set; } = 20;
 
     /// <summary>
-    /// Azure Service Bus queue name for event outbound.
+    /// Azure Service Bus queue name for event outbound. Same value in every environment,
+    /// so it's a compiled-in default rather than something each environment must configure —
+    /// still override-able via configuration if ever needed.
     /// </summary>
-    public string? OutboundQueueName { get; set; }
+    public string OutboundQueueName { get; set; } = "altinn.events.outbound";
 
     /// <summary>
     /// Retry policy configuration for the outbound queue.
     /// </summary>
-    public QueueRetryPolicy OutboundQueuePolicy { get; set; } = new();
+    public QueueRetryPolicy OutboundQueuePolicy { get; set; } = new()
+    {
+        CooldownDelaysMs = [10000],
+        ScheduleDelaysMs = [30000, 60000, 300000, 600000, 1800000, 3600000, 10800000, 21600000, 43200000, 43200000]
+    };
 
     /// <summary>
-    /// Azure Service Bus queue name for event validation.
+    /// Azure Service Bus queue name for event validation. Same value in every environment,
+    /// so it's a compiled-in default rather than something each environment must configure —
+    /// still override-able via configuration if ever needed.
     /// </summary>
-    public string? ValidationQueueName { get; set; }
+    public string ValidationQueueName { get; set; } = "altinn.events.subscription.validation";
 
     /// <summary>
     /// Retry policy configuration for the validation queue.
     /// </summary>
-    public QueueRetryPolicy ValidationQueuePolicy { get; set; } = new();
+    public QueueRetryPolicy ValidationQueuePolicy { get; set; } = new()
+    {
+        CooldownDelaysMs = [1000, 5000, 10000],
+        ScheduleDelaysMs = [30000, 60000, 120000, 120000, 120000]
+    };
 }
