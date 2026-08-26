@@ -22,6 +22,7 @@ namespace Altinn.Platform.Events.Controllers
     /// <summary>
     /// Controller for all events related operations
     /// </summary>
+    [Authorize]
     [Route("events/api/v1/events")]
     [ApiController]
     public class EventsController : ControllerBase
@@ -88,6 +89,7 @@ namespace Altinn.Platform.Events.Controllers
         /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
         /// </param>
         [HttpGet]
+        [Authorize(Policy = AuthorizationConstants.POLICY_SCOPE_EVENTS_SUBSCRIBE)]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
