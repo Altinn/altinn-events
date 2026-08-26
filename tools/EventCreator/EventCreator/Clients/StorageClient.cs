@@ -11,6 +11,16 @@ public class StorageClient
 {
     private readonly string _readSqlNoElements = "select * from storage.readinstancenoelements ($1)";
 
+    private readonly string _readSimilarArchivedInstancesSql = """
+        SELECT instance
+        FROM storage.instances
+        WHERE appid = $1
+        AND alternateid <> $2
+        AND instance->'Status'->>'IsArchived' = 'true'
+        ORDER BY lastchanged DESC
+        LIMIT $3
+        """;
+
     private readonly NpgsqlDataSource _dataSource;
 
     public StorageClient(string _pgConnectionString)
@@ -37,5 +47,23 @@ public class StorageClient
         }
 
         return instance;
+    }
+
+    public async Task<List<Instance>> GetSimilarArchivedInstances(string appId, Guid excludeInstanceGuid, int limit)
+    {
+        List<Instance> instances = [];
+
+        await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_readSimilarArchivedInstancesSql);
+        pgcom.Parameters.AddWithValue(NpgsqlDbType.Text, appId);
+        pgcom.Parameters.AddWithValue(NpgsqlDbType.Uuid, excludeInstanceGuid);
+        pgcom.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
+
+        await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            instances.Add(await reader.GetFieldValueAsync<Instance>("instance"));
+        }
+
+        return instances;
     }
 }

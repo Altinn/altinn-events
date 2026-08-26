@@ -4,23 +4,22 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
-using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Platform.Events.Wolverine.Commands;
+using Altinn.Platform.Events.Wolverine.Publishers;
 
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Wolverine;
 
 namespace Altinn.Platform.Events.Services
 {
     /// <summary>
-    /// Functionality for registering and forwarding cloud events. 
+    /// Functionality for registering and forwarding cloud events.
     /// </summary>
     public class EventsService : IEventsService
     {
@@ -31,7 +30,7 @@ namespace Altinn.Platform.Events.Services
         private readonly IAuthorization _authorizationService;
         private readonly IMessageBus _bus;
         private readonly ILogger _logger;
-        private readonly WolverineSettings _wolverineSettings;
+        private readonly IRegistrationEventPublisher _registrationPublisher;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsService"/> class.
@@ -44,7 +43,7 @@ namespace Altinn.Platform.Events.Services
             IAuthorization authorizationService,
             IMessageBus bus,
             ILogger<EventsService> logger,
-            IOptions<WolverineSettings> wolverineSettings)
+            IRegistrationEventPublisher registrationPublisher)
         {
             _repository = repository;
             _traceLogService = traceLogService;
@@ -53,7 +52,7 @@ namespace Altinn.Platform.Events.Services
             _authorizationService = authorizationService;
             _bus = bus;
             _logger = logger;
-            _wolverineSettings = wolverineSettings.Value;
+            _registrationPublisher = registrationPublisher;
         }
 
         /// <inheritdoc/>
@@ -77,7 +76,7 @@ namespace Altinn.Platform.Events.Services
         {
             try
             {
-                await PublishRegistrationEvent(cloudEvent);
+                await _registrationPublisher.PublishRegistrationEvent(cloudEvent);
             }
             catch (Exception ex)
             {
@@ -159,7 +158,7 @@ namespace Altinn.Platform.Events.Services
             EnsureCorrectResourceFormat(cloudEvent);
             await Save(cloudEvent);
             string payload = cloudEvent.Serialize();
-            await _bus.PublishAsync(new InboundEventCommand(payload));
+            await _bus.SendAsync(new InboundEventCommand(payload));
         }
 
         /// <summary>
@@ -187,29 +186,6 @@ namespace Altinn.Platform.Events.Services
 
                     cloudEvent.SetAttributeFromString("resource", $"urn:altinn:resource:app_{org}_{app}");
                 }
-            }
-        }
-
-        private async Task PublishRegistrationEvent(CloudEvent cloudEvent)
-        {
-            string payload = cloudEvent.Serialize();
-            if (_wolverineSettings.EnableServiceBus)
-            {
-                await _bus.PublishAsync(new RegisterEventCommand(payload));
-            }
-            else
-            {
-                await EnqueueToStorageQueue(payload);
-            }
-        }
-
-        private async Task EnqueueToStorageQueue(string payload)
-        {
-            QueuePostReceipt receipt = await _queueClient.EnqueueRegistration(payload);
-
-            if (!receipt.Success)
-            {
-                throw receipt.Exception;
             }
         }
     }

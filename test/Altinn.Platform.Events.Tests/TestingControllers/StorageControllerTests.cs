@@ -183,7 +183,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                         config.AddConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.unittest.json").Build());
                     });
 
-                    builder.UseSetting("WolverineSettings:EnableServiceBus", "false");
+                    builder.UseSetting("WolverineSettings:EnableRegistrationPublisher", "false");
+                    builder.UseSetting("WolverineSettings:EnableValidationPublisher", "false");
+                    builder.UseSetting("WolverineSettings:EnableRegistrationListener", "false");
+                    builder.UseSetting("WolverineSettings:EnableInboundListener", "false");
+                    builder.UseSetting("WolverineSettings:EnableOutboundListener", "false");
+                    builder.UseSetting("WolverineSettings:EnableValidationListener", "false");
 
                     builder.ConfigureTestServices(services =>
                     {

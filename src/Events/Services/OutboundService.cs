@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Common.Models;
 using Altinn.Platform.Events.Configuration;
-using Altinn.Platform.Events.Contracts;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Telemetry;
+using Altinn.Platform.Events.Wolverine.Commands;
 
 using CloudNative.CloudEvents;
 using Microsoft.Extensions.Caching.Memory;
@@ -336,7 +336,7 @@ public class OutboundService : IOutboundService
             if (useAzureServiceBus)
             {
                 string payload = cloudEventEnvelope.Serialize();
-                await _bus.PublishAsync(new OutboundEventCommand(payload));
+                await _bus.SendAsync(new OutboundEventCommand(payload));
             }
             else
             {
