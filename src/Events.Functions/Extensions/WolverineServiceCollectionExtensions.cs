@@ -33,7 +33,13 @@ public static class WolverineServiceCollectionExtensions
         {
             if (wolverineSettings.IsAzureServiceBusEnabled)
             {
-                opts.ConfigureEventsDefaults(env, wolverineSettings.ServiceBusConnectionString!);
+                if (string.IsNullOrWhiteSpace(wolverineSettings.ServiceBusConnectionString))
+                {
+                    throw new InvalidOperationException(
+                        "Configuration 'WolverineSettings:ServiceBusConnectionString' is required when a Wolverine listener is enabled.");
+                }
+
+                opts.ConfigureEventsDefaults(env, wolverineSettings.ServiceBusConnectionString);
 
                 AddOutboundListener(wolverineSettings, opts);
                 AddValidationListener(wolverineSettings, opts);
