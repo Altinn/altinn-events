@@ -26,7 +26,7 @@ namespace Altinn.Platform.Events.Functions.Services
         private readonly string _slackUri = "hooks.slack.com";
 
         /// <summary>Name of the named <see cref="HttpClient"/> used by this service.</summary>
-        internal const string _httpClientName = nameof(AsbWebhookService);
+        internal const string HttpClientName = nameof(AsbWebhookService);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AsbWebhookService"/> class. Takes
@@ -38,7 +38,7 @@ namespace Altinn.Platform.Events.Functions.Services
         public AsbWebhookService(
             IHttpClientFactory httpClientFactory, IEventsClient eventsClient, IOptions<EventsOutboundSettings> eventOutboundSettings, ILogger<AsbWebhookService> logger)
         {
-            _client = httpClientFactory.CreateClient(_httpClientName);
+            _client = httpClientFactory.CreateClient(HttpClientName);
             _eventsClient = eventsClient;
             _logger = logger;
             _client.Timeout = TimeSpan.FromSeconds(eventOutboundSettings.Value.RequestTimeout);

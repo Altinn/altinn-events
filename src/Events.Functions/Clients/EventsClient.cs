@@ -34,7 +34,7 @@ namespace Altinn.Platform.Events.Functions.Clients
         private readonly ICertificateResolverService _certificateResolverService;
 
         /// <summary>Name of the named <see cref="HttpClient"/> used by this client.</summary>
-        internal const string _httpClientName = nameof(EventsClient);
+        internal const string HttpClientName = nameof(EventsClient);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EventsClient"/> class. Takes
@@ -50,7 +50,7 @@ namespace Altinn.Platform.Events.Functions.Clients
             IOptions<PlatformSettings> eventsConfig,
             ILogger<EventsClient> logger)
         {
-            _client = httpClientFactory.CreateClient(_httpClientName);
+            _client = httpClientFactory.CreateClient(HttpClientName);
             _accessTokenGenerator = accessTokenGenerator;
             _certificateResolverService = certificateResolverService;
 
