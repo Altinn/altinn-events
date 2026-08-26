@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 
@@ -161,7 +162,15 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventType, cloudEvent.Type, defaultType, defaultIssuer));
             resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.EventSource, cloudEvent.Source.ToString(), defaultType, defaultIssuer));
             resourceCategory.AddAttributeFromUrn(cloudEvent.GetResource());
-            resourceCategory.AddSubjectAttribute(cloudEvent.Subject); 
+            resourceCategory.AddSubjectAttribute(cloudEvent.Subject);
+
+            bool isAppEvent = cloudEvent.GetResource()?.
+                StartsWith("urn:altinn:resource:app_", StringComparison.OrdinalIgnoreCase) == true;
+
+            if (isAppEvent)
+            {
+                resourceCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(AltinnXacmlUrns.AppResource, "events", defaultType, defaultIssuer));
+            }
 
             if (cloudEvent["resourceinstance"] is not null)
             {

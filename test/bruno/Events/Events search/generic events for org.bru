@@ -1,0 +1,26 @@
+meta {
+  name: generic events for org
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{PlatformHostUrl}}/events/api/v1/events?resource=urn:altinn:resource:k6-instancedelegation-test&after=b8fb73a7-c675-4cb1-9cf1-f60d3e555cc5&size=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  resource: urn:altinn:resource:k6-instancedelegation-test
+  after: b8fb73a7-c675-4cb1-9cf1-f60d3e555cc5
+  size: 10
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/subscribe (ttd)");
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

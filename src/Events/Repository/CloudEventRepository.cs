@@ -79,6 +79,8 @@ namespace Altinn.Platform.Events.Repository
         /// <inheritdoc/>
         public async Task<List<CloudEvent>> GetEvents(string resource, string after, string subject, string alternativeSubject, List<string> type, int size)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resource);
+
             List<CloudEvent> searchResult = GetSearchResult();
 
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_getEventsSql);
@@ -86,12 +88,13 @@ namespace Altinn.Platform.Events.Repository
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, subject ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, alternativeSubject ?? (object)DBNull.Value);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Varchar, after);
-#pragma warning disable S3265
 
-            // ignore missing [Flags] attribute on NpgsqlDbType enum.
+            // Ignore missing [Flags] attribute on NpgsqlDbType enum.
             // For more info: https://github.com/npgsql/npgsql/issues/2801
+#pragma warning disable S3265
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Array | NpgsqlDbType.Text, type ?? (object)DBNull.Value);
 #pragma warning restore S3265
+
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Integer, size);
 
             await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())

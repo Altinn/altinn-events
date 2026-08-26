@@ -382,7 +382,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c0008", expectedSubject, null, [], 50, CancellationToken.None);
+            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:app_skd_sirius", "e31dbb11-2208-4dda-a549-92a0db8c0008", expectedSubject, null, [], 50, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -401,11 +401,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         public async Task GetEvents_QueryIncludesAfter_RetrievesCorrectNumberOfEvents()
         {
             // Arrange
-            int expectedCount = 3;
+            int expectedCount = 2;
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetEvents(null, "e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, [], 50, CancellationToken.None);
+            List<CloudEvent> actual = await eventsService.GetEvents("urn:altinn:resource:app_nav_app", "e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, [], 50, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -468,10 +468,122 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            await eventsService.GetEvents(null, null, string.Empty, string.Empty, [], 50, CancellationToken.None);
+            await eventsService.GetEvents("urn:altinn:resource:simple-resource", null, string.Empty, string.Empty, [], 50, CancellationToken.None);
 
             // Assert
             repositoryMock.VerifyAll();
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Calling GetEvents with null resource
+        /// Expected result:
+        ///   Method throws ArgumentNullException
+        /// Success criteria:
+        ///   ArgumentNullException is thrown when resource is null.
+        /// </summary>
+        [Fact]
+        public async Task GetEvents_ResourceIsNull_ThrowsArgumentNullException()
+        {
+            // Arrange
+            EventsService target = GetEventsService();
+
+            // Act
+            Exception actual = null;
+            try
+            {
+                await target.GetEvents(null, null, string.Empty, string.Empty, [], 50, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                actual = ex;
+            }
+
+            // Assert
+            Assert.IsType<ArgumentNullException>(actual);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Calling GetEvents with null resource
+        /// Expected result:
+        ///   Method throws ArgumentNullException
+        /// Success criteria:
+        ///   ArgumentNullException is thrown when resource is null.
+        /// </summary>
+        [Theory]
+        [InlineData("urn:altinn:resource:app_ttd_apps-test", true)]
+        [InlineData("urn:altinn:resource:not-an-app", false)]
+        public async Task GetEvents_ResourceIsProvided_CallsAuthorizationWithIsAppCorrectly(
+            string resource, bool isApp)
+        {
+            // Arrange
+            List<CloudEvent> events =
+            [
+                new CloudEvent(CloudEventsSpecVersion.V1_0)
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Type = "instance.completed",
+                    Source = new Uri("https://ttd.apps.at22.altinn.cloud/ttd/app-test/"),
+                    Time = DateTime.Now,
+                    Subject = "/party/456456"
+                },
+            ];
+            Mock<ICloudEventRepository> repositoryMock = new();
+            repositoryMock.Setup(r => r.GetEvents(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<int>()))
+                .ReturnsAsync(events);
+
+            bool? actual = null;
+            Mock<IAuthorization> authorizationMock = new();
+            authorizationMock
+                .Setup(a => a.AuthorizeEvents(
+                    It.IsAny<IEnumerable<CloudEvent>>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Callback<IEnumerable<CloudEvent>, bool, CancellationToken>((events, isAppValue, cancellationToken) =>
+                {
+                    actual = isAppValue;
+                })
+                .ReturnsAsync(events);
+
+            EventsService target = GetEventsService(repositoryMock: repositoryMock.Object, authorizationMock: authorizationMock);
+
+            // Act
+            await target.GetEvents(resource, null, string.Empty, string.Empty, [], 50, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(isApp, actual);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   Calling GetEvents with empty or whitespace resource
+        /// Expected result:
+        ///   Method throws ArgumentException
+        /// Success criteria:
+        ///   ArgumentException is thrown when resource is empty or whitespace.
+        /// </summary>
+        [Theory]
+        [InlineData("")]
+        [InlineData(" ")]
+        [InlineData("\r")]
+        public async Task GetEvents_ResourceIsEmptyOrWhitespace_ThrowsArgumentException(string resource)
+        {
+            // Arrange
+            EventsService target = GetEventsService();
+
+            // Act
+            Exception actual = null;
+            try
+            {
+                await target.GetEvents(resource, null, string.Empty, string.Empty, [], 50, CancellationToken.None);
+            }
+            catch (Exception ex) 
+            { 
+                actual = ex;
+            }
+
+            // Assert
+            Assert.IsType<ArgumentException>(actual);
         }
 
         /// <summary>
@@ -816,7 +928,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.Empty(result);
-            authMock.Verify(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>(), It.IsAny<CancellationToken>()), Times.Never);
+            authMock.Verify(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -960,8 +1072,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                     .ReturnsAsync((List<CloudEvent> events) => events);
 
                 _authorizationMock
-                  .Setup(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>(), It.IsAny<CancellationToken>()))
-                  .ReturnsAsync((List<CloudEvent> events, CancellationToken cancellationToken) => events);
+                  .Setup(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                  .ReturnsAsync((List<CloudEvent> events, bool flag, CancellationToken cancellationToken) => events);
 
                 authorizationMock = _authorizationMock;
             }

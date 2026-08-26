@@ -570,7 +570,7 @@ public class AuthorizationServiceTest
         AuthorizationService target = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, CancellationToken.None);
+        List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, false, CancellationToken.None);
 
         Assert.NotNull(finalCloudEvents);
 

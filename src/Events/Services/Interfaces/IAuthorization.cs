@@ -24,12 +24,18 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Authorizes and filters events based on authorization
         /// </summary>
         /// <param name="cloudEvents">The list of events</param>
+        /// <param name="isAppEvents">Indicates whether the events are Altinn App events</param>
         /// <param name="cancellationToken">
         /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
         /// </param>
+        /// <remarks>
+        /// Caller should ensure that all events in the list are of the same type (either all Altinn App events 
+        /// or all generic events) before calling this method. The method does not perform type checking on the 
+        /// events, and passing a mixed list may lead to unexpected behavior.
+        /// </remarks>
         /// <returns>A list of authorized events</returns>
         public Task<List<CloudEvent>> AuthorizeEvents(
-            IEnumerable<CloudEvent> cloudEvents, CancellationToken cancellationToken);
+            IEnumerable<CloudEvent> cloudEvents, bool isAppEvents, CancellationToken cancellationToken);
 
         /// <summary>
         /// Authorizes the currents user's right to publish the provided event
