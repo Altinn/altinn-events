@@ -17,8 +17,9 @@ public class StorageClient
         WHERE appid = $1
         AND alternateid <> $2
         AND instance->'Status'->>'IsArchived' = 'true'
+        AND (instance->'Status'->>'Archived')::timestamptz <= $3
         ORDER BY lastchanged DESC
-        LIMIT $3
+        LIMIT $4
         """;
 
     private readonly NpgsqlDataSource _dataSource;
@@ -49,13 +50,14 @@ public class StorageClient
         return instance;
     }
 
-    public async Task<List<Instance>> GetSimilarArchivedInstances(string appId, Guid excludeInstanceGuid, int limit)
+    public async Task<List<Instance>> GetSimilarArchivedInstances(string appId, Guid excludeInstanceGuid, int limit, DateTime archivedBefore)
     {
         List<Instance> instances = [];
 
         await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_readSimilarArchivedInstancesSql);
         pgcom.Parameters.AddWithValue(NpgsqlDbType.Text, appId);
         pgcom.Parameters.AddWithValue(NpgsqlDbType.Uuid, excludeInstanceGuid);
+        pgcom.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, archivedBefore);
         pgcom.Parameters.AddWithValue(NpgsqlDbType.Integer, limit);
 
         await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();

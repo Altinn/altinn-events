@@ -33,7 +33,7 @@ launches the interactive menu. Passing `-b`/`--batch` instead reads instance GUI
 ### Interactive menu
 
 1. **Analyze app instance** — fetches an instance from Storage and prints its status (created, last changed, current process step, archived), completion confirmations, and its recorded events from the Events DB.
-2. **Compare with similar archived instances** — given an instance, finds other **archived** instances of the same app and prints their event sequences and confirmation status next to the target's, so you can see what a normal/healthy run of that specific app looks like and spot which event is missing. Also reports how many of the compared instances had completion confirmations, as a signal for whether this app's process typically confirms before archiving.
+2. **Compare with similar archived instances** — given an instance, finds other **archived** instances of the same app and prints their event sequences and confirmation status next to the target's, so you can see what a normal/healthy run of that specific app looks like and spot which event is missing. Also reports how many of the compared instances had completion confirmations, as a signal for whether this app's process typically confirms before archiving. Only considers instances archived at least N days ago (configurable, default 1) — a recently archived instance may show "Confirmed: No" simply because the confirming third party hasn't acted yet, not because this app's process never confirms.
 3. **Generate event for instance** — sends a CloudEvent of a chosen type (default `app.instance.process.completed`) onto the events-registration queue for an instance, in the same shape the platform itself produces.
 4. **Exit**
 

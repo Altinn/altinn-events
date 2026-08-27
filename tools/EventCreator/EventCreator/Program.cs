@@ -237,13 +237,19 @@ static async Task<Instance?> CompareSimilarInstances(StorageClient storageClient
         return null;
     }
 
-    const int defaultLimit = 5;
+    const int defaultLimit = 3;
     Console.Write($"How many archived instances to compare against [{defaultLimit}]: ");
     string? limitInput = Console.ReadLine()?.Trim();
     int limit = int.TryParse(limitInput, out int parsedLimit) && parsedLimit > 0 ? parsedLimit : defaultLimit;
 
-    Console.WriteLine($"Looking for the latest {limit} archived instances of '{instance.AppId}' excluding {instance.Id}...");
-    List<Instance> similarInstances = await storageClient.GetSimilarArchivedInstances(instance.AppId, instanceGuid, limit);
+    const int defaultMinDaysSinceArchived = 1;
+    Console.Write($"Minimum days since archived, to avoid instances still waiting on a third party to confirm [{defaultMinDaysSinceArchived}]: ");
+    string? minDaysInput = Console.ReadLine()?.Trim();
+    int minDaysSinceArchived = int.TryParse(minDaysInput, out int parsedMinDays) && parsedMinDays >= 0 ? parsedMinDays : defaultMinDaysSinceArchived;
+    DateTime archivedBefore = DateTime.UtcNow.AddDays(-minDaysSinceArchived);
+
+    Console.WriteLine($"Looking for the latest {limit} archived instances of '{instance.AppId}' excluding {instance.Id}, archived before {ToLocal(archivedBefore)}...");
+    List<Instance> similarInstances = await storageClient.GetSimilarArchivedInstances(instance.AppId, instanceGuid, limit, archivedBefore);
 
     Console.WriteLine();
     Console.WriteLine($"  Target instance {instance.Id} (Process Step: {instance.Process?.CurrentTask?.ElementId ?? "-"}, Archived: {ToLocal(instance.Status?.Archived)}, Confirmed: {FormatConfirmed(instance)}):");
