@@ -33,17 +33,24 @@ namespace Altinn.Platform.Events.Functions.Clients
 
         private readonly ICertificateResolverService _certificateResolverService;
 
+        /// <summary>Name of the named <see cref="HttpClient"/> used by this client.</summary>
+        internal const string HttpClientName = nameof(EventsClient);
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="EventsClient"/> class.
+        /// Initializes a new instance of the <see cref="EventsClient"/> class. Takes
+        /// <see cref="IHttpClientFactory"/> (not a typed HttpClient) and is registered via a plain
+        /// AddScoped — this is a dependency of AsbWebhookService and ValidationEventHandler, both
+        /// consumed by Wolverine message handlers, whose code generation rejects services
+        /// registered through AddHttpClient's typed-client overload as an opaque factory.
         /// </summary>
         public EventsClient(
-            HttpClient httpClient,
+            IHttpClientFactory httpClientFactory,
             IAccessTokenGenerator accessTokenGenerator,
             ICertificateResolverService certificateResolverService,
             IOptions<PlatformSettings> eventsConfig,
             ILogger<EventsClient> logger)
         {
-            _client = httpClient;
+            _client = httpClientFactory.CreateClient(HttpClientName);
             _accessTokenGenerator = accessTokenGenerator;
             _certificateResolverService = certificateResolverService;
 

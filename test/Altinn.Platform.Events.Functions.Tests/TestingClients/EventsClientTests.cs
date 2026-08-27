@@ -60,7 +60,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 HttpStatusCode.OK);
 
             var sut = new EventsClient(
-                new HttpClient(handlerMock.Object),
+                CreateHttpClientFactory(new HttpClient(handlerMock.Object)),
                 _atgMock.Object,
                 _srMock.Object,
                 _platformSettings,
@@ -84,7 +84,7 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
                 HttpStatusCode.OK);
 
             var sut = new EventsClient(
-                new HttpClient(handlerMock.Object),
+                CreateHttpClientFactory(new HttpClient(handlerMock.Object)),
                 _atgMock.Object,
                 _srMock.Object,
                 _platformSettings,
@@ -310,11 +310,18 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
         private EventsClient CreateTestInstance(HttpMessageHandler messageHandlerMock)
         {
             return new EventsClient(
-                  new HttpClient(messageHandlerMock),
+                  CreateHttpClientFactory(new HttpClient(messageHandlerMock)),
                   _atgMock.Object,
                   _srMock.Object,
                   _platformSettings,
                   _loggerMock.Object);
+        }
+
+        private static IHttpClientFactory CreateHttpClientFactory(HttpClient client)
+        {
+            Mock<IHttpClientFactory> factoryMock = new();
+            factoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
+            return factoryMock.Object;
         }
     }
 }
