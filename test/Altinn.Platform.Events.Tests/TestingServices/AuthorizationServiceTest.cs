@@ -256,7 +256,7 @@ public class AuthorizationServiceTest
     {
         // Arrange
         CloudEvent cloudEvent = 
-            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:18874198354");
+            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:18874198354", false);
 
         PartiesRegisterQueryResponse partiesRegisterQueryResponse = 
             await TestDataLoader.Load<PartiesRegisterQueryResponse>("oneperson");
@@ -434,7 +434,7 @@ public class AuthorizationServiceTest
     {
         // Arrange
         CloudEvent cloudEvent =
-            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:18874198354");
+            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:18874198354", false);
 
         PartiesRegisterQueryResponse partiesRegisterQueryResponse =
             await TestDataLoader.Load<PartiesRegisterQueryResponse>("oneperson");
@@ -517,12 +517,12 @@ public class AuthorizationServiceTest
     public async Task AuthorizeEvents_InputEventsFiveSubjects_LogicManipulateSubjectCorrectly()
     {
         List<CloudEvent> cloudEvents = [
-            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:02056241046"),
-            GetCloudEvent("ef14212c-0f9d-4f88-89c5-255d946e5f18", "urn:altinn:organization:identifier-no:312508729"),
-            GetCloudEvent("29168d79-b081-4299-9eec-2db9b5259fac", "urn:altinn:person:identifier-no:31073102351"),
-            GetCloudEvent("bf1411fe-c55e-4472-9f37-10e2c2403ecb", "urn:altinn:person:identifier-no:31073102351"),
-            GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "urn:altinn:person:identifier-no:notfound"),
-            GetCloudEvent("a7c7b7bf-3151-4de8-b326-aeaa5c36e7c4", null)];
+            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:identifier-no:02056241046", false),
+            GetCloudEvent("ef14212c-0f9d-4f88-89c5-255d946e5f18", "urn:altinn:organization:identifier-no:312508729", false),
+            GetCloudEvent("29168d79-b081-4299-9eec-2db9b5259fac", "urn:altinn:person:identifier-no:31073102351", false),
+            GetCloudEvent("bf1411fe-c55e-4472-9f37-10e2c2403ecb", "urn:altinn:person:identifier-no:31073102351", false),
+            GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "urn:altinn:person:identifier-no:notfound", false),
+            GetCloudEvent("a7c7b7bf-3151-4de8-b326-aeaa5c36e7c4", null, false)];
 
         List<PartyIdentifiers> partyIdentifiers =
             (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
@@ -572,6 +572,7 @@ public class AuthorizationServiceTest
         // Act
         List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, false, CancellationToken.None);
 
+        // Assert
         Assert.NotNull(finalCloudEvents);
 
         Assert.Equal(5, finalCloudEvents.Count); // The last event was not authorized
@@ -589,6 +590,62 @@ public class AuthorizationServiceTest
 
         Assert.Equal("urn:altinn:person:identifier-no:notfound", finalCloudEvents[4].Subject);
         Assert.Null(finalCloudEvents[4]["originalsubjectreplacedforauthorization"]);
+    }
+
+    [Fact]
+    public async Task AuthorizeEvents_InputMixOfAppAndOtherEvents_LogicIncludesAppResourcesInAuthorizationRequestForCorrectEvent()
+    {
+        List<CloudEvent> cloudEvents = [
+            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "/party/67654562", true),
+            GetCloudEvent("ef14212c-0f9d-4f88-89c5-255d946e5f18", "/party/67654562", false),
+            GetCloudEvent("29168d79-b081-4299-9eec-2db9b5259fac", "/party/67654562", true),
+            GetCloudEvent("bf1411fe-c55e-4472-9f37-10e2c2403ecb", "/party/67654562", false),
+            GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "/party/67654562", false),
+            GetCloudEvent("a7c7b7bf-3151-4de8-b326-aeaa5c36e7c4", "/party/67654562", true)];
+
+        XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_subscribe_five");
+
+        Mock<IPDP> pdpMock = new();
+        pdpMock
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Callback((XacmlJsonRequestRoot authRequest) =>
+            {
+                List<XacmlJsonCategory> resources = authRequest.Request.Resource;
+
+                // Analyze the generated resources with focus on the manipulated subjects
+                Assert.Equal(6, resources.Count);
+
+                Assert.Equal(6, resources[0].Attribute.Count);
+                Assert.Equal("urn:altinn:appresource", resources[0].Attribute[5].AttributeId);
+                Assert.Equal("events", resources[0].Attribute[5].Value);
+
+                Assert.Equal(5, resources[1].Attribute.Count);
+
+                Assert.Equal(6, resources[2].Attribute.Count);
+                Assert.Equal("urn:altinn:appresource", resources[2].Attribute[5].AttributeId);
+                Assert.Equal("events", resources[2].Attribute[5].Value);
+
+                Assert.Equal(5, resources[3].Attribute.Count);
+                Assert.Equal(5, resources[4].Attribute.Count);
+
+                Assert.Equal(6, resources[5].Attribute.Count);
+                Assert.Equal("urn:altinn:appresource", resources[5].Attribute[5].AttributeId);
+                Assert.Equal("events", resources[5].Attribute[5].Value);
+
+                List<XacmlJsonCategory> actions = authRequest.Request.Action;
+
+                Assert.Single(actions);
+                Assert.Equal("read", actions[0].Attribute[0].Value);
+            })
+            .ReturnsAsync(decisionResponse);
+
+        AuthorizationService target = new(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        // Act
+        List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, true, CancellationToken.None);
+
+        // Assert
+        // The Asserts we care about here is defined in the callback of the mock, which will fail the test if the logic is not correct.
     }
 
     [Fact]
@@ -807,7 +864,7 @@ public class AuthorizationServiceTest
         Assert.False(result["/org/nav"]);
     }
 
-    private static CloudEvent GetCloudEvent(string eventId, string? subject)
+    private static CloudEvent GetCloudEvent(string eventId, string? subject, bool useAppResource)
     {
         CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
         {
@@ -818,7 +875,14 @@ public class AuthorizationServiceTest
             Source = new Uri($"https://dialogporten.no/api/v1/dialogs/{Guid.NewGuid()}")
         };
 
-        cloudEvent["resource"] = "urn:altinn:resource:super-simple-service";
+        if (useAppResource)
+        {
+            cloudEvent["resource"] = "urn:altinn:resource:app_ttd_apps-test";
+        }
+        else
+        {
+            cloudEvent["resource"] = "urn:altinn:resource:super-simple-service";
+        }
 
         return cloudEvent;
     }
