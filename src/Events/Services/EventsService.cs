@@ -58,7 +58,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public Task<bool> Save(CloudEvent cloudEvent, string idempotencyId)
+        public Task<bool> Save(CloudEvent cloudEvent, string idempotencyId = null)
         {
             try
             {

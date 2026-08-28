@@ -18,7 +18,7 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// <param name="cloudEvent">The cloudEvent to be saved</param>
         /// <param name="idempotencyId">The idempotency id for the request</param>
         /// <returns>true if the cloud event was saved successfully, otherwise false</returns>
-        Task<bool> Save(CloudEvent cloudEvent, string idempotencyId);
+        Task<bool> Save(CloudEvent cloudEvent, string idempotencyId = null);
 
         /// <summary>
         /// Post cloud event to registration queue.

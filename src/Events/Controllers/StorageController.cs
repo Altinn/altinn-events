@@ -52,7 +52,7 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 AddIdTelemetry(cloudEvent.Id);
-                await _eventsService.Save(cloudEvent, null);
+                await _eventsService.Save(cloudEvent);
                 return Ok();
             }
             catch (Exception e)
