@@ -1,0 +1,1 @@
+ALTER TABLE events.events ADD COLUMN IF NOT EXISTS idempotencyid uuid NULL;

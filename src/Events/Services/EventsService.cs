@@ -58,27 +58,25 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> Save(CloudEvent cloudEvent)
+        public Task<bool> Save(CloudEvent cloudEvent, string idempotencyId)
         {
             try
             {
-                await _repository.CreateEvent(cloudEvent.Serialize());
+                return _repository.CreateEvent(cloudEvent.Serialize(), idempotencyId);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "// EventsService // Save // Failed to save eventId {EventId} to storage.", cloudEvent.Id);
                 throw new InvalidOperationException($"Failed to save event with ID {cloudEvent.Id} to storage.", ex);
             }
-
-            return cloudEvent.Id;
         }
 
         /// <inheritdoc/>
-        public async Task<string> RegisterNew(CloudEvent cloudEvent)
+        public async Task<string> RegisterNew(CloudEvent cloudEvent, string idempotencyId)
         {
-            try
+            try    
             {
-                await _registrationPublisher.PublishRegistrationEvent(cloudEvent);
+                await _registrationPublisher.PublishRegistrationEvent(cloudEvent, idempotencyId);
             }
             catch (Exception ex)
             {
@@ -154,9 +152,17 @@ namespace Altinn.Platform.Events.Services
         public async Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken)
         {
             EnsureCorrectResourceFormat(cloudEvent);
-            await Save(cloudEvent);
-            string payload = cloudEvent.Serialize();
-            await _bus.SendAsync(new InboundEventCommand(payload));
+            var result = await Save(cloudEvent, null);
+
+            if (result)
+            {
+                string payload = cloudEvent.Serialize();
+                await _bus.SendAsync(new InboundEventCommand(payload));
+            }
+            else
+            {
+                await _traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(cloudEvent, cloudEvent.Id);
+            }
         }
 
         /// <summary>

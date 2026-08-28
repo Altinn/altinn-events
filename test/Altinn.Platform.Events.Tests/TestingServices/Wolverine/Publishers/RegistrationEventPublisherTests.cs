@@ -46,7 +46,7 @@ public class RegistrationEventPublisherTests
         };
 
         // Act
-        await publisher.PublishRegistrationEvent(cloudEvent);
+        await publisher.PublishRegistrationEvent(cloudEvent, null);
 
         // Assert
         busMock.Verify(b => b.SendAsync(It.IsAny<RegisterEventCommand>()), Times.Once);

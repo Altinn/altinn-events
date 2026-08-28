@@ -16,15 +16,17 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Save cloud event to persistent storage.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be saved</param>
-        /// <returns>Id for the created document</returns>
-        Task<string> Save(CloudEvent cloudEvent);
+        /// <param name="idempotencyId">The idempotency id for the request</param>
+        /// <returns>true if the cloud event was saved successfully, otherwise false</returns>
+        Task<bool> Save(CloudEvent cloudEvent, string idempotencyId);
 
         /// <summary>
         /// Post cloud event to registration queue.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be queued</param>
+        /// <param name="idempotencyId">The idempotency id for the request</param>
         /// <returns>Id for the queued event</returns>
-        Task<string> RegisterNew(CloudEvent cloudEvent);
+        Task<string> RegisterNew(CloudEvent cloudEvent, string idempotencyId);
 
         /// <summary>
         /// Push cloud event to inbound queue.

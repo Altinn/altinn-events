@@ -64,13 +64,8 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] AppCloudEventRequestModel cloudEventRequest)
+        public async Task<ActionResult<string>> Post([FromBody] AppCloudEventRequestModel cloudEventRequest, [FromHeader(Name = "Idempotency-Id")] string idempotencyId)
         {
-            if (!cloudEventRequest.ValidateRequiredProperties())
-            {
-                return Problem("Missing parameter values: source, subject and type cannot be null", null, 400);
-            }
-
             var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];
 
             if (!cloudEventRequest.Source.AbsolutePath.StartsWith("/" + item))
@@ -78,12 +73,22 @@ namespace Altinn.Platform.Events.Controllers
                 return StatusCode(401, item + " is not authorized to create events for " + cloudEventRequest.Source);
             }
 
+            if (!cloudEventRequest.ValidateRequiredProperties())
+            {
+                return Problem("Missing parameter values: source, subject and type cannot be null", null, 400);
+            }
+
+            if (!string.IsNullOrEmpty(idempotencyId) && !Guid.TryParse(idempotencyId, out _))
+            {
+                return Problem("Invalid Idempotency-Id header", null, 400);
+            }
+
             try
             {
                 var cloudEvent = AppCloudEventExtensions.CreateEvent(cloudEventRequest);
                 AddIdTelemetry(cloudEvent.Id);
 
-                await _eventsService.RegisterNew(cloudEvent);
+                await _eventsService.RegisterNew(cloudEvent, idempotencyId);
                 return Created(cloudEvent.Subject, cloudEvent.Id);
             }
             catch (Exception e)

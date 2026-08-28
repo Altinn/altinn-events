@@ -14,10 +14,15 @@ namespace Altinn.Platform.Events.Wolverine.Publishers;
 public class StorageQueueRegistrationEventPublisher(IEventsQueueClient queueClient) : IRegistrationEventPublisher
 {
     /// <inheritdoc/>
-    public async Task PublishRegistrationEvent(CloudEvent cloudEvent)
+    public async Task PublishRegistrationEvent(CloudEvent cloudEvent, string idempotencyId)
     {
-        string payload = cloudEvent.Serialize();
-        QueuePostReceipt receipt = await queueClient.EnqueueRegistration(payload);
+        var message = new RegistrationQueueMessage
+        {
+            CloudEventPayload = cloudEvent.Serialize(),
+            IdempotencyId = idempotencyId
+        };
+
+        QueuePostReceipt receipt = await queueClient.EnqueueRegistration(message.Serialize());
 
         if (!receipt.Success)
         {

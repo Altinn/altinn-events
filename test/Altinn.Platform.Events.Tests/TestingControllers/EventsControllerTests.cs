@@ -190,7 +190,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -220,7 +220,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -251,7 +251,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();

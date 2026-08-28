@@ -46,7 +46,7 @@ public class StorageQueueRegistrationEventPublisherTests
         };
 
         // Act
-        await publisher.PublishRegistrationEvent(cloudEvent);
+        await publisher.PublishRegistrationEvent(cloudEvent, null);
 
         // Assert
         queueMock.Verify(q => q.EnqueueRegistration(It.IsAny<string>()), Times.Once);
@@ -80,6 +80,6 @@ public class StorageQueueRegistrationEventPublisherTests
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => publisher.PublishRegistrationEvent(cloudEvent));
+        await Assert.ThrowsAsync<Exception>(() => publisher.PublishRegistrationEvent(cloudEvent, null));
     }
 }

@@ -48,6 +48,7 @@ namespace Altinn.Platform.Events.Controllers
         /// Registers a new cloud event to be stored and processed.
         /// </summary>
         /// <param name="cloudEvent">The cloud event to be stored and processed.</param>
+        /// <param name="idempotencyOptionalHeaderValue">Optional client-supplied idempotency id used to detect and skip duplicate submissions.</param>
         /// <param name="cancellationToken">
         /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
         /// </param>
@@ -55,13 +56,19 @@ namespace Altinn.Platform.Events.Controllers
         [HttpPost]
         [Authorize(Policy = AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS)]
         [Consumes("application/cloudevents+json")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post(
-            [FromBody] CloudEvent cloudEvent, CancellationToken cancellationToken)
+            [FromBody] CloudEvent cloudEvent, [FromHeader(Name = "Idempotency-Id")] string idempotencyOptionalHeaderValue, CancellationToken cancellationToken)
         {
             (bool isValid, string errorMessage) = ValidateCloudEvent(cloudEvent);
             if (!isValid)
             {
                 return Problem(errorMessage, null, 400);
+            }
+
+            if (!string.IsNullOrEmpty(idempotencyOptionalHeaderValue) && !Guid.TryParse(idempotencyOptionalHeaderValue, out _))
+            {
+                return Problem("Invalid Idempotency-Id header", null, 400);
             }
 
             bool isAuthorizedToPublish = await _authorizationService.AuthorizePublishEvent(cloudEvent, cancellationToken);
@@ -70,7 +77,7 @@ namespace Altinn.Platform.Events.Controllers
                 return Forbid();
             }
 
-            await _eventsService.RegisterNew(cloudEvent);
+            await _eventsService.RegisterNew(cloudEvent, idempotencyOptionalHeaderValue);
             return Ok();
         }
 
