@@ -19,6 +19,6 @@ public class RegistrationEventPublisher(IMessageBus bus) : IRegistrationEventPub
     public async Task PublishRegistrationEvent(CloudEvent cloudEvent, string idempotencyId)
     {
         string payload = cloudEvent.Serialize();
-        await bus.SendAsync(new RegisterEventCommand(payload));
+        await bus.SendAsync(new RegisterEventCommand(payload, idempotencyId));
     }
 }

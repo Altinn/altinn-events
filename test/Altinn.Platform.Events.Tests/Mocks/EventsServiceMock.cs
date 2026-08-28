@@ -162,7 +162,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             throw new NotImplementedException();
         }
 
-        public Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken)
+        public Task SaveAndPublish(CloudEvent cloudEvent, string idempotencyId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

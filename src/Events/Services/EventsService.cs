@@ -149,12 +149,12 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken)
+        public async Task SaveAndPublish(CloudEvent cloudEvent, string idempotencyId, CancellationToken cancellationToken)
         {
             EnsureCorrectResourceFormat(cloudEvent);
-            var result = await Save(cloudEvent, null);
+            var cloudEventWasPersisted = await Save(cloudEvent, idempotencyId);
 
-            if (result)
+            if (cloudEventWasPersisted)
             {
                 string payload = cloudEvent.Serialize();
                 await _bus.SendAsync(new InboundEventCommand(payload));

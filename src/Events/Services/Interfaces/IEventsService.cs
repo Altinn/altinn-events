@@ -66,7 +66,8 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Saves a cloud event to persistent storage and publishes it to the inbound queue.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be saved and published</param>
+        /// <param name="idempotencyId">The idempotency ID to ensure the operation is processed only once.</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken);
+        Task SaveAndPublish(CloudEvent cloudEvent, string idempotencyId, CancellationToken cancellationToken);
     }
 }

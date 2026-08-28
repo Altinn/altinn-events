@@ -491,7 +491,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
 
             // Act
-            await eventsService.SaveAndPublish(GetCloudEventFromApp(), CancellationToken.None);
+            await eventsService.SaveAndPublish(GetCloudEventFromApp(), null, CancellationToken.None);
 
             // Assert
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
@@ -532,7 +532,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             cloudEvent.SetAttributeFromString("resource", "urn:altinn:resource:altinnapp.ttd.apps-test");
 
             // Act
-            await eventsService.SaveAndPublish(cloudEvent, CancellationToken.None);
+            await eventsService.SaveAndPublish(cloudEvent, null, CancellationToken.None);
 
             // Assert
             Assert.NotNull(capturedEvent);
@@ -575,7 +575,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             cloudEvent.SetAttributeFromString("resource", "urn:altinn:resource:some-other-resource");
 
             // Act
-            await eventsService.SaveAndPublish(cloudEvent, CancellationToken.None);
+            await eventsService.SaveAndPublish(cloudEvent, null, CancellationToken.None);
 
             // Assert
             Assert.NotNull(capturedEvent);
@@ -610,7 +610,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => eventsService.SaveAndPublish(GetCloudEventFromApp(), CancellationToken.None));
+                () => eventsService.SaveAndPublish(GetCloudEventFromApp(), null, CancellationToken.None));
 
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Never);
@@ -790,7 +790,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             cloudEvent.SetAttributeFromString("resource", "urn:altinn:resource:altinnapp.ttd.apps-test");
 
             // Act
-            await eventsService.SaveAndPublish(cloudEvent, CancellationToken.None);
+            await eventsService.SaveAndPublish(cloudEvent, null, CancellationToken.None);
 
             // Assert
             Assert.NotNull(capturedEvent);
@@ -850,7 +850,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
 
             // Act
-            await eventsService.SaveAndPublish(cloudEvent, CancellationToken.None);
+            await eventsService.SaveAndPublish(cloudEvent, null, CancellationToken.None);
 
             // Assert
             Assert.NotNull(capturedEvent);

@@ -22,6 +22,6 @@ public static class RegistrationEventHandler
     public static async Task Handle(RegisterEventCommand message, IEventsService eventsService, CancellationToken cancellationToken)
     {
         var cloudEvent = message.Payload.Deserialize();
-        await eventsService.SaveAndPublish(cloudEvent, cancellationToken);
+        await eventsService.SaveAndPublish(cloudEvent, message.IdempotencyId, cancellationToken);
     }
 }

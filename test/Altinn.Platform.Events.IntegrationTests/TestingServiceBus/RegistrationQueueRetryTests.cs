@@ -36,7 +36,7 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
         await using (factory)
         {
             var cloudEvent = CloudEventTestData.CreateTestCloudEvent();
-            var command = new RegisterEventCommand(cloudEvent.Serialize());
+            var command = new RegisterEventCommand(cloudEvent.Serialize(), Guid.NewGuid().ToString());
 
             // Act
             await factory.PublishMessageAsync(command);
@@ -77,7 +77,7 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
         await using (factory)
         {
             var cloudEvent = CloudEventTestData.CreateTestCloudEvent();
-            var command = new RegisterEventCommand(cloudEvent.Serialize());
+            var command = new RegisterEventCommand(cloudEvent.Serialize(), null);
 
             // Act
             await factory.PublishMessageAsync(command);
