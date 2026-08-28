@@ -1,0 +1,13 @@
+variables:
+  - name: Environment
+    value: prod
+  - name: BaseUrl
+    value: https://platform.altinn.no
+  - name: PlatformHostUrl
+    value: "{{BaseUrl}}"
+  - name: AuthN_UserId
+    value: ""
+  - name: AuthN_PartyId
+    value: ""
+  - name: AuthN_Pid
+    value: ""

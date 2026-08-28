@@ -1,0 +1,39 @@
+info:
+  name: subscribe (ttd)
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{TokenGeneratorBaseUrl}}/api/GetEnterpriseToken?env={{Environment}}&scopes=altinn:events.subscribe&orgNo=991825827&org=ttd"
+  params:
+    - name: env
+      value: "{{Environment}}"
+      type: query
+    - name: scopes
+      value: altinn:events.subscribe
+      type: query
+    - name: orgNo
+      value: "991825827"
+      type: query
+    - name: org
+      value: ttd
+      type: query
+  auth:
+    type: basic
+    username: "{{TokenGeneratorUserName}}"
+    password: "{{TokenGeneratorPassword}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const token = res.getBody();
+        bru.setVar("BearerToken", token);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

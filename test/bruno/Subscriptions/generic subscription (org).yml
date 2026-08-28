@@ -1,0 +1,28 @@
+info:
+  name: generic subscription (org)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{PlatformHostUrl}}/events/api/v1/subscriptions"
+  body:
+    type: json
+    data: |-
+      {
+        "resourceFilter": "urn:altinn:resource:ttd-altinn-events-automated-tests",
+        "endpoint": "https://webhook.site/73e46e5f-e905-4375-8ab6-12986525007e"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: await bru.runRequest("Token generator/subscribe (ttd)");
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
