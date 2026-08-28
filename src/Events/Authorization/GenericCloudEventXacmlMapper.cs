@@ -171,7 +171,7 @@ namespace Altinn.Platform.Events.Authorization
             resourceCategory.AddSubjectAttribute(cloudEvent.Subject);
 
             bool isAppEvent = cloudEvent.GetResource().
-                StartsWith("urn:altinn:resource:app_", StringComparison.OrdinalIgnoreCase) == true;
+                StartsWith("urn:altinn:resource:app_", StringComparison.OrdinalIgnoreCase);
 
             if (isAppEvent)
             {
