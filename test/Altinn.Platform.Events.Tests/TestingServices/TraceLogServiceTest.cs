@@ -389,5 +389,52 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.Equal(response, string.Empty);
             loggerMock.Verify(x => x.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
         }
+
+        /// <summary>
+        /// Scenario:
+        ///   CreateLogEntryDuplicateIdempotencyIdSkipped is called for a duplicate cloud event.
+        /// Expected result:
+        ///   A trace log entry with the DuplicateIdempotencyIdSkipped activity is created.
+        /// Success criteria:
+        ///   TraceLogRepository.CreateTraceLogEntry is called once with the correct activity.
+        /// </summary>
+        [Fact]
+        public async Task CreateLogEntryDuplicateIdempotencyIdSkipped_ValidEvent_CreatesEntryWithCorrectActivity()
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+
+            // Act
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(_cloudEvent, "d1525c79-cda8-4fef-b95c-feb3e7be89ec");
+
+            // Assert
+            Assert.Equal(_cloudEvent.Id, result);
+            traceLogRepositoryMock.Verify(
+                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.DuplicateIdempotencyIdSkipped)), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   CreateLogEntryDuplicateIdempotencyIdSkipped is called and the repository throws.
+        /// Expected result:
+        ///   Empty string is returned and the exception is caught (does not propagate).
+        /// Success criteria:
+        ///   No exception escapes the method call.
+        /// </summary>
+        [Fact]
+        public async Task CreateLogEntryDuplicateIdempotencyIdSkipped_RepositoryThrows_ReturnsEmptyString()
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            traceLogRepositoryMock.Setup(x => x.CreateTraceLogEntry(It.IsAny<TraceLog>())).Throws(new Exception());
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+
+            // Act
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(_cloudEvent, "d1525c79-cda8-4fef-b95c-feb3e7be89ec");
+
+            // Assert
+            Assert.Equal(string.Empty, result);
+        }
     }
 }

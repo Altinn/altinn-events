@@ -161,7 +161,7 @@ namespace Altinn.Platform.Events.Services
             }
             else
             {
-                await _traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(cloudEvent, cloudEvent.Id);
+                await _traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(cloudEvent, idempotencyId);
             }
         }
 

@@ -1198,6 +1198,117 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.StartsWith("Only one of 'Party' or 'Person' can be defined.", actual.Detail);
             }
 
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid CloudEventRequest with a valid Idempotency-Id header.
+            /// Expected result:
+            ///   Returns HttpStatus Created and the idempotency id is forwarded to the service.
+            /// Success criteria:
+            ///   IEventsService.RegisterNew is called with the same idempotency id value as the header.
+            /// </summary>
+            [Fact]
+            public async Task Post_ValidIdempotencyIdHeader_ForwardsIdToService()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                const string idempotencyId = "d1525c79-cda8-4fef-b95c-feb3e7be89ec";
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
+
+                Mock<IEventsService> eventsService = new();
+                eventsService
+                    .Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), idempotencyId))
+                    .ReturnsAsync((CloudEvent c, string id) => c.Id);
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+                httpRequestMessage.Headers.Add("Idempotency-Id", idempotencyId);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), idempotencyId), Times.Once);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid CloudEventRequest with no Idempotency-Id header present.
+            /// Expected result:
+            ///   Returns HttpStatus Created and a null idempotency id is forwarded to the service.
+            /// Success criteria:
+            ///   IEventsService.RegisterNew is called with a null idempotency id.
+            /// </summary>
+            [Fact]
+            public async Task Post_NoIdempotencyIdHeader_ForwardsNullToService()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
+
+                Mock<IEventsService> eventsService = new();
+                eventsService
+                    .Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), null))
+                    .ReturnsAsync((CloudEvent c, string id) => c.Id);
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), null), Times.Once);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid CloudEventRequest with an Idempotency-Id header that is not a valid GUID.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest and the event is never registered.
+            /// Success criteria:
+            ///   Response status is 400 and IEventsService.RegisterNew is never called.
+            /// </summary>
+            [Fact]
+            public async Task Post_InvalidIdempotencyIdHeader_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
+
+                Mock<IEventsService> eventsService = new();
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+                httpRequestMessage.Headers.Add("Idempotency-Id", "not-a-guid");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Never);
+            }
+
             private HttpClient GetTestClient(IEventsService eventsService, ITraceLogService traceLogService = null)
             {
                 HttpClient client = _factory.WithWebHostBuilder(builder =>
