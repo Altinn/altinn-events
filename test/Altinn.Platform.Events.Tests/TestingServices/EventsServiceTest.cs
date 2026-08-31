@@ -1009,6 +1009,19 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<ILogger<EventsService>> loggerMock = null,
             Mock<IRegistrationEventPublisher> registrationPublisherMock = null)
         {
+            if (authorizationMock == null)
+            {
+                _authorizationMock
+                    .Setup(a => a.AuthorizeAltinnAppEvents(It.IsAny<List<CloudEvent>>()))
+                    .ReturnsAsync((List<CloudEvent> events) => events);
+
+                _authorizationMock
+                  .Setup(a => a.AuthorizeEvents(It.IsAny<List<CloudEvent>>(), It.IsAny<CancellationToken>()))
+                  .ReturnsAsync((List<CloudEvent> events, CancellationToken cancellationToken) => events);
+
+                authorizationMock = _authorizationMock;
+            }
+
             return new EventsService(
                 repositoryMock ?? _repositoryMock,
                 (traceLogServiceMock ?? _traceLogServiceMock).Object,
