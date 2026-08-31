@@ -433,7 +433,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
-            repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<string>()));
+            repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 

@@ -58,11 +58,12 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public Task<bool> Save(CloudEvent cloudEvent, string idempotencyId = null)
+        public async Task<bool> Save(CloudEvent cloudEvent, string idempotencyId = null)
         {
             try
             {
-                return _repository.CreateEvent(cloudEvent.Serialize(), idempotencyId);
+                var result = await _repository.CreateEvent(cloudEvent.Serialize(), idempotencyId);
+                return result;  
             }
             catch (Exception ex)
             {

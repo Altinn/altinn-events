@@ -2,12 +2,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.IntegrationTests.Data;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Wolverine.Commands;
+
 using Moq;
 using Xunit;
 

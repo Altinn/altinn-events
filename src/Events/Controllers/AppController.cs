@@ -76,14 +76,14 @@ namespace Altinn.Platform.Events.Controllers
         {
             var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];
 
-            if (!cloudEventRequest.Source.AbsolutePath.StartsWith("/" + item))
-            {
-                return StatusCode(401, item + " is not authorized to create events for " + cloudEventRequest.Source);
-            }
-
             if (!cloudEventRequest.ValidateRequiredProperties())
             {
                 return Problem("Missing parameter values: source, subject and type cannot be null", null, 400);
+            }
+
+            if (!cloudEventRequest.Source.AbsolutePath.StartsWith("/" + item))
+            {
+                return StatusCode(401, item + " is not authorized to create events for " + cloudEventRequest.Source);
             }
 
             if (!string.IsNullOrEmpty(idempotencyId) && !Guid.TryParse(idempotencyId, out _))
