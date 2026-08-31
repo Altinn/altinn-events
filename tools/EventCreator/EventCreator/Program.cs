@@ -3,9 +3,12 @@ using System.Reflection;
 using Altinn.Platform.Storage.Configuration;
 using Altinn.Platform.Storage.Interface.Models;
 
+using CloudNative.CloudEvents;
+
 using EventCreator.Clients;
 using EventCreator.Configuration;
 using EventCreator.Menu;
+using EventCreator.Publishing;
 using EventCreator.Workflows;
 
 using Microsoft.Extensions.Configuration;
@@ -17,9 +20,6 @@ var builder = new ConfigurationBuilder()
     .AddUserSecrets(Assembly.GetExecutingAssembly());
 var config = builder.Build();
 
-QueueStorageSettings queueStorageSettings = new();
-config.GetRequiredSection("QueueStorageSettings").Bind(queueStorageSettings);
-
 StorageDbSettings postgreSqlSettings = new();
 config.GetRequiredSection("StorageDbSettings").Bind(postgreSqlSettings);
 
@@ -29,9 +29,30 @@ config.GetRequiredSection("GeneralSettings").Bind(generalSettings);
 EventsDbSettings eventsDbSettings = new();
 config.GetRequiredSection("EventsDbSettings").Bind(eventsDbSettings);
 
-EventsQueueClient eventsQueueClient = new(queueStorageSettings, generalSettings.SourceBaseAddress);
+QueueStorageSettings queueStorageSettings = new();
+config.GetRequiredSection("QueueStorageSettings").Bind(queueStorageSettings);
+
+ServiceBusSettings serviceBusSettings = new();
+config.GetSection("ServiceBusSettings").Bind(serviceBusSettings);
+
+PublishSettings publishSettings = new();
+config.GetSection("PublishSettings").Bind(publishSettings);
+
 StorageClient storageClient = new(postgreSqlSettings.ConnectionString);
 EventsClient eventsClient = new(eventsDbSettings.ConnectionString, eventsDbSettings.CommandTimeoutSeconds);
+
+IEventPublisher eventPublisher = publishSettings.Mode switch
+{
+    PublishMode.AzureStorageQueue => new AzureStorageQueueEventPublisher(queueStorageSettings),
+    PublishMode.AzureServiceBus => new AzureServiceBusEventPublisher(serviceBusSettings),
+    _ => throw new InvalidOperationException($"Unsupported PublishSettings.Mode: '{publishSettings.Mode}'."),
+};
+
+async Task PublishEvent(string eventType, Instance instance)
+{
+    CloudEvent cloudEvent = CloudEventFactory.Create(eventType, instance, generalSettings.SourceBaseAddress);
+    await eventPublisher.PublishAsync(cloudEvent);
+}
 
 if (batchMode)
 {
@@ -58,12 +79,12 @@ if (batchMode)
 
         logWriter.WriteLine($"[{DateTime.Now}]:[{line}]: Instance FOUND, generating and sending event");
 
-        //// await eventsQueueClient.AddEvent("app.instance.created", instance);
-        //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_2", instance);
-        //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_2Revisor", instance);
-        //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_3", instance);
-        //// await eventsQueueClient.AddEvent("app.instance.substatus.changed", instance);
-        await eventsQueueClient.AddEvent("app.instance.process.completed", instance);
+        //// await PublishEvent("app.instance.created", instance);
+        //// await PublishEvent("app.instance.process.movedTo.Task_2", instance);
+        //// await PublishEvent("app.instance.process.movedTo.Task_2Revisor", instance);
+        //// await PublishEvent("app.instance.process.movedTo.Task_3", instance);
+        //// await PublishEvent("app.instance.substatus.changed", instance);
+        await PublishEvent("app.instance.process.completed", instance);
 
         logWriter.WriteLine($"[{DateTime.Now}]:[{line}]: Finished processing");
     }
@@ -74,8 +95,13 @@ else
 {
     AnalyzeInstanceWorkflow analyzeInstanceWorkflow = new(storageClient, eventsClient);
     CompareInstancesWorkflow compareInstancesWorkflow = new(storageClient, eventsClient);
-    GenerateEventWorkflow generateEventWorkflow = new(storageClient, eventsQueueClient);
+    GenerateEventWorkflow generateEventWorkflow = new(storageClient, eventPublisher, generalSettings.SourceBaseAddress);
 
     InteractiveMenu menu = new(analyzeInstanceWorkflow, compareInstancesWorkflow, generateEventWorkflow);
     await menu.Run();
+}
+
+if (eventPublisher is IAsyncDisposable disposablePublisher)
+{
+    await disposablePublisher.DisposeAsync();
 }

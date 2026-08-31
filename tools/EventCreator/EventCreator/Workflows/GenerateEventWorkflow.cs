@@ -1,14 +1,17 @@
 using Altinn.Platform.Storage.Interface.Models;
 
+using CloudNative.CloudEvents;
+
 using EventCreator.Clients;
 using EventCreator.ConsoleSupport;
+using EventCreator.Publishing;
 
 namespace EventCreator.Workflows;
 
 /// <summary>
 /// Generates and publishes an event for an instance.
 /// </summary>
-public class GenerateEventWorkflow(StorageClient storageClient, EventsQueueClient eventsQueueClient)
+public class GenerateEventWorkflow(StorageClient storageClient, IEventPublisher eventPublisher, string resourceBaseAddress)
 {
     private const string DefaultEventType = "app.instance.process.completed";
 
@@ -53,7 +56,8 @@ public class GenerateEventWorkflow(StorageClient storageClient, EventsQueueClien
 
         logWriter.WriteLine($"[{DateTime.Now}]:[{instanceId}]: Generating and sending event of type '{eventType}'");
 
-        await eventsQueueClient.AddEvent(eventType, instance);
+        CloudEvent cloudEvent = CloudEventFactory.Create(eventType, instance, resourceBaseAddress);
+        await eventPublisher.PublishAsync(cloudEvent);
 
         logWriter.WriteLine($"[{DateTime.Now}]:[{instanceId}]: Event sent");
         Console.WriteLine("Event generated successfully.");
