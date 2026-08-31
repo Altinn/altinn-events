@@ -69,8 +69,8 @@ public class RegistrationEventPublisherTests
         RegisterEventCommand capturedCommand = null;
 
         Mock<IMessageBus> busMock = new();
-        busMock.Setup(b => b.SendAsync(It.IsAny<RegisterEventCommand>()))
-            .Callback<object>(cmd => capturedCommand = (RegisterEventCommand)cmd)
+        busMock.Setup(b => b.SendAsync(It.IsAny<RegisterEventCommand>(), It.IsAny<DeliveryOptions>()))
+            .Callback<RegisterEventCommand, DeliveryOptions>((cmd, _) => capturedCommand = cmd)
             .Returns(ValueTask.CompletedTask);
 
         var publisher = new RegistrationEventPublisher(busMock.Object);
@@ -108,8 +108,8 @@ public class RegistrationEventPublisherTests
         RegisterEventCommand capturedCommand = null;
 
         Mock<IMessageBus> busMock = new();
-        busMock.Setup(b => b.SendAsync(It.IsAny<RegisterEventCommand>()))
-            .Callback<object>(cmd => capturedCommand = (RegisterEventCommand)cmd)
+        busMock.Setup(b => b.SendAsync(It.IsAny<RegisterEventCommand>(), It.IsAny<DeliveryOptions>()))
+            .Callback<RegisterEventCommand, DeliveryOptions>((cmd, _) => capturedCommand = cmd)
             .Returns(ValueTask.CompletedTask);
 
         var publisher = new RegistrationEventPublisher(busMock.Object);
