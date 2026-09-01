@@ -6,6 +6,7 @@ using EventCreator.Publishing.Wolverine;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 using Wolverine;
 using Wolverine.AzureServiceBus;
@@ -42,6 +43,10 @@ public class AzureServiceBusEventPublisher(ServiceBusSettings settings) : IEvent
         if (_host is null)
         {
             HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+
+            // Quiet Wolverine/host info and warning logging
+            builder.Logging.SetMinimumLevel(LogLevel.Error);
+
             builder.Services.AddWolverine(opts =>
             {
                 opts.Policies.DisableConventionalLocalRouting();
