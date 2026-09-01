@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Repository
             // ON CONFLICT DO NOTHING (with no explicit target) suppresses errors from
             // *any* unique constraint violation, covering both the existing
             // (cloudevent -> 'id', cloudevent -> 'source') dedup and the new
-            // (source, idempotencyid) partial unique index.
+            // idempotencyid partial unique index.
             return result != null;
         }
 

@@ -101,4 +101,62 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
             Assert.Equal(9, attemptCount);
         }
     }
+
+    /// <summary>
+    /// Tests that when the same idempotency id is submitted twice, the second registration is detected as a
+    /// duplicate (via the database unique constraint), the event is saved only once, and no second message
+    /// is forwarded to the inbound queue for the duplicate.
+    /// </summary>
+    [Fact]
+    public async Task RegisterEventCommand_DuplicateIdempotencyId_DoesNotPublishSecondInboundMessage()
+    {
+        // Arrange
+        var factory = new IntegrationTestWebApplicationFactory(_fixture).Initialize();
+
+        await using (factory)
+        {
+            var idempotencyId = Guid.NewGuid().ToString();
+
+            var firstCloudEvent = CloudEventTestData.CreateTestCloudEvent();
+            var firstCommand = new RegisterEventCommand(firstCloudEvent.Serialize(), idempotencyId);
+
+            var secondCloudEvent = CloudEventTestData.CreateTestCloudEvent();
+            var secondCommand = new RegisterEventCommand(secondCloudEvent.Serialize(), idempotencyId);
+
+            // Act - publish the first message and let it flow through to the inbound queue
+            await factory.PublishMessageAsync(firstCommand);
+
+            var firstInboundMessage = await ServiceBusTestUtils.WaitForMessageAsync(
+                _fixture,
+                factory.WolverineSettings.InboundQueueName);
+            Assert.NotNull(firstInboundMessage);
+
+            using var firstSavedEvent = await PostgresTestUtils.GetEventFromDatabaseAsync(_fixture.PostgresConnectionString, firstCloudEvent.Id!);
+            Assert.NotNull(firstSavedEvent);
+
+            // Act - publish a second, different cloud event but with the same idempotency id
+            await factory.PublishMessageAsync(secondCommand);
+
+            // Assert - register queue should be empty (second message was processed, i.e. not stuck/retried)
+            var registerQueueEmpty = await ServiceBusTestUtils.WaitForEmptyAsync(
+                _fixture,
+                factory.WolverineSettings.RegistrationQueueName);
+            Assert.True(registerQueueEmpty, "Register queue should be empty after processing the duplicate");
+
+            // Assert - the duplicate event was never saved to the database
+            using var secondSavedEvent = await PostgresTestUtils.GetEventFromDatabaseAsync(
+                _fixture.PostgresConnectionString,
+                secondCloudEvent.Id!,
+                maxAttempts: 3,
+                delayMs: 200);
+            Assert.Null(secondSavedEvent);
+
+            // Assert - no second message was published to the inbound queue for the duplicate
+            var secondInboundMessage = await ServiceBusTestUtils.WaitForMessageAsync(
+                _fixture,
+                factory.WolverineSettings.InboundQueueName,
+                TimeSpan.FromSeconds(3));
+            Assert.Null(secondInboundMessage);
+        }
+    }
 }
