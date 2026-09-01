@@ -13,14 +13,23 @@ The interactive menu's "Analyze app instance" and "Compare with similar archived
 
 ## Configuration
 
-Four settings are needed, via user secrets (from the project directory):
+Settings are needed, via user secrets (from the project directory):
 
 ```
 dotnet user-secrets set "GeneralSettings:SourceBaseAddress" <app host base address>
 dotnet user-secrets set "StorageDbSettings:ConnectionString" <postgresql connection string>
 dotnet user-secrets set "EventsDbSettings:ConnectionString" <postgresql connection string>
 dotnet user-secrets set "QueueStorageSettings:ConnectionString" <storage account connection string>
+dotnet user-secrets set "ServiceBusSettings:ConnectionString" <service bus connection string>
 ```
+
+Events are registered by sending a CloudEvent to one of two transports, selected by `PublishSettings:Mode` — `AzureStorageQueue` (default, the legacy Storage Queue path) or `AzureServiceBus` (publishes via Wolverine to the Events API's Service Bus registration queue). Switch with:
+
+```
+dotnet user-secrets set "PublishSettings:Mode" "AzureServiceBus"
+```
+
+`ServiceBusSettings:ConnectionString` only needs setting when targeting a real (non-emulator) Service Bus namespace — the default in `appsettings.json` already works against the local emulator (`emulator/docker-compose.yaml` at the repo root).
 
 ## Running
 
@@ -28,13 +37,13 @@ dotnet user-secrets set "QueueStorageSettings:ConnectionString" <storage account
 dotnet run
 ```
 
-launches the interactive menu. Passing `-b`/`--batch` instead reads instance GUIDs from `instances.txt` (one raw GUID per line, no quotes or commas) and sends a hardcoded event type for each, logging progress to `log.txt` — the event type for batch mode is set directly in `Program.cs`. It is preferred to use the interactive menu instead.
+launches the interactive menu. Passing `-b`/`--batch` instead reads instance GUIDs from `instances.txt` (one raw GUID per line, no quotes or commas) and sends a hardcoded event type for each, logging progress to `log.txt` — the event type for batch mode is set directly in `Program.cs`. It is preferred to use the interactive menu instead. Batch mode publishes via whichever transport `PublishSettings:Mode` selects, same as the interactive menu.
 
 ### Interactive menu
 
 1. **Analyze app instance** — fetches an instance from Storage and prints its status (created, last changed, current process step, archived), completion confirmations, and its recorded events from the Events DB.
 2. **Compare with similar archived instances** — given an instance, finds other **archived** instances of the same app and prints their event sequences and confirmation status next to the target's, so you can see what a normal/healthy run of that specific app looks like and spot which event is missing. Also reports how many of the compared instances had completion confirmations, as a signal for whether this app's process typically confirms before archiving. Only considers instances archived at least N days ago (configurable, default 1) — a recently archived instance may show "Confirmed: No" simply because the confirming third party hasn't acted yet, not because this app's process never confirms.
-3. **Generate event for instance** — sends a CloudEvent of a chosen type (default `app.instance.process.completed`) onto the events-registration queue for an instance, in the same shape the platform itself produces.
+3. **Generate event for instance** — sends a CloudEvent of a chosen type (default `app.instance.process.completed`) to the event registration transport for an instance, in the same shape the platform itself produces. Asks for confirmation before sending.
 4. **Exit**
 
 The instance GUID you last worked with is remembered and offered as the default for the next prompt — press Enter to reuse it.
