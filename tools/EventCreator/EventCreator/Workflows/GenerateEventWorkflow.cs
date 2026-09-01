@@ -1,6 +1,7 @@
 using Altinn.Platform.Storage.Interface.Models;
 
 using EventCreator.Clients;
+using EventCreator.ConsoleSupport;
 
 namespace EventCreator.Workflows;
 
@@ -40,6 +41,12 @@ public class GenerateEventWorkflow(StorageClient storageClient, EventsQueueClien
         Console.Write($"Enter event type [{DefaultEventType}]: ");
         string? eventTypeInput = Console.ReadLine()?.Trim();
         string eventType = string.IsNullOrEmpty(eventTypeInput) ? DefaultEventType : eventTypeInput;
+
+        if (!ConsoleInput.Confirm($"This will generate a '{eventType}' event for instance {instanceId}. Proceed?"))
+        {
+            Console.WriteLine("Cancelled. No event was generated.");
+            return;
+        }
 
         await using FileStream logStream = new("log.txt", FileMode.Append, FileAccess.Write);
         await using StreamWriter logWriter = new(logStream);
