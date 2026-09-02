@@ -33,7 +33,7 @@ public class FunctionsWolverineSettings
     /// <summary>
     /// Number of listeners to be used against Azure Service Bus queues (per pod).
     /// </summary>
-    public int ListenerCount { get; set; } = 20;
+    public int ListenerCount { get; set; } = 30;
 
     /// <summary>
     /// Azure Service Bus queue name for event outbound. Same value in every environment,
