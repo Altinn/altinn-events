@@ -1,0 +1,26 @@
+meta {
+  name: generic events for org
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{PlatformHostUrl}}/events/api/v1/events?resource=urn:altinn:resource:app_ttd_apps-test&after=7955e214-3476-4a87-ba84-f835bf58be13&size=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  resource: urn:altinn:resource:app_ttd_apps-test
+  after: 7955e214-3476-4a87-ba84-f835bf58be13
+  size: 10
+}
+
+script:pre-request {
+  await bru.runRequest("Token generator/subscribe (ttd)");
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

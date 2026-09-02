@@ -31,6 +31,8 @@ public class AuthorizationService : IAuthorization
 {
     private const string _originalSubjectKey = "originalsubjectreplacedforauthorization";
     private const string _subscribeActionType = "subscribe";
+    private const string _readActionType = "read";
+
     private readonly IPDP _pdp;
     private readonly IClaimsPrincipalProvider _claimsPrincipalProvider;
     private readonly IRegisterService _registerService;
@@ -67,7 +69,7 @@ public class AuthorizationService : IAuthorization
 
     /// <inheritdoc/>
     public async Task<List<CloudEvent>> AuthorizeEvents(
-        IEnumerable<CloudEvent> cloudEvents, CancellationToken cancellationToken)
+        IEnumerable<CloudEvent> cloudEvents, bool isAppEvents, CancellationToken cancellationToken)
     {
         ClaimsPrincipal consumer = _claimsPrincipalProvider.GetUser();
 
@@ -93,8 +95,10 @@ public class AuthorizationService : IAuthorization
             }
         }
 
+        string actionType = isAppEvents ? _readActionType : _subscribeActionType;
+
         XacmlJsonRequestRoot xacmlJsonRequest = 
-            GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, _subscribeActionType, cloudEvents.ToList());
+            GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, actionType, cloudEvents.ToList());
         XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
 
         List<CloudEvent> authorizedEvents = FilterAuthorizedRequests(cloudEvents.ToList(), consumer, response);

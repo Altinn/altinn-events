@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,7 +26,6 @@ namespace Altinn.Platform.Events.Services
         private readonly ICloudEventRepository _repository;
         private readonly ITraceLogService _traceLogService;
         private readonly IEventsQueueClient _queueClient;
-
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
         private readonly IMessageBus _bus;
@@ -87,7 +85,7 @@ namespace Altinn.Platform.Events.Services
             }
 
             await _traceLogService.CreateRegisteredEntry(cloudEvent);
-            return cloudEvent.Id;            
+            return cloudEvent.Id;
         }
 
         /// <inheritdoc/>
@@ -137,6 +135,8 @@ namespace Altinn.Platform.Events.Services
             int size,
             CancellationToken cancellationToken)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(resource);
+
             types = types.Count > 0 ? types : null;
             after ??= string.Empty;
 
@@ -147,7 +147,9 @@ namespace Altinn.Platform.Events.Services
                 return events;
             }
 
-            return await _authorizationService.AuthorizeEvents(events, cancellationToken);
+            bool isAppEvents = resource.StartsWith("urn:altinn:resource:app_", StringComparison.OrdinalIgnoreCase);
+
+            return await _authorizationService.AuthorizeEvents(events, isAppEvents, cancellationToken);
         }
 
         /// <inheritdoc/>

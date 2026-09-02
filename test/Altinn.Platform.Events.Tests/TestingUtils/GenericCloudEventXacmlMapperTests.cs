@@ -24,6 +24,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         private readonly CloudEvent _cloudEventWithPersonSubject;
         private readonly CloudEvent _cloudEventWithNoSubject;
         private readonly CloudEvent _cloudEventWithUnknownSubject;
+        private readonly CloudEvent _cloudEventWithAppResource;
 
         public GenericCloudEventXacmlMapperTests()
         {
@@ -48,6 +49,9 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
 
             _cloudEventWithUnknownSubject = _cloudEvent.Clone();
             _cloudEventWithUnknownSubject.Subject = "foobar";
+
+            _cloudEventWithAppResource = _cloudEvent.Clone();
+            _cloudEventWithAppResource["resource"] = "urn:altinn:resource:app_ttd_apps-test";
 
             _cloudEventWithResourceInstance = new CloudEvent(CloudEventsSpecVersion.V1_0)
             {
@@ -177,6 +181,25 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:eventtype"));
             Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:eventsource"));
             Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:resource"));
+            Assert.True(actualEventIdAttribute.IncludeInResult);
+        }
+
+        [Fact]
+        public void CreateResourceCategory_AppEvent_IncludesAppResource()
+        {
+            int expectedAttributeCount = 5;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithAppResource);
+            var actualEventIdAttribute = actual.Attribute.Find(a => a.AttributeId.Equals("urn:altinn:event-id"));
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:event-id"));
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:eventtype"));
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:eventsource"));
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:resource"));
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:appresource"));
             Assert.True(actualEventIdAttribute.IncludeInResult);
         }
 
