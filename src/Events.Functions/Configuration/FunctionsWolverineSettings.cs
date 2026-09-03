@@ -63,7 +63,7 @@ public class FunctionsWolverineSettings
     /// </summary>
     public QueueRetryPolicy ValidationQueuePolicy { get; set; } = new()
     {
-        CooldownDelaysMs = [1000, 5000, 10000],
+        CooldownDelaysMs = [1000],
         ScheduleDelaysMs = [30000, 60000, 120000, 120000, 120000]
     };
 }
