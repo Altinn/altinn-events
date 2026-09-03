@@ -33,7 +33,7 @@ public class FunctionsWolverineSettings
     /// <summary>
     /// Number of listeners to be used against Azure Service Bus queues (per pod).
     /// </summary>
-    public int ListenerCount { get; set; } = 20;
+    public int ListenerCount { get; set; } = 30;
 
     /// <summary>
     /// Azure Service Bus queue name for event outbound. Same value in every environment,
@@ -63,7 +63,7 @@ public class FunctionsWolverineSettings
     /// </summary>
     public QueueRetryPolicy ValidationQueuePolicy { get; set; } = new()
     {
-        CooldownDelaysMs = [1000, 5000, 10000],
+        CooldownDelaysMs = [1000],
         ScheduleDelaysMs = [30000, 60000, 120000, 120000, 120000]
     };
 }
