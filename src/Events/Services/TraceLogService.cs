@@ -84,6 +84,34 @@ namespace Altinn.Platform.Events.Services
             }
         }
 
+        /// <inheritdoc/>
+        public async Task<string> CreateLogEntryDuplicateIdempotencyIdSkipped(CloudEvent cloudEvent, string idempotencyId)
+        {
+            try
+            {
+                var parseResult = Guid.TryParse(cloudEvent.Id, out Guid parsedGuid);
+                var traceLogEntry = new TraceLog
+                {
+                    CloudEventId = parseResult ? parsedGuid : null,
+                    Resource = cloudEvent.GetResource(),
+                    EventType = cloudEvent.Type,
+                    Consumer = null, // we don't know about the consumer in this context
+                    SubscriberEndpoint = null, // no subscriber in this context
+                    SubscriptionId = null, // no subscription in this context
+                    Activity = TraceLogActivity.DuplicateIdempotencyIdSkipped
+                };
+                await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
+                return cloudEvent.Id ?? string.Empty;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Error creating trace log entry for registered event with existing idempotency id: {CloudEventId} with message: {Message}", cloudEvent.Id, exception.Message);
+                
+                // don't throw exception, we don't want to stop the event processing
+                return string.Empty;
+            }
+        }
+
         /// <summary>
         /// Log response from webhook post to subscriber.
         /// Should be called by the storage controller when a webhook POST response is received. The controller action should handle exceptions

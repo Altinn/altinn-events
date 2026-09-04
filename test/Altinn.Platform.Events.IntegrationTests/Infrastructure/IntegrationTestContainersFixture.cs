@@ -96,16 +96,23 @@ public sealed class IntegrationTestContainersFixture : IAsyncLifetime
             // Create platform_events role for migrations
             await CreatePlatformEventsRoleAsync(postgresSettings.EventsRolePwd);
 
-            // Start MSSQL (required by Service Bus Emulator)
+            // Start MSSQL (required by Service Bus Emulator).
+            // Wait for the "ready for client connections" log message — TCP open alone is not enough,
+            // especially on Windows/WSL2 where MSSQL initialization can take several minutes.
             _mssqlContainer = new ContainerBuilder(ContainerImageUtils.GetImage("mssql"))
                 .WithNetwork(_network)
                 .WithNetworkAliases("mssql")
                 .WithEnvironment("ACCEPT_EULA", "Y")
                 .WithEnvironment("MSSQL_SA_PASSWORD", _mssqlSaPassword)
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(
+                    "SQL Server is now ready for client connections",
+                    s => s.WithTimeout(TimeSpan.FromMinutes(5))))
                 .WithAutoRemove(true)
                 .Build();
 
             await _mssqlContainer.StartAsync();
+
+            Console.WriteLine("MSSQL started and ready");
 
             string configPath = Path.Combine(AppContext.BaseDirectory, "Infrastructure", "config.json");
 
@@ -114,6 +121,9 @@ public sealed class IntegrationTestContainersFixture : IAsyncLifetime
                 throw new FileNotFoundException($"Emulator config file not found at: {configPath}");
             }
 
+            // Wait for the emulator's own "successfully up" log message instead of probing
+            // AMQP externally — the emulator only logs this after connecting to MSSQL and
+            // setting up its schema, which is exactly the readiness signal we need.
             _serviceBusEmulatorContainer = new ContainerBuilder(ContainerImageUtils.GetImage("serviceBusEmulator"))
                 .WithNetwork(_network)
                 .WithEnvironment("SQL_SERVER", "mssql")
@@ -122,6 +132,9 @@ public sealed class IntegrationTestContainersFixture : IAsyncLifetime
                 .WithEnvironment("SQL_WAIT_INTERVAL", "5")
                 .WithBindMount(configPath, "/ServiceBus_Emulator/ConfigFiles/Config.json", AccessMode.ReadOnly)
                 .WithPortBinding(5672, true)
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(
+                    "Emulator Service is Successfully Up!",
+                    s => s.WithTimeout(TimeSpan.FromMinutes(5))))
                 .WithAutoRemove(true)
                 .Build();
 
@@ -199,12 +212,46 @@ public sealed class IntegrationTestContainersFixture : IAsyncLifetime
     /// <summary>
     /// Waits for PostgreSQL to be fully ready by attempting to connect with retries.
     /// </summary>
-    private Task WaitForPostgresAsync() =>
-        WaitForTcpPortAsync("PostgreSQL", "127.0.0.1", PostgresPort);
+    private async Task WaitForPostgresAsync()
+    {
+        await WaitForTcpPortAsync("PostgreSQL", "127.0.0.1", PostgresPort);
+
+        // TCP port open is not enough — probe with a real connection to ensure PostgreSQL
+        // is ready to authenticate. The port can accept TCP while the server is still
+        // initializing, causing SSL-negotiation/auth-level failures like EndOfStreamException.
+        const int maxRetries = 30;
+        const int delayMs = 1000;
+
+        bool ready = await WaitForUtils.WaitForAsync(
+            async () =>
+            {
+                try
+                {
+                    await using var dataSource = NpgsqlDataSource.Create(PostgresConnectionString);
+                    await using var cmd = dataSource.CreateCommand("SELECT 1");
+                    await cmd.ExecuteScalarAsync();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            },
+            maxRetries,
+            delayMs);
+
+        if (!ready)
+        {
+            throw new TimeoutException("PostgreSQL did not become ready for connections after TCP port opened");
+        }
+
+        Console.WriteLine("PostgreSQL accepting connections");
+    }
 
     /// <summary>
     /// Waits for the Service Bus Emulator to be fully ready by attempting to connect with retries.
-    /// The container being "started" doesn't mean the AMQP listener is ready.
+    /// The container's UntilMessageIsLogged wait strategy already confirmed the emulator is fully up.
+    /// This TCP check is a final sanity-guard for the host-mapped port.
     /// </summary>
     private Task WaitForServiceBusAsync()
     {

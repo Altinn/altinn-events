@@ -19,8 +19,9 @@ namespace Altinn.Platform.Events.Repository
     [ExcludeFromCodeCoverage]
     public class CloudEventRepository : ICloudEventRepository
     {
-        private readonly string _insertEventSql = @"insert into events.events(cloudevent) VALUES ($1)
-            ON CONFLICT ((cloudevent -> 'id'), (cloudevent -> 'source')) DO NOTHING";
+        private readonly string _insertEventSql = @"insert into events.events(cloudevent, idempotencyid) VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+            RETURNING sequenceno";
 
         private readonly string _getAppEventsSql = "select events.getappevents_v2(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
         private readonly string _getEventsSql = "select events.getevents_v2($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
@@ -36,12 +37,20 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task CreateEvent(string cloudEvent)
+        public async Task<bool> CreateEvent(string cloudEvent, string idempotencyId)
         {
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_insertEventSql);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Jsonb, cloudEvent);
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Uuid, string.IsNullOrEmpty(idempotencyId) ? DBNull.Value : Guid.Parse(idempotencyId));
 
-            await pgcom.ExecuteNonQueryAsync();
+            object result = await pgcom.ExecuteScalarAsync();
+
+            // A row is returned only when the insert actually happened.
+            // ON CONFLICT DO NOTHING (with no explicit target) suppresses errors from
+            // *any* unique constraint violation, covering both the existing
+            // (cloudevent -> 'id', cloudevent -> 'source') dedup and the new
+            // idempotencyid partial unique index.
+            return result != null;
         }
 
         /// <inheritdoc/>

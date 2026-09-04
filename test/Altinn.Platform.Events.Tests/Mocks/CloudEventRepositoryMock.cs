@@ -24,9 +24,9 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task CreateEvent(string cloudEvent)
+        public Task<bool> CreateEvent(string cloudEvent, string idempotencyId)
         {
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         private static EventsTableEntry NewTestEvent(

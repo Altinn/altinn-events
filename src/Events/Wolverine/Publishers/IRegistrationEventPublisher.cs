@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using CloudNative.CloudEvents;
@@ -12,5 +13,5 @@ public interface IRegistrationEventPublisher
     /// <summary>
     /// Publishes the registration event for the given cloud event.
     /// </summary>
-    Task PublishRegistrationEvent(CloudEvent cloudEvent);
+    Task PublishRegistrationEvent(CloudEvent cloudEvent, string idempotencyId);
 }

@@ -15,7 +15,9 @@ namespace Altinn.Platform.Events.Repository
         /// Creates a cloud event in the repository.
         /// </summary>
         /// <param name="cloudEvent">The json serialized cloud event</param>
-        Task CreateEvent(string cloudEvent);
+        /// <param name="idempotencyId">The idempotency id for the request</param>
+        /// <returns>true if the cloud event was created successfully, otherwise false</returns>
+        Task<bool> CreateEvent(string cloudEvent, string idempotencyId);
 
         /// <summary>
         /// Calls a function to retrieve app cloud events based on query params
