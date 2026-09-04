@@ -19,9 +19,16 @@ public static class RegistrationEventHandler
     /// Handles the registration of an event command.
     /// Deserializes the CloudEvent payload before processing.
     /// </summary>
-    public static async Task Handle(RegisterEventCommand message, IEventsService eventsService, CancellationToken cancellationToken)
+    /// <remarks>
+    /// PERF TEST ONLY — do not merge to main.
+    /// Body replaced with a no-op: skips <see cref="IEventsService.SaveAndPublish"/> (the
+    /// Postgres write + inbound publish) so the registration queue is drained without any
+    /// handler-side work, to isolate AMQP link/credit contention (shared ServiceBusClient
+    /// connection) from handler-side DB/thread-pool contention. See
+    /// perftesting/github-comment-followup.md for context.
+    /// </remarks>
+    public static Task Handle(RegisterEventCommand message, IEventsService eventsService, CancellationToken cancellationToken)
     {
-        var cloudEvent = message.Payload.Deserialize();
-        await eventsService.SaveAndPublish(cloudEvent, cancellationToken);
+        return Task.CompletedTask;
     }
 }
