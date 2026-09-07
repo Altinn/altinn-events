@@ -60,7 +60,7 @@ public class WolverineSettings
     /// process's CPU/DB-connection/thread-pool capacity, and perf testing showed registration
     /// throughput drops sharply as this count rises (see perftesting/ for the load-test results).
     /// </summary>
-    public int RegistrationListenerCount { get; set; } = 1;
+    public int RegistrationListenerCount { get; set; } = 5;
 
     /// <summary>
     /// Retry policy configuration for the registration queue.
