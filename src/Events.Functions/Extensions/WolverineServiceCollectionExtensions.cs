@@ -61,7 +61,7 @@ public static class WolverineServiceCollectionExtensions
         }
 
         opts.ListenToAzureServiceBusQueue(settings.OutboundQueueName)
-            .ListenerCount(settings.ListenerCount)
+            .ListenerCount(settings.OutboundListenerCount)
             .ProcessInline();
         opts.Policies.Add(new OutboundEventHandlerPolicy(settings));
     }
@@ -74,7 +74,7 @@ public static class WolverineServiceCollectionExtensions
         }
 
         opts.ListenToAzureServiceBusQueue(settings.ValidationQueueName)
-            .ListenerCount(settings.ListenerCount)
+            .ListenerCount(settings.ValidationListenerCount)
             .ProcessInline();
         opts.Policies.Add(new ValidationEventHandlerPolicy(settings));
     }
