@@ -96,7 +96,7 @@ public static class WolverineServiceCollectionExtensions
         }
 
         opts.ListenToAzureServiceBusQueue(settings.RegistrationQueueName)
-            .ListenerCount(settings.ListenerCount)
+            .ListenerCount(settings.RegistrationListenerCount)
             .ProcessInline();
         opts.Policies.Add(new RegistrationEventHandlerPolicy(settings));
     }
@@ -109,7 +109,7 @@ public static class WolverineServiceCollectionExtensions
         }
 
         opts.ListenToAzureServiceBusQueue(settings.InboundQueueName)
-            .ListenerCount(settings.ListenerCount)
+            .ListenerCount(settings.InboundListenerCount)
             .ProcessInline();
         opts.Policies.Add(new InboundEventHandlerPolicy(settings));
     }
@@ -122,7 +122,7 @@ public static class WolverineServiceCollectionExtensions
         }
 
         opts.ListenToAzureServiceBusQueue(settings.OutboundQueueName)
-            .ListenerCount(settings.ListenerCount)
+            .ListenerCount(settings.OutboundListenerCount)
             .ProcessInline();
         opts.Policies.Add(new OutboundEventHandlerPolicy(settings));
     }
@@ -135,7 +135,7 @@ public static class WolverineServiceCollectionExtensions
         }
 
         opts.ListenToAzureServiceBusQueue(settings.ValidationQueueName)
-            .ListenerCount(settings.ListenerCount)
+            .ListenerCount(settings.ValidationListenerCount)
             .ProcessInline();
         opts.Policies.Add(new ValidationEventHandlerPolicy(settings));
     }
