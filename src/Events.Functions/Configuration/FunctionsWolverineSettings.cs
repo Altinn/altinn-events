@@ -40,7 +40,7 @@ public class FunctionsWolverineSettings
     /// <summary>
     /// Number of listeners to be used against the outbound queue (per pod).
     /// </summary>
-    public int OutboundListenerCount { get; set; } = 5;
+    public int OutboundListenerCount { get; set; } = 15;
 
     /// <summary>
     /// Retry policy configuration for the outbound queue.
