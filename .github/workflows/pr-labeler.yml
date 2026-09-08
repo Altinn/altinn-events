@@ -5,6 +5,8 @@ on:
       - main
     types:
       - opened
+      - synchronize
+      - reopened
     paths:
       - '**/Migration/**'
 
