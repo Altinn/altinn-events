@@ -46,8 +46,8 @@
         EndpointValidationFailed,
 
         /// <summary>
-        /// A duplicate cloud event (matching an existing idempotency id) was detected and skipped.
+        /// A duplicate cloud event (matching an existing idempotency key) was detected and skipped.
         /// </summary>
-        DuplicateIdempotencyIdSkipped,
+        DuplicateIdempotencyKeySkipped,
     }
 }

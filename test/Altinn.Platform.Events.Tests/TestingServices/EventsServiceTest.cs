@@ -891,7 +891,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
             traceLogServiceMock.Verify(
-                t => t.CreateLogEntryDuplicateIdempotencyIdSkipped(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()), Times.Never);
+                t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()), Times.Never);
         }
 
         /// <summary>
@@ -903,7 +903,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   IMessageBus.SendAsync is never called and a duplicate-idempotency trace log entry is created once.
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_DuplicateIdempotencyId_SkipsQueuePublish_LogsDuplicate()
+        public async Task SaveAndPublish_DuplicateIdempotencyKey_SkipsQueuePublish_LogsDuplicate()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -914,7 +914,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<ITraceLogService> traceLogServiceMock = new();
             traceLogServiceMock
-                .Setup(t => t.CreateLogEntryDuplicateIdempotencyIdSkipped(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
+                .Setup(t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
                 .ReturnsAsync(string.Empty);
 
             EventsService eventsService = GetEventsService(
@@ -923,27 +923,27 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 traceLogServiceMock: traceLogServiceMock);
 
             CloudEvent cloudEvent = GetCloudEvent();
-            var idempotencyId = Guid.NewGuid();
+            var idempotencyKey = Guid.NewGuid();
 
             // Act
-            await eventsService.SaveAndPublish(cloudEvent, idempotencyId, CancellationToken.None);
+            await eventsService.SaveAndPublish(cloudEvent, idempotencyKey, CancellationToken.None);
 
             // Assert
             messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Never);
             traceLogServiceMock.Verify(
-                t => t.CreateLogEntryDuplicateIdempotencyIdSkipped(cloudEvent, idempotencyId), Times.Once);
+                t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, idempotencyKey), Times.Once);
         }
 
         /// <summary>
         /// Scenario:
-        ///   Save is called with an idempotency id.
+        ///   Save is called with an idempotency key.
         /// Expected result:
-        ///   The idempotency id is forwarded unchanged to the repository.
+        ///   The idempotency key is forwarded unchanged to the repository.
         /// Success criteria:
-        ///   ICloudEventRepository.CreateEvent is called once with the same idempotency id.
+        ///   ICloudEventRepository.CreateEvent is called once with the same idempotency key.
         /// </summary>
         [Fact]
-        public async Task Save_WithIdempotencyId_ForwardsIdToRepository()
+        public async Task Save_WithIdempotencyKey_ForwardsKeyToRepository()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -952,14 +952,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
             CloudEvent cloudEvent = GetCloudEvent();
-            var idempotencyId = Guid.NewGuid();
+            var idempotencyKey = Guid.NewGuid();
 
             // Act
-            bool result = await eventsService.Save(cloudEvent, idempotencyId);
+            bool result = await eventsService.Save(cloudEvent, idempotencyKey);
 
             // Assert
             Assert.True(result);
-            repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), idempotencyId), Times.Once);
+            repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), idempotencyKey), Times.Once);
         }
 
         /// <summary>

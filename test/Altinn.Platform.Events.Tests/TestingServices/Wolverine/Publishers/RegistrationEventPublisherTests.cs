@@ -54,15 +54,15 @@ public class RegistrationEventPublisherTests
 
     /// <summary>
     /// Scenario:
-    ///   PublishRegistrationEvent is called with a cloud event and an idempotency id.
+    ///   PublishRegistrationEvent is called with a cloud event and an idempotency key.
     /// Expected result:
-    ///   The RegisterEventCommand sent to the message bus carries the same idempotency id and the serialized payload.
+    ///   The RegisterEventCommand sent to the message bus carries the same idempotency key and the serialized payload.
     /// Success criteria:
     ///   IMessageBus.SendAsync is called once with a RegisterEventCommand whose IdempotencyKey matches and whose
     ///   Payload deserializes back to the original cloud event id.
     /// </summary>
     [Fact]
-    public async Task PublishRegistrationEvent_WithIdempotencyId_CommandCarriesIdAndPayload()
+    public async Task PublishRegistrationEvent_WithIdempotencyKey_CommandCarriesIdAndPayload()
     {
         // Arrange
         Guid idempotencyKey = Guid.Parse("d1525c79-cda8-4fef-b95c-feb3e7be89ec");
@@ -95,14 +95,14 @@ public class RegistrationEventPublisherTests
 
     /// <summary>
     /// Scenario:
-    ///   PublishRegistrationEvent is called with a null idempotency id.
+    ///   PublishRegistrationEvent is called with a null idempotency key.
     /// Expected result:
     ///   The RegisterEventCommand is sent with a null IdempotencyKey.
     /// Success criteria:
     ///   The captured command's IdempotencyKey is null.
     /// </summary>
     [Fact]
-    public async Task PublishRegistrationEvent_NullIdempotencyId_CommandHasNullId()
+    public async Task PublishRegistrationEvent_NullIdempotencyKey_CommandHasNullId()
     {
         // Arrange
         RegisterEventCommand capturedCommand = null;

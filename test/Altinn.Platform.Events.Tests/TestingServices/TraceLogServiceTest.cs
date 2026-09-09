@@ -392,38 +392,38 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
         /// <summary>
         /// Scenario:
-        ///   CreateLogEntryDuplicateIdempotencyIdSkipped is called for a duplicate cloud event.
+        ///   CreateLogEntryDuplicateIdempotencyKeySkipped is called for a duplicate cloud event.
         /// Expected result:
-        ///   A trace log entry with the DuplicateIdempotencyIdSkipped activity is created.
+        ///   A trace log entry with the DuplicateIdempotencyKeySkipped activity is created.
         /// Success criteria:
         ///   TraceLogRepository.CreateTraceLogEntry is called once with the correct activity.
         /// </summary>
         [Fact]
-        public async Task CreateLogEntryDuplicateIdempotencyIdSkipped_ValidEvent_CreatesEntryWithCorrectActivity()
+        public async Task CreateLogEntryDuplicateIdempotencyKeySkipped_ValidEvent_CreatesEntryWithCorrectActivity()
         {
             // Arrange
             var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
             var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
 
             // Act
-            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(_cloudEvent, Guid.NewGuid());
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(_cloudEvent, Guid.NewGuid());
 
             // Assert
             Assert.Equal(_cloudEvent.Id, result);
             traceLogRepositoryMock.Verify(
-                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.DuplicateIdempotencyIdSkipped)), Times.Once);
+                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.Activity == TraceLogActivity.DuplicateIdempotencyKeySkipped)), Times.Once);
         }
 
         /// <summary>
         /// Scenario:
-        ///   CreateLogEntryDuplicateIdempotencyIdSkipped is called and the repository throws.
+        ///   CreateLogEntryDuplicateIdempotencyKeySkipped is called and the repository throws.
         /// Expected result:
         ///   Empty string is returned and the exception is caught (does not propagate).
         /// Success criteria:
         ///   No exception escapes the method call.
         /// </summary>
         [Fact]
-        public async Task CreateLogEntryDuplicateIdempotencyIdSkipped_RepositoryThrows_ReturnsEmptyString()
+        public async Task CreateLogEntryDuplicateIdempotencyKeySkipped_RepositoryThrows_ReturnsEmptyString()
         {
             // Arrange
             var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
@@ -431,7 +431,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
 
             // Act
-            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(_cloudEvent, Guid.NewGuid());
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(_cloudEvent, Guid.NewGuid());
 
             // Assert
             Assert.Equal(string.Empty, result);

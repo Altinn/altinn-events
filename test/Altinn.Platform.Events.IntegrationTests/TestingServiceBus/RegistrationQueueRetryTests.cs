@@ -104,12 +104,12 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
     }
 
     /// <summary>
-    /// Tests that when the same idempotency id is submitted twice, the second registration is detected as a
+    /// Tests that when the same idempotency key is submitted twice, the second registration is detected as a
     /// duplicate (via the database unique constraint), the event is saved only once, and the outbound service
     /// is never invoked for the duplicate.
     /// </summary>
     [Fact]
-    public async Task RegisterEventCommand_DuplicateIdempotencyId_DoesNotInvokeOutboundServiceForDuplicate()
+    public async Task RegisterEventCommand_DuplicateIdempotencyKey_DoesNotInvokeOutboundServiceForDuplicate()
     {
         // Arrange
         var outboundServiceMock = new Mock<IOutboundService>();
@@ -123,13 +123,13 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
 
         await using (factory)
         {
-            var idempotencyId = Guid.NewGuid();
+            var idempotencyKey = Guid.NewGuid();
 
             var firstCloudEvent = CloudEventTestData.CreateTestCloudEvent();
-            var firstCommand = new RegisterEventCommand(firstCloudEvent.Serialize(), idempotencyId);
+            var firstCommand = new RegisterEventCommand(firstCloudEvent.Serialize(), idempotencyKey);
 
             var secondCloudEvent = CloudEventTestData.CreateTestCloudEvent();
-            var secondCommand = new RegisterEventCommand(secondCloudEvent.Serialize(), idempotencyId);
+            var secondCommand = new RegisterEventCommand(secondCloudEvent.Serialize(), idempotencyKey);
 
             // Act - publish the first message and let it flow all the way to the outbound service
             await factory.PublishMessageAsync(firstCommand);
@@ -137,7 +137,7 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
             using var firstSavedEvent = await PostgresTestUtils.GetEventFromDatabaseAsync(_fixture.PostgresConnectionString, firstCloudEvent.Id!);
             Assert.NotNull(firstSavedEvent);
 
-            // Act - publish a second, different cloud event but with the same idempotency id
+            // Act - publish a second, different cloud event but with the same idempotency key
             await factory.PublishMessageAsync(secondCommand);
 
             // Assert - register queue should be empty (second message was processed, i.e. not stuck/retried)

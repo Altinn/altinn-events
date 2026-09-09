@@ -1200,23 +1200,23 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid CloudEventRequest with a valid Idempotency-Id header.
+            ///   Post a valid CloudEventRequest with a valid Idempotency-Key header.
             /// Expected result:
-            ///   Returns HttpStatus Created and the idempotency id is forwarded to the service.
+            ///   Returns HttpStatus Created and the idempotency key is forwarded to the service.
             /// Success criteria:
-            ///   IEventsService.RegisterNew is called with the same idempotency id value as the header.
+            ///   IEventsService.RegisterNew is called with the same idempotency key value as the header.
             /// </summary>
             [Fact]
-            public async Task Post_ValidIdempotencyIdHeader_ForwardsIdToService()
+            public async Task Post_ValidIdempotencyKeyHeader_ForwardsKeyToService()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
-                const string idempotencyId = "d1525c79-cda8-4fef-b95c-feb3e7be89ec";
+                Guid idempotencyKey = Guid.NewGuid();
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new();
                 eventsService
-                    .Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value.ToString() == idempotencyId)))
+                    .Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value == idempotencyKey)))
                     .ReturnsAsync((CloudEvent c, Guid? id) => c.Id);
 
                 HttpClient client = GetTestClient(eventsService.Object);
@@ -1227,26 +1227,26 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
                 };
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
-                httpRequestMessage.Headers.Add("Idempotency-Id", idempotencyId);
+                httpRequestMessage.Headers.Add("Idempotency-Key", idempotencyKey.ToString());
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value.ToString() == idempotencyId)), Times.Once);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value == idempotencyKey)), Times.Once);
             }
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid CloudEventRequest with no Idempotency-Id header present.
+            ///   Post a valid CloudEventRequest with no Idempotency-Key header present.
             /// Expected result:
-            ///   Returns HttpStatus Created and a null idempotency id is forwarded to the service.
+            ///   Returns HttpStatus Created and a null idempotency key is forwarded to the service.
             /// Success criteria:
-            ///   IEventsService.RegisterNew is called with a null idempotency id.
+            ///   IEventsService.RegisterNew is called with a null idempotency key.
             /// </summary>
             [Fact]
-            public async Task Post_NoIdempotencyIdHeader_ForwardsNullToService()
+            public async Task Post_NoIdempotencyKeyHeader_ForwardsNullToService()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -1276,14 +1276,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid CloudEventRequest with an Idempotency-Id header that is not a valid GUID.
+            ///   Post a valid CloudEventRequest with an Idempotency-Key header that is not a valid GUID.
             /// Expected result:
             ///   Returns HttpStatus BadRequest and the event is never registered.
             /// Success criteria:
             ///   Response status is 400 and IEventsService.RegisterNew is never called.
             /// </summary>
             [Fact]
-            public async Task Post_InvalidIdempotencyIdHeader_ReturnsBadRequest()
+            public async Task Post_InvalidIdempotencyKeyHeader_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app";
@@ -1299,7 +1299,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                     Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
                 };
                 httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
-                httpRequestMessage.Headers.Add("Idempotency-Id", "not-a-guid");
+                httpRequestMessage.Headers.Add("Idempotency-Key", "not-a-guid");
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);

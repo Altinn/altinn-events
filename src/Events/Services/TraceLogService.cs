@@ -85,7 +85,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> CreateLogEntryDuplicateIdempotencyIdSkipped(CloudEvent cloudEvent, Guid? idempotencyKey)
+        public async Task<string> CreateLogEntryDuplicateIdempotencyKeySkipped(CloudEvent cloudEvent, Guid? idempotencyKey)
         {
             try
             {
@@ -98,7 +98,7 @@ namespace Altinn.Platform.Events.Services
                     Consumer = null, // we don't know about the consumer in this context
                     SubscriberEndpoint = null, // no subscriber in this context
                     SubscriptionId = null, // no subscription in this context
-                    Activity = TraceLogActivity.DuplicateIdempotencyIdSkipped
+                    Activity = TraceLogActivity.DuplicateIdempotencyKeySkipped
                 };
                 await _traceLogRepository.CreateTraceLogEntry(traceLogEntry);
                 return cloudEvent.Id ?? string.Empty;

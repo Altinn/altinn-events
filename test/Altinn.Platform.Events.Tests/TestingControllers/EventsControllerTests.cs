@@ -673,9 +673,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid cloud event with a valid Idempotency-Id header.
+            ///   Post a valid cloud event with a valid Idempotency-Key header.
             /// Expected result:
-            ///   Returns HttpStatus OK and the idempotency id is forwarded to the service.
+            ///   Returns HttpStatus OK and the idempotency key is forwarded to the service.
             /// Success criteria:
             ///   IEventsService.RegisterNew is called with the same idempotency key value as the header.
             /// </summary>
@@ -717,12 +717,12 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Scenario:
             ///   Post a valid cloud event with no Idempotency-Id header present.
             /// Expected result:
-            ///   Returns HttpStatus OK and a null idempotency id is forwarded to the service.
+            ///   Returns HttpStatus OK and a null idempotency key is forwarded to the service.
             /// Success criteria:
-            ///   IEventsService.RegisterNew is called with a null idempotency id.
+            ///   IEventsService.RegisterNew is called with a null idempotency key.
             /// </summary>
             [Fact]
-            public async Task Post_NoIdempotencyIdHeader_ForwardsNullToService()
+            public async Task Post_NoIdempotencyKeyHeader_ForwardsNullToService()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events";

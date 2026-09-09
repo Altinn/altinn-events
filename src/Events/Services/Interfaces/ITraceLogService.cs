@@ -41,5 +41,5 @@ public interface ITraceLogService
     /// <param name="cloudEvent">The cloud event that was attempted to be registered.</param>
     /// <param name="idempotencyKey">The idempotency key that caused the event to be skipped.</param>
     /// <returns>A string representation of the cloud event id.</returns>
-    Task<string> CreateLogEntryDuplicateIdempotencyIdSkipped(CloudEvent cloudEvent, Guid? idempotencyKey);
+    Task<string> CreateLogEntryDuplicateIdempotencyKeySkipped(CloudEvent cloudEvent, Guid? idempotencyKey);
 }
