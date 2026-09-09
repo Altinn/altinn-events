@@ -677,20 +677,20 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             /// Expected result:
             ///   Returns HttpStatus OK and the idempotency id is forwarded to the service.
             /// Success criteria:
-            ///   IEventsService.RegisterNew is called with the same idempotency id value as the header.
+            ///   IEventsService.RegisterNew is called with the same idempotency key value as the header.
             /// </summary>
             [Fact]
-            public async Task Post_ValidIdempotencyIdHeader_ForwardsIdToService()
+            public async Task Post_ValidIdempotencyKeyHeader_ForwardsKeyToService()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events";
-                const string idempotencyId = "d1525c79-cda8-4fef-b95c-feb3e7be89ec";
+                var idempotencyKey = Guid.NewGuid();
 
                 Mock<IEventsService> eventMock = new();
                 eventMock
-                    .Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value.ToString() == idempotencyId)))
+                    .Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value == idempotencyKey)))
                     .ReturnsAsync(Guid.NewGuid().ToString());
-
+                    
                 Mock<IAuthorization> authorizationMock = new();
                 authorizationMock
                     .Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()))
@@ -703,14 +703,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 {
                     Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
                 };
-                httpRequestMessage.Headers.Add("Idempotency-Id", idempotencyId);
+                httpRequestMessage.Headers.Add("Idempotency-Key", idempotencyKey.ToString());
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value.ToString() == idempotencyId)), Times.Once);
+                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value == idempotencyKey)), Times.Once);
             }
 
             /// <summary>
@@ -755,14 +755,14 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
-            ///   Post a valid cloud event with an Idempotency-Id header that is not a valid GUID.
+            ///   Post a valid cloud event with an Idempotency-Key header that is not a valid GUID.
             /// Expected result:
             ///   Returns HttpStatus BadRequest and the event is never registered.
             /// Success criteria:
             ///   Response status is 400 and IEventsService.RegisterNew is never called.
             /// </summary>
             [Fact]
-            public async Task Post_InvalidIdempotencyIdHeader_ReturnsBadRequest()
+            public async Task Post_InvalidIdempotencyKeyHeader_ReturnsBadRequest()
             {
                 // Arrange
                 string requestUri = $"{BasePath}/events";
@@ -781,7 +781,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 {
                     Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
                 };
-                httpRequestMessage.Headers.Add("Idempotency-Id", "not-a-guid");
+                httpRequestMessage.Headers.Add("Idempotency-Key", "not-a-guid");
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
