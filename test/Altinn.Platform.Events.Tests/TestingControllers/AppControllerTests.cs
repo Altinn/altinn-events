@@ -79,7 +79,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new();
-                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue), It.IsAny<string>())).ReturnsAsync((CloudEvent c, string idempotencyId) => c.Id);
+                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue), It.IsAny<Guid?>())).ReturnsAsync((CloudEvent c, Guid? idempotencyKey) => c.Id);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -114,7 +114,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new();
-                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue), It.IsAny<string>())).ReturnsAsync((CloudEvent c, string idempotencyId) => c.Id);
+                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue), It.IsAny<Guid?>())).ReturnsAsync((CloudEvent c, Guid? idempotencyKey) => c.Id);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetTokenForSystemUser("random_system_identifier", Convert.ToString(Guid.NewGuid()), "random_org_cliam_identifier"));
@@ -150,7 +150,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>())).ReturnsAsync(responseId);
+                eventsService.Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -320,7 +320,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/app";
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(er => er.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>())).Throws(new Exception());
+                eventsService.Setup(er => er.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -1216,8 +1216,8 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 Mock<IEventsService> eventsService = new();
                 eventsService
-                    .Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), idempotencyId))
-                    .ReturnsAsync((CloudEvent c, string id) => c.Id);
+                    .Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value.ToString() == idempotencyId)))
+                    .ReturnsAsync((CloudEvent c, Guid? id) => c.Id);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -1234,7 +1234,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), idempotencyId), Times.Once);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value.ToString() == idempotencyId)), Times.Once);
             }
 
             /// <summary>
@@ -1306,7 +1306,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Never);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => !id.HasValue)), Times.Never);
             }
 
             private HttpClient GetTestClient(IEventsService eventsService, ITraceLogService traceLogService = null)

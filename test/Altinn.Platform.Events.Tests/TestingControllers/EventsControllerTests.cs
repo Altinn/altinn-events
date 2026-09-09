@@ -190,7 +190,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -220,7 +220,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -252,7 +252,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -688,7 +688,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 Mock<IEventsService> eventMock = new();
                 eventMock
-                    .Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), idempotencyId))
+                    .Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value.ToString() == idempotencyId)))
                     .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -710,7 +710,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), idempotencyId), Times.Once);
+                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value.ToString() == idempotencyId)), Times.Once);
             }
 
             /// <summary>
@@ -788,7 +788,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<string>()), Times.Never);
+                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => !id.HasValue)), Times.Never);
             }
         }
     }

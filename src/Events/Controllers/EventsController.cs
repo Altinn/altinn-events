@@ -49,9 +49,9 @@ namespace Altinn.Platform.Events.Controllers
         /// Registers a new cloud event to be stored and processed.
         /// </summary>
         /// <param name="cloudEvent">The cloud event to be stored and processed.</param>
-        /// <param name="idempotencyOptionalHeaderValue">
-        /// Optional client-supplied idempotency id (must be a valid GUID). If a cloud event with the
-        /// same idempotency id has already been registered, the duplicate is detected and skipped
+        /// <param name="idempotencyKey">
+        /// Optional client-supplied idempotency key (must be a valid GUID). If a cloud event with the
+        /// same idempotency key has already been registered, the duplicate is detected and skipped
         /// during processing; the response to the caller is unaffected.
         /// </param>
         /// <param name="cancellationToken">
@@ -64,7 +64,7 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post(
             [FromBody] CloudEvent cloudEvent,
-            [FromHeader(Name = "Idempotency-Id")] [SwaggerParameter("Optional idempotency id (GUID) used to detect and skip duplicate submissions.")] string idempotencyOptionalHeaderValue,
+            [FromHeader(Name = "Idempotency-Key")] [SwaggerParameter("Optional idempotency key (GUID) used to detect and skip duplicate submissions.")] Guid? idempotencyKey,
             CancellationToken cancellationToken)
         {
             (bool isValid, string errorMessage) = ValidateCloudEvent(cloudEvent);
@@ -73,18 +73,13 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            if (!string.IsNullOrEmpty(idempotencyOptionalHeaderValue) && !Guid.TryParse(idempotencyOptionalHeaderValue, out _))
-            {
-                return Problem("Invalid Idempotency-Id header", null, 400);
-            }
-
             bool isAuthorizedToPublish = await _authorizationService.AuthorizePublishEvent(cloudEvent, cancellationToken);
             if (!isAuthorizedToPublish)
             {
                 return Forbid();
             }
 
-            await _eventsService.RegisterNew(cloudEvent, idempotencyOptionalHeaderValue);
+            await _eventsService.RegisterNew(cloudEvent, idempotencyKey);
             return Ok();
         }
 

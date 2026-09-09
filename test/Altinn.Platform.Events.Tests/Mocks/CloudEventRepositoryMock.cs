@@ -24,7 +24,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<bool> CreateEvent(string cloudEvent, string idempotencyId)
+        public Task<bool> CreateEvent(string cloudEvent, Guid? idempotencyKey)
         {
             return Task.FromResult(true);
         }

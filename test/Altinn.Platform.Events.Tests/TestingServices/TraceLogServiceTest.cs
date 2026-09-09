@@ -406,7 +406,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
 
             // Act
-            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(_cloudEvent, "d1525c79-cda8-4fef-b95c-feb3e7be89ec");
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(_cloudEvent, Guid.NewGuid());
 
             // Assert
             Assert.Equal(_cloudEvent.Id, result);
@@ -431,7 +431,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
 
             // Act
-            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(_cloudEvent, "d1525c79-cda8-4fef-b95c-feb3e7be89ec");
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(_cloudEvent, Guid.NewGuid());
 
             // Assert
             Assert.Equal(string.Empty, result);

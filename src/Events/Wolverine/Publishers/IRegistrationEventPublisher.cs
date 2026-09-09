@@ -13,5 +13,5 @@ public interface IRegistrationEventPublisher
     /// <summary>
     /// Publishes the registration event for the given cloud event.
     /// </summary>
-    Task PublishRegistrationEvent(CloudEvent cloudEvent, string idempotencyId);
+    Task PublishRegistrationEvent(CloudEvent cloudEvent, Guid? idempotencyKey);
 }

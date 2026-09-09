@@ -16,9 +16,9 @@ namespace Altinn.Platform.Events.Wolverine.Publishers;
 public class RegistrationEventPublisher(IMessageBus bus) : IRegistrationEventPublisher
 {
     /// <inheritdoc/>
-    public async Task PublishRegistrationEvent(CloudEvent cloudEvent, string idempotencyId)
+    public async Task PublishRegistrationEvent(CloudEvent cloudEvent, Guid? idempotencyKey)
     {
         string payload = cloudEvent.Serialize();
-        await bus.SendAsync(new RegisterEventCommand(payload, idempotencyId));
+        await bus.SendAsync(new RegisterEventCommand(payload, idempotencyKey));
     }
 }

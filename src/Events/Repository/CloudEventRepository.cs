@@ -37,11 +37,11 @@ namespace Altinn.Platform.Events.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<bool> CreateEvent(string cloudEvent, string idempotencyId)
+        public async Task<bool> CreateEvent(string cloudEvent, Guid? idempotencyKey)
         {
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_insertEventSql);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Jsonb, cloudEvent);
-            pgcom.Parameters.AddWithValue(NpgsqlDbType.Uuid, string.IsNullOrEmpty(idempotencyId) ? DBNull.Value : Guid.Parse(idempotencyId));
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Uuid, idempotencyKey.HasValue ? idempotencyKey.Value : DBNull.Value);
 
             object result = await pgcom.ExecuteScalarAsync();
 

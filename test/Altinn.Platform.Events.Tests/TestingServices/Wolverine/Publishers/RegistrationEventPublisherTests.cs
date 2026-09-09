@@ -58,14 +58,14 @@ public class RegistrationEventPublisherTests
     /// Expected result:
     ///   The RegisterEventCommand sent to the message bus carries the same idempotency id and the serialized payload.
     /// Success criteria:
-    ///   IMessageBus.SendAsync is called once with a RegisterEventCommand whose IdempotencyId matches and whose
+    ///   IMessageBus.SendAsync is called once with a RegisterEventCommand whose IdempotencyKey matches and whose
     ///   Payload deserializes back to the original cloud event id.
     /// </summary>
     [Fact]
     public async Task PublishRegistrationEvent_WithIdempotencyId_CommandCarriesIdAndPayload()
     {
         // Arrange
-        const string idempotencyId = "d1525c79-cda8-4fef-b95c-feb3e7be89ec";
+        Guid idempotencyKey = Guid.Parse("d1525c79-cda8-4fef-b95c-feb3e7be89ec");
         RegisterEventCommand capturedCommand = null;
 
         Mock<IMessageBus> busMock = new();
@@ -85,11 +85,11 @@ public class RegistrationEventPublisherTests
         };
 
         // Act
-        await publisher.PublishRegistrationEvent(cloudEvent, idempotencyId);
+        await publisher.PublishRegistrationEvent(cloudEvent, idempotencyKey);
 
         // Assert
         Assert.NotNull(capturedCommand);
-        Assert.Equal(idempotencyId, capturedCommand.IdempotencyId);
+        Assert.Equal(idempotencyKey, capturedCommand.IdempotencyKey);
         Assert.Contains(cloudEvent.Id, capturedCommand.Payload);
     }
 
@@ -97,9 +97,9 @@ public class RegistrationEventPublisherTests
     /// Scenario:
     ///   PublishRegistrationEvent is called with a null idempotency id.
     /// Expected result:
-    ///   The RegisterEventCommand is sent with a null IdempotencyId.
+    ///   The RegisterEventCommand is sent with a null IdempotencyKey.
     /// Success criteria:
-    ///   The captured command's IdempotencyId is null.
+    ///   The captured command's IdempotencyKey is null.
     /// </summary>
     [Fact]
     public async Task PublishRegistrationEvent_NullIdempotencyId_CommandHasNullId()
@@ -128,6 +128,6 @@ public class RegistrationEventPublisherTests
 
         // Assert
         Assert.NotNull(capturedCommand);
-        Assert.Null(capturedCommand.IdempotencyId);
+        Assert.Null(capturedCommand.IdempotencyKey);
     }
 }

@@ -39,7 +39,7 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
         await using (factory)
         {
             var cloudEvent = CloudEventTestData.CreateTestCloudEvent();
-            var command = new RegisterEventCommand(cloudEvent.Serialize(), Guid.NewGuid().ToString());
+            var command = new RegisterEventCommand(cloudEvent.Serialize(), Guid.NewGuid());
 
             // Act
             await factory.PublishMessageAsync(command);
@@ -69,8 +69,8 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
         // Arrange - Create mock repository that simulates database timeouts
         int attemptCount = 0;
         var mockRepository = new Mock<ICloudEventRepository>();
-        mockRepository.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<string>()))
-            .Callback<string, string>((_, _) => Interlocked.Increment(ref attemptCount))
+        mockRepository.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<Guid?>()))
+            .Callback<string, Guid?>((_, _) => Interlocked.Increment(ref attemptCount))
             .ThrowsAsync(new TaskCanceledException("Simulated database timeout"));
 
         var factory = new IntegrationTestWebApplicationFactory(_fixture)
@@ -123,7 +123,7 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
 
         await using (factory)
         {
-            var idempotencyId = Guid.NewGuid().ToString();
+            var idempotencyId = Guid.NewGuid();
 
             var firstCloudEvent = CloudEventTestData.CreateTestCloudEvent();
             var firstCommand = new RegisterEventCommand(firstCloudEvent.Serialize(), idempotencyId);

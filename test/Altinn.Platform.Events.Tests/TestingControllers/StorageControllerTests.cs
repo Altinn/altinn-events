@@ -71,7 +71,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 var cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(s => s.Save(It.IsAny<CloudEvent>(), It.IsAny<string>())).ReturnsAsync(true);
+                eventsService.Setup(s => s.Save(It.IsAny<CloudEvent>(), It.IsAny<Guid?>())).ReturnsAsync(true);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
@@ -103,7 +103,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/storage/events";
                 var cloudEvent = GetCloudEventRequest();
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(er => er.Save(It.IsAny<CloudEvent>(), It.IsAny<string>())).Throws(new Exception());
+                eventsService.Setup(er => er.Save(It.IsAny<CloudEvent>(), It.IsAny<Guid?>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)

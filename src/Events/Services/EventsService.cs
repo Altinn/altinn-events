@@ -58,11 +58,11 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<bool> Save(CloudEvent cloudEvent, string idempotencyId = null)
+        public async Task<bool> Save(CloudEvent cloudEvent, Guid? idempotencyKey = null)
         {
             try
             {
-                var result = await _repository.CreateEvent(cloudEvent.Serialize(), idempotencyId);
+                var result = await _repository.CreateEvent(cloudEvent.Serialize(), idempotencyKey);
                 return result;  
             }
             catch (Exception ex)
@@ -73,11 +73,11 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> RegisterNew(CloudEvent cloudEvent, string idempotencyId)
+        public async Task<string> RegisterNew(CloudEvent cloudEvent, Guid? idempotencyKey)
         {
             try    
             {
-                await _registrationPublisher.PublishRegistrationEvent(cloudEvent, idempotencyId);
+                await _registrationPublisher.PublishRegistrationEvent(cloudEvent, idempotencyKey);
             }
             catch (Exception ex)
             {
@@ -150,10 +150,10 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task SaveAndPublish(CloudEvent cloudEvent, string idempotencyId, CancellationToken cancellationToken)
+        public async Task SaveAndPublish(CloudEvent cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken)
         {
             EnsureCorrectResourceFormat(cloudEvent);
-            var cloudEventWasPersisted = await Save(cloudEvent, idempotencyId);
+            var cloudEventWasPersisted = await Save(cloudEvent, idempotencyKey);
 
             if (cloudEventWasPersisted)
             {
@@ -162,7 +162,7 @@ namespace Altinn.Platform.Events.Services
             }
             else
             {
-                await _traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(cloudEvent, idempotencyId);
+                await _traceLogService.CreateLogEntryDuplicateIdempotencyIdSkipped(cloudEvent, idempotencyKey);
             }
         }
 

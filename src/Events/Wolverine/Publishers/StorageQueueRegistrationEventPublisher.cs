@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
@@ -18,13 +19,13 @@ public class StorageQueueRegistrationEventPublisher(IEventsQueueClient queueClie
     /// </summary>
     /// <remarks>
     /// This is the legacy Storage Queue path, which is being phased out in favor of Azure Service Bus.
-    /// The <paramref name="idempotencyId"/> parameter is accepted to satisfy the
+    /// The <paramref name="idempotencyKey"/> parameter is accepted to satisfy the
     /// <see cref="IRegistrationEventPublisher"/> contract, but idempotency is not supported on this path;
     /// the value is ignored and not forwarded to the queue.
     /// </remarks>
     /// <param name="cloudEvent">The cloud event to publish.</param>
-    /// <param name="idempotencyId">Accepted for interface compatibility only; not used.</param>
-    public async Task PublishRegistrationEvent(CloudEvent cloudEvent, string idempotencyId)
+    /// <param name="idempotencyKey">Accepted for interface compatibility only; not used.</param>
+    public async Task PublishRegistrationEvent(CloudEvent cloudEvent, Guid? idempotencyKey)
     {
         string payload = cloudEvent.Serialize();
         QueuePostReceipt receipt = await queueClient.EnqueueRegistration(payload);

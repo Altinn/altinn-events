@@ -16,17 +16,17 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Save cloud event to persistent storage.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be saved</param>
-        /// <param name="idempotencyId">The idempotency id for the request</param>
+        /// <param name="idempotencyKey">The idempotency key for the request</param>
         /// <returns>true if the cloud event was saved successfully, otherwise false</returns>
-        Task<bool> Save(CloudEvent cloudEvent, string idempotencyId = null);
+        Task<bool> Save(CloudEvent cloudEvent, Guid? idempotencyKey = null);
 
         /// <summary>
         /// Post cloud event to registration queue.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be queued</param>
-        /// <param name="idempotencyId">The idempotency id for the request</param>
+        /// <param name="idempotencyKey">The idempotency key for the request</param>
         /// <returns>Id for the queued event</returns>
-        Task<string> RegisterNew(CloudEvent cloudEvent, string idempotencyId);
+        Task<string> RegisterNew(CloudEvent cloudEvent, Guid? idempotencyKey);
 
         /// <summary>
         /// Push cloud event to inbound queue.
@@ -66,8 +66,8 @@ namespace Altinn.Platform.Events.Services.Interfaces
         /// Saves a cloud event to persistent storage and publishes it to the inbound queue.
         /// </summary>
         /// <param name="cloudEvent">The cloudEvent to be saved and published</param>
-        /// <param name="idempotencyId">The idempotency ID to ensure the operation is processed only once.</param>
+        /// <param name="idempotencyKey">The idempotency key to ensure the operation is processed only once.</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        Task SaveAndPublish(CloudEvent cloudEvent, string idempotencyId, CancellationToken cancellationToken);
+        Task SaveAndPublish(CloudEvent cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken);
     }
 }

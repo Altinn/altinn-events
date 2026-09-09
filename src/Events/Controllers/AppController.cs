@@ -56,9 +56,9 @@ namespace Altinn.Platform.Events.Controllers
         /// Inserts a new event.
         /// </summary>
         /// <param name="cloudEventRequest">The cloud event request model.</param>
-        /// <param name="idempotencyId">
-        /// Optional client-supplied idempotency id (must be a valid GUID). If a cloud event with the
-        /// same idempotency id has already been registered, the duplicate is detected and skipped
+        /// <param name="idempotencyKey">
+        /// Optional client-supplied idempotency key (must be a valid GUID). If a cloud event with the
+        /// same idempotency key has already been registered, the duplicate is detected and skipped
         /// during processing; the response to the caller is unaffected.
         /// </param>
         /// <returns>The cloudEvent subject and id</returns>
@@ -72,7 +72,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<string>> Post(
             [FromBody] AppCloudEventRequestModel cloudEventRequest,
-            [FromHeader(Name = "Idempotency-Id")] [SwaggerParameter("Optional idempotency id (GUID) used to detect and skip duplicate submissions.")] string idempotencyId)
+            [FromHeader(Name = "Idempotency-Key")] [SwaggerParameter("Optional idempotency key (GUID) used to detect and skip duplicate submissions.")] Guid? idempotencyKey)
         {
             var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];
 
@@ -86,17 +86,12 @@ namespace Altinn.Platform.Events.Controllers
                 return StatusCode(401, item + " is not authorized to create events for " + cloudEventRequest.Source);
             }
 
-            if (!string.IsNullOrEmpty(idempotencyId) && !Guid.TryParse(idempotencyId, out _))
-            {
-                return Problem("Invalid Idempotency-Id header", null, 400);
-            }
-
             try
             {
                 var cloudEvent = AppCloudEventExtensions.CreateEvent(cloudEventRequest);
                 AddIdTelemetry(cloudEvent.Id);
 
-                await _eventsService.RegisterNew(cloudEvent, idempotencyId);
+                await _eventsService.RegisterNew(cloudEvent, idempotencyKey);
                 return Created(cloudEvent.Subject, cloudEvent.Id);
             }
             catch (Exception e)
