@@ -19,7 +19,7 @@ namespace Altinn.Platform.Events.Repository
     [ExcludeFromCodeCoverage]
     public class CloudEventRepository : ICloudEventRepository
     {
-        private readonly string _insertEventSql = @"insert into events.events(cloudevent, idempotencyid) VALUES ($1, $2)
+        private readonly string _insertEventSql = @"insert into events.events(cloudevent, idempotencykey) VALUES ($1, $2)
             ON CONFLICT DO NOTHING
             RETURNING sequenceno";
 
@@ -49,7 +49,7 @@ namespace Altinn.Platform.Events.Repository
             // ON CONFLICT DO NOTHING (with no explicit target) suppresses errors from
             // *any* unique constraint violation, covering both the existing
             // (cloudevent -> 'id', cloudevent -> 'source') dedup and the new
-            // idempotencyid partial unique index.
+            // idempotencykey partial unique index.
             return result != null;
         }
 
