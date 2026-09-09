@@ -436,5 +436,102 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             Assert.Equal(string.Empty, result);
         }
+
+        /// <summary>
+        /// Scenario:
+        ///   CreateLogEntryDuplicateIdempotencyKeySkipped is called with a cloud event whose Id is not a valid GUID.
+        /// Expected result:
+        ///   The trace log entry is created with a null CloudEventId, and the raw (non-GUID) cloud event id is returned.
+        /// Success criteria:
+        ///   TraceLogRepository.CreateTraceLogEntry is called once with a null CloudEventId.
+        /// </summary>
+        [Fact]
+        public async Task CreateLogEntryDuplicateIdempotencyKeySkipped_InvalidGuid_CreatesEntryWithNullCloudEventId()
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+            var cloudEvent = new CloudEvent
+            {
+                Id = "not-a-guid"
+            };
+
+            // Act
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, Guid.NewGuid());
+
+            // Assert
+            Assert.Equal("not-a-guid", result);
+            traceLogRepositoryMock.Verify(
+                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y => y.CloudEventId == null)), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   CreateLogEntryDuplicateIdempotencyKeySkipped is called with a cloud event whose Id is null.
+        /// Expected result:
+        ///   An empty string is returned (the null-coalescing branch of cloudEvent.Id ?? string.Empty is exercised).
+        /// Success criteria:
+        ///   The result equals string.Empty and the repository is still called once.
+        /// </summary>
+        [Fact]
+        public async Task CreateLogEntryDuplicateIdempotencyKeySkipped_NullCloudEventId_ReturnsEmptyString()
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+            var cloudEvent = new CloudEvent
+            {
+                Id = null
+            };
+
+            // Act
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, Guid.NewGuid());
+
+            // Assert
+            Assert.Equal(string.Empty, result);
+            traceLogRepositoryMock.Verify(
+                x => x.CreateTraceLogEntry(It.IsAny<TraceLog>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Scenario:
+        ///   CreateWebhookResponseEntry is called with a valid dto that omits all optional properties
+        ///   (Consumer, SubscriptionId, CloudEventResource, CloudEventType).
+        /// Expected result:
+        ///   The trace log entry is still created successfully and the cloud event id is returned.
+        /// Success criteria:
+        ///   TraceLogRepository.CreateTraceLogEntry is called once with the optional fields left null,
+        ///   exercising the object-initializer and null-coalescing branches with all-null optional data.
+        /// </summary>
+        [Fact]
+        public async Task Create_TraceLogWebhookResponseEntry_OptionalFieldsNull_CreatesEntryAndReturnsCloudEventId()
+        {
+            // Arrange
+            var traceLogRepositoryMock = new Mock<ITraceLogRepository>();
+            var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
+            LogEntryDto logEntry = new()
+            {
+                CloudEventId = _cloudEvent.Id,
+                CloudEventResource = null,
+                CloudEventType = null,
+                Consumer = null,
+                SubscriptionId = null,
+                Endpoint = new Uri("https://localhost:3000"),
+                StatusCode = HttpStatusCode.OK
+            };
+
+            // Act
+            var result = await traceLogService.CreateWebhookResponseEntry(logEntry);
+
+            // Assert
+            Assert.Equal(_cloudEvent.Id, result);
+            traceLogRepositoryMock.Verify(
+                x => x.CreateTraceLogEntry(It.Is<TraceLog>(y =>
+                    y.Resource == null &&
+                    y.EventType == null &&
+                    y.Consumer == null &&
+                    y.SubscriptionId == null)),
+                Times.Once);
+        }
     }
 }
