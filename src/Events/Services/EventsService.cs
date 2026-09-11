@@ -155,15 +155,13 @@ namespace Altinn.Platform.Events.Services
             EnsureCorrectResourceFormat(cloudEvent);
             var cloudEventWasPersisted = await Save(cloudEvent, idempotencyKey);
 
-            if (cloudEventWasPersisted)
-            {
-                string payload = cloudEvent.Serialize();
-                await _bus.SendAsync(new InboundEventCommand(payload));
-            }
-            else
+            if (!cloudEventWasPersisted)
             {
                 await _traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, idempotencyKey);
             }
+            
+            string payload = cloudEvent.Serialize();
+            await _bus.SendAsync(new InboundEventCommand(payload));
         }
 
         /// <summary>
