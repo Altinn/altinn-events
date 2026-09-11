@@ -56,27 +56,26 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> Save(CloudEvent cloudEvent)
+        public async Task<bool> Save(CloudEvent cloudEvent, Guid? idempotencyKey = null)
         {
             try
             {
-                await _repository.CreateEvent(cloudEvent.Serialize());
+                var result = await _repository.CreateEvent(cloudEvent.Serialize(), idempotencyKey);
+                return result;  
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "// EventsService // Save // Failed to save eventId {EventId} to storage.", cloudEvent.Id);
                 throw new InvalidOperationException($"Failed to save event with ID {cloudEvent.Id} to storage.", ex);
             }
-
-            return cloudEvent.Id;
         }
 
         /// <inheritdoc/>
-        public async Task<string> RegisterNew(CloudEvent cloudEvent)
+        public async Task<string> RegisterNew(CloudEvent cloudEvent, Guid? idempotencyKey)
         {
-            try
+            try    
             {
-                await _registrationPublisher.PublishRegistrationEvent(cloudEvent);
+                await _registrationPublisher.PublishRegistrationEvent(cloudEvent, idempotencyKey);
             }
             catch (Exception ex)
             {
@@ -153,10 +152,16 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken)
+        public async Task SaveAndPublish(CloudEvent cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken)
         {
             EnsureCorrectResourceFormat(cloudEvent);
-            await Save(cloudEvent);
+            var cloudEventWasPersisted = await Save(cloudEvent, idempotencyKey);
+
+            if (!cloudEventWasPersisted)
+            {
+                await _traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, idempotencyKey);
+            }
+            
             string payload = cloudEvent.Serialize();
             await _bus.SendAsync(new InboundEventCommand(payload));
         }

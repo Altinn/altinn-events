@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Models;
 
@@ -33,4 +34,12 @@ public interface ITraceLogService
     /// <param name="activity">Type of activity associated with log entry <see cref="TraceLogActivity"/></param>
     /// <returns>Returns empty string if a log entry can't be created</returns>
     Task<string> CreateLogEntryWithSubscriptionDetails(CloudEvent cloudEvent, Subscription subscription, TraceLogActivity activity);
+
+    /// <summary>
+    /// Creates a trace log entry for a registered event with an existing idempotency key. This is used to log when an event is skipped due to a duplicate idempotency key.
+    /// </summary>
+    /// <param name="cloudEvent">The cloud event that was attempted to be registered.</param>
+    /// <param name="idempotencyKey">The idempotency key that caused the event to be skipped.</param>
+    /// <returns>A string representation of the cloud event id.</returns>
+    Task<string> CreateLogEntryDuplicateIdempotencyKeySkipped(CloudEvent cloudEvent, Guid? idempotencyKey);
 }

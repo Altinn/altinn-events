@@ -79,7 +79,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new();
-                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue))).ReturnsAsync((CloudEvent c) => c.Id);
+                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue), It.IsAny<Guid?>())).ReturnsAsync((CloudEvent c, Guid? idempotencyKey) => c.Id);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -114,7 +114,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new();
-                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue))).ReturnsAsync((CloudEvent c) => c.Id);
+                eventsService.Setup(s => s.RegisterNew(It.Is<CloudEvent>(c => !string.IsNullOrEmpty(c.Id) && c.Time != DateTimeOffset.MinValue), It.IsAny<Guid?>())).ReturnsAsync((CloudEvent c, Guid? idempotencyKey) => c.Id);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetTokenForSystemUser("random_system_identifier", Convert.ToString(Guid.NewGuid()), "random_org_cliam_identifier"));
@@ -150,7 +150,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
 
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(s => s.RegisterNew(It.IsAny<CloudEvent>())).ReturnsAsync(responseId);
+                eventsService.Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>())).ReturnsAsync(responseId);
 
                 HttpClient client = GetTestClient(eventsService.Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -320,7 +320,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/app";
                 AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(er => er.RegisterNew(It.IsAny<CloudEvent>())).Throws(new Exception());
+                eventsService.Setup(er => er.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -1196,6 +1196,117 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
                 Assert.StartsWith("Only one of 'Party' or 'Person' can be defined.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid CloudEventRequest with a valid Idempotency-Key header.
+            /// Expected result:
+            ///   Returns HttpStatus Created and the idempotency key is forwarded to the service.
+            /// Success criteria:
+            ///   IEventsService.RegisterNew is called with the same idempotency key value as the header.
+            /// </summary>
+            [Fact]
+            public async Task Post_ValidIdempotencyKeyHeader_ForwardsKeyToService()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                Guid idempotencyKey = Guid.NewGuid();
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
+
+                Mock<IEventsService> eventsService = new();
+                eventsService
+                    .Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value == idempotencyKey)))
+                    .ReturnsAsync((CloudEvent c, Guid? id) => c.Id);
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+                httpRequestMessage.Headers.Add("Idempotency-Key", idempotencyKey.ToString());
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value == idempotencyKey)), Times.Once);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid CloudEventRequest with no Idempotency-Key header present.
+            /// Expected result:
+            ///   Returns HttpStatus Created and a null idempotency key is forwarded to the service.
+            /// Success criteria:
+            ///   IEventsService.RegisterNew is called with a null idempotency key.
+            /// </summary>
+            [Fact]
+            public async Task Post_NoIdempotencyKeyHeader_ForwardsNullToService()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
+
+                Mock<IEventsService> eventsService = new();
+                eventsService
+                    .Setup(s => s.RegisterNew(It.IsAny<CloudEvent>(), null))
+                    .ReturnsAsync((CloudEvent c, string id) => c.Id);
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), null), Times.Once);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid CloudEventRequest with an Idempotency-Key header that is not a valid GUID.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest and the event is never registered.
+            /// Success criteria:
+            ///   Response status is 400 and IEventsService.RegisterNew is never called.
+            /// </summary>
+            [Fact]
+            public async Task Post_InvalidIdempotencyKeyHeader_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app";
+                AppCloudEventRequestModel cloudEvent = GetCloudEventRequest();
+
+                Mock<IEventsService> eventsService = new();
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(cloudEvent.Serialize(), Encoding.UTF8, "application/json")
+                };
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
+                httpRequestMessage.Headers.Add("Idempotency-Key", "not-a-guid");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                eventsService.Verify(s => s.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => !id.HasValue)), Times.Never);
             }
 
             private HttpClient GetTestClient(IEventsService eventsService, ITraceLogService traceLogService = null)

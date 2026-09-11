@@ -190,7 +190,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -220,7 +220,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -235,8 +235,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 {
                     Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
                 };
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "apps-test"));
 
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "apps-test"));
+                
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
@@ -251,7 +252,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 string requestUri = $"{BasePath}/events";
 
                 Mock<IEventsService> eventMock = new();
-                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>()))
+                eventMock.Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
                          .ReturnsAsync(Guid.NewGuid().ToString());
 
                 Mock<IAuthorization> authorizationMock = new();
@@ -266,8 +267,9 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 {
                     Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
                 };
-                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "apps-test"));
 
+                httpRequestMessage.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "apps-test"));
+                
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
 
@@ -667,6 +669,126 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 }).CreateClient();
 
                 return client;
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid cloud event with a valid Idempotency-Key header.
+            /// Expected result:
+            ///   Returns HttpStatus OK and the idempotency key is forwarded to the service.
+            /// Success criteria:
+            ///   IEventsService.RegisterNew is called with the same idempotency key value as the header.
+            /// </summary>
+            [Fact]
+            public async Task Post_ValidIdempotencyKeyHeader_ForwardsKeyToService()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+                var idempotencyKey = Guid.NewGuid();
+
+                Mock<IEventsService> eventMock = new();
+                eventMock
+                    .Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value == idempotencyKey)))
+                    .ReturnsAsync(Guid.NewGuid().ToString());
+                    
+                Mock<IAuthorization> authorizationMock = new();
+                authorizationMock
+                    .Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(true);
+
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
+                };
+                httpRequestMessage.Headers.Add("Idempotency-Key", idempotencyKey.ToString());
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => id.HasValue && id.Value == idempotencyKey)), Times.Once);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid cloud event with no Idempotency-Id header present.
+            /// Expected result:
+            ///   Returns HttpStatus OK and a null idempotency key is forwarded to the service.
+            /// Success criteria:
+            ///   IEventsService.RegisterNew is called with a null idempotency key.
+            /// </summary>
+            [Fact]
+            public async Task Post_NoIdempotencyKeyHeader_ForwardsNullToService()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+
+                Mock<IEventsService> eventMock = new();
+                eventMock
+                    .Setup(em => em.RegisterNew(It.IsAny<CloudEvent>(), null))
+                    .ReturnsAsync(Guid.NewGuid().ToString());
+
+                Mock<IAuthorization> authorizationMock = new();
+                authorizationMock
+                    .Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(true);
+
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
+                };
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), null), Times.Once);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Post a valid cloud event with an Idempotency-Key header that is not a valid GUID.
+            /// Expected result:
+            ///   Returns HttpStatus BadRequest and the event is never registered.
+            /// Success criteria:
+            ///   Response status is 400 and IEventsService.RegisterNew is never called.
+            /// </summary>
+            [Fact]
+            public async Task Post_InvalidIdempotencyKeyHeader_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/events";
+
+                Mock<IEventsService> eventMock = new();
+
+                Mock<IAuthorization> authorizationMock = new();
+                authorizationMock
+                    .Setup(a => a.AuthorizePublishEvent(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(true);
+
+                HttpClient client = GetTestClient(eventMock.Object, authorizationMock.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.publish"));
+
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Post, requestUri)
+                {
+                    Content = new StringContent(_validEvent.Serialize(), Encoding.UTF8, "application/cloudevents+json")
+                };
+                httpRequestMessage.Headers.Add("Idempotency-Key", "not-a-guid");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                eventMock.Verify(em => em.RegisterNew(It.IsAny<CloudEvent>(), It.Is<Guid?>(id => !id.HasValue)), Times.Never);
             }
         }
     }
