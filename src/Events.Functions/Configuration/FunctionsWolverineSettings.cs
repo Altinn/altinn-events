@@ -31,16 +31,16 @@ public class FunctionsWolverineSettings
     public string? ServiceBusConnectionString { get; set; }
 
     /// <summary>
-    /// Number of listeners to be used against Azure Service Bus queues (per pod).
-    /// </summary>
-    public int ListenerCount { get; set; } = 20;
-
-    /// <summary>
     /// Azure Service Bus queue name for event outbound. Same value in every environment,
     /// so it's a compiled-in default rather than something each environment must configure —
     /// still override-able via configuration if ever needed.
     /// </summary>
     public string OutboundQueueName { get; set; } = "altinn.events.outbound";
+
+    /// <summary>
+    /// Number of listeners to be used against the outbound queue (per pod).
+    /// </summary>
+    public int OutboundListenerCount { get; set; } = 15;
 
     /// <summary>
     /// Retry policy configuration for the outbound queue.
@@ -59,11 +59,16 @@ public class FunctionsWolverineSettings
     public string ValidationQueueName { get; set; } = "altinn.events.subscription.validation";
 
     /// <summary>
+    /// Number of listeners to be used against the validation queue (per pod).
+    /// </summary>
+    public int ValidationListenerCount { get; set; } = 5;
+
+    /// <summary>
     /// Retry policy configuration for the validation queue.
     /// </summary>
     public QueueRetryPolicy ValidationQueuePolicy { get; set; } = new()
     {
-        CooldownDelaysMs = [1000, 5000, 10000],
+        CooldownDelaysMs = [1000],
         ScheduleDelaysMs = [30000, 60000, 120000, 120000, 120000]
     };
 }
