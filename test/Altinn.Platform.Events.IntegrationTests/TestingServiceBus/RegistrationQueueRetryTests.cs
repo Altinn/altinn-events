@@ -105,11 +105,12 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
 
     /// <summary>
     /// Tests that when the same idempotency key is submitted twice, the second registration is detected as a
-    /// duplicate (via the database unique constraint), the event is saved only once, and the outbound service
-    /// is never invoked for the duplicate.
+    /// duplicate (via the database unique constraint) and is not saved to the database, but the outbound
+    /// service is still invoked for both events (at-least-once delivery semantics are preserved regardless
+    /// of whether the repository persisted the event).
     /// </summary>
     [Fact]
-    public async Task RegisterEventCommand_DuplicateIdempotencyKey_DoesNotInvokeOutboundServiceForDuplicate()
+    public async Task RegisterEventCommand_DuplicateIdempotencyKey_StillInvokesOutboundServiceForBothEvents()
     {
         // Arrange
         var outboundServiceMock = new Mock<IOutboundService>();
@@ -154,13 +155,16 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
                 delayMs: 200);
             Assert.Null(secondSavedEvent);
 
-            // Assert - outbound service was invoked exactly once (only for the first, non-duplicate event)
+            // Assert - outbound service is invoked for the first event (persisted)
             outboundServiceMock.Verify(
                 s => s.PostOutbound(It.Is<CloudEvent>(c => c.Id == firstCloudEvent.Id), It.IsAny<CancellationToken>(), It.IsAny<bool>()),
                 Times.Once);
+
+            // Assert - outbound service is also invoked for the duplicate event, since messages are sent
+            // at-least-once regardless of whether the repository persisted the event
             outboundServiceMock.Verify(
                 s => s.PostOutbound(It.Is<CloudEvent>(c => c.Id == secondCloudEvent.Id), It.IsAny<CancellationToken>(), It.IsAny<bool>()),
-                Times.Never);
+                Times.Once);
         }
     }
 }

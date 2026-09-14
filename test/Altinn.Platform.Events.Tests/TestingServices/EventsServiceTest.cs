@@ -898,12 +898,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Scenario:
         ///   SaveAndPublish is called and the repository reports the event as a duplicate (idempotency conflict).
         /// Expected result:
-        ///   The event is NOT sent to the message bus.
+        ///   The event is still sent to the message bus (at-least-once delivery), but a duplicate-idempotency
+        ///   trace log entry is also created.
         /// Success criteria:
-        ///   IMessageBus.SendAsync is never called and a duplicate-idempotency trace log entry is created once.
+        ///   IMessageBus.SendAsync is called once and a duplicate-idempotency trace log entry is created once.
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_DuplicateIdempotencyKey_SkipsQueuePublish_LogsDuplicate()
+        public async Task SaveAndPublish_DuplicateIdempotencyKey_StillPublishesToQueue_LogsDuplicate()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -929,7 +930,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await eventsService.SaveAndPublish(cloudEvent, idempotencyKey, CancellationToken.None);
 
             // Assert
-            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Never);
+            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
             traceLogServiceMock.Verify(
                 t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, idempotencyKey), Times.Once);
         }
