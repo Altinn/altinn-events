@@ -159,7 +159,7 @@ namespace Altinn.Platform.Events.Services
 
             if (!cloudEventWasPersisted)
             {
-                await _traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, idempotencyKey);
+                await _traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent);
             }
             
             string payload = cloudEvent.Serialize();

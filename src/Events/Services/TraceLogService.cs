@@ -85,7 +85,7 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> CreateLogEntryDuplicateIdempotencyKeySkipped(CloudEvent cloudEvent, Guid? idempotencyKey)
+        public async Task<string> CreateLogEntryDuplicateIdempotencyKeySkipped(CloudEvent cloudEvent)
         {
             try
             {

@@ -406,7 +406,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
 
             // Act
-            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(_cloudEvent, Guid.NewGuid());
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(_cloudEvent);
 
             // Assert
             Assert.Equal(_cloudEvent.Id, result);
@@ -431,7 +431,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var traceLogService = new TraceLogService(traceLogRepositoryMock.Object, NullLogger<TraceLogService>.Instance);
 
             // Act
-            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(_cloudEvent, Guid.NewGuid());
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(_cloudEvent);
 
             // Assert
             Assert.Equal(string.Empty, result);
@@ -457,7 +457,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
 
             // Act
-            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, Guid.NewGuid());
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent);
 
             // Assert
             Assert.Equal("not-a-guid", result);
@@ -485,7 +485,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
 
             // Act
-            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, Guid.NewGuid());
+            var result = await traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent);
 
             // Assert
             Assert.Equal(string.Empty, result);

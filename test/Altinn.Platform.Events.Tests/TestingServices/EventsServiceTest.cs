@@ -1003,7 +1003,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
             traceLogServiceMock.Verify(
-                t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()), Times.Never);
+                t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(It.IsAny<CloudEvent>()), Times.Never);
         }
 
         /// <summary>
@@ -1027,7 +1027,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             Mock<ITraceLogService> traceLogServiceMock = new();
             traceLogServiceMock
-                .Setup(t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(It.IsAny<CloudEvent>(), It.IsAny<Guid?>()))
+                .Setup(t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(It.IsAny<CloudEvent>()))
                 .ReturnsAsync(string.Empty);
 
             EventsService eventsService = GetEventsService(
@@ -1044,7 +1044,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             // Assert
             messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
             traceLogServiceMock.Verify(
-                t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent, idempotencyKey), Times.Once);
+                t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent), Times.Once);
         }
 
         /// <summary>

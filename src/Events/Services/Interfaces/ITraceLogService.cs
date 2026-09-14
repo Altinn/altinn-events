@@ -39,7 +39,6 @@ public interface ITraceLogService
     /// Creates a trace log entry for a registered event with an existing idempotency key. This is used to log when an event is skipped due to a duplicate idempotency key.
     /// </summary>
     /// <param name="cloudEvent">The cloud event that was attempted to be registered.</param>
-    /// <param name="idempotencyKey">The idempotency key that caused the event to be skipped.</param>
     /// <returns>A string representation of the cloud event id.</returns>
-    Task<string> CreateLogEntryDuplicateIdempotencyKeySkipped(CloudEvent cloudEvent, Guid? idempotencyKey);
+    Task<string> CreateLogEntryDuplicateIdempotencyKeySkipped(CloudEvent cloudEvent);
 }
