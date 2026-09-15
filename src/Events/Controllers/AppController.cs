@@ -55,6 +55,12 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Inserts a new event.
         /// </summary>
+        /// <param name="cloudEventRequest">The cloud event request model.</param>
+        /// <param name="idempotencyKey">
+        /// Optional client-supplied idempotency key (must be a valid GUID). If a cloud event with the
+        /// same idempotency key has already been registered, the duplicate is detected and skipped
+        /// during processing; the response to the caller is unaffected.
+        /// </param>
         /// <returns>The cloudEvent subject and id</returns>
         [Authorize(Policy = "PlatformAccess")]
         [HttpPost]
@@ -64,14 +70,16 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
-        public async Task<ActionResult<string>> Post([FromBody] AppCloudEventRequestModel cloudEventRequest)
+        public async Task<ActionResult<string>> Post(
+            [FromBody] AppCloudEventRequestModel cloudEventRequest,
+            [FromHeader(Name = "Idempotency-Key")] [SwaggerParameter("Optional idempotency key (GUID) used to detect and skip duplicate submissions.")] Guid? idempotencyKey)
         {
+            var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];
+
             if (!cloudEventRequest.ValidateRequiredProperties())
             {
                 return Problem("Missing parameter values: source, subject and type cannot be null", null, 400);
             }
-
-            var item = HttpContext.Items[_accessTokenSettings.AccessTokenHttpContextId];
 
             if (!cloudEventRequest.Source.AbsolutePath.StartsWith("/" + item))
             {
@@ -83,7 +91,7 @@ namespace Altinn.Platform.Events.Controllers
                 var cloudEvent = AppCloudEventExtensions.CreateEvent(cloudEventRequest);
                 AddIdTelemetry(cloudEvent.Id);
 
-                await _eventsService.RegisterNew(cloudEvent);
+                await _eventsService.RegisterNew(cloudEvent, idempotencyKey);
                 return Created(cloudEvent.Subject, cloudEvent.Id);
             }
             catch (Exception e)

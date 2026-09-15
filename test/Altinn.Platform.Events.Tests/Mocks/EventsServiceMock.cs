@@ -147,7 +147,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return null;
         }
 
-        public Task<string> RegisterNew(CloudEvent cloudEvent)
+        public Task<string> RegisterNew(CloudEvent cloudEvent, Guid? idempotencyKey)
         {
             throw new NotImplementedException();
         }
@@ -157,12 +157,12 @@ namespace Altinn.Platform.Events.Tests.Mocks
             throw new NotImplementedException();
         }
 
-        public Task<string> Save(CloudEvent cloudEvent)
+        public Task<bool> Save(CloudEvent cloudEvent, Guid? idempotencyKey = null)
         {
             throw new NotImplementedException();
         }
 
-        public Task SaveAndPublish(CloudEvent cloudEvent, CancellationToken cancellationToken)
+        public Task SaveAndPublish(CloudEvent cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

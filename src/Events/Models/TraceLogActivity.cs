@@ -44,5 +44,10 @@
         /// The response code implies that validation failed
         /// </summary>
         EndpointValidationFailed,
+
+        /// <summary>
+        /// A duplicate cloud event (matching an existing idempotency key) was detected and skipped.
+        /// </summary>
+        DuplicateIdempotencyKeySkipped,
     }
 }
