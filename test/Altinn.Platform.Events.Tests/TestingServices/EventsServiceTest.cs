@@ -9,7 +9,6 @@ using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Mocks;
-using Altinn.Platform.Events.Wolverine.Commands;
 using Altinn.Platform.Events.Wolverine.Publishers;
 
 using CloudNative.CloudEvents;
@@ -17,7 +16,6 @@ using CloudNative.CloudEvents;
 using Microsoft.Extensions.Logging;
 
 using Moq;
-using Wolverine;
 using Xunit;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
@@ -32,7 +30,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         private readonly Mock<ITraceLogService> _traceLogServiceMock;
         private readonly Mock<IRegisterService> _registerMock;
         private readonly Mock<IAuthorization> _authorizationMock;
-        private readonly Mock<IMessageBus> _messageBusMock;
         private readonly Mock<ILogger<EventsService>> _loggerMock;
         private readonly Mock<IRegistrationEventPublisher> _registrationPublisherMock;
 
@@ -43,7 +40,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             _traceLogServiceMock = new();
             _registerMock = new();
             _authorizationMock = new();
-            _messageBusMock = new();
             _loggerMock = new();
             _registrationPublisherMock = new();
         }
@@ -586,28 +582,24 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Scenario:
         ///   SaveAndPublish is called with a cloud event
         /// Expected result:
-        ///   Event is saved to repository and published to the message bus
+        ///   Event is saved to repository
         /// Success criteria:
-        ///   Repository CreateEvent and MessageBus PublishAsync are both called once
+        ///   Repository CreateEvent is called once
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_ValidCloudEvent_SavesAndPublishes()
+        public async Task SaveAndPublish_ValidCloudEvent_SavesEvent()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
             repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<Guid?>())).Returns(Task.FromResult(true));
 
-            Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
-
-            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
             await eventsService.SaveAndPublish(GetCloudEvent(), null, CancellationToken.None);
 
             // Assert
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), It.Is<Guid?>(id => !id.HasValue)), Times.Once);
-            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
         }
 
         /// <summary>
@@ -628,10 +620,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Callback<string, Guid?>((e, s) => capturedEvent = e)
                 .Returns(Task.FromResult(true));
 
-            Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
-
-            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
@@ -650,7 +639,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.NotNull(capturedEvent);
             Assert.Contains("urn:altinn:resource:app_ttd_apps-test", capturedEvent);
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), It.Is<Guid?>(id => !id.HasValue)), Times.Once);
-            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
         }
 
         /// <summary>
@@ -671,10 +659,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Callback<string, Guid?>((e, s) => capturedEvent = e)
                 .Returns(Task.FromResult(true));
 
-            Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
-
-            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
@@ -693,31 +678,28 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Assert.NotNull(capturedEvent);
             Assert.Contains("urn:altinn:resource:some-other-resource", capturedEvent);
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), It.Is<Guid?>(id => !id.HasValue)), Times.Once);
-            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
         }
 
         /// <summary>
         /// Scenario:
         ///   SaveAndPublish fails during save operation
         /// Expected result:
-        ///   Exception is propagated and message is not published
+        ///   Exception is propagated
         /// Success criteria:
-        ///   InvalidOperationException is thrown and PublishAsync is never called
+        ///   InvalidOperationException is thrown
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_SaveFails_ExceptionThrownAndNotPublished()
+        public async Task SaveAndPublish_SaveFails_ExceptionThrown()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
             repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<Guid?>()))
                 .ThrowsAsync(new Exception("Database error"));
 
-            Mock<IMessageBus> messageBusMock = new();
             Mock<ILogger<EventsService>> logger = new();
 
             EventsService eventsService = GetEventsService(
                 repositoryMock: repositoryMock.Object, 
-                messageBusMock: messageBusMock,
                 loggerMock: logger);
 
             // Act & Assert
@@ -725,7 +707,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 () => eventsService.SaveAndPublish(GetCloudEvent(), null, CancellationToken.None));
 
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), It.Is<Guid?>(id => !id.HasValue)), Times.Once);
-            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Never);
             logger.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -886,10 +867,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Callback<string, Guid?>((e, s) => capturedEvent = e)
                 .Returns(Task.FromResult(true));
 
-            Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
-
-            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
             {
@@ -946,10 +924,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .Callback<string, Guid?>((e, s) => capturedEvent = e)
                 .Returns(Task.FromResult(true));
 
-            Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
-
-            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, messageBusMock: messageBusMock);
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // CloudEvent without resource attribute - covers `resource is not null` false branch
             CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
@@ -975,24 +950,20 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Expected result:
         ///   The event is serialized and sent to the message bus as an InboundEventCommand.
         /// Success criteria:
-        ///   IMessageBus.SendAsync is called once with an InboundEventCommand and no duplicate trace log is created.
+        ///   No duplicate trace log is created.
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_EventPersisted_PublishesInboundEventCommand()
+        public async Task SaveAndPublish_EventPersisted_SavesEvent()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
             repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<Guid?>()))
                 .ReturnsAsync(true);
 
-            Mock<IMessageBus> messageBusMock = new();
-            messageBusMock.Setup(m => m.SendAsync(It.IsAny<InboundEventCommand>())).Returns(ValueTask.CompletedTask);
-
             Mock<ITraceLogService> traceLogServiceMock = new();
 
             EventsService eventsService = GetEventsService(
                 repositoryMock: repositoryMock.Object,
-                messageBusMock: messageBusMock,
                 traceLogServiceMock: traceLogServiceMock);
 
             CloudEvent cloudEvent = GetCloudEvent();
@@ -1001,7 +972,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await eventsService.SaveAndPublish(cloudEvent, Guid.NewGuid(), CancellationToken.None);
 
             // Assert
-            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
             traceLogServiceMock.Verify(
                 t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(It.IsAny<CloudEvent>()), Times.Never);
         }
@@ -1013,7 +983,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   The event is still sent to the message bus (at-least-once delivery), but a duplicate-idempotency
         ///   trace log entry is also created.
         /// Success criteria:
-        ///   IMessageBus.SendAsync is called once and a duplicate-idempotency trace log entry is created once.
+        ///   A duplicate-idempotency trace log entry is created once.
         /// </summary>
         [Fact]
         public async Task SaveAndPublish_DuplicateIdempotencyKey_StillPublishesToQueue_LogsDuplicate()
@@ -1023,8 +993,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             repositoryMock.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<Guid?>()))
                 .ReturnsAsync(false);
 
-            Mock<IMessageBus> messageBusMock = new();
-
             Mock<ITraceLogService> traceLogServiceMock = new();
             traceLogServiceMock
                 .Setup(t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(It.IsAny<CloudEvent>()))
@@ -1032,7 +1000,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             EventsService eventsService = GetEventsService(
                 repositoryMock: repositoryMock.Object,
-                messageBusMock: messageBusMock,
                 traceLogServiceMock: traceLogServiceMock);
 
             CloudEvent cloudEvent = GetCloudEvent();
@@ -1042,7 +1009,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await eventsService.SaveAndPublish(cloudEvent, idempotencyKey, CancellationToken.None);
 
             // Assert
-            messageBusMock.Verify(m => m.SendAsync(It.IsAny<InboundEventCommand>()), Times.Once);
             traceLogServiceMock.Verify(
                 t => t.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent), Times.Once);
         }
@@ -1118,7 +1084,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             Mock<ITraceLogService> traceLogServiceMock = null,
             Mock<IRegisterService> registerMock = null,
             Mock<IAuthorization> authorizationMock = null,
-            Mock<IMessageBus> messageBusMock = null,
             Mock<ILogger<EventsService>> loggerMock = null,
             Mock<IRegistrationEventPublisher> registrationPublisherMock = null)
         {
@@ -1141,7 +1106,6 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 queueMock ?? _queueMock,
                 (registerMock ?? _registerMock).Object,
                 (authorizationMock ?? _authorizationMock).Object,
-                (messageBusMock ?? _messageBusMock).Object,
                 (loggerMock ?? _loggerMock).Object,
                 (registrationPublisherMock ?? _registrationPublisherMock).Object);
         }
