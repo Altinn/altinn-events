@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.Platform.Events.Controllers
 {
@@ -48,6 +49,11 @@ namespace Altinn.Platform.Events.Controllers
         /// Registers a new cloud event to be stored and processed.
         /// </summary>
         /// <param name="cloudEvent">The cloud event to be stored and processed.</param>
+        /// <param name="idempotencyKey">
+        /// Optional client-supplied idempotency key (must be a valid GUID). If a cloud event with the
+        /// same idempotency key has already been registered, the duplicate is detected and skipped
+        /// during processing; the response to the caller is unaffected.
+        /// </param>
         /// <param name="cancellationToken">
         /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
         /// </param>
@@ -55,8 +61,11 @@ namespace Altinn.Platform.Events.Controllers
         [HttpPost]
         [Authorize(Policy = AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS)]
         [Consumes("application/cloudevents+json")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post(
-            [FromBody] CloudEvent cloudEvent, CancellationToken cancellationToken)
+            [FromBody] CloudEvent cloudEvent,
+            [FromHeader(Name = "Idempotency-Key")] [SwaggerParameter("Optional idempotency key (GUID) used to detect and skip duplicate submissions.")] Guid? idempotencyKey,
+            CancellationToken cancellationToken)
         {
             (bool isValid, string errorMessage) = ValidateCloudEvent(cloudEvent);
             if (!isValid)
@@ -70,7 +79,7 @@ namespace Altinn.Platform.Events.Controllers
                 return Forbid();
             }
 
-            await _eventsService.RegisterNew(cloudEvent);
+            await _eventsService.RegisterNew(cloudEvent, idempotencyKey);
             return Ok();
         }
 

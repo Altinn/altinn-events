@@ -50,14 +50,17 @@ public class WolverineSettings
     public string ServiceBusConnectionString { get; set; }
 
     /// <summary>
-    /// Number of listeners to be used against Azure Service Bus queues (per pod).
-    /// </summary>
-    public int ListenerCount { get; set; }
-
-    /// <summary>
     /// Azure Service Bus queue name for event registration.
     /// </summary>
     public string RegistrationQueueName { get; set; }
+
+    /// <summary>
+    /// Number of listeners to be used against the registration queue (per pod). Kept low by
+    /// default: this queue's listener competes with the registration HTTP endpoint for the same
+    /// process's CPU/DB-connection/thread-pool capacity, and perf testing showed registration
+    /// throughput drops sharply as this count rises (see perftesting/ for the load-test results).
+    /// </summary>
+    public int RegistrationListenerCount { get; set; } = 5;
 
     /// <summary>
     /// Retry policy configuration for the registration queue.
@@ -70,6 +73,12 @@ public class WolverineSettings
     public string ValidationQueueName { get; set; }
 
     /// <summary>
+    /// Number of listeners to be used against the validation queue (per pod), when it's hosted
+    /// here rather than in Events.Functions.
+    /// </summary>
+    public int ValidationListenerCount { get; set; } = 5;
+
+    /// <summary>
     /// Retry policy configuration for the validation queue.
     /// </summary>
     public QueueRetryPolicy ValidationQueuePolicy { get; set; } = new();
@@ -80,6 +89,11 @@ public class WolverineSettings
     public string InboundQueueName { get; set; }
 
     /// <summary>
+    /// Number of listeners to be used against the inbound queue (per pod).
+    /// </summary>
+    public int InboundListenerCount { get; set; } = 5;
+
+    /// <summary>
     /// Retry policy configuration for the inbound queue.
     /// </summary>
     public QueueRetryPolicy InboundQueuePolicy { get; set; } = new();
@@ -88,6 +102,12 @@ public class WolverineSettings
     /// Azure Service Bus queue name for event outbound.
     /// </summary>
     public string OutboundQueueName { get; set; }
+
+    /// <summary>
+    /// Number of listeners to be used against the outbound queue (per pod), when it's hosted
+    /// here rather than in Events.Functions.
+    /// </summary>
+    public int OutboundListenerCount { get; set; } = 5;
 
     /// <summary>
     /// Retry policy configuration for the outbound queue.
