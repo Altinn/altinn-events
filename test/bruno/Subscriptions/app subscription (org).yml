@@ -1,0 +1,29 @@
+info:
+  name: app subscription (org)
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{PlatformHostUrl}}/events/api/v1/subscriptions"
+  body:
+    type: json
+    data: |-
+      {
+        "sourceFilter": "https://ttd.apps.at22.altinn.cloud/ttd/apps-test",
+        "endpoint": "https://webhook.site/a637c7c2-4c9c-419b-8ea5-49c8ae84126e",
+        "includeSubunits": false
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: await bru.runRequest("Token generator/subscribe (ttd)");
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

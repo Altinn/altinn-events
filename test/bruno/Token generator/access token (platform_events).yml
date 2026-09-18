@@ -1,0 +1,40 @@
+info:
+  name: access token (platform_events)
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{TokenGeneratorBaseUrl}}/api/GetPlatformAccessToken?env={{Environment}}&app=events"
+  params:
+    - name: env
+      value: "{{Environment}}"
+      type: query
+    - name: app
+      value: events
+      type: query
+  auth:
+    type: basic
+    username: "{{TokenGeneratorUserName}}"
+    password: "{{TokenGeneratorPassword}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        let data = res.getBody();
+
+        // Check if the response contains a valid token
+        if (!data || data.trim() === '') {
+          console.error('Failed to retrieve a valid platform access token');
+          return;
+        }
+
+        bru.setEnvVar("AccessToken", data);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

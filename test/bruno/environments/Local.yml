@@ -1,0 +1,13 @@
+variables:
+  - name: Environment
+    value: local
+  - name: BaseUrl
+    value: http://localhost:5080
+  - name: PlatformHostUrl
+    value: "{{BaseUrl}}"
+  - name: AuthN_UserId
+    value: "20734816"
+  - name: AuthN_PartyId
+    value: "50884402"
+  - name: AuthN_Pid
+    value: "03827099790"
