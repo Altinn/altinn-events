@@ -8,13 +8,11 @@ using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platform.Events.Wolverine.Commands;
 using Altinn.Platform.Events.Wolverine.Publishers;
 
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
-using Wolverine;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -28,7 +26,6 @@ namespace Altinn.Platform.Events.Services
         private readonly IEventsQueueClient _queueClient;
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
-        private readonly IMessageBus _bus;
         private readonly ILogger _logger;
         private readonly IRegistrationEventPublisher _registrationPublisher;
 
@@ -41,7 +38,6 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
-            IMessageBus bus,
             ILogger<EventsService> logger,
             IRegistrationEventPublisher registrationPublisher)
         {
@@ -50,7 +46,6 @@ namespace Altinn.Platform.Events.Services
             _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
-            _bus = bus;
             _logger = logger;
             _registrationPublisher = registrationPublisher;
         }
@@ -161,9 +156,6 @@ namespace Altinn.Platform.Events.Services
             {
                 await _traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent);
             }
-            
-            string payload = cloudEvent.Serialize();
-            await _bus.SendAsync(new InboundEventCommand(payload));
         }
 
         /// <summary>
