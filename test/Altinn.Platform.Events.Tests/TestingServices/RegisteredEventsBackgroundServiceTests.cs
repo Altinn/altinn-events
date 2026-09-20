@@ -62,7 +62,7 @@ public class RegisteredEventsBackgroundServiceTests
 
         // Act
         await target.StartAsync(CancellationToken.None);
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         await target.StopAsync(CancellationToken.None);
 
         // Assert
@@ -97,7 +97,7 @@ public class RegisteredEventsBackgroundServiceTests
 
         // Act
         await target.StartAsync(CancellationToken.None);
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
         await target.StopAsync(CancellationToken.None);
 
         // Assert
@@ -143,7 +143,7 @@ public class RegisteredEventsBackgroundServiceTests
 
         // Act
         await target.StartAsync(CancellationToken.None);
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
         await target.StopAsync(CancellationToken.None);
 
         // Assert
