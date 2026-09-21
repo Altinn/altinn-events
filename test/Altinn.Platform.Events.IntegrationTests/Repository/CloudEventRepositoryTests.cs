@@ -31,23 +31,26 @@ public class CloudEventRepositoryTests(IntegrationTestContainersFixture fixture)
             await repo.CreateEvent(cloudEvent.Serialize(), null, TestContext.Current.CancellationToken); // register the event first
 
             UnitOfWork unitOfWork = await unitOfWorkRepository.StartUnitOfWork();
+            ClaimedEvent? claimed = null;
             try
             {
-                ClaimedEvent? claimed = await repo.ClaimRegisteredEventAsync(unitOfWork, TestContext.Current.CancellationToken);
+                claimed = await repo.ClaimRegisteredEventAsync(unitOfWork, TestContext.Current.CancellationToken);
                 Assert.NotNull(claimed);
                 Assert.Equal(cloudEvent.Id, claimed!.CloudEvent.Id);
 
                 await repo.MarkEventProcessedAsync(unitOfWork, claimed.SequenceNo, TestContext.Current.CancellationToken);
                 await unitOfWorkRepository.CommitUnitOfWork(unitOfWork);
 
-                string? status = await PostgresTestUtils.GetEventStatusAsync(_fixture.PostgresConnectionString, claimed.SequenceNo);
-                Assert.Equal("processed", status);
             }
             catch
             {
                 await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
                 throw;
             }
+
+            // Assert that the event is marked as processed in the database
+            string? status = await PostgresTestUtils.GetEventStatusAsync(_fixture.PostgresConnectionString, claimed!.SequenceNo);
+            Assert.Equal("processed", status);
         }
     }
 }
