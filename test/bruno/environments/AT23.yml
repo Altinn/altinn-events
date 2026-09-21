@@ -1,0 +1,15 @@
+variables:
+  - name: Environment
+    value: at23
+  - name: BaseUrl
+    value: https://platform.{{Environment}}.altinn.cloud
+  - name: PlatformHostUrl
+    value: "{{BaseUrl}}"
+  - name: AuthN_UserId
+    value: "21009563"
+  - name: AuthN_PartyId
+    value: "50620121"
+  - name: AuthN_Pid
+    value: "03827099790"
+  - secret: true
+    name: AccessToken

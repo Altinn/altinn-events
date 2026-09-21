@@ -1,0 +1,40 @@
+info:
+  name: party id identified main unit
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{PlatformHostUrl}}/events/api/v1/outbound"
+  headers:
+    - name: Content-Type
+      value: application/cloudevents+json
+    - name: PlatformAccessToken
+      value: "{{AccessToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "id": "{{$randomUUID}}",
+        "time": "{{$isoTimestamp}}",
+        "type": "app.instance.created",
+        "source": "https://ttd.apps.at22.altinn.cloud/ttd/apps-test/instances/51326198/428a4575-2c04-4400-89a3-1aaadd2579cd",
+        "resource": "urn:altinn:resource:app_ttd_apps-test",
+        "resourceinstance": "51326198/428a4575-2c04-4400-89a3-1aaadd2579cd",
+        "subject": "/party/51326198",
+        "specversion": "1.0",
+        "alternativesubject": "/organization/314249879"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: await bru.runRequest("Token generator/access token (platform_events)");
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

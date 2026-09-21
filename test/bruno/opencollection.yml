@@ -1,0 +1,24 @@
+opencollection: 1.0.0
+
+info:
+  name: Events
+
+request:
+  auth:
+    type: bearer
+    token: "{{BearerToken}}"
+  variables:
+    - name: TokenGeneratorUserName
+      value: "{{process.env.TOKEN_BASIC_AUTH_USER}}"
+    - name: TokenGeneratorPassword
+      value: "{{process.env.TOKEN_BASIC_AUTH_PW}}"
+    - name: TokenGeneratorBaseUrl
+      value: "{{process.env.TOKEN_URL}}"
+    - name: AltinnSlackWebHook
+      value: "{{process.env.ALTINN_SLACK_WEBHOOK}}"
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

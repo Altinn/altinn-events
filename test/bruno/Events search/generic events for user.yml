@@ -1,0 +1,34 @@
+info:
+  name: generic events for user
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{PlatformHostUrl}}/events/api/v1/events?resource=urn:altinn:resource:app_ttd_apps-test&after=7955e214-3476-4a87-ba84-f835bf58be13&size=10"
+  headers:
+    - name: Altinn-AlternativeSubject
+      value: /person/{{AuthN_Pid}}
+  params:
+    - name: resource
+      value: urn:altinn:resource:app_ttd_apps-test
+      type: query
+    - name: after
+      value: 7955e214-3476-4a87-ba84-f835bf58be13
+      type: query
+    - name: size
+      value: "10"
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: await bru.runRequest("Token generator/subscribe (user)");
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
