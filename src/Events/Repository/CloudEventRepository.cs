@@ -21,7 +21,7 @@ namespace Altinn.Platform.Events.Repository;
 [ExcludeFromCodeCoverage]
 public class CloudEventRepository : ICloudEventRepository
 {
-    private readonly string _insertEventSql = @"insert into events.events(cloudevent, idempotencykey) VALUES ($1, $2)
+    private readonly string _insertEventSql = @"insert into events.events(cloudevent, idempotencykey, status) VALUES ($1, $2, 'registered')
             ON CONFLICT DO NOTHING
             RETURNING sequenceno";
 

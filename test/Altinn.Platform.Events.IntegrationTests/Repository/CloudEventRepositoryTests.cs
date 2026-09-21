@@ -40,7 +40,6 @@ public class CloudEventRepositoryTests(IntegrationTestContainersFixture fixture)
 
                 await repo.MarkEventProcessedAsync(unitOfWork, claimed.SequenceNo, TestContext.Current.CancellationToken);
                 await unitOfWorkRepository.CommitUnitOfWork(unitOfWork);
-
             }
             catch
             {
