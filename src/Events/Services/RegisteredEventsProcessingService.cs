@@ -50,6 +50,7 @@ public class RegisteredEventsProcessingService(
         try
         {
             claimedEvent = await cloudEventRepository.ClaimRegisteredEventAsync(unitOfWork, cancellationToken);
+
             activity?.SetTag("Claimed", claimedEvent != null);
 
             if (claimedEvent == null)
@@ -58,6 +59,9 @@ public class RegisteredEventsProcessingService(
                 return false;
             }
 
+            // saves the current state of the transaction after claiming the event, so that we can rollback to this point if processing fails
+            await unitOfWorkRepository.SaveUnitOfWork(unitOfWork, "event_claimed");
+            
             activity?.SetTag("EventId", claimedEvent.CloudEvent.Id);
 
             await outboundService.PostOutbound(claimedEvent.CloudEvent, cancellationToken, true);
@@ -77,12 +81,15 @@ public class RegisteredEventsProcessingService(
                     e.Message);
             }
 
+
             if (claimedEvent == null)
             {
                 await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
                 return false;
             }
 
+            await unitOfWorkRepository.RollbackUnitOfWorkToSavepoint(unitOfWork, "event_claimed");
+            
             try
             {
                 // Record the failed attempt so retrycount/lastretried are updated and the
