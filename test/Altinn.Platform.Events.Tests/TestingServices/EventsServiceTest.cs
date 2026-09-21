@@ -546,8 +546,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            bool actual = await eventsService.Save(GetCloudEvent(), It.IsAny<Guid?>(), CancellationToken.None);
-
+            bool actual = await eventsService.Save(GetCloudEvent(), It.IsAny<Guid?>(), TestContext.Current.CancellationToken);
+            
             // Assert
             Assert.True(actual);
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), It.Is<Guid?>(id => !id.HasValue), TestContext.Current.CancellationToken), Times.Once);
@@ -633,7 +633,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             cloudEvent.SetAttributeFromString("resource", "urn:altinn:resource:altinnapp.ttd.apps-test");
 
             // Act
-            await eventsService.Save(cloudEvent, null, CancellationToken.None);
+            await eventsService.Save(cloudEvent, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(capturedEvent);
@@ -672,7 +672,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             cloudEvent.SetAttributeFromString("resource", "urn:altinn:resource:some-other-resource");
 
             // Act
-            await eventsService.Save(cloudEvent, null, CancellationToken.None);
+            await eventsService.Save(cloudEvent, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(capturedEvent);
@@ -704,7 +704,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Act & Assert
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => eventsService.Save(GetCloudEvent(), null, CancellationToken.None));
+                () => eventsService.Save(GetCloudEvent(), null, TestContext.Current.CancellationToken));
 
             repositoryMock.Verify(r => r.CreateEvent(It.IsAny<string>(), It.Is<Guid?>(id => !id.HasValue), TestContext.Current.CancellationToken), Times.Once);
             logger.Verify(
@@ -880,7 +880,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             cloudEvent.SetAttributeFromString("resource", "urn:altinn:resource:altinnapp.ttd.apps-test");
 
             // Act
-            await eventsService.Save(cloudEvent, null, CancellationToken.None);
+            await eventsService.Save(cloudEvent, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(capturedEvent);
@@ -937,7 +937,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             };
 
             // Act
-            await eventsService.Save(cloudEvent, null, CancellationToken.None);
+            await eventsService.Save(cloudEvent, null, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(capturedEvent);
@@ -969,7 +969,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             CloudEvent cloudEvent = GetCloudEvent();
 
             // Act
-            await eventsService.Save(cloudEvent, Guid.NewGuid(), CancellationToken.None);
+            await eventsService.Save(cloudEvent, Guid.NewGuid(), TestContext.Current.CancellationToken);
 
             // Assert
             traceLogServiceMock.Verify(
@@ -1006,7 +1006,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             var idempotencyKey = Guid.NewGuid();
 
             // Act
-            await eventsService.Save(cloudEvent, idempotencyKey, CancellationToken.None);
+            await eventsService.Save(cloudEvent, idempotencyKey, TestContext.Current.CancellationToken);
 
             // Assert
             traceLogServiceMock.Verify(
