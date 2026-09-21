@@ -192,12 +192,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Scenario:
         ///   Outbound delivery succeeds, but marking the event processed throws.
         /// Expected result:
-        ///   The unit of work is rolled back rather than committed, and false is returned.
+        ///   The failed attempt is recorded via MarkEventRetryAsync and the unit of work is
+        ///   committed rather than rolled back, and false is returned.
         /// Success criteria:
-        ///   RollbackUnitOfWork is called once; CommitUnitOfWork is never called.
+        ///   MarkEventRetryAsync and CommitUnitOfWork are called once each; RollbackUnitOfWork is never called.
         /// </summary>
         [Fact]
-        public async Task TryProcessEvent_MarkEventProcessedThrows_RollsBackAndReturnsFalse()
+        public async Task TryProcessEvent_MarkEventProcessedThrows_MarksRetryAndCommits()
         {
             // Arrange
             ClaimedEvent claimedEvent = new()
@@ -225,8 +226,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.False(result);
-            _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
-            _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(_unitOfWork), Times.Once);
+            _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<CancellationToken>()), Times.Once);
+            _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(_unitOfWork), Times.Once);
+            _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
         }
 
         private RegisteredEventsProcessingService GetTarget()

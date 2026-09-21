@@ -77,10 +77,34 @@ public class RegisteredEventsProcessingService(
                     e.Message);
             }
 
-            // Retry tracking (retrycount/lastretried/retryExhausted) is postponed; for now a
-            // full rollback simply releases the claim, leaving the event as 'registered' so
-            // it (or another task) can retry it on a future poll.
-            await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
+            if (claimedEvent == null)
+            {
+                await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
+                return false;
+            }
+
+            try
+            {
+                // Record the failed attempt so retrycount/lastretried are updated and the
+                // event is marked 'retryExhausted' once MaxRetryCount is reached; otherwise
+                // it stays 'registered' so it (or another task) can retry it on a future poll.
+                await cloudEventRepository.MarkEventRetryAsync(unitOfWork, claimedEvent.SequenceNo, cancellationToken);
+                await unitOfWorkRepository.CommitUnitOfWork(unitOfWork);
+            }
+            catch (Exception retryEx)
+            {
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    logger.LogError(
+                        retryEx,
+                        "// RegisteredEventsProcessingService // TryProcessEvent // Failed to mark retry for event {EventId}: {ErrorMessage}",
+                        claimedEvent.CloudEvent?.Id,
+                        retryEx.Message);
+                }
+
+                await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
+            }
+
             return false;
         }
     }
