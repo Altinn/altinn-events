@@ -46,6 +46,7 @@ public class RegisteredEventsProcessingService(
         }
 
         ClaimedEvent? claimedEvent = null;
+        bool eventClaimedSavepointCreated = false;
 
         try
         {
@@ -61,6 +62,7 @@ public class RegisteredEventsProcessingService(
 
             // saves the current state of the transaction after claiming the event, so that we can rollback to this point if processing fails
             await unitOfWorkRepository.SaveUnitOfWork(unitOfWork, "event_claimed");
+            eventClaimedSavepointCreated = true;
             
             activity?.SetTag("EventId", claimedEvent.CloudEvent.Id);
 
@@ -87,8 +89,8 @@ public class RegisteredEventsProcessingService(
                 return false;
             }
 
-            await unitOfWorkRepository.RollbackUnitOfWorkToSavepoint(unitOfWork, "event_claimed");
-            
+            await RollbackAfterProcessingFailure(unitOfWork, eventClaimedSavepointCreated);
+
             try
             {
                 // Record the failed attempt so retrycount/lastretried are updated and the
@@ -112,6 +114,32 @@ public class RegisteredEventsProcessingService(
             }
 
             return false;
+        }
+    }
+
+    private async Task RollbackAfterProcessingFailure(
+    UnitOfWork unitOfWork,
+    bool eventClaimedSavepointCreated)
+    {
+        if (!eventClaimedSavepointCreated)
+        {
+            await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
+            return;
+        }
+
+        try
+        {
+            await unitOfWorkRepository.RollbackUnitOfWorkToSavepoint(
+                unitOfWork,
+                "event_claimed");
+        }
+        catch (Exception rollbackException)
+        {
+            logger.LogError(
+                rollbackException,
+                "// RegisteredEventsProcessingService // TryProcessEvent // Failed to roll back to the event_claimed savepoint.");
+
+            await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
         }
     }
 }
