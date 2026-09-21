@@ -81,7 +81,6 @@ public class RegisteredEventsProcessingService(
                     e.Message);
             }
 
-
             if (claimedEvent == null)
             {
                 await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
