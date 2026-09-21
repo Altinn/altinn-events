@@ -27,8 +27,10 @@ public class EventsProcessingSettings
     /// the event is flagged as <c>retryExhausted</c> and no longer retried.
     /// </summary>
     /// <remarks>
-    /// Not yet enforced — retry tracking (<see cref="Repository.ICloudEventRepository.MarkEventRetryAsync"/>)
-    /// is not currently called by <see cref="Services.RegisteredEventsProcessingService"/>.
+    /// Enforced via <see cref="Repository.ICloudEventRepository.MarkEventRetryAsync"/>, which is
+    /// called by <see cref="Services.RegisteredEventsProcessingService"/> whenever processing a
+    /// claimed event fails; the retry count is incremented and the event is marked
+    /// <c>retryExhausted</c> once it reaches this limit.
     /// </remarks>
     public int MaxRetryCount { get; set; } = 5;
 }
