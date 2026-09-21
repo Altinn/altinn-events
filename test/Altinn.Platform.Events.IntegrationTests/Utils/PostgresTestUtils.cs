@@ -46,4 +46,43 @@ public static class PostgresTestUtils
             maxAttempts,
             delayMs);
     }
+
+    /// <summary>
+    /// Retrieves the processing status ('registered', 'processed', or 'retryExhausted') for the
+    /// event with the given sequence number, directly from the database, bypassing the repository
+    /// layer. Intended for asserting the outcome of claim/process/retry flows in integration tests.
+    /// </summary>
+    /// <param name="connectionString">The PostgreSQL connection string.</param>
+    /// <param name="sequenceNo">The sequence number of the event to look up.</param>
+    /// <returns>The event's status, or null if no matching row was found.</returns>
+    public static async Task<string?> GetEventStatusAsync(string connectionString, long sequenceNo)
+    {
+        await using var dataSource = NpgsqlDataSource.Create(connectionString);
+
+        await using var command = dataSource.CreateCommand(
+            "SELECT status FROM events.events WHERE sequenceno = $1");
+        command.Parameters.AddWithValue(sequenceNo);
+
+        var result = await command.ExecuteScalarAsync();
+        return result as string;
+    }
+
+    /// <summary>
+    /// Retrieves the retry count for the event with the given sequence number, directly from the
+    /// database. Useful for asserting that MarkEventRetryAsync incremented the count as expected.
+    /// </summary>
+    /// <param name="connectionString">The PostgreSQL connection string.</param>
+    /// <param name="sequenceNo">The sequence number of the event to look up.</param>
+    /// <returns>The event's retry count, or null if no matching row was found.</returns>
+    public static async Task<int?> GetEventRetryCountAsync(string connectionString, long sequenceNo)
+    {
+        await using var dataSource = NpgsqlDataSource.Create(connectionString);
+
+        await using var command = dataSource.CreateCommand(
+            "SELECT retrycount FROM events.events WHERE sequenceno = $1");
+        command.Parameters.AddWithValue(sequenceNo);
+
+        var result = await command.ExecuteScalarAsync();
+        return result is int retryCount ? retryCount : null;
+    }
 }

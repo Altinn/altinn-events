@@ -17,8 +17,9 @@ public interface ICloudEventRepository
     /// </summary>
     /// <param name="cloudEvent">The json serialized cloud event</param>
     /// <param name="idempotencyKey">The idempotency key for the request</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <returns>true if the cloud event was created successfully, otherwise false</returns>
-    Task<bool> CreateEvent(string cloudEvent, Guid? idempotencyKey);
+    Task<bool> CreateEvent(string cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken);
 
     /// <summary>
     /// Calls a function to retrieve app cloud events based on query params

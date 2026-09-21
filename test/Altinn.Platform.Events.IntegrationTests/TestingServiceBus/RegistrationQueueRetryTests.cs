@@ -69,7 +69,7 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
         // Arrange - Create mock repository that simulates database timeouts
         int attemptCount = 0;
         var mockRepository = new Mock<ICloudEventRepository>();
-        mockRepository.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<Guid?>()))
+        mockRepository.Setup(r => r.CreateEvent(It.IsAny<string>(), It.IsAny<Guid?>(), TestContext.Current.CancellationToken))
             .Callback<string, Guid?>((_, _) => Interlocked.Increment(ref attemptCount))
             .ThrowsAsync(new TaskCanceledException("Simulated database timeout"));
 

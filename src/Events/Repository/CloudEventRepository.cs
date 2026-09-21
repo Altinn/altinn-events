@@ -48,13 +48,13 @@ public class CloudEventRepository : ICloudEventRepository
     }
 
     /// <inheritdoc/>
-    public async Task<bool> CreateEvent(string cloudEvent, Guid? idempotencyKey)
+    public async Task<bool> CreateEvent(string cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken)
     {
         await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_insertEventSql);
         pgcom.Parameters.AddWithValue(NpgsqlDbType.Jsonb, cloudEvent);
         pgcom.Parameters.AddWithValue(NpgsqlDbType.Uuid, idempotencyKey.HasValue ? idempotencyKey.Value : DBNull.Value);
 
-        object result = await pgcom.ExecuteScalarAsync();
+        object result = await pgcom.ExecuteScalarAsync(cancellationToken);
 
         // A row is returned only when the insert actually happened.
         // ON CONFLICT DO NOTHING (with no explicit target) suppresses errors from
