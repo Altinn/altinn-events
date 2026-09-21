@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.IntegrationTests.Infrastructure;
 using Altinn.Platform.Events.IntegrationTests.Utils;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,6 +75,36 @@ public static class TestFactoryExtensions
             }
 
             services.AddSingleton(implementationFactory);
+        });
+
+        return factory;
+    }
+
+    /// <summary>
+    /// Re-enables the DB-driven <c>RegisteredEventsBackgroundService</c> for this factory instance.
+    /// The factory disables it globally (<c>TaskCount = 0</c>) to avoid interfering with tests that
+    /// don't expect background polling/claiming of registered events; use this for end-to-end tests
+    /// that rely on the background service actually delivering registered events to outbound.
+    /// </summary>
+    /// <param name="factory">The factory to configure.</param>
+    /// <param name="taskCount">The number of concurrent polling tasks to run. Defaults to 1.</param>
+    /// <param name="primaryTaskIdleDelaySeconds">
+    /// The idle delay, in seconds, for the primary polling task when no event was available to claim.
+    /// Kept short by default to minimize added test time.
+    /// </param>
+    /// <returns>The factory for method chaining.</returns>
+    public static IntegrationTestWebApplicationFactory EnableRegisteredEventsProcessing(
+        this IntegrationTestWebApplicationFactory factory,
+        int taskCount = 1,
+        int primaryTaskIdleDelaySeconds = 1)
+    {
+        factory.ConfigureTestServices(services =>
+        {
+            services.PostConfigure<EventsProcessingSettings>(o =>
+            {
+                o.TaskCount = taskCount;
+                o.PrimaryTaskIdleDelaySeconds = primaryTaskIdleDelaySeconds;
+            });
         });
 
         return factory;
