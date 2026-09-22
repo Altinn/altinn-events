@@ -477,6 +477,96 @@ public class RegisteredEventsProcessingServiceTests
         _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
     }
 
+    /// <summary>
+    /// Scenario:
+    ///   TryProcessEvent claims a registered event, but SaveUnitOfWork (creating the
+    ///   'event_claimed' savepoint) throws before outbound delivery is even attempted.
+    /// Expected result:
+    ///   Since no savepoint was created, the failure falls back to a single full rollback;
+    ///   retry accounting is not attempted because RollbackAfterProcessingFailure short-circuits
+    ///   (eventClaimedSavepointCreated is false).
+    /// Success criteria:
+    ///   RollbackUnitOfWork is called once; MarkEventRetryAsync and CommitUnitOfWork are never called.
+    /// </summary>
+    [Fact]
+    public async Task TryProcessEvent_SaveUnitOfWorkThrows_RollsBackAndReturnsFalse()
+    {
+        // Arrange
+        ClaimedEvent claimedEvent = new()
+        {
+            SequenceNo = 21,
+            CloudEvent = GetCloudEvent()
+        };
+
+        _cloudEventRepositoryMock
+            .Setup(r => r.ClaimRegisteredEventAsync(_unitOfWork, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(claimedEvent);
+
+        _unitOfWorkRepositoryMock
+            .Setup(u => u.SaveUnitOfWork(_unitOfWork, "event_claimed"))
+            .ThrowsAsync(new InvalidOperationException("Failed to create savepoint"));
+
+        var target = GetTarget();
+
+        // Act
+        bool result = await target.TryProcessEvent(CancellationToken.None);
+
+        // Assert
+        Assert.False(result);
+        _outboundServiceMock.Verify(o => o.PostOutbound(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
+        _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(_unitOfWork), Times.Once);
+        _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWorkToSavepoint(It.IsAny<UnitOfWork>(), It.IsAny<string>()), Times.Never);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Scenario:
+    ///   TryProcessEvent claims a registered event, the savepoint is created, and outbound
+    ///   delivery fails, but the subsequent RollbackUnitOfWorkToSavepoint call itself throws.
+    /// Expected result:
+    ///   RollbackAfterProcessingFailure catches the savepoint-rollback failure, logs it, and
+    ///   falls back to a full rollback instead. Retry accounting is skipped entirely since the
+    ///   transaction state could not be safely restored to attempt it.
+    /// Success criteria:
+    ///   RollbackUnitOfWorkToSavepoint is attempted once; RollbackUnitOfWork (full) is called
+    ///   once; MarkEventRetryAsync and CommitUnitOfWork are never called.
+    /// </summary>
+    [Fact]
+    public async Task TryProcessEvent_RollbackUnitOfWorkToSavepointThrows_FallsBackToFullRollback()
+    {
+        // Arrange
+        ClaimedEvent claimedEvent = new()
+        {
+            SequenceNo = 22,
+            CloudEvent = GetCloudEvent()
+        };
+
+        _cloudEventRepositoryMock
+            .Setup(r => r.ClaimRegisteredEventAsync(_unitOfWork, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(claimedEvent);
+
+        _outboundServiceMock
+            .Setup(o => o.PostOutbound(claimedEvent.CloudEvent, It.IsAny<CancellationToken>(), true))
+            .ThrowsAsync(new InvalidOperationException("Outbound delivery failed"));
+
+        _unitOfWorkRepositoryMock
+            .Setup(u => u.RollbackUnitOfWorkToSavepoint(_unitOfWork, "event_claimed"))
+            .ThrowsAsync(new InvalidOperationException("Failed to roll back to savepoint"));
+
+        var target = GetTarget();
+
+        // Act
+        bool result = await target.TryProcessEvent(CancellationToken.None);
+
+        // Assert
+        Assert.False(result);
+        _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWorkToSavepoint(_unitOfWork, "event_claimed"), Times.Once);
+        _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(_unitOfWork), Times.Once);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
+    }
+
     private void VerifyErrorLogged(Times times)
     {
         _loggerMock.Verify(
