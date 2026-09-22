@@ -89,7 +89,12 @@ public class RegisteredEventsProcessingService(
                 return false;
             }
 
-            await RollbackAfterProcessingFailure(unitOfWork, eventClaimedSavepointCreated);
+            var rollbackSuccessful = await RollbackAfterProcessingFailure(unitOfWork, eventClaimedSavepointCreated);
+
+            if (!rollbackSuccessful)
+            {
+                return false;
+            }
 
             try
             {
@@ -117,14 +122,20 @@ public class RegisteredEventsProcessingService(
         }
     }
 
-    private async Task RollbackAfterProcessingFailure(
+    /// <summary>
+    /// Rolls back the unit of work after a processing failure, either to the savepoint created after claiming the event or fully if no savepoint was created.
+    /// </summary>
+    /// <param name="unitOfWork">The unit of work to roll back.</param>
+    /// <param name="eventClaimedSavepointCreated">Indicates whether a savepoint was created after claiming the event.</param>
+    /// <returns>True if rollback to the savepoint was successful, false otherwise</returns>
+    private async Task<bool> RollbackAfterProcessingFailure(
     UnitOfWork unitOfWork,
     bool eventClaimedSavepointCreated)
     {
         if (!eventClaimedSavepointCreated)
         {
             await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
-            return;
+            return false;
         }
 
         try
@@ -132,6 +143,7 @@ public class RegisteredEventsProcessingService(
             await unitOfWorkRepository.RollbackUnitOfWorkToSavepoint(
                 unitOfWork,
                 "event_claimed");
+            return true;
         }
         catch (Exception rollbackException)
         {
@@ -140,6 +152,7 @@ public class RegisteredEventsProcessingService(
                 "// RegisteredEventsProcessingService // TryProcessEvent // Failed to roll back to the event_claimed savepoint.");
 
             await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
+            return false;
         }
     }
 }
