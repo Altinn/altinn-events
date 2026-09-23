@@ -35,7 +35,6 @@ public static class WolverineServiceCollectionExtensions
                 opts.ConfigureEventsDefaults(env, wolverineSettings.ServiceBusConnectionString);
 
                 AddRegistrationPublisher(wolverineSettings, opts);
-                AddInboundPublisher(wolverineSettings, opts);
                 AddOutboundPublisher(wolverineSettings, opts);
                 AddValidationPublisher(wolverineSettings, opts);
 
@@ -59,13 +58,6 @@ public static class WolverineServiceCollectionExtensions
 
         opts.PublishMessage<RegisterEventCommand>()
             .ToAzureServiceBusQueue(settings.RegistrationQueueName)
-            .SendInline();
-    }
-
-    private static void AddInboundPublisher(WolverineSettings settings, WolverineOptions opts)
-    {
-        opts.PublishMessage<InboundEventCommand>()
-            .ToAzureServiceBusQueue(settings.InboundQueueName)
             .SendInline();
     }
 
