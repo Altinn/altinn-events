@@ -8,7 +8,7 @@ public class EventsProcessingSettings
     /// <summary>
     /// The number of concurrent polling tasks to run.
     /// </summary>
-    public int TaskCount { get; set; } = 1;
+    public int TaskCount { get; set; } = 30;
 
     /// <summary>
     /// The delay, in seconds, between polling iterations for the primary (first-started) task
