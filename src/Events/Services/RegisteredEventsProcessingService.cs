@@ -89,14 +89,13 @@ public class RegisteredEventsProcessingService(
                 return false;
             }
 
-            var rollbackSuccessful = await RollbackAfterProcessingFailure(unitOfWork, eventClaimedSavepointCreated);
+            var wasRolledBackToSavepoint = await RollbackAfterProcessingFailure(unitOfWork, eventClaimedSavepointCreated);
 
-            if (!rollbackSuccessful)
+            if (wasRolledBackToSavepoint)
             {
-                return false;
+                await MarkRetryAndCommit(unitOfWork, claimedEvent, cancellationToken);
             }
 
-            await MarkRetryAndCommit(unitOfWork, claimedEvent, cancellationToken);
             return false;
         }
     }
