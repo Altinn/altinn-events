@@ -1,0 +1,43 @@
+info:
+  name: access token (ttd_apps-test)
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{TokenGeneratorBaseUrl}}/api/GetPlatformAccessToken?env={{Environment}}&app=apps-test&org=ttd"
+  params:
+    - name: env
+      value: "{{Environment}}"
+      type: query
+    - name: app
+      value: apps-test
+      type: query
+    - name: org
+      value: ttd
+      type: query
+  auth:
+    type: basic
+    username: "{{TokenGeneratorUserName}}"
+    password: "{{TokenGeneratorPassword}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        let data = res.getBody();
+
+        // Check if the response contains a valid token
+        if (!data || data.trim() === '') {
+          console.error('Failed to retrieve a valid platform access token');
+          return;
+        }
+
+        bru.setEnvVar("AccessToken", data);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

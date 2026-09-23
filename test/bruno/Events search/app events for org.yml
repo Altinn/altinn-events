@@ -1,0 +1,25 @@
+info:
+  name: app events for org
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{PlatformHostUrl}}/events/api/v1/app/ttd/apps-test?after=7955e214-3476-4a87-ba84-f835bf58be13"
+  params:
+    - name: after
+      value: 7955e214-3476-4a87-ba84-f835bf58be13
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: await bru.runRequest("Token generator/subscribe (ttd)");
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

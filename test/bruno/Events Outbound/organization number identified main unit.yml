@@ -1,0 +1,39 @@
+info:
+  name: organization number identified main unit
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{PlatformHostUrl}}/events/api/v1/outbound"
+  headers:
+    - name: Content-Type
+      value: application/cloudevents+json
+    - name: PlatformAccessToken
+      value: "{{AccessToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "id": "{{$randomUUID}}",
+        "time": "{{$isoTimestamp}}",
+        "type": "no.altinn.correspondence.correspondencereceiverneverread",
+        "source": "https://platform.tt02.altinn.no/correspondence/api/v1/correspondence",
+        "subject": "urn:altinn:organization:identifier-no:314249879",
+        "resource": "urn:altinn:resource:nabovarsel",
+        "specversion": "1.0",
+        "resourceinstance": "019ce781-a5c0-7d03-8f51-3e7dda66dd74"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: await bru.runRequest("Token generator/access token (platform_events)");
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
