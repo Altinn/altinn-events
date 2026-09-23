@@ -134,6 +134,7 @@ public class CloudEventRepositoryTests(IntegrationTestContainersFixture fixture)
                 for (int i = 0; i < eventCount; i++)
                 {
                     var cloudEvent = CloudEventTestData.CreateTestCloudEvent();
+                    Assert.NotNull(cloudEvent.Id);
                     expectedIds.Add(cloudEvent.Id);
                     await seedRepo.CreateEvent(cloudEvent.Serialize(), null, TestContext.Current.CancellationToken);
                 }
