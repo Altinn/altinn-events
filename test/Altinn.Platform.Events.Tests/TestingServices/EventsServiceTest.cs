@@ -587,7 +587,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   Repository CreateEvent is called once
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_ValidCloudEvent_SavesEvent()
+        public async Task Save_ValidCloudEvent_SavesEvent()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -606,12 +606,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Scenario:
         ///   Save is called with an AltinnApp cloud event with dot notation in resource
         /// Expected result:
-        ///   Resource format is corrected to use underscore, event is saved and published
+        ///   Resource format is corrected to use underscore, event is saved
         /// Success criteria:
         ///   Resource attribute is changed from altinnapp. to app_{org}_{app} format
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_AltinnAppEventWithDotNotation_ResourceFormatCorrected()
+        public async Task Save_AltinnAppEventWithDotNotation_ResourceFormatCorrected()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -645,12 +645,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Scenario:
         ///   Save is called with a non-AltinnApp cloud event
         /// Expected result:
-        ///   Resource format is unchanged, event is saved and published
+        ///   Resource format is unchanged, event is saved
         /// Success criteria:
         ///   Resource attribute remains unchanged
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_NonAltinnAppEvent_ResourceFormatUnchanged()
+        public async Task Save_NonAltinnAppEvent_ResourceFormatUnchanged()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -689,7 +689,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         ///   InvalidOperationException is thrown
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_SaveFails_ExceptionThrown()
+        public async Task Save_SaveFails_ExceptionThrown()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -858,7 +858,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task SaveAndPublish_AltinnAppEventWithShortPath_OrgAndAppAreNull()
+        public async Task Save_AltinnAppEventWithShortPath_OrgAndAppAreNull()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -915,7 +915,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task SaveAndPublish_NoResourceAttribute_SkipsResourceFormatting()
+        public async Task Save_NoResourceAttribute_SkipsResourceFormatting()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -948,12 +948,12 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Scenario:
         ///   Save is called and the repository reports the event was newly persisted (not a duplicate).
         /// Expected result:
-        ///   The event is serialized and sent to the message bus as an InboundEventCommand.
+        ///   The event is serialized and saved.
         /// Success criteria:
         ///   No duplicate trace log is created.
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_EventPersisted_SavesEvent()
+        public async Task Save_EventPersisted_SavesEvent()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
@@ -980,13 +980,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         /// Scenario:
         ///   Save is called and the repository reports the event as a duplicate (idempotency conflict).
         /// Expected result:
-        ///   The event is still sent to the message bus (at-least-once delivery), but a duplicate-idempotency
+        ///   The event is not saved, but a duplicate-idempotency
         ///   trace log entry is also created.
         /// Success criteria:
         ///   A duplicate-idempotency trace log entry is created once.
         /// </summary>
         [Fact]
-        public async Task SaveAndPublish_DuplicateIdempotencyKey_StillPublishesToQueue_LogsDuplicate()
+        public async Task Save_DuplicateIdempotencyKey_StillSavesEvent_LogsDuplicate()
         {
             // Arrange
             Mock<ICloudEventRepository> repositoryMock = new();
