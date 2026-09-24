@@ -89,9 +89,7 @@ public class RegisteredEventsProcessingService(
                 return false;
             }
 
-            var wasRolledBackToSavepoint = await RollbackAfterProcessingFailure(unitOfWork, eventClaimedSavepointCreated);
-
-            if (wasRolledBackToSavepoint)
+            if (await TryRollbackToSavepointForRetry(unitOfWork, eventClaimedSavepointCreated))
             {
                 await MarkRetryAndCommit(unitOfWork, claimedEvent, cancellationToken);
             }
@@ -106,7 +104,7 @@ public class RegisteredEventsProcessingService(
     /// <param name="unitOfWork">The unit of work to roll back.</param>
     /// <param name="eventClaimedSavepointCreated">Indicates whether a savepoint was created after claiming the event.</param>
     /// <returns>True if rollback to the savepoint was successful, false otherwise</returns>
-    private async Task<bool> RollbackAfterProcessingFailure(
+    private async Task<bool> TryRollbackToSavepointForRetry(
     UnitOfWork unitOfWork,
     bool eventClaimedSavepointCreated)
     {
