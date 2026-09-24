@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Tests.Models;
 
@@ -24,7 +25,7 @@ namespace Altinn.Platform.Events.Tests.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<bool> CreateEvent(string cloudEvent, Guid? idempotencyKey)
+        public Task<bool> CreateEvent(string cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(true);
         }
@@ -239,6 +240,21 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 .ToList();
 
             return Task.FromResult(result);
+        }
+
+        public Task<ClaimedEvent> ClaimRegisteredEventAsync(UnitOfWork unitOfWork, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MarkEventProcessedAsync(UnitOfWork unitOfWork, long sequenceNo, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
     }
 }

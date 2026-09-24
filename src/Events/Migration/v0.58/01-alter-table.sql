@@ -1,0 +1,10 @@
+ALTER TABLE events.events ADD COLUMN IF NOT EXISTS status text NULL DEFAULT 'registered';
+ALTER TABLE events.events ADD COLUMN IF NOT EXISTS retrycount int NULL DEFAULT 0;
+ALTER TABLE events.events ADD COLUMN IF NOT EXISTS lastretried timestamptz NULL;
+
+ALTER TABLE events.events DROP CONSTRAINT IF EXISTS events_status_check;
+ALTER TABLE events.events ADD CONSTRAINT events_status_check
+    CHECK (status IS NULL OR status IN ('registered', 'processed', 'retryExhausted'));
+
+CREATE INDEX IF NOT EXISTS idx_events_status_sequenceno
+    ON events.events (status, sequenceno);
