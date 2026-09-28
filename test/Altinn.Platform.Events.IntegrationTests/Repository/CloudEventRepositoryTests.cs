@@ -51,8 +51,8 @@ public class CloudEventRepositoryTests(IntegrationTestContainersFixture fixture)
             }
 
             // Assert that the event is marked as processed in the database
-            string? status = await PostgresTestUtils.GetEventStatusAsync(_fixture.PostgresConnectionString, claimed!.SequenceNo);
-            Assert.Equal("processed", status);
+            int? status = await PostgresTestUtils.GetEventStatusAsync(_fixture.PostgresConnectionString, claimed!.SequenceNo);
+            Assert.Equal((int)EventStatus.Processed, status);
         }
     }
 
@@ -88,9 +88,9 @@ public class CloudEventRepositoryTests(IntegrationTestContainersFixture fixture)
 
             // First failure: retry count incremented, status remains registered.
             int? retryCount = await PostgresTestUtils.GetEventRetryCountAsync(_fixture.PostgresConnectionString, claimed!.SequenceNo);
-            string? status = await PostgresTestUtils.GetEventStatusAsync(_fixture.PostgresConnectionString, claimed.SequenceNo);
+            int? status = await PostgresTestUtils.GetEventStatusAsync(_fixture.PostgresConnectionString, claimed.SequenceNo);
             Assert.Equal(1, retryCount);
-            Assert.Equal("registered", status);
+            Assert.Equal((int)EventStatus.Registered, status);
 
             // Drive remaining retries directly (bypassing claim, since claim only selects 'registered' rows,
             // and we want to isolate MarkEventRetryAsync behavior at the boundary).
@@ -113,7 +113,7 @@ public class CloudEventRepositoryTests(IntegrationTestContainersFixture fixture)
             status = await PostgresTestUtils.GetEventStatusAsync(_fixture.PostgresConnectionString, claimed.SequenceNo);
 
             Assert.Equal(settings.MaxRetryCount, retryCount);
-            Assert.Equal("retryExhausted", status);
+            Assert.Equal((int)EventStatus.RetryExhausted, status);
         }
     }
 

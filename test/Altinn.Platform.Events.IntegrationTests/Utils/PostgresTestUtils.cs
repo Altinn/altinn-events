@@ -48,14 +48,14 @@ public static class PostgresTestUtils
     }
 
     /// <summary>
-    /// Retrieves the processing status ('registered', 'processed', or 'retryExhausted') for the
+    /// Retrieves the processing status for the
     /// event with the given sequence number, directly from the database, bypassing the repository
     /// layer. Intended for asserting the outcome of claim/process/retry flows in integration tests.
     /// </summary>
     /// <param name="connectionString">The PostgreSQL connection string.</param>
     /// <param name="sequenceNo">The sequence number of the event to look up.</param>
     /// <returns>The event's status, or null if no matching row was found.</returns>
-    public static async Task<string?> GetEventStatusAsync(string connectionString, long sequenceNo)
+    public static async Task<int?> GetEventStatusAsync(string connectionString, long sequenceNo)
     {
         await using var dataSource = NpgsqlDataSource.Create(connectionString);
 
@@ -64,7 +64,7 @@ public static class PostgresTestUtils
         command.Parameters.AddWithValue(sequenceNo);
 
         var result = await command.ExecuteScalarAsync();
-        return result as string;
+        return result is int status ? status : null;
     }
 
     /// <summary>
