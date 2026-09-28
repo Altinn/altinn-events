@@ -1,6 +1,8 @@
 #nullable enable
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Npgsql;
 
 namespace Altinn.Platform.Events.IntegrationTests.Utils;
@@ -64,7 +66,13 @@ public static class PostgresTestUtils
         command.Parameters.AddWithValue(sequenceNo);
 
         var result = await command.ExecuteScalarAsync();
-        return result is int status ? status : null;
+
+        if (result is null or DBNull)
+        {
+            return null;
+        }
+
+        return Convert.ToInt32(result);
     }
 
     /// <summary>

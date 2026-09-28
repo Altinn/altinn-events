@@ -56,5 +56,5 @@ public interface ICloudEventRepository
     /// Persisted to the <c>retryreason</c> column for diagnostics.
     /// </param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, string? retryReason, CancellationToken cancellationToken);
+    Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, string retryReason, CancellationToken cancellationToken);
 }

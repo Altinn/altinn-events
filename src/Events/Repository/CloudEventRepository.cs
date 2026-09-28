@@ -168,7 +168,7 @@ public class CloudEventRepository : ICloudEventRepository
     }
 
     /// <inheritdoc/>
-    public async Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, string? retryReason, CancellationToken cancellationToken)
+    public async Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, string retryReason, CancellationToken cancellationToken)
     {
         NpgsqlCommand pgcom = unitOfWork.Transaction.Connection.CreateCommand();
         pgcom.CommandText = _markEventRetrySql;

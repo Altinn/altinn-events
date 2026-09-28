@@ -8,15 +8,15 @@ public enum EventStatus
     /// <summary>
     /// The event has been registered in the database, but not yet processed.
     /// </summary>
-    Registered,
+    Registered = 1,
 
     /// <summary>
     /// The event has been claimed and processed.
     /// </summary>
-    Processed,
+    Processed = 2,
     
     /// <summary>
     /// The event has reached the maximum number of retry attempts and will not be retried further.
     /// </summary>
-    RetryExhausted
+    RetryExhausted = 3
 }
