@@ -42,7 +42,7 @@ namespace Altinn.Platform.Events.Models
         public string TypeFilter { get; set; }
 
         /// <summary>
-        /// Indicates whether events for sub-units of the subject should be included.
+        /// Indicates whether events for sub-units of the subject should be included. This has an effect only when subjectFilter identifies the actual main unit of the organisation.   
         /// </summary>
         public bool IncludeSubunits { get; set; } = false;
 
