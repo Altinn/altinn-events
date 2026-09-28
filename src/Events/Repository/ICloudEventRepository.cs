@@ -45,9 +45,16 @@ public interface ICloudEventRepository
     Task MarkEventProcessedAsync(UnitOfWork unitOfWork, long sequenceNo, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Increments the given event's retry count, sets <c>lastretried</c>, and flips it to
-    /// <c>retryExhausted</c> if the configured maximum has been reached. Does not commit — the
-    /// caller is responsible for committing (or rolling back) <paramref name="unitOfWork"/>.
+    /// Increments the given event's retry count, sets <c>lastretried</c> and <c>retryreason</c>,
+    /// and flips it to <c>retryExhausted</c> if the configured maximum has been reached. Does not
+    /// commit — the caller is responsible for committing (or rolling back) <paramref name="unitOfWork"/>.
     /// </summary>
-    Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, CancellationToken cancellationToken);
+    /// <param name="unitOfWork">The unit of work to perform the update within.</param>
+    /// <param name="sequenceNo">The sequence number of the event to update.</param>
+    /// <param name="retryReason">
+    /// A short description of why the retry occurred, typically the caught exception's message.
+    /// Persisted to the <c>retryreason</c> column for diagnostics.
+    /// </param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, string? retryReason, CancellationToken cancellationToken);
 }

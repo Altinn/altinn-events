@@ -91,7 +91,7 @@ public class RegisteredEventsProcessingService(
 
             if (await TryRollbackToSavepointForRetry(unitOfWork, eventClaimedSavepointCreated))
             {
-                await MarkRetryAndCommit(unitOfWork, claimedEvent, cancellationToken);
+                await MarkRetryAndCommit(unitOfWork, claimedEvent, e.Message, cancellationToken);
             }
 
             return false;
@@ -132,14 +132,14 @@ public class RegisteredEventsProcessingService(
         }
     }
 
-    private async Task MarkRetryAndCommit(UnitOfWork unitOfWork, ClaimedEvent claimedEvent, CancellationToken cancellationToken)
+    private async Task MarkRetryAndCommit(UnitOfWork unitOfWork, ClaimedEvent claimedEvent, string? retryReason, CancellationToken cancellationToken)
     {
         try
         {
-            // Record the failed attempt so retrycount/lastretried are updated and the
-            // event is marked 'retryExhausted' once MaxRetryCount is reached; otherwise
+            // Record the failed attempt so retrycount/lastretried/retryreason are updated and
+            // the event is marked 'retryExhausted' once MaxRetryCount is reached; otherwise
             // it stays 'registered' so it (or another task) can retry it on a future poll.
-            await cloudEventRepository.MarkEventRetryAsync(unitOfWork, claimedEvent.SequenceNo, cancellationToken);
+            await cloudEventRepository.MarkEventRetryAsync(unitOfWork, claimedEvent.SequenceNo, retryReason, cancellationToken);
             await unitOfWorkRepository.CommitUnitOfWork(unitOfWork);
         }
         catch (Exception retryEx)

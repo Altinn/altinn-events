@@ -10,11 +10,6 @@ namespace Altinn.Platform.Events.Models;
 public class UnitOfWork
 {
     /// <summary>
-    /// Gets the connection associated with this unit of work.
-    /// </summary>
-    public required NpgsqlConnection Connection { get; init; }
-
-    /// <summary>
     /// Gets the transaction associated with this unit of work.
     /// </summary>
     public required NpgsqlTransaction Transaction { get; init; }

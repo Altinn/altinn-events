@@ -21,18 +21,19 @@ namespace Altinn.Platform.Events.Repository;
 [ExcludeFromCodeCoverage]
 public class CloudEventRepository : ICloudEventRepository
 {
-    private readonly string _insertEventSql = @"insert into events.events(cloudevent, idempotencykey, status) VALUES ($1, $2, 'registered')
+    private readonly string _insertEventSql = @"insert into events.events(cloudevent, idempotencykey, status) VALUES ($1, $2, 1)
             ON CONFLICT DO NOTHING
             RETURNING sequenceno";
 
     private readonly string _getAppEventsSql = "select events.getappevents_v2(@_subject, @_after, @_from, @_to, @_type, @_source, @_resource, @_size)";
     private readonly string _getEventsSql = "select events.getevents_v2($1, $2, $3, $4, $5, $6)"; // _resource, _subject, _alternativesubject, _after, _type, _size
     private readonly string _claimRegisteredEventSql = "select * from events.claim_registered_event()";
-    private readonly string _markEventProcessedSql = "update events.events set status = 'processed' where sequenceno = $1";
+    private readonly string _markEventProcessedSql = "update events.events set status = 2 where sequenceno = $1"; // Processed
     private readonly string _markEventRetrySql = @"update events.events
     set retrycount = retrycount + 1,
         lastretried = now(),
-        status = case when retrycount + 1 >= @maxretrycount then 'retryExhausted' else status end
+        retryreason = @retryreason,
+        status = case when retrycount + 1 >= @maxretrycount then 3 else status end -- RetryExhausted
     where sequenceno = @sequenceno";
 
     private readonly NpgsqlDataSource _dataSource;
@@ -132,7 +133,7 @@ public class CloudEventRepository : ICloudEventRepository
     /// <inheritdoc/>
     public async Task<ClaimedEvent> ClaimRegisteredEventAsync(UnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
-        NpgsqlCommand pgcom = unitOfWork.Connection.CreateCommand();
+        NpgsqlCommand pgcom = unitOfWork.Transaction.Connection.CreateCommand();
         pgcom.CommandText = _claimRegisteredEventSql;
         pgcom.Transaction = unitOfWork.Transaction;
 
@@ -155,7 +156,7 @@ public class CloudEventRepository : ICloudEventRepository
     /// <inheritdoc/>
     public async Task MarkEventProcessedAsync(UnitOfWork unitOfWork, long sequenceNo, CancellationToken cancellationToken)
     {
-        NpgsqlCommand pgcom = unitOfWork.Connection.CreateCommand();
+        NpgsqlCommand pgcom = unitOfWork.Transaction.Connection.CreateCommand();
         pgcom.CommandText = _markEventProcessedSql;
         pgcom.Transaction = unitOfWork.Transaction;
         pgcom.Parameters.AddWithValue(NpgsqlDbType.Bigint, sequenceNo);
@@ -167,13 +168,14 @@ public class CloudEventRepository : ICloudEventRepository
     }
 
     /// <inheritdoc/>
-    public async Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, CancellationToken cancellationToken)
+    public async Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, string? retryReason, CancellationToken cancellationToken)
     {
-        NpgsqlCommand pgcom = unitOfWork.Connection.CreateCommand();
+        NpgsqlCommand pgcom = unitOfWork.Transaction.Connection.CreateCommand();
         pgcom.CommandText = _markEventRetrySql;
         pgcom.Transaction = unitOfWork.Transaction;
         pgcom.Parameters.AddWithValue("sequenceno", NpgsqlDbType.Bigint, sequenceNo);
         pgcom.Parameters.AddWithValue("maxretrycount", NpgsqlDbType.Integer, _eventsProcessingSettings.MaxRetryCount);
+        pgcom.Parameters.AddWithValue("retryreason", NpgsqlDbType.Text, (object?)retryReason ?? DBNull.Value);
 
         await using (pgcom)
         {

@@ -20,7 +20,7 @@ public class UnitOfWorkRepository(NpgsqlDataSource dataSource) : IUnitOfWorkRepo
         try
         {
             var transaction = await connection.BeginTransactionAsync();
-            return new UnitOfWork { Connection = connection, Transaction = transaction };
+            return new UnitOfWork { Transaction = transaction };
         }
         catch
         {
@@ -38,7 +38,7 @@ public class UnitOfWorkRepository(NpgsqlDataSource dataSource) : IUnitOfWorkRepo
         }
         finally
         {
-            await unitOfWork.Connection.CloseAsync();
+            await unitOfWork.Transaction.Connection.CloseAsync();
         }
     }
 
@@ -51,7 +51,7 @@ public class UnitOfWorkRepository(NpgsqlDataSource dataSource) : IUnitOfWorkRepo
         }
         finally
         {
-            await unitOfWork.Connection.CloseAsync();
+            await unitOfWork.Transaction.Connection.CloseAsync();
         }
     }
 

@@ -77,7 +77,7 @@ public class CloudEventRepositoryTests(IntegrationTestContainersFixture fixture)
                 claimed = await repo.ClaimRegisteredEventAsync(unitOfWork, TestContext.Current.CancellationToken);
                 Assert.NotNull(claimed);
 
-                await repo.MarkEventRetryAsync(unitOfWork, claimed!.SequenceNo, TestContext.Current.CancellationToken);
+                await repo.MarkEventRetryAsync(unitOfWork, claimed!.SequenceNo, "reason for retry", TestContext.Current.CancellationToken);
                 await unitOfWorkRepository.CommitUnitOfWork(unitOfWork);
             }
             catch
@@ -99,7 +99,7 @@ public class CloudEventRepositoryTests(IntegrationTestContainersFixture fixture)
                 UnitOfWork retryUnitOfWork = await unitOfWorkRepository.StartUnitOfWork();
                 try
                 {
-                    await repo.MarkEventRetryAsync(retryUnitOfWork, claimed.SequenceNo, TestContext.Current.CancellationToken);
+                    await repo.MarkEventRetryAsync(retryUnitOfWork, claimed.SequenceNo, "reason for retry", TestContext.Current.CancellationToken);
                     await unitOfWorkRepository.CommitUnitOfWork(retryUnitOfWork);
                 }
                 catch

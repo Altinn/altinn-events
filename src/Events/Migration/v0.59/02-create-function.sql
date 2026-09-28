@@ -12,7 +12,7 @@ BEGIN
     RETURN QUERY
     SELECT e.sequenceno, e.cloudevent
     FROM events.events e
-    WHERE e.status = 'registered'
+    WHERE e.status = 1 -- Registered
     ORDER BY e.sequenceno
     LIMIT 1
     FOR UPDATE SKIP LOCKED;
