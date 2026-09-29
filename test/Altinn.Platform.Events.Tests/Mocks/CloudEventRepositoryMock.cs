@@ -252,7 +252,7 @@ public class CloudEventRepositoryMock : ICloudEventRepository
         throw new NotImplementedException();
     }
 
-    public Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, string? reason, CancellationToken cancellationToken)
+    public Task MarkEventRetryAsync(UnitOfWork unitOfWork, long sequenceNo, string reason, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

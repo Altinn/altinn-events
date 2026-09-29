@@ -175,7 +175,7 @@ public class CloudEventRepository : ICloudEventRepository
         pgcom.Transaction = unitOfWork.Transaction;
         pgcom.Parameters.AddWithValue("sequenceno", NpgsqlDbType.Bigint, sequenceNo);
         pgcom.Parameters.AddWithValue("maxretrycount", NpgsqlDbType.Integer, _eventsProcessingSettings.MaxRetryCount);
-        pgcom.Parameters.AddWithValue("retryreason", NpgsqlDbType.Text, (object?)retryReason ?? DBNull.Value);
+        pgcom.Parameters.AddWithValue("retryreason", NpgsqlDbType.Text, string.IsNullOrWhiteSpace(retryReason) ? DBNull.Value : retryReason);
 
         await using (pgcom)
         {

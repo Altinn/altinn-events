@@ -1,5 +1,4 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -147,7 +146,7 @@ public class RegisteredEventsProcessingServiceTests
         // Assert
         Assert.False(result);
         _cloudEventRepositoryMock.Verify(r => r.MarkEventProcessedAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<CancellationToken>()), Times.Never);
-        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(_unitOfWork), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
     }
@@ -182,7 +181,7 @@ public class RegisteredEventsProcessingServiceTests
             .ThrowsAsync(new InvalidOperationException("Outbound delivery failed"));
 
         _cloudEventRepositoryMock
-            .Setup(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Database error"));
 
         var target = GetTarget();
@@ -192,7 +191,7 @@ public class RegisteredEventsProcessingServiceTests
 
         // Assert
         Assert.False(result);
-        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(_unitOfWork), Times.Once);
     }
@@ -241,7 +240,7 @@ public class RegisteredEventsProcessingServiceTests
             .Returns(Task.CompletedTask);
 
         _cloudEventRepositoryMock
-            .Setup(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add(nameof(ICloudEventRepository.MarkEventRetryAsync)))
             .Returns(Task.CompletedTask);
 
@@ -266,7 +265,7 @@ public class RegisteredEventsProcessingServiceTests
             callOrder);
 
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWorkToSavepoint(_unitOfWork, "event_claimed"), Times.Once);
-        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(_unitOfWork), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
     }
@@ -355,7 +354,7 @@ public class RegisteredEventsProcessingServiceTests
         Assert.False(result);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(_unitOfWork), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWorkToSavepoint(It.IsAny<UnitOfWork>(), It.IsAny<string>()), Times.Never);
-        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
         VerifyErrorLogged(Times.Once());
     }
@@ -427,7 +426,7 @@ public class RegisteredEventsProcessingServiceTests
         // Assert
         Assert.False(result);
         VerifyErrorLogged(Times.Never());
-        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(_unitOfWork), Times.Once);
     }
 
@@ -459,7 +458,7 @@ public class RegisteredEventsProcessingServiceTests
             .ThrowsAsync(new InvalidOperationException("Outbound delivery failed"));
 
         _cloudEventRepositoryMock
-            .Setup(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.MarkEventRetryAsync(_unitOfWork, claimedEvent.SequenceNo, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new OperationCanceledException());
 
         var target = GetTarget();
@@ -515,7 +514,7 @@ public class RegisteredEventsProcessingServiceTests
         _outboundServiceMock.Verify(o => o.PostOutbound(It.IsAny<CloudEvent>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(_unitOfWork), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWorkToSavepoint(It.IsAny<UnitOfWork>(), It.IsAny<string>()), Times.Never);
-        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
     }
 
@@ -562,7 +561,7 @@ public class RegisteredEventsProcessingServiceTests
         Assert.False(result);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWorkToSavepoint(_unitOfWork, "event_claimed"), Times.Once);
         _unitOfWorkRepositoryMock.Verify(u => u.RollbackUnitOfWork(_unitOfWork), Times.Once);
-        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _cloudEventRepositoryMock.Verify(r => r.MarkEventRetryAsync(It.IsAny<UnitOfWork>(), It.IsAny<long>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWorkRepositoryMock.Verify(u => u.CommitUnitOfWork(It.IsAny<UnitOfWork>()), Times.Never);
     }
 
