@@ -573,7 +573,7 @@ public class RegisteredEventsProcessingServiceTests
                 It.IsAny<EventId>(),
                 It.IsAny<It.IsAnyType>(),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             times);
     }
 

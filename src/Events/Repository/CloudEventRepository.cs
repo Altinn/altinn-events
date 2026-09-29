@@ -34,7 +34,7 @@ public class CloudEventRepository : ICloudEventRepository
         lastretried = now(),
         retryreason = @retryreason,
         status = case when retrycount + 1 >= @maxretrycount then 3 else status end -- RetryExhausted
-    where sequenceno = @sequenceno";
+    where sequenceno = @sequenceno and status = 1"; // Registered
 
     private readonly NpgsqlDataSource _dataSource;
     private readonly EventsProcessingSettings _eventsProcessingSettings;
