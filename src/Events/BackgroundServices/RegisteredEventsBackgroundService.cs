@@ -79,36 +79,11 @@ public class RegisteredEventsBackgroundService(
         {
             try
             {
-                // Additional (non-primary) tasks stay idle until the primary task has observed
-                // a sustained backlog. This keeps polling load proportional to actual event volume
-                // instead of always running TaskCount concurrent pollers.
-                bool shouldAttemptClaim = isFirstInstance || _manyEventsLately.Get();
+                bool shouldIdle = await RunSingleIterationAsync(isFirstInstance, stoppingToken, ref consecutiveClaims);
 
-                if (!shouldAttemptClaim)
+                if (shouldIdle && !stoppingToken.IsCancellationRequested)
                 {
                     await Task.Delay(idleDelay, stoppingToken);
-                    continue;
-                }
-
-                using IServiceScope scope = serviceScopeFactory.CreateScope();
-                IRegisteredEventsProcessingService processingService =
-                    scope.ServiceProvider.GetRequiredService<IRegisteredEventsProcessingService>();
-
-                bool processed = await processingService.TryProcessEvent(stoppingToken);
-
-                if (!processed && !stoppingToken.IsCancellationRequested)
-                {
-                    consecutiveClaims = 0;
-                    await Task.Delay(idleDelay, stoppingToken);
-                }
-                else if (processed)
-                {
-                    consecutiveClaims++;
-
-                    if (isFirstInstance && consecutiveClaims >= _settings.RampUpLimit)
-                    {
-                        _manyEventsLately.Set(true);
-                    }
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -124,6 +99,51 @@ public class RegisteredEventsBackgroundService(
                     await Task.Delay(idleDelay, stoppingToken);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Runs a single polling iteration: either idles (if this is a non-primary task waiting
+    /// for ramp-up) or attempts to claim and process one event, updating the ramp-up state
+    /// as needed.
+    /// </summary>
+    /// <returns><see langword="true"/> if the caller should idle-delay before the next iteration.</returns>
+    private async Task<bool> RunSingleIterationAsync(bool isFirstInstance, CancellationToken stoppingToken, ref int consecutiveClaims)
+    {
+        // Additional (non-primary) tasks stay idle until the primary task has observed
+        // a sustained backlog. This keeps polling load proportional to actual event volume
+        // instead of always running TaskCount concurrent pollers.
+        if (!isFirstInstance && !_manyEventsLately.Get())
+        {
+            return true;
+        }
+
+        using IServiceScope scope = serviceScopeFactory.CreateScope();
+        IRegisteredEventsProcessingService processingService =
+            scope.ServiceProvider.GetRequiredService<IRegisteredEventsProcessingService>();
+
+        bool processed = await processingService.TryProcessEvent(stoppingToken);
+
+        if (!processed)
+        {
+            consecutiveClaims = 0;
+            return true;
+        }
+
+        consecutiveClaims++;
+        TrackRampUp(isFirstInstance, consecutiveClaims);
+        return false;
+    }
+
+    /// <summary>
+    /// Flips the shared ramp-up flag once the primary task reaches <see cref="EventsProcessingSettings.RampUpLimit"/>
+    /// consecutive successful claims, allowing additional tasks to start polling too.
+    /// </summary>
+    private void TrackRampUp(bool isFirstInstance, int consecutiveClaims)
+    {
+        if (isFirstInstance && consecutiveClaims >= _settings.RampUpLimit)
+        {
+            _manyEventsLately.Set(true);
         }
     }
 
