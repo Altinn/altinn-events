@@ -23,6 +23,13 @@ public class EventsProcessingSettings
     public int AdditionalTasksIdleDelaySeconds { get; set; } = 5;
 
     /// <summary>
+    /// The number of consecutive successful claims by the primary task required before
+    /// additional (non-primary) tasks start polling too. Until this threshold is reached,
+    /// only the primary task attempts to claim events.
+    /// </summary>
+    public int RampUpLimit { get; set; } = 5;
+
+    /// <summary>
     /// The maximum number of retry attempts for delivering an event to outbound before
     /// the event is flagged as <c>retryExhausted</c> and no longer retried.
     /// </summary>

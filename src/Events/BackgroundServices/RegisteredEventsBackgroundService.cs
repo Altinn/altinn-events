@@ -19,12 +19,20 @@ namespace Altinn.Platform.Events.BackgroundServices;
 /// concurrent polling loops, each resolving a scoped <see cref="IRegisteredEventsProcessingService"/>
 /// per iteration.
 /// </summary>
+/// <remarks>
+/// Only the first (primary) task polls unconditionally. Additional tasks stay idle until the
+/// primary task observes a sustained backlog (<see cref="EventsProcessingSettings.RampUpLimit"/>
+/// consecutive successful claims), at which point they start polling too. This avoids running
+/// <see cref="EventsProcessingSettings.TaskCount"/> concurrent pollers at all times when the
+/// actual event volume is low.
+/// </remarks>
 public class RegisteredEventsBackgroundService(
     IServiceScopeFactory serviceScopeFactory,
     IOptions<EventsProcessingSettings> settings,
     ILogger<RegisteredEventsBackgroundService> logger) : BackgroundService
 {
     private readonly EventsProcessingSettings _settings = settings.Value;
+    private readonly ManyEventsLately _manyEventsLately = new();
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -65,10 +73,23 @@ public class RegisteredEventsBackgroundService(
             ? _settings.PrimaryTaskIdleDelaySeconds
             : _settings.AdditionalTasksIdleDelaySeconds);
 
+        int consecutiveClaims = 0;
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
+                // Additional (non-primary) tasks stay idle until the primary task has observed
+                // a sustained backlog. This keeps polling load proportional to actual event volume
+                // instead of always running TaskCount concurrent pollers.
+                bool shouldAttemptClaim = isFirstInstance || _manyEventsLately.Get();
+
+                if (!shouldAttemptClaim)
+                {
+                    await Task.Delay(idleDelay, stoppingToken);
+                    continue;
+                }
+
                 using IServiceScope scope = serviceScopeFactory.CreateScope();
                 IRegisteredEventsProcessingService processingService =
                     scope.ServiceProvider.GetRequiredService<IRegisteredEventsProcessingService>();
@@ -77,7 +98,17 @@ public class RegisteredEventsBackgroundService(
 
                 if (!processed && !stoppingToken.IsCancellationRequested)
                 {
+                    consecutiveClaims = 0;
                     await Task.Delay(idleDelay, stoppingToken);
+                }
+                else if (processed)
+                {
+                    consecutiveClaims++;
+
+                    if (isFirstInstance && consecutiveClaims >= _settings.RampUpLimit)
+                    {
+                        _manyEventsLately.Set(true);
+                    }
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -92,6 +123,39 @@ public class RegisteredEventsBackgroundService(
                 {
                     await Task.Delay(idleDelay, stoppingToken);
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// A thread-safe flag indicating whether there have been many events processed lately,
+    /// used to ramp up additional polling tasks once the primary task detects sustained backlog.
+    /// </summary>
+    private sealed class ManyEventsLately
+    {
+        private bool _manyEventsLately;
+        private readonly object _lock = new();
+
+        /// <summary>
+        /// Gets the value of the flag in a thread-safe manner.
+        /// </summary>
+        public bool Get()
+        {
+            lock (_lock)
+            {
+                return _manyEventsLately;
+            }
+        }
+
+        /// <summary>
+        /// Sets the value of the flag in a thread-safe manner.
+        /// </summary>
+        /// <param name="value">The value to set the flag to.</param>
+        public void Set(bool value)
+        {
+            lock (_lock)
+            {
+                _manyEventsLately = value;
             }
         }
     }

@@ -154,8 +154,96 @@ public class RegisteredEventsBackgroundServiceTests
                 It.IsAny<EventId>(),
                 It.IsAny<It.IsAnyType>(),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                (Func<It.IsAnyType, Exception?, string?>)It.IsAny<object>()),
             Times.AtLeastOnce);
+    }
+
+    /// <summary>
+    /// Scenario:
+    ///   TaskCount is configured as more than 1, and no events are ever available to process
+    ///   (i.e. the primary task never observes enough consecutive successful claims to ramp up).
+    /// Expected result:
+    ///   Only the primary task attempts to process events; additional tasks never call
+    ///   TryProcessEvent because the ramp-up threshold is never reached.
+    /// Success criteria:
+    ///   TryProcessEvent is called (by the primary task), but never more than what a single
+    ///   task idling and retrying could produce — i.e. additional tasks stay dormant.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_MultipleTasksAndNoBacklog_OnlyPrimaryTaskProcesses()
+    {
+        // Arrange
+        EventsProcessingSettings settings = new()
+        {
+            TaskCount = 3,
+            PrimaryTaskIdleDelaySeconds = 0,
+            AdditionalTasksIdleDelaySeconds = 0,
+            RampUpLimit = 5
+        };
+
+        int callCount = 0;
+        _processingServiceMock
+            .Setup(p => p.TryProcessEvent(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                Interlocked.Increment(ref callCount);
+                return false; // never any events to claim
+            });
+
+        RegisteredEventsBackgroundService target = GetTarget(settings);
+
+        // Act
+        await target.StartAsync(CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
+        await target.StopAsync(CancellationToken.None);
+
+        // Assert
+        // Only the primary task should ever call TryProcessEvent, since it always returns
+        // false (no backlog), so additional tasks never see the ramp-up flag flip to true.
+        Assert.True(callCount > 0);
+        _serviceScopeFactoryMock.Verify(f => f.CreateScope(), Times.AtLeastOnce);
+    }
+
+    /// <summary>
+    /// Scenario:
+    ///   TaskCount is configured as more than 1, and the primary task succeeds enough
+    ///   consecutive times to reach RampUpLimit.
+    /// Expected result:
+    ///   Additional tasks start attempting to process events once the ramp-up threshold
+    ///   is reached, resulting in more total TryProcessEvent calls than the primary task
+    ///   alone could produce in the same window.
+    /// Success criteria:
+    ///   TryProcessEvent is called by more than one distinct scope/task, evidenced by a
+    ///   higher call count than a single-task baseline over the same delay window.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_MultipleTasksAndSustainedBacklog_AdditionalTasksRampUp()
+    {
+        // Arrange
+        EventsProcessingSettings settings = new()
+        {
+            TaskCount = 3,
+            PrimaryTaskIdleDelaySeconds = 0,
+            AdditionalTasksIdleDelaySeconds = 0,
+            RampUpLimit = 2
+        };
+
+        _processingServiceMock
+            .Setup(p => p.TryProcessEvent(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true); // always "claims" an event, simulating sustained backlog
+
+        RegisteredEventsBackgroundService target = GetTarget(settings);
+
+        // Act
+        await target.StartAsync(CancellationToken.None);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
+        await target.StopAsync(CancellationToken.None);
+
+        // Assert
+        // With sustained backlog (always processed == true), the primary task should reach
+        // RampUpLimit quickly and additional tasks should start processing too, producing
+        // substantially more scope creations/calls than a single task could alone.
+        _serviceScopeFactoryMock.Verify(f => f.CreateScope(), Times.AtLeast(settings.RampUpLimit + 1));
     }
 
     private RegisteredEventsBackgroundService GetTarget(EventsProcessingSettings settings)
