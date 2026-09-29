@@ -79,9 +79,10 @@ public class RegisteredEventsBackgroundService(
         {
             try
             {
-                bool shouldIdle = await RunSingleIterationAsync(isFirstInstance, stoppingToken, ref consecutiveClaims);
+                IterationResult result = await RunSingleIterationAsync(isFirstInstance, consecutiveClaims, stoppingToken);
+                consecutiveClaims = result.ConsecutiveClaims;
 
-                if (shouldIdle && !stoppingToken.IsCancellationRequested)
+                if (result.ShouldIdle && !stoppingToken.IsCancellationRequested)
                 {
                     await Task.Delay(idleDelay, stoppingToken);
                 }
@@ -107,15 +108,14 @@ public class RegisteredEventsBackgroundService(
     /// for ramp-up) or attempts to claim and process one event, updating the ramp-up state
     /// as needed.
     /// </summary>
-    /// <returns><see langword="true"/> if the caller should idle-delay before the next iteration.</returns>
-    private async Task<bool> RunSingleIterationAsync(bool isFirstInstance, CancellationToken stoppingToken, ref int consecutiveClaims)
+    private async Task<IterationResult> RunSingleIterationAsync(bool isFirstInstance, int consecutiveClaims, CancellationToken stoppingToken)
     {
         // Additional (non-primary) tasks stay idle until the primary task has observed
         // a sustained backlog. This keeps polling load proportional to actual event volume
         // instead of always running TaskCount concurrent pollers.
         if (!isFirstInstance && !_manyEventsLately.Get())
         {
-            return true;
+            return new IterationResult(ShouldIdle: true, ConsecutiveClaims: consecutiveClaims);
         }
 
         using IServiceScope scope = serviceScopeFactory.CreateScope();
@@ -126,13 +126,12 @@ public class RegisteredEventsBackgroundService(
 
         if (!processed)
         {
-            consecutiveClaims = 0;
-            return true;
+            return new IterationResult(ShouldIdle: true, ConsecutiveClaims: 0);
         }
 
-        consecutiveClaims++;
-        TrackRampUp(isFirstInstance, consecutiveClaims);
-        return false;
+        int updatedConsecutiveClaims = consecutiveClaims + 1;
+        TrackRampUp(isFirstInstance, updatedConsecutiveClaims);
+        return new IterationResult(ShouldIdle: false, ConsecutiveClaims: updatedConsecutiveClaims);
     }
 
     /// <summary>
@@ -146,6 +145,13 @@ public class RegisteredEventsBackgroundService(
             _manyEventsLately.Set(true);
         }
     }
+
+    /// <summary>
+    /// The outcome of a single <see cref="RunSingleIterationAsync"/> call.
+    /// </summary>
+    /// <param name="ShouldIdle">Whether the caller should idle-delay before the next iteration.</param>
+    /// <param name="ConsecutiveClaims">The updated consecutive-successful-claims count.</param>
+    private sealed record IterationResult(bool ShouldIdle, int ConsecutiveClaims);
 
     /// <summary>
     /// A thread-safe flag indicating whether there have been many events processed lately,
