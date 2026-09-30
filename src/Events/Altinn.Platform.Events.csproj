@@ -23,6 +23,8 @@
 		<PackageReference Include="CloudNative.CloudEvents.AspNetCore" Version="2.9.0" />
 		<PackageReference Include="CloudNative.CloudEvents.SystemTextJson" Version="2.9.0" />
 		<PackageReference Include="JWTCookieAuthentication" Version="4.0.4" />
+		<!-- TEST (revert before merge): known-vulnerable version, added to verify the container-scan app-dependency mitigation path end-to-end -->
+		<PackageReference Include="SixLabors.ImageSharp" Version="2.1.0" />
 		<PackageReference Include="Scrutor" Version="7.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.2.3" />

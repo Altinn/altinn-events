@@ -207,7 +207,10 @@ jobs:
     needs: scan
     # scan exits 1 on findings, so this must not be gated on scan succeeding.
     # An empty count means scan broke before counting -- also worth an alert.
-    if: ${{ github.event_name != 'pull_request' && !cancelled() && needs.scan.outputs.findings-count != '0' }}
+    # TEMPORARY (revert before merge): pull_request exclusion removed to
+    # verify the Slack webhook fires end-to-end. Restore
+    # `github.event_name != 'pull_request' &&` before this PR merges.
+    if: ${{ !cancelled() && needs.scan.outputs.findings-count != '0' }}
     uses: ./.github/workflows/send-slack-warning.yml
     permissions: {}
     with:
