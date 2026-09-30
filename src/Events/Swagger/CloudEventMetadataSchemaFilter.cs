@@ -46,6 +46,11 @@ public class CloudEventMetadataSchemaFilter : ISchemaFilter
             return;
         }
 
+        // Swashbuckle defaults object schemas to "additionalProperties: false", i.e. closed for extension.
+        // CloudEvent carries arbitrary CloudEvents extension attributes beyond the ones we document
+        // explicitly below, so the schema must stay open to reflect that reality.
+        openApiSchema.AdditionalPropertiesAllowed = true;
+
         foreach (string propertyName in _propertiesToRemove)
         {
             string key = openApiSchema.Properties.Keys
