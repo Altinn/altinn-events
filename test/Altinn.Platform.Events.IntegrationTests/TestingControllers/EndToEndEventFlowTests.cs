@@ -15,6 +15,7 @@ using Altinn.Platform.Events.IntegrationTests.Utils;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
 using CloudNative.CloudEvents;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
 
@@ -64,6 +65,7 @@ public class EndToEndEventFlowTests(IntegrationTestContainersFixture fixture)
         var factory = new IntegrationTestWebApplicationFactory(_fixture)
             .ReplaceService(_ => webhookMock.Object)
             .ReplaceService(_ => authMock.Object)
+            .EnableRegisteredEventsProcessing()
             .Initialize();
 
         await using (factory)
