@@ -1,4 +1,6 @@
-ALTER TABLE events.events ADD COLUMN IF NOT EXISTS status smallint NULL DEFAULT 1;
+ALTER TABLE events.events ADD COLUMN IF NOT EXISTS status smallint NULL;
+ALTER TABLE events.events ALTER COLUMN status SET DEFAULT 1;
+
 ALTER TABLE events.events ADD COLUMN IF NOT EXISTS retrycount int NULL DEFAULT 0;
 ALTER TABLE events.events ADD COLUMN IF NOT EXISTS retryReason text NULL;
 ALTER TABLE events.events ADD COLUMN IF NOT EXISTS lastretried timestamptz NULL;
