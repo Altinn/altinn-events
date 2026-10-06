@@ -5,6 +5,7 @@ import * as eventsApi from "../../api/events.js";
 import * as subscriptionsApi from "../../api/subscriptions.js";
 import * as config from "../../config.js";
 import { addErrorCount } from "../../errorhandler.js";
+import { getFromSecretSource } from "../../secret-reader.js";
 
 export const scopes =
     "altinn:events.publish altinn:serviceowner altinn:events.subscribe";
@@ -20,11 +21,25 @@ export function warnIfUntagged() {
     }
 }
 
+// Uses the webhookEndpoint secret when available, otherwise the events service's own test receiver
+async function getWebhookEndpoint() {
+    try {
+        return await getFromSecretSource("webhookEndpoint");
+    } catch {
+        console.log(
+            `[SETUP] Secret webhookEndpoint not available. Using default receiver ${config.platformEvents.webhookReceiver}`
+        );
+        return config.platformEvents.webhookReceiver;
+    }
+}
+
 export async function performanceSetup(setupLogLine) {
     const token = await setupToken.getAltinnTokenForOrg(scopes);
 
+    const webhookEndpoint = await getWebhookEndpoint();
+
     const subscription = {
-        endPoint: config.platformEvents.webhookReceiver,
+        endPoint: webhookEndpoint,
         resourceFilter: resourceFilter,
     };
 
