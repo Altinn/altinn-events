@@ -33,7 +33,10 @@ public class RegisteredEventsProcessingService(
         UnitOfWork unitOfWork;
         try
         {
-            unitOfWork = await unitOfWorkRepository.StartUnitOfWork();
+            using (_activitySource.StartActivity("StartUnitOfWork"))
+            {
+                unitOfWork = await unitOfWorkRepository.StartUnitOfWork();
+            }
         }
         catch (Exception e)
         {
@@ -50,7 +53,10 @@ public class RegisteredEventsProcessingService(
 
         try
         {
-            claimedEvent = await cloudEventRepository.ClaimRegisteredEventAsync(unitOfWork, cancellationToken);
+            using (_activitySource.StartActivity("ClaimEvent"))
+            {
+                claimedEvent = await cloudEventRepository.ClaimRegisteredEventAsync(unitOfWork, cancellationToken);
+            }
 
             activity?.SetTag("Claimed", claimedEvent != null);
 
@@ -66,9 +72,20 @@ public class RegisteredEventsProcessingService(
             
             activity?.SetTag("EventId", claimedEvent.CloudEvent.Id);
 
-            await outboundService.PostOutbound(claimedEvent.CloudEvent, cancellationToken, true);
-            await cloudEventRepository.MarkEventProcessedAsync(unitOfWork, claimedEvent.SequenceNo, cancellationToken);
-            await unitOfWorkRepository.CommitUnitOfWork(unitOfWork);
+            using (_activitySource.StartActivity("PostOutbound"))
+            {
+                await outboundService.PostOutbound(claimedEvent.CloudEvent, cancellationToken, true);
+            }
+
+            using (_activitySource.StartActivity("MarkEventProcessed"))
+            {
+                await cloudEventRepository.MarkEventProcessedAsync(unitOfWork, claimedEvent.SequenceNo, cancellationToken);
+            }
+
+            using (_activitySource.StartActivity("CommitUnitOfWork"))
+            {
+                await unitOfWorkRepository.CommitUnitOfWork(unitOfWork);
+            }
 
             return true;
         }
