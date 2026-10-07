@@ -54,9 +54,24 @@ assert_contains() {
   return 0
 }
 
+# assert_pkg_row <output> <cve> <pkg> <verdict-substring> <label>
+# Isolates the table row for <cve> AND <pkg>, so two rows sharing the same CVE
+# (e.g. one CVE affecting two packages) can't be confused for one another.
+assert_pkg_row() {
+  local out="$1" cve="$2" pkg="$3" verdict="$4" label="$5"
+  local row
+  row="$(printf '%s\n' "$out" | grep -F "| $cve | \`$pkg\` |")"
+  case "$row" in
+    *"$verdict"*) ok "$label" ;;
+    *)            bad "$label (row: ${row:-<none>})" ;;
+  esac
+  return 0
+}
+
 # assert_row <output> <cve> <verdict-substring> <label>
 # Isolates the table row for <cve> and checks its verdict, so a verdict from a
-# different row can't accidentally satisfy the assertion.
+# different row can't accidentally satisfy the assertion. NOT safe when two
+# rows share the same CVE for different packages -- use assert_pkg_row then.
 assert_row() {
   local out="$1" cve="$2" verdict="$3" label="$4"
   local row
@@ -117,6 +132,24 @@ assert_kv "$out" BASE_TAG     "10.0.9-alpine3.23"               "reads tag past 
 assert_kv "$out" BASE_DIGEST  "sha256:eee"                      "reads digest past a FROM flag"
 assert_kv "$out" FLOATING_TAG "10.0-alpine3.23"                 "derives floating tag past a FROM flag"
 
+df="$tmp/Dockerfile.port-no-tag"
+cat > "$df" <<'EOF'
+FROM registry.example:5000/dotnet/aspnet@sha256:fff AS final
+EOF
+out="$(bash "$scripts/derive-base-image.sh" "$df")"
+assert_kv "$out" BASE_REPO   "registry.example:5000/dotnet/aspnet" "a registry port is not mistaken for a tag"
+assert_kv "$out" BASE_TAG    ""                                    "no tag is derived when only a port is present"
+assert_kv "$out" BASE_DIGEST "sha256:fff"                          "digest still parses past a registry port"
+
+df="$tmp/Dockerfile.port-and-tag"
+cat > "$df" <<'EOF'
+FROM registry.example:5000/dotnet/aspnet:10.0.9-alpine3.23@sha256:ggg AS final
+EOF
+out="$(bash "$scripts/derive-base-image.sh" "$df")"
+assert_kv "$out" BASE_REPO    "registry.example:5000/dotnet/aspnet" "a registry port and a real tag both parse"
+assert_kv "$out" BASE_TAG     "10.0.9-alpine3.23"                   "the real tag is read, not the port"
+assert_kv "$out" FLOATING_TAG "10.0-alpine3.23"                     "floating tag still derives past a registry port"
+
 echo "== analyze-base-fixes.sh =="
 
 # A newer base exists and was scanned. Mirror the real "same version tag, new
@@ -146,6 +179,28 @@ assert_contains "$out" "No newer base image is published" "reports we are on the
 assert_contains "$out" "Already on latest base"           "base-origin -> already on latest"
 assert_contains "$out" "**0** fixable by a base image bump" "nothing marked as base-bump without a newer base"
 assert_contains "$out" "App dependency"                    "app dep still flagged without a newer base"
+
+# Regression: the same CVE affects two different packages, and the latest
+# base image fixes only one of them (libssl3 stays vulnerable, libcrypto3 is
+# fixed). Matching by VulnerabilityID alone would misclassify both the same
+# way; matching must also key on package name.
+out="$(HAS_NEW_BASE=true FLOATING_TAG=10.0-alpine3.23 LATEST_VERSION=10.0.9-alpine3.23 \
+  bash "$scripts/analyze-base-fixes.sh" "$fixtures/app-findings-shared-cve.json" "$fixtures/base-latest-findings-shared-cve.json")"
+assert_pkg_row "$out" CVE-SHARED libcrypto3 "Base image bump"        "shared CVE, package fixed upstream -> base bump"
+assert_pkg_row "$out" CVE-SHARED libssl3    "Not yet fixed upstream" "shared CVE, package still vulnerable upstream -> awaiting upstream"
+
+# Regression: malformed app-scan JSON must fail loudly, not silently render
+# "No CRITICAL/HIGH findings to analyze" as if the scan were clean.
+malformed_out="$tmp/malformed-out"
+if bash "$scripts/analyze-base-fixes.sh" "$fixtures/app-findings-malformed.json" >"$malformed_out" 2>/dev/null; then
+  bad "malformed app JSON must exit non-zero, not succeed"
+else
+  ok "malformed app JSON exits non-zero"
+fi
+case "$(cat "$malformed_out" 2>/dev/null)" in
+  *"No CRITICAL/HIGH findings"*) bad "malformed app JSON must not report a clean scan" ;;
+  *)                             ok "malformed app JSON does not report a clean scan" ;;
+esac
 
 echo
 echo "Passed: $pass  Failed: $fail"

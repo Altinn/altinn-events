@@ -79,26 +79,30 @@ short_digest() {
   fi
 }
 
-# Set of vulnerability IDs still present in the latest base image (if scanned).
+# Set of vulnerability ID + package + ecosystem keys still present in the
+# latest base image (if scanned) -- keyed on ID alone, the same CVE on two
+# different packages would misclassify whichever one was actually fixed.
 declare -A latest_base_ids=()
 if [[ -n "$base_json" ]] && [[ -f "$base_json" ]]; then
-  if ! base_ids="$(jq -r '[.Results[]?.Vulnerabilities[]?.VulnerabilityID] | unique[]' "$base_json")"; then
+  if ! base_keys="$(jq -r '[.Results[]? as $r | $r.Vulnerabilities[]? | [ .VulnerabilityID, .PkgName, ($r.Type // "") ] | @tsv] | unique[]' "$base_json")"; then
     echo "analyze-base-fixes.sh: invalid JSON in $base_json" >&2
     exit 1
   fi
-  while IFS= read -r id; do
-    [[ -n "$id" ]] && latest_base_ids["$id"]=1
-  done < <(printf '%s\n' "$base_ids" | tr -d '\r')
+  while IFS=$'\t' read -r id pkg ecosystem; do
+    [[ -n "$id" ]] && latest_base_ids["$id"$'\t'"$pkg"$'\t'"$ecosystem"]=1
+  done < <(printf '%s\n' "$base_keys" | tr -d '\r')
 elif [[ "$has_new_base" = "true" ]]; then
   echo "analyze-base-fixes.sh: HAS_NEW_BASE=true but no base scan file provided" >&2
   exit 1
 fi
 
 # Emit each finding as a tab-separated row from the app scan.
-# Fields: id, pkg, installed, fixed, severity, class, location
+# Fields: id, pkg, installed, fixed, severity, class, ecosystem, location
 # `location` is the package path when Trivy provides one, otherwise the result
 # Target. For .deps.json findings PkgPath is null, so the Target is what tells
-# the runtime shared framework apart from the app's own packages.
+# the runtime shared framework apart from the app's own packages. `ecosystem`
+# is the result Type (e.g. alpine, dotnet-core), part of the composite key
+# matched against the latest base scan above.
 extract() {
   jq -r '
     .Results[]? as $r
@@ -111,6 +115,7 @@ extract() {
         (.FixedVersion // "-"),
         (.Severity // ""),
         $class,
+        ($r.Type // ""),
         (.PkgPath // $target) ]
     | @tsv
   ' "$app_json"
@@ -131,12 +136,18 @@ count_bump=0
 count_upstream=0
 count_appdep=0
 
-while IFS=$'\t' read -r id pkg installed fixed severity class location; do
+if ! extracted_rows="$(extract | tr -d '\r')"; then
+  echo "analyze-base-fixes.sh: failed to extract findings from $app_json" >&2
+  exit 1
+fi
+
+while IFS=$'\t' read -r id pkg installed fixed severity class ecosystem location; do
   [[ -z "$id" ]] && continue
   count_total=$((count_total + 1))
 
   if is_base_origin "$class" "$location"; then
-    if [[ "$has_new_base" = "true" ]] && [[ -n "${latest_base_ids[$id]:-}" ]]; then
+    base_key="${id}"$'\t'"${pkg}"$'\t'"${ecosystem}"
+    if [[ "$has_new_base" = "true" ]] && [[ -n "${latest_base_ids[$base_key]:-}" ]]; then
       verdict="⏳ Not yet fixed upstream — Dockerfile workaround or wait"
       count_upstream=$((count_upstream + 1))
     elif [[ "$has_new_base" = "true" ]]; then
@@ -153,7 +164,7 @@ while IFS=$'\t' read -r id pkg installed fixed severity class location; do
   fi
 
   rows+="| ${severity} | ${id} | \`${pkg}\` | ${installed} | ${fixed} | ${verdict} |"$'\n'
-done < <(extract | tr -d '\r')
+done <<< "$extracted_rows"
 
 # Render.
 {

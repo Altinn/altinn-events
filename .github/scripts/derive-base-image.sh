@@ -61,13 +61,23 @@ case "$ref" in
 esac
 image_and_tag="${ref%@*}"
 
-# repo is everything before the last ':', tag is everything after it.
-repo="${image_and_tag%:*}"
-tag="${image_and_tag##*:}"
-if [[ "$repo" = "$image_and_tag" ]]; then
-  # No ':' present -> untagged reference; treat the whole thing as the repo.
-  repo="$image_and_tag"
-  tag=""
+# A ':' only separates the tag when it occurs in the final path segment (after
+# the last '/') -- earlier in the reference, a ':' is a registry port, e.g.
+# registry.example:5000/dotnet/aspnet (no tag at all, despite the colon).
+case "$image_and_tag" in
+  */*) dir="${image_and_tag%/*}"; last="${image_and_tag##*/}" ;;
+  *)   dir=""; last="$image_and_tag" ;;
+esac
+
+case "$last" in
+  *:*) tag="${last##*:}"; last_repo="${last%:*}" ;;
+  *)   tag=""; last_repo="$last" ;;
+esac
+
+if [[ -n "$dir" ]]; then
+  repo="${dir}/${last_repo}"
+else
+  repo="$last_repo"
 fi
 
 # Derive the floating channel tag: reduce the version to major.minor and keep
