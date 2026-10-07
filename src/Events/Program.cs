@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -30,6 +31,7 @@ using Altinn.Platform.Events.Telemetry;
 using AltinnCore.Authentication.JwtCookie;
 using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.Exporter;
+using CloudNative.CloudEvents;
 using CloudNative.CloudEvents.SystemTextJson;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -269,6 +271,29 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         // Adding filters to provide object examples
         c.SchemaFilter<SchemaExampleFilter>();
         c.RequestBodyFilter<RequestBodyExampleFilter>();
+
+        // CloudEventsSpecVersion is a complex type on the wire it is serialized as a simple string (e.g. "1.0").
+        // Map it to a plain string schema so the OpenAPI spec reflects the actual JSON shape.
+        c.MapType<CloudEventsSpecVersion>(() => new OpenApiSchema
+        {
+            Type = JsonSchemaType.String,
+            Example = JsonValue.Create("1.0")
+        });
+
+        // CloudEventAttribute (SDK metadata describing an attribute's definition, not its value) exposes
+        // Type.ClrType, a System.Type. Left unmapped, Swashbuckle recursively generates schemas for the
+        // entire System.Reflection type graph (Type, Assembly, Module, MethodInfo, ...). Map it to a plain
+        // object schema to stop that recursion at the source.
+        c.MapType<CloudEventAttribute>(() => new OpenApiSchema
+        {
+            Type = JsonSchemaType.Object,
+            AdditionalPropertiesAllowed = true
+        });
+
+        // ExtensionAttributes/IsValid are CloudEvents SDK-internal metadata, never part of the actual
+        // request/response payload (real extension attribute values are accessed via an indexer that
+        // Swashbuckle does not reflect over). Hide them from the public CloudEvent schema.
+        c.SchemaFilter<CloudEventMetadataSchemaFilter>();
 
         // add JWT Authentication
         c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
