@@ -89,7 +89,9 @@ public class RegisteredEventsProcessingService(
                 return false;
             }
 
-            if (await TryRollbackToSavepointForRetry(unitOfWork, eventClaimedSavepointCreated))
+            bool canRecordRetry = await RollbackAfterProcessingFailure(unitOfWork, eventClaimedSavepointCreated);
+
+            if (canRecordRetry)
             {
                 await MarkRetryAndCommit(unitOfWork, claimedEvent, e.Message, cancellationToken);
             }
@@ -99,12 +101,16 @@ public class RegisteredEventsProcessingService(
     }
 
     /// <summary>
-    /// Rolls back the unit of work after a processing failure, either to the savepoint created after claiming the event or fully if no savepoint was created.
+    /// Rolls back the unit of work after a processing failure. Rolls back to the savepoint created
+    /// after claiming the event when possible, otherwise rolls back the whole unit of work.
     /// </summary>
     /// <param name="unitOfWork">The unit of work to roll back.</param>
     /// <param name="eventClaimedSavepointCreated">Indicates whether a savepoint was created after claiming the event.</param>
-    /// <returns>True if rollback to the savepoint was successful, false otherwise</returns>
-    private async Task<bool> TryRollbackToSavepointForRetry(
+    /// <returns>
+    /// True if the unit of work is still open after rolling back to the savepoint, so the retry can be
+    /// recorded and committed. False if the whole unit of work was rolled back, so there is nothing left to commit.
+    /// </returns>
+    private async Task<bool> RollbackAfterProcessingFailure(
     UnitOfWork unitOfWork,
     bool eventClaimedSavepointCreated)
     {
