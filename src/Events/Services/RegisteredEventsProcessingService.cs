@@ -49,6 +49,7 @@ public class RegisteredEventsProcessingService(
         }
 
         ClaimedEvent? claimedEvent = null;
+        bool eventClaimedSavepointCreated = false;
 
         try
         {
@@ -65,6 +66,10 @@ public class RegisteredEventsProcessingService(
                 return false;
             }
 
+            // saves the current state of the transaction after claiming the event, so that we can rollback to this point if processing fails
+            await unitOfWorkRepository.SaveUnitOfWork(unitOfWork, "event_claimed");
+            eventClaimedSavepointCreated = true;
+            
             activity?.SetTag("EventId", claimedEvent.CloudEvent.Id);
 
             using (_activitySource.StartActivity("PostOutbound"))
@@ -95,48 +100,64 @@ public class RegisteredEventsProcessingService(
                     e.Message);
             }
 
-            // Roll back everything, including the claim lock, before recording the retry. Updating a row that
-            // was locked earlier in the same transaction from inside a savepoint creates a MultiXact per event,
-            // which caused heavy MultiXact SLRU contention under load.
-            await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
-
-            if (claimedEvent != null)
+            if (claimedEvent == null)
             {
-                await MarkRetryInNewUnitOfWork(claimedEvent, e.Message, cancellationToken);
+                await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
+                return false;
+            }
+
+            if (await TryRollbackToSavepointForRetry(unitOfWork, eventClaimedSavepointCreated))
+            {
+                await MarkRetryAndCommit(unitOfWork, claimedEvent, e.Message, cancellationToken);
             }
 
             return false;
         }
     }
 
-    private async Task MarkRetryInNewUnitOfWork(ClaimedEvent claimedEvent, string? retryReason, CancellationToken cancellationToken)
+    /// <summary>
+    /// Rolls back the unit of work after a processing failure, either to the savepoint created after claiming the event or fully if no savepoint was created.
+    /// </summary>
+    /// <param name="unitOfWork">The unit of work to roll back.</param>
+    /// <param name="eventClaimedSavepointCreated">Indicates whether a savepoint was created after claiming the event.</param>
+    /// <returns>True if rollback to the savepoint was successful, false otherwise</returns>
+    private async Task<bool> TryRollbackToSavepointForRetry(
+    UnitOfWork unitOfWork,
+    bool eventClaimedSavepointCreated)
     {
-        UnitOfWork retryUnitOfWork;
+        if (!eventClaimedSavepointCreated)
+        {
+            await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
+            return false;
+        }
+
         try
         {
-            retryUnitOfWork = await unitOfWorkRepository.StartUnitOfWork();
+            await unitOfWorkRepository.RollbackUnitOfWorkToSavepoint(
+                unitOfWork,
+                "event_claimed");
+            return true;
         }
-        catch (Exception startEx)
+        catch (Exception rollbackException)
         {
-            if (!cancellationToken.IsCancellationRequested)
-            {
-                logger.LogError(
-                    startEx,
-                    "// RegisteredEventsProcessingService // TryProcessEvent // Failed to start a unit of work to mark retry for event {EventId}: {ErrorMessage}",
-                    claimedEvent.CloudEvent?.Id,
-                    startEx.Message);
-            }
+            logger.LogError(
+                rollbackException,
+                "// RegisteredEventsProcessingService // TryProcessEvent // Failed to roll back to the event_claimed savepoint.");
 
-            return;
+            await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
+            return false;
         }
+    }
 
+    private async Task MarkRetryAndCommit(UnitOfWork unitOfWork, ClaimedEvent claimedEvent, string? retryReason, CancellationToken cancellationToken)
+    {
         try
         {
             // Record the failed attempt so retrycount/lastretried/retryreason are updated and
             // the event is marked 'retryExhausted' once MaxRetryCount is reached; otherwise
             // it stays 'registered' so it (or another task) can retry it on a future poll.
-            await cloudEventRepository.MarkEventRetryAsync(retryUnitOfWork, claimedEvent.SequenceNo, retryReason, cancellationToken);
-            await unitOfWorkRepository.CommitUnitOfWork(retryUnitOfWork);
+            await cloudEventRepository.MarkEventRetryAsync(unitOfWork, claimedEvent.SequenceNo, retryReason, cancellationToken);
+            await unitOfWorkRepository.CommitUnitOfWork(unitOfWork);
         }
         catch (Exception retryEx)
         {
@@ -149,7 +170,7 @@ public class RegisteredEventsProcessingService(
                     retryEx.Message);
             }
 
-            await unitOfWorkRepository.RollbackUnitOfWork(retryUnitOfWork);
+            await unitOfWorkRepository.RollbackUnitOfWork(unitOfWork);
         }
     }
 }
