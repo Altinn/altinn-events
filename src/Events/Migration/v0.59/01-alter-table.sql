@@ -13,5 +13,7 @@ ALTER TABLE events.events
     FOREIGN KEY (status)
     REFERENCES events.event_status (id);
 
-CREATE INDEX IF NOT EXISTS idx_events_status_sequenceno
-    ON events.events (status, sequenceno);
+CREATE INDEX IF NOT EXISTS idx_events_sequenceno_filtered
+    ON events.events USING btree
+    (sequenceno ASC NULLS LAST)
+    WHERE status = 1;
