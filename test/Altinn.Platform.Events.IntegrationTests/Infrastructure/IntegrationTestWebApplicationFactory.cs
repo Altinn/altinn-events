@@ -66,7 +66,13 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
                 ["WolverineSettings:ServiceBusConnectionString"] = _fixture.ServiceBusConnectionString,
                 ["PostgreSQLSettings:ConnectionString"] = _fixture.PostgresConnectionString,
                 ["PostgreSQLSettings:AdminConnectionString"] = _fixture.PostgresConnectionString,
-                ["PostgreSQLSettings:WorkspacePath"] = FindMigrationPath()
+                ["PostgreSQLSettings:WorkspacePath"] = FindMigrationPath(),
+
+                // Disable the DB-driven registered events polling background service during
+                // integration tests. It runs as a hosted service on the real WebApplicationFactory
+                // host and would otherwise race with test assertions by claiming/processing
+                // registered events outside of the test's control.
+                ["EventsProcessingSettings:TaskCount"] = "0"
             };
             config.AddInMemoryCollection(testConfigOverrides);
         });
