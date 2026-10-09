@@ -126,6 +126,11 @@ public class RegisteredEventsBackgroundService(
 
         if (!processed)
         {
+            if (isFirstInstance)
+            {
+                _manyEventsLately.Set(false);
+            }
+
             return new IterationResult(ShouldIdle: true, ConsecutiveClaims: 0);
         }
 
