@@ -132,14 +132,22 @@ assert_kv "$out" BASE_TAG     "10.0.9-alpine3.23"               "reads tag past 
 assert_kv "$out" BASE_DIGEST  "sha256:eee"                      "reads digest past a FROM flag"
 assert_kv "$out" FLOATING_TAG "10.0-alpine3.23"                 "derives floating tag past a FROM flag"
 
+# A registry port with no tag at all has no version to float a channel on,
+# this must fail loudly.
 df="$tmp/Dockerfile.port-no-tag"
 cat > "$df" <<'EOF'
 FROM registry.example:5000/dotnet/aspnet@sha256:fff AS final
 EOF
-out="$(bash "$scripts/derive-base-image.sh" "$df")"
-assert_kv "$out" BASE_REPO   "registry.example:5000/dotnet/aspnet" "a registry port is not mistaken for a tag"
-assert_kv "$out" BASE_TAG    ""                                    "no tag is derived when only a port is present"
-assert_kv "$out" BASE_DIGEST "sha256:fff"                          "digest still parses past a registry port"
+port_no_tag_err="$tmp/port-no-tag.err"
+if bash "$scripts/derive-base-image.sh" "$df" >/dev/null 2>"$port_no_tag_err"; then
+  bad "a tagless reference (registry port only) must fail, not succeed"
+else
+  ok "a tagless reference (registry port only) fails loudly"
+fi
+case "$(cat "$port_no_tag_err" 2>/dev/null)" in
+  *"no tag"*) ok "failure message explains the missing tag" ;;
+  *)          bad "failure message missing or unclear" ;;
+esac
 
 df="$tmp/Dockerfile.port-and-tag"
 cat > "$df" <<'EOF'

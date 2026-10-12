@@ -80,6 +80,11 @@ else
   repo="$last_repo"
 fi
 
+if [[ -z "$tag" ]]; then
+  echo "derive-base-image.sh: no tag in FROM reference '$ref' -- a digest-only (or bare registry-port) reference has no version to float a channel on" >&2
+  exit 1
+fi
+
 # Derive the floating channel tag: reduce the version to major.minor and keep
 # the OS suffix verbatim.  10.0.9-alpine3.23 -> 10.0-alpine3.23
 version="${tag%%-*}"
