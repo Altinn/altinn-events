@@ -210,6 +210,27 @@ case "$(cat "$malformed_out" 2>/dev/null)" in
   *)                             ok "malformed app JSON does not report a clean scan" ;;
 esac
 
+# Regression: jq succeeds silently on empty input, so an empty app-scan file
+# must not be read as "zero findings" -- it's Trivy failing, not a clean scan.
+empty_app_err="$tmp/empty-app.err"
+if bash "$scripts/analyze-base-fixes.sh" "$fixtures/empty.json" >/dev/null 2>"$empty_app_err"; then
+  bad "empty app JSON must exit non-zero, not succeed"
+else
+  ok "empty app JSON exits non-zero"
+fi
+assert_contains "$(cat "$empty_app_err" 2>/dev/null)" "empty or missing Results" "empty app JSON reports the shape error"
+
+# Same gap, the other input: an empty base-latest scan must not be read as
+# "nothing left to fix", which would mark every base-origin finding fixable.
+empty_base_err="$tmp/empty-base.err"
+if HAS_NEW_BASE=true FLOATING_TAG=10.0-alpine3.23 \
+  bash "$scripts/analyze-base-fixes.sh" "$fixtures/app-findings.json" "$fixtures/empty.json" >/dev/null 2>"$empty_base_err"; then
+  bad "empty base-latest JSON must exit non-zero, not succeed"
+else
+  ok "empty base-latest JSON exits non-zero"
+fi
+assert_contains "$(cat "$empty_base_err" 2>/dev/null)" "empty or missing Results" "empty base-latest JSON reports the shape error"
+
 echo
 echo "Passed: $pass  Failed: $fail"
 [[ "$fail" -eq 0 ]]

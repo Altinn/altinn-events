@@ -39,6 +39,17 @@
 
 set -euo pipefail
 
+# jq succeeds silently on empty input (zero JSON values -> zero output), so an
+# empty or garbage scan file would otherwise read as "zero findings" instead
+# of the upstream failure it actually is. Require the expected Trivy shape.
+require_scan_shape() {
+  local file="$1"
+  if ! jq -e 'type == "object" and has("Results")' "$file" >/dev/null 2>&1; then
+    echo "analyze-base-fixes.sh: not a valid Trivy scan result (empty or missing Results): $file" >&2
+    exit 1
+  fi
+}
+
 app_json="${1:?usage: analyze-base-fixes.sh <app-trivy.json> [base-latest-trivy.json]}"
 base_json="${2:-}"
 
@@ -46,6 +57,7 @@ if [[ ! -f "$app_json" ]]; then
   echo "analyze-base-fixes.sh: file not found: $app_json" >&2
   exit 1
 fi
+require_scan_shape "$app_json"
 
 has_new_base="${HAS_NEW_BASE:-false}"
 floating_tag="${FLOATING_TAG:-the latest base image}"
@@ -84,6 +96,7 @@ short_digest() {
 # different packages would misclassify whichever one was actually fixed.
 declare -A latest_base_ids=()
 if [[ -n "$base_json" ]] && [[ -f "$base_json" ]]; then
+  require_scan_shape "$base_json"
   if ! base_keys="$(jq -r '[.Results[]? as $r | $r.Vulnerabilities[]? | [ .VulnerabilityID, .PkgName, ($r.Type // "") ] | @tsv] | unique[]' "$base_json")"; then
     echo "analyze-base-fixes.sh: invalid JSON in $base_json" >&2
     exit 1
