@@ -8,13 +8,11 @@ using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
-using Altinn.Platform.Events.Wolverine.Commands;
 using Altinn.Platform.Events.Wolverine.Publishers;
 
 using CloudNative.CloudEvents;
 
 using Microsoft.Extensions.Logging;
-using Wolverine;
 
 namespace Altinn.Platform.Events.Services
 {
@@ -28,7 +26,6 @@ namespace Altinn.Platform.Events.Services
         private readonly IEventsQueueClient _queueClient;
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
-        private readonly IMessageBus _bus;
         private readonly ILogger _logger;
         private readonly IRegistrationEventPublisher _registrationPublisher;
 
@@ -41,7 +38,6 @@ namespace Altinn.Platform.Events.Services
             IEventsQueueClient queueClient,
             IRegisterService registerService,
             IAuthorization authorizationService,
-            IMessageBus bus,
             ILogger<EventsService> logger,
             IRegistrationEventPublisher registrationPublisher)
         {
@@ -50,18 +46,29 @@ namespace Altinn.Platform.Events.Services
             _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
-            _bus = bus;
             _logger = logger;
             _registrationPublisher = registrationPublisher;
         }
 
         /// <inheritdoc/>
-        public async Task<bool> Save(CloudEvent cloudEvent, Guid? idempotencyKey = null)
+        public async Task<bool> Save(CloudEvent cloudEvent, Guid? idempotencyKey = null, CancellationToken cancellationToken = default)
         {
+            EnsureCorrectResourceFormat(cloudEvent);
+
             try
             {
-                var result = await _repository.CreateEvent(cloudEvent.Serialize(), idempotencyKey);
+                var result = await _repository.CreateEvent(cloudEvent.Serialize(), idempotencyKey, cancellationToken);
+
+                if (!result)
+                {
+                    await _traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent);
+                }
+
                 return result;  
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -149,21 +156,6 @@ namespace Altinn.Platform.Events.Services
             bool isAppEvents = resource.StartsWith("urn:altinn:resource:app_", StringComparison.OrdinalIgnoreCase);
 
             return await _authorizationService.AuthorizeEvents(events, isAppEvents, cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public async Task SaveAndPublish(CloudEvent cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken)
-        {
-            EnsureCorrectResourceFormat(cloudEvent);
-            var cloudEventWasPersisted = await Save(cloudEvent, idempotencyKey);
-
-            if (!cloudEventWasPersisted)
-            {
-                await _traceLogService.CreateLogEntryDuplicateIdempotencyKeySkipped(cloudEvent);
-            }
-            
-            string payload = cloudEvent.Serialize();
-            await _bus.SendAsync(new InboundEventCommand(payload));
         }
 
         /// <summary>

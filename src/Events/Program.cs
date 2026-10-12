@@ -16,6 +16,7 @@ using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
 using Altinn.Platform.Events.Authorization;
+using Altinn.Platform.Events.BackgroundServices;
 using Altinn.Platform.Events.Clients;
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Configuration;
@@ -145,6 +146,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             }
 
             tracing.AddSource(TelemetryClient.AppName);
+            tracing.AddSource("Altinn.Platform.Events.RegisteredEventsProcessingService");
             tracing.AddAspNetCoreInstrumentation();
 
             tracing.AddHttpClientInstrumentation();
@@ -188,6 +190,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.Configure<EventsOutboundSettings>(config.GetSection("EventsOutboundSettings"));
     services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
     services.Configure<Altinn.Common.PEP.Configuration.PlatformSettings>(config.GetSection("PlatformSettings"));
+    services.Configure<EventsProcessingSettings>(config.GetSection("EventsProcessingSettings"));
 
     services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
     services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -311,6 +314,10 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
             [new OpenApiSecuritySchemeReference("Bearer", document)] = []
         });
     });
+
+    services.AddSingleton<IUnitOfWorkRepository, UnitOfWorkRepository>();
+    services.AddScoped<IRegisteredEventsProcessingService, RegisteredEventsProcessingService>();
+    services.AddHostedService<RegisteredEventsBackgroundService>();
 }
 
 void AddAzureMonitorTelemetryExporters(IServiceCollection services, IConfiguration config)
