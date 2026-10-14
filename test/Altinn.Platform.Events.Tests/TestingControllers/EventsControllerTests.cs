@@ -626,6 +626,75 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
             }
 
+            /// <summary>
+            /// Scenario:
+            ///   Get the generated OpenAPI document.
+            /// Expected result:
+            ///   Post events documents 200 OK and 403 Forbidden, both without a body.
+            /// Success criteria:
+            ///   The post operation lists both response codes, and neither has content.
+            /// </summary>
+            [Fact]
+            public async Task GetOpenApiDocument_PostEvents_DocumentsOkAndForbidden()
+            {
+                // Arrange
+                HttpClient client = GetTestClient();
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, "/swagger/v1/swagger.json");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+                using JsonDocument document = JsonDocument.Parse(responseString);
+                JsonElement responses = document.RootElement
+                    .GetProperty("paths")
+                    .GetProperty($"{BasePath}/events")
+                    .GetProperty("post")
+                    .GetProperty("responses");
+
+                Assert.True(responses.TryGetProperty("200", out JsonElement ok));
+                Assert.False(ok.TryGetProperty("content", out _));
+                Assert.True(responses.TryGetProperty("403", out JsonElement forbidden));
+                Assert.False(forbidden.TryGetProperty("content", out _));
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get the generated OpenAPI document.
+            /// Expected result:
+            ///   Get events documents the after query parameter as required.
+            /// Success criteria:
+            ///   The after parameter has required set to true.
+            /// </summary>
+            [Fact]
+            public async Task GetOpenApiDocument_GetEvents_DocumentsAfterAsRequired()
+            {
+                // Arrange
+                HttpClient client = GetTestClient();
+                HttpRequestMessage httpRequestMessage = new(HttpMethod.Get, "/swagger/v1/swagger.json");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+                using JsonDocument document = JsonDocument.Parse(responseString);
+                JsonElement after = document.RootElement
+                    .GetProperty("paths")
+                    .GetProperty($"{BasePath}/events")
+                    .GetProperty("get")
+                    .GetProperty("parameters")
+                    .EnumerateArray()
+                    .Single(p => p.GetProperty("name").GetString() == "after");
+
+                Assert.True(after.TryGetProperty("required", out JsonElement required) && required.GetBoolean());
+            }
+
             private HttpClient GetTestClient(IEventsService eventsService = null, IAuthorization authorizationService = null)
             {
                 if (eventsService == null)

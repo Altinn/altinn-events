@@ -61,7 +61,9 @@ namespace Altinn.Platform.Events.Controllers
         [HttpPost]
         [Authorize(Policy = AuthorizationConstants.POLICY_PUBLISH_SCOPE_OR_PLATFORM_ACCESS)]
         [Consumes("application/cloudevents+json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status403Forbidden)]
         public async Task<ActionResult> Post(
             [FromBody] CloudEvent cloudEvent,
             [FromHeader(Name = "Idempotency-Key")] [SwaggerParameter("Optional idempotency key (GUID) used to detect and skip duplicate submissions.")] Guid? idempotencyKey,
@@ -105,7 +107,7 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/cloudevents+json")]
         public async Task<ActionResult<List<CloudEvent>>> Get(
             [FromQuery, Required] string resource,
-            [FromQuery] string after,
+            [FromQuery, SwaggerParameter(Required = true)] string after,
             [FromQuery] string subject,
             [FromHeader(Name = "Altinn-AlternativeSubject")] string alternativeSubject,
             [FromQuery] List<string> type,
