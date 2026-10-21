@@ -1,0 +1,236 @@
+#!/usr/bin/env bash
+#
+# Fixture-based tests for the container-scan helper scripts. No Docker or
+# network access required — pure data in, verdicts out.
+#
+# Usage: .github/scripts/tests/run-tests.sh
+
+set -uo pipefail
+
+# analyze-base-fixes.sh writes its report to $GITHUB_STEP_SUMMARY when set,
+# falling back to stdout otherwise. Unset it so the assertions see the same
+# stdout output locally and in CI.
+unset GITHUB_STEP_SUMMARY
+
+here="$(cd "$(dirname "$0")" && pwd)"
+scripts="$(cd "$here/.." && pwd)"
+fixtures="$here/fixtures"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+pass=0
+fail=0
+
+ok() {
+  local label="$1"
+  printf '  \033[32mPASS\033[0m %s\n' "$label"
+  pass=$((pass + 1))
+  return 0
+}
+
+bad() {
+  local label="$1"
+  printf '  \033[31mFAIL\033[0m %s\n' "$label"
+  fail=$((fail + 1))
+  return 0
+}
+
+# assert_kv <output> <KEY> <expected-value> <label>
+assert_kv() {
+  local out="$1" key="$2" want="$3" label="$4"
+  local got
+  got="$(printf '%s\n' "$out" | sed -n "s/^${key}=//p")"
+  if [[ "$got" = "$want" ]]; then ok "$label ($key=$got)"; else bad "$label ($key: want '$want', got '$got')"; fi
+  return 0
+}
+
+# assert_contains <haystack> <needle> <label>
+assert_contains() {
+  local haystack="$1" needle="$2" label="$3"
+  case "$haystack" in
+    *"$needle"*) ok "$label" ;;
+    *)           bad "$label (missing: $needle)" ;;
+  esac
+  return 0
+}
+
+# assert_pkg_row <output> <cve> <pkg> <verdict-substring> <label>
+# Isolates the table row for <cve> AND <pkg>, so two rows sharing the same CVE
+# (e.g. one CVE affecting two packages) can't be confused for one another.
+assert_pkg_row() {
+  local out="$1" cve="$2" pkg="$3" verdict="$4" label="$5"
+  local row
+  row="$(printf '%s\n' "$out" | grep -F "| $cve | \`$pkg\` |")"
+  case "$row" in
+    *"$verdict"*) ok "$label" ;;
+    *)            bad "$label (row: ${row:-<none>})" ;;
+  esac
+  return 0
+}
+
+# assert_row <output> <cve> <verdict-substring> <label>
+# Isolates the table row for <cve> and checks its verdict, so a verdict from a
+# different row can't accidentally satisfy the assertion. NOT safe when two
+# rows share the same CVE for different packages -- use assert_pkg_row then.
+assert_row() {
+  local out="$1" cve="$2" verdict="$3" label="$4"
+  local row
+  row="$(printf '%s\n' "$out" | grep -F "| $cve |")"
+  case "$row" in
+    *"$verdict"*) ok "$label" ;;
+    *)            bad "$label (row: ${row:-<none>})" ;;
+  esac
+  return 0
+}
+
+echo "== derive-base-image.sh =="
+
+df="$tmp/Dockerfile.aspnet"
+cat > "$df" <<'EOF'
+FROM mcr.microsoft.com/dotnet/sdk:10.0.301-alpine3.23@sha256:aaa AS build
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.9-alpine3.23@sha256:bbb AS final
+EOF
+out="$(bash "$scripts/derive-base-image.sh" "$df")"
+assert_kv "$out" BASE_REPO    "mcr.microsoft.com/dotnet/aspnet" "picks the final (last) FROM"
+assert_kv "$out" BASE_TAG     "10.0.9-alpine3.23"               "reads full tag"
+assert_kv "$out" BASE_DIGEST  "sha256:bbb"                      "reads pinned digest"
+assert_kv "$out" BASE_VERSION "10.0.9"                          "extracts version"
+assert_kv "$out" BASE_CHANNEL "10.0"                            "reduces to major.minor"
+assert_kv "$out" OS_SUFFIX    "alpine3.23"                      "extracts OS suffix"
+assert_kv "$out" FLOATING_TAG "10.0-alpine3.23"                 "derives floating tag"
+
+df="$tmp/Dockerfile.future"
+cat > "$df" <<'EOF'
+FROM mcr.microsoft.com/dotnet/aspnet:11.0.3-alpine3.25@sha256:ccc AS final
+EOF
+out="$(bash "$scripts/derive-base-image.sh" "$df")"
+assert_kv "$out" FLOATING_TAG "11.0-alpine3.25" "generalizes to a future major/OS bump"
+
+df="$tmp/Dockerfile.noble"
+cat > "$df" <<'EOF'
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.9-noble@sha256:ddd AS final
+EOF
+out="$(bash "$scripts/derive-base-image.sh" "$df")"
+assert_kv "$out" OS_SUFFIX    "noble"       "handles non-Alpine OS suffix"
+assert_kv "$out" FLOATING_TAG "10.0-noble"  "derives floating tag for non-Alpine"
+
+df="$tmp/Dockerfile.nodigest"
+cat > "$df" <<'EOF'
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.9-alpine3.23 AS final
+EOF
+out="$(bash "$scripts/derive-base-image.sh" "$df")"
+assert_kv "$out" BASE_DIGEST  ""                "tolerates an unpinned FROM"
+assert_kv "$out" FLOATING_TAG "10.0-alpine3.23" "still derives floating tag when unpinned"
+
+df="$tmp/Dockerfile.platform"
+cat > "$df" <<'EOF'
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/aspnet:10.0.9-alpine3.23@sha256:eee AS final
+EOF
+out="$(bash "$scripts/derive-base-image.sh" "$df")"
+assert_kv "$out" BASE_REPO    "mcr.microsoft.com/dotnet/aspnet" "skips a --platform flag to find the image"
+assert_kv "$out" BASE_TAG     "10.0.9-alpine3.23"               "reads tag past a FROM flag"
+assert_kv "$out" BASE_DIGEST  "sha256:eee"                      "reads digest past a FROM flag"
+assert_kv "$out" FLOATING_TAG "10.0-alpine3.23"                 "derives floating tag past a FROM flag"
+
+# A registry port with no tag at all has no version to float a channel on,
+# this must fail loudly.
+df="$tmp/Dockerfile.port-no-tag"
+cat > "$df" <<'EOF'
+FROM registry.example:5000/dotnet/aspnet@sha256:fff AS final
+EOF
+port_no_tag_err="$tmp/port-no-tag.err"
+if bash "$scripts/derive-base-image.sh" "$df" >/dev/null 2>"$port_no_tag_err"; then
+  bad "a tagless reference (registry port only) must fail, not succeed"
+else
+  ok "a tagless reference (registry port only) fails loudly"
+fi
+case "$(cat "$port_no_tag_err" 2>/dev/null)" in
+  *"no tag"*) ok "failure message explains the missing tag" ;;
+  *)          bad "failure message missing or unclear" ;;
+esac
+
+df="$tmp/Dockerfile.port-and-tag"
+cat > "$df" <<'EOF'
+FROM registry.example:5000/dotnet/aspnet:10.0.9-alpine3.23@sha256:ggg AS final
+EOF
+out="$(bash "$scripts/derive-base-image.sh" "$df")"
+assert_kv "$out" BASE_REPO    "registry.example:5000/dotnet/aspnet" "a registry port and a real tag both parse"
+assert_kv "$out" BASE_TAG     "10.0.9-alpine3.23"                   "the real tag is read, not the port"
+assert_kv "$out" FLOATING_TAG "10.0-alpine3.23"                     "floating tag still derives past a registry port"
+
+echo "== analyze-base-fixes.sh =="
+
+# A newer base exists and was scanned. Mirror the real "same version tag, new
+# digest" case: the digest is the only thing that changed.
+new_digest="sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+old_digest="sha256:1111111111111111111111111111111111111111111111111111111111111111"
+out="$(HAS_NEW_BASE=true FLOATING_TAG=10.0-alpine3.23 \
+  LATEST_VERSION=10.0.9-alpine3.23 LATEST_DIGEST="$new_digest" \
+  BASE_TAG=10.0.9-alpine3.23 BASE_DIGEST="$old_digest" \
+  bash "$scripts/analyze-base-fixes.sh" "$fixtures/app-findings.json" "$fixtures/base-latest-findings.json")"
+assert_contains "$out" "**4** finding(s): **2** fixable by a base image bump, **1** awaiting an upstream fix, **1** app dependencies." "counts add up with a newer base"
+assert_row "$out" CVE-OS-FIXED      "Base image bump"        "OS pkg absent from latest base -> base bump"
+assert_row "$out" CVE-OS-STILL      "Not yet fixed upstream" "OS pkg present in latest base -> awaiting upstream"
+assert_row "$out" CVE-RUNTIME-FIXED "Base image bump"        "runtime assembly (usr/share/dotnet) is base-origin -> base bump"
+# Regression: an app NuGet package is reported by Trivy as Type dotnet-core with
+# a null PkgPath (Target under app/). It must NOT be mistaken for base-origin.
+assert_row "$out" CVE-APP-DEP       "App dependency"         "app dep (dotnet-core, app/ target) -> app dependency, not base"
+assert_contains "$out" "Deployed base image: \`10.0.9-alpine3.23@${old_digest}\`"          "deployed line shows full pinned digest"
+assert_contains "$out" "A newer base image is available: \`10.0.9-alpine3.23@${new_digest}\`" "available line shows full latest digest"
+assert_contains "$out" "update Dockerfile to \`10.0.9-alpine3.23@sha256:abcdef012345\`"    "bump verdict shows the short target digest"
+case "$out" in *"update Dockerfile to \`10.0.9-alpine3.23@${new_digest}\`"*) bad "verdict must NOT carry the full digest" ;; *) ok "verdict omits the full digest" ;; esac
+
+# No newer base published: base-origin findings should all read 'already on latest'.
+out="$(HAS_NEW_BASE=false FLOATING_TAG=10.0-alpine3.23 BASE_TAG=10.0.9-alpine3.23 \
+  bash "$scripts/analyze-base-fixes.sh" "$fixtures/app-findings.json")"
+assert_contains "$out" "No newer base image is published" "reports we are on the latest base"
+assert_contains "$out" "Already on latest base"           "base-origin -> already on latest"
+assert_contains "$out" "**0** fixable by a base image bump" "nothing marked as base-bump without a newer base"
+assert_contains "$out" "App dependency"                    "app dep still flagged without a newer base"
+
+# Regression: the same CVE affects two different packages, and the latest
+# base image fixes only one of them (libssl3 stays vulnerable, libcrypto3 is
+# fixed). Matching by VulnerabilityID alone would misclassify both the same
+# way; matching must also key on package name.
+out="$(HAS_NEW_BASE=true FLOATING_TAG=10.0-alpine3.23 LATEST_VERSION=10.0.9-alpine3.23 \
+  bash "$scripts/analyze-base-fixes.sh" "$fixtures/app-findings-shared-cve.json" "$fixtures/base-latest-findings-shared-cve.json")"
+assert_pkg_row "$out" CVE-SHARED libcrypto3 "Base image bump"        "shared CVE, package fixed upstream -> base bump"
+assert_pkg_row "$out" CVE-SHARED libssl3    "Not yet fixed upstream" "shared CVE, package still vulnerable upstream -> awaiting upstream"
+
+# Regression: malformed app-scan JSON must fail loudly, not silently render
+# "No CRITICAL/HIGH findings to analyze" as if the scan were clean.
+malformed_out="$tmp/malformed-out"
+if bash "$scripts/analyze-base-fixes.sh" "$fixtures/app-findings-malformed.json" >"$malformed_out" 2>/dev/null; then
+  bad "malformed app JSON must exit non-zero, not succeed"
+else
+  ok "malformed app JSON exits non-zero"
+fi
+case "$(cat "$malformed_out" 2>/dev/null)" in
+  *"No CRITICAL/HIGH findings"*) bad "malformed app JSON must not report a clean scan" ;;
+  *)                             ok "malformed app JSON does not report a clean scan" ;;
+esac
+
+# Regression: jq succeeds silently on empty input, so an empty app-scan file
+# must not be read as "zero findings" -- it's Trivy failing, not a clean scan.
+empty_app_err="$tmp/empty-app.err"
+if bash "$scripts/analyze-base-fixes.sh" "$fixtures/empty.json" >/dev/null 2>"$empty_app_err"; then
+  bad "empty app JSON must exit non-zero, not succeed"
+else
+  ok "empty app JSON exits non-zero"
+fi
+assert_contains "$(cat "$empty_app_err" 2>/dev/null)" "empty or missing Results" "empty app JSON reports the shape error"
+
+# Same gap, the other input: an empty base-latest scan must not be read as
+# "nothing left to fix", which would mark every base-origin finding fixable.
+empty_base_err="$tmp/empty-base.err"
+if HAS_NEW_BASE=true FLOATING_TAG=10.0-alpine3.23 \
+  bash "$scripts/analyze-base-fixes.sh" "$fixtures/app-findings.json" "$fixtures/empty.json" >/dev/null 2>"$empty_base_err"; then
+  bad "empty base-latest JSON must exit non-zero, not succeed"
+else
+  ok "empty base-latest JSON exits non-zero"
+fi
+assert_contains "$(cat "$empty_base_err" 2>/dev/null)" "empty or missing Results" "empty base-latest JSON reports the shape error"
+
+echo
+echo "Passed: $pass  Failed: $fail"
+[[ "$fail" -eq 0 ]]
