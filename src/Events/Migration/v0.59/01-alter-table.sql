@@ -11,3 +11,9 @@ CREATE INDEX IF NOT EXISTS idx_events_sequenceno_filtered
     ON events.events USING btree
     (sequenceno ASC NULLS LAST)
     WHERE status = 1;
+
+ALTER TABLE events.events
+    ADD CONSTRAINT events_status_fkey
+    FOREIGN KEY (status)
+    REFERENCES events.event_status (id)
+    NOT VALID;
