@@ -1,7 +1,7 @@
 info:
   name: publish admin (dialogporten)
   type: http
-  seq: 4
+  seq: 5
 
 http:
   method: GET
