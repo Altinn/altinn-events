@@ -307,3 +307,6 @@ __queuestorage__
 
 # Bruno
 test/bruno/**/.env
+
+# Written by tools/aspire: the certificate the API signs its platform access tokens with locally
+src/accesstoken/
