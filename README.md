@@ -13,7 +13,7 @@ These instructions will get you a copy of the events component up and running on
 
 ### Run everything with Aspire
 
-[`tools/aspire`](tools/aspire/README.md) runs the API with PostgreSQL, the Service Bus emulator, a local Key Vault and mocks of the token generator, Register, Authorization and a subscriber's webhook, from one command and without credentials:
+[`tools/aspire`](tools/aspire/README.md) runs the API and Events.Functions with PostgreSQL, the Service Bus emulator, a local Key Vault and mocks of the token generator, Register, Authorization and a subscriber's webhook, from one command and without credentials:
 
 ```bash
 cd tools/aspire

@@ -4,20 +4,23 @@ Runs the Events API locally from one command, with everything it calls as local 
 
 | Resource | What | Port |
 | :--- | :--- | :--- |
-| `api` | The Events API (`src/Events`), with the outbound and validation listeners turned on, so it delivers events itself | 5080 |
+| `api` | The Events API (`src/Events`) | 5080 |
+| `functions` | Events.Functions (`src/Events.Functions`), which runs the outbound and validation listeners, as in the cluster. See [Listeners](#listeners) | assigned by Aspire |
+| `functions-storage` | Azurite, as host storage for `functions` | assigned by Aspire |
 | `postgres` | PostgreSQL with the roles and database from the main README. Persistent: the container and its volume `altinn-events-aspire-db` survive a restart | 5440 |
 | `servicebus` | The Service Bus emulator with the queues from `emulator/config.json`. Persistent | assigned by Aspire |
 | `keyvault` | [Lowkey Vault](https://github.com/nagyesta/lowkey-vault) in place of Azure Key Vault, with the platform access token certificates | 5085, 5086 |
 | `mock-auth` | Token issuer in place of the Altinn test token generator and the OpenID endpoints | 5081 |
 | `wiremock-platform` | Register, Authorization (PDP) and a webhook receiver for subscriptions | 5082, 5083, 5084 |
 
-The API's code and appsettings are not changed. The app host sets everything it needs through environment variables.
+The code and appsettings of the API and Functions are not changed. The app host sets everything they need through environment variables.
 
 ## Prerequisites
 
 * [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 * [Aspire CLI](https://aspire.dev/get-started/install-cli/)
 * Docker or [Podman](https://podman.io/). For Podman, set `ASPIRE_CONTAINER_RUNTIME=podman`.
+* [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local) 4, which Aspire runs `functions` with. Not needed when both [listeners](#listeners) run in the API.
 * **A trusted ASP.NET Core development certificate:** `dotnet dev-certs https --trust`. The vault and the webhook receiver serve https with it, because the Key Vault SDK and the API's subscription endpoints only accept https.
   * On Linux, .NET only trusts it when `~/.aspnet/dev-certs/trust` is in `SSL_CERT_DIR`, as `dotnet dev-certs` says, e.g. `export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs"`.
 * **`events.dev.localhost` must resolve to 127.0.0.1.** Many Linux distributions do this for every `*.localhost` name. Otherwise add this line to `/etc/hosts` (on Windows, `C:\Windows\System32\drivers\etc\hosts`):
@@ -60,7 +63,20 @@ curl -H "Authorization: Bearer $PUB" -H "Content-Type: application/cloudevents+j
   $API/events
 ```
 
-The `wiremock-platform` log then shows the validation event and the event arriving at `/webhooks/ok/my-test`, after the API's calls to Register and Authorization.
+The `wiremock-platform` log then shows the validation event and the event arriving at `/webhooks/ok/my-test`, sent by `functions`, after the API's calls to Register and Authorization.
+
+### Listeners
+
+The API puts outbound events and subscription validations on Service Bus, and the outbound and validation listeners send them to the subscribers. In the cluster the listeners run in Events.Functions, and they move to the API ([#1076](https://github.com/Altinn/altinn-events/issues/1076)). `Listeners:Outbound` and `Listeners:Validation` choose where each runs locally:
+
+| Value | Listener runs in |
+| :--- | :--- |
+| `Functions` (default) | `functions`, which calls the API back with a platform access token: `subscriptions/validate/{id}` after a validation, and `storage/events/logs` after each delivery |
+| `Api` | `api`, in-process |
+
+With both set to `Api`, the app host leaves `functions` and `functions-storage` out.
+
+The Storage Queue functions in Events.Functions (`EventsRegistration`, `EventsInbound`, `EventsOutbound` and `SubscriptionValidation`) are on their way out and are disabled. Events.Functions still creates its retry queue in Queue Storage at startup, so `QueueStorage` points to the Azurite emulator until that code is removed.
 
 ### Webhook receiver
 
@@ -80,7 +96,7 @@ Use `https://localhost:5084/webhooks/{scenario}/{anything}` as a subscription's 
 | Where | What | Used by |
 | :--- | :--- | :--- |
 | Vault secrets `platform-access-token-public-cert` and `ttd-access-token-public-cert` | Public certificates | The API, to check incoming access tokens |
-| Vault certificate `platform-access-token-private-cert` | Certificate with private key | Events.Functions, to sign its calls to the API |
+| Vault certificate `platform-access-token-private-cert` | Certificate with private key | `functions`, to sign its calls to the API |
 | `src/accesstoken/accesstokencredentials.pfx` (git-ignored) | Certificate with private key | The API, to sign its calls to Register. `Altinn.Common.AccessTokenClient` reads it from `<parent of the working folder>/accesstoken/` |
 
 ### Bruno
@@ -93,11 +109,11 @@ Copy `test/bruno/aspire.env` to `test/bruno/.env` and use the `Local` environmen
 
 ## How Key Vault works locally
 
-The API reads secrets from Key Vault as configuration (`kvSetting:SecretUri`) and gets the public access token certificates from it. Functions gets its signing certificate from it. All of them use `DefaultAzureCredential` and the Key Vault SDK as they are, which requires:
+The API reads secrets from Key Vault as configuration (`kvSetting:SecretUri`) and gets the public access token certificates from it. Functions gets its signing certificate from it (`KeyVault:KeyVaultURI`). All of them use `DefaultAzureCredential` and the Key Vault SDK as they are, which requires:
 
 * **https.** Lowkey Vault serves https with the development certificate, which the app host exports to `.local/` (git-ignored) on each start.
 * **A vault host name that ends with `.<resource in the vault's auth challenge>`.** Lowkey Vault answers with `dev.localhost` (`LOWKEY_AUTH_RESOURCE`), and the vault is at `events.dev.localhost`, which the development certificate covers (`*.dev.localhost`).
-* **A token.** The API gets `IDENTITY_ENDPOINT`/`IDENTITY_HEADER`, so `DefaultAzureCredential` uses managed identity and gets its token from Lowkey Vault's endpoint on 5086.
+* **A token.** The API and Functions get `IDENTITY_ENDPOINT`/`IDENTITY_HEADER`, so `DefaultAzureCredential` uses managed identity and gets its token from Lowkey Vault's endpoint on 5086.
 
 ## Settings
 
@@ -106,10 +122,11 @@ Override `appsettings.json` in a git-ignored `appsettings.Local.json`.
 | Setting | Default | Description |
 | :--- | :--- | :--- |
 | `Api:SubscriptionCachingLifetimeInSeconds` | `5` | The API caches subscriptions and authorization decisions for an hour by default, so a new subscription would not match events for that long |
+| `Listeners:Outbound`, `Listeners:Validation` | `Functions` | Where the listeners run: `Functions` or `Api`. See [Listeners](#listeners) |
 | `Ports:*` | see the table at the top | Host ports for the mocks and containers. The API's 5080 is fixed, since its settings refer to it |
 
 ## Not covered yet
 
-* **Events.Functions** and **Azurite**. The API's `inbound` and `outbound` endpoints are the path Functions uses, and put messages on Storage Queues, which fails without Azurite. Events published through `events` and `app` go through Service Bus and are delivered. The vault already has the certificate Functions signs with.
-* **Telemetry.** The API only exports to Azure Monitor, so the dashboard has its console logs but no traces or metrics.
+* **The legacy Storage Queue path.** The API's `inbound` and `outbound` endpoints and its Storage Queue publishers are only used by the disabled Storage Queue functions, and are on their way out. Events published through `events` and `app` go through Service Bus, as in the cluster.
+* **Telemetry.** The API and Functions only export to Azure Monitor, so the dashboard has their console logs but no traces or metrics. For `functions` it only has the Core Tools' log: what the listeners log does not reach it. A failed delivery shows in the `wiremock-platform` log, and as the status code `functions` sends to the API's `storage/events/logs`.
 * A control panel that shows the events the webhook receiver gets and answers requests by hand, like in altinn-notifications.

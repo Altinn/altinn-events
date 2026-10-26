@@ -1,6 +1,7 @@
 #:sdk Aspire.AppHost.Sdk@13.6.4
 #:package Aspire.Hosting.PostgreSQL@13.6.4
 #:package Aspire.Hosting.Azure.ServiceBus@13.6.4
+#:package Aspire.Hosting.Azure.Functions@13.6.4
 #:property AspireUseCliBundle=true
 
 using System.Diagnostics;
@@ -30,6 +31,17 @@ builder.Configuration
     .AddJsonFile(Path.Combine(builder.AppHostDirectory, "appsettings.Local.json"), optional: true);
 
 int Port(string name) => builder.Configuration.GetValue<int>($"Ports:{name}");
+
+// The outbound and validation listeners on Service Bus run in the Functions app in the cluster, and move to the API (#1076).
+bool InFunctions(string listener) => builder.Configuration.GetValue($"Listeners:{listener}", "Functions") switch
+{
+    "Functions" => true,
+    "Api" => false,
+    var other => throw new InvalidOperationException($"Listeners:{listener} is '{other}'. Use 'Functions' or 'Api'."),
+};
+
+bool outboundInFunctions = InFunctions("Outbound");
+bool validationInFunctions = InFunctions("Validation");
 
 string localDirectory = Path.Combine(builder.AppHostDirectory, ".local");
 Directory.CreateDirectory(localDirectory);
@@ -62,16 +74,15 @@ api.WithEnvironment("PostgreSQLSettings__AdminConnectionString", string.Format(c
     .WithEnvironment("PostgreSQLSettings__ConnectionString", string.Format(connectionString, "platform_events") + ";Include Error Detail=True")
     .WaitFor(postgres);
 
-// The Service Bus emulator with the queues from emulator/config.json. The API runs the outbound and validation listeners too,
-// which the Functions app runs in the cluster, so the whole flow runs without Functions.
+// The Service Bus emulator with the queues from emulator/config.json.
 var serviceBus = builder.AddAzureServiceBus("servicebus")
     .RunAsEmulator(emulator => emulator
         .WithConfigurationFile(Path.Combine(builder.AppHostDirectory, Root, "emulator/config.json"))
         .WithLifetime(ContainerLifetime.Persistent));
 
 api.WithEnvironment("WolverineSettings__ServiceBusConnectionString", serviceBus)
-    .WithEnvironment("WolverineSettings__EnableOutboundListener", "true")
-    .WithEnvironment("WolverineSettings__EnableValidationListener", "true")
+    .WithEnvironment("WolverineSettings__EnableOutboundListener", (!outboundInFunctions).ToString())
+    .WithEnvironment("WolverineSettings__EnableValidationListener", (!validationInFunctions).ToString())
     .WaitFor(serviceBus);
 
 // Lowkey Vault in place of Azure Key Vault, with the public certificates the API checks platform access tokens against, and the
@@ -99,8 +110,9 @@ builder.Eventing.Subscribe<ResourceReadyEvent>(keyVault.Resource, async (e, ct) 
     await SeedKeyVaultAsync(logger, ct);
 });
 
+string identityEndpoint = "http://localhost:" + Port("KeyVaultToken") + "/metadata/identity/oauth2/token";
 api.WithEnvironment("kvSetting__SecretUri", keyVaultUrl)
-    .WithEnvironment("IDENTITY_ENDPOINT", "http://localhost:" + Port("KeyVaultToken") + "/metadata/identity/oauth2/token")
+    .WithEnvironment("IDENTITY_ENDPOINT", identityEndpoint)
     .WithEnvironment("IDENTITY_HEADER", "lowkey-vault")
     .WaitFor(keyVault);
 
@@ -129,6 +141,40 @@ var mocks = builder.AddProject("wiremock-platform", $"{Root}/tools/src/Altinn.Pl
 api.WithEnvironment("PlatformSettings__RegisterApiBaseAddress", "http://localhost:" + Port("Register") + "/register/api/")
     .WithEnvironment("PlatformSettings__ApiAuthorizationEndpoint", "http://localhost:" + Port("Authorization") + "/authorization/api/v1/")
     .WaitFor(mocks);
+
+// The Functions app, for the listeners that run there. It sends to the webhooks, and calls the API with platform access tokens
+// signed with the certificate in the vault. Aspire runs it with the Functions Core Tools, and gives it an Azurite emulator as
+// host storage (AzureWebJobsStorage).
+//
+// The Core Tools add the values in local.settings.json as environment variables, unless one with the same name is set. The
+// settings below use the same names, so local.settings.json's at22 vault and Service Bus without port do not end up beside them.
+if (outboundInFunctions || validationInFunctions)
+{
+    var functionsStorage = builder.AddAzureStorage("functions-storage").RunAsEmulator();
+
+    builder.AddAzureFunctionsProject("functions", $"{Root}/src/Events.Functions/Altinn.Platform.Events.Functions.csproj")
+        .WithHostStorage(functionsStorage)
+        .WithEnvironment("AZURE_FUNCTIONS_ENVIRONMENT", "Development")
+        .WithEnvironment("Platform:ApiEventsEndpoint", "http://localhost:5080/events/api/v1/")
+        .WithEnvironment("KeyVault:KeyVaultURI", keyVaultUrl)
+        .WithEnvironment("IDENTITY_ENDPOINT", identityEndpoint)
+        .WithEnvironment("IDENTITY_HEADER", "lowkey-vault")
+        .WithEnvironment("WolverineSettings:ServiceBusConnectionString", serviceBus)
+        .WithEnvironment("WolverineSettings:EnableOutboundListener", outboundInFunctions.ToString())
+        .WithEnvironment("WolverineSettings:EnableValidationListener", validationInFunctions.ToString())
+        // The legacy Storage Queue functions are not part of the flow. Functions still creates its retry queue in Queue Storage
+        // at startup, so it gets the emulator's queues until that code is gone.
+        .WithReference(functionsStorage.AddQueues("functions-queues"), "QueueStorage")
+        .WithEnvironment("AzureWebJobs.EventsRegistration.Disabled", "true")
+        .WithEnvironment("AzureWebJobs.EventsInbound.Disabled", "true")
+        .WithEnvironment("AzureWebJobs.EventsOutbound.Disabled", "true")
+        .WithEnvironment("AzureWebJobs.SubscriptionValidation.Disabled", "true")
+        // The host logs every request to the storage emulator.
+        .WithEnvironment("AzureFunctionsJobHost__logging__logLevel__Azure.Core", "Warning")
+        .WaitFor(serviceBus)
+        .WaitFor(keyVault)
+        .WaitFor(api);
+}
 
 builder.Build().Run();
 
