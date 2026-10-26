@@ -1,0 +1,15 @@
+info:
+  name: NIN user
+  type: folder
+  seq: 6
+
+request:
+  auth:
+    type: bearer
+    token: "{{t_token}}"
+  scripts:
+    - type: before-request
+      code: |-
+        // Paths are resolved from the collection root (Bruno folder), not this file's folder.
+        const { obtainToken } = require("./NIN user/ninToken.js");
+        await obtainToken("17902349936", "altinn:events.subscribe");
