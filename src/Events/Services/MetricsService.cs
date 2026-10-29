@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 
 namespace Altinn.Platform.Events.Services
@@ -9,12 +9,13 @@ namespace Altinn.Platform.Events.Services
     /// <summary>
     /// Service that retrieves and emits custom metrics.
     /// </summary>
-    public class MetricsService : IMetricsService
+    public class MetricsService(IMetricsRepository metricsRepository) : IMetricsService
     {
         /// <inheritdoc/>
-        public Task TriggerGetMetrics(CancellationToken cancellationToken)
+        public async Task TriggerGetMetrics(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var restryExahustedCount = await metricsRepository.GetRetryExhaustedCount(cancellationToken);
+
         }
     }
 }

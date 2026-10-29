@@ -136,7 +136,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 "Microsoft.AspNetCore.Hosting",
                 "Microsoft.AspNetCore.Server.Kestrel",
                 "System.Net.Http",
-                TelemetryClient.AppName);
+                TelemetryClient.AppName,
+                BacklogMetrics.MeterName);
         })
         .WithTracing(tracing => 
         {
@@ -158,6 +159,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     AddAzureMonitorTelemetryExporters(services, config);
 
     services.AddSingleton<TelemetryClient>();
+    services.AddSingleton<IBacklogMetrics, BacklogMetrics>();
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
