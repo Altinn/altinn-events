@@ -136,7 +136,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 "Microsoft.AspNetCore.Hosting",
                 "Microsoft.AspNetCore.Server.Kestrel",
                 "System.Net.Http",
-                TelemetryClient.AppName);
+                TelemetryClient.AppName,
+                BacklogMetrics.MeterName);
         })
         .WithTracing(tracing => 
         {
@@ -158,6 +159,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     AddAzureMonitorTelemetryExporters(services, config);
 
     services.AddSingleton<TelemetryClient>();
+    services.AddSingleton<IBacklogMetrics, BacklogMetrics>();
 
     services.AddMemoryCache();
     services.AddHealthChecks().AddCheck<HealthCheck>("events_health_check");
@@ -247,6 +249,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddScoped<IRegisterApiClient, RegisterApiClient>();
     services.AddScoped<IRegisterService, CachingRegisterService>();
     services.AddSingleton<ITraceLogService, TraceLogService>();
+    services.AddSingleton<IMetricsService, MetricsService>();
     services.AddScoped<IEventsService, EventsService>();
     services.AddScoped<IOutboundService, OutboundService>();
     services.AddScoped<ISubscriptionService, SubscriptionService>();
@@ -255,6 +258,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<ICloudEventRepository, CloudEventRepository>();
     services.AddSingleton<ISubscriptionRepository, SubscriptionRepository>();
     services.AddSingleton<ITraceLogRepository, TraceLogRepository>();
+    services.AddSingleton<IMetricsRepository, MetricsRepository>();
     services.Decorate<ISubscriptionRepository, SubscriptionRepositoryCachingDecorator>();
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
