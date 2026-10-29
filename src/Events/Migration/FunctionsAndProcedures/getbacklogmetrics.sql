@@ -1,5 +1,5 @@
-CREATE OR REPLACE FUNCTION events.get_registered_events_metrics()
-    RETURNS TABLE(registeredcount bigint, oldestageseconds double precision)
+CREATE OR REPLACE FUNCTION events.get_backlog_metrics()
+    RETURNS TABLE(registeredcount bigint, registeredoldestageseconds double precision, retryexhaustedcount bigint)
     LANGUAGE 'sql'
 AS $BODY$
     SELECT
@@ -10,5 +10,6 @@ AS $BODY$
              WHERE status = 1 -- Registered
              ORDER BY sequenceno
              LIMIT 1),
-            0);
+            0),
+        (SELECT count(*) FROM events.events WHERE status = 3); -- RetryExhausted
 $BODY$;
