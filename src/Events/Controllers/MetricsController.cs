@@ -26,11 +26,9 @@ namespace Altinn.Platform.Events.Controllers
         /// Triggers retrieval and emission of custom metrics.
         /// </summary>
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        [Authorize(Policy = AuthorizationConstants.POLICY_PLATFORM_ACCESS)]
         [HttpPost("getmetrics")]
         [ApiExplorerSettings(IgnoreApi = true)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> TriggerGetMetrics(CancellationToken cancellationToken)
         {
             await _metricsService.TriggerGetMetrics(cancellationToken);
