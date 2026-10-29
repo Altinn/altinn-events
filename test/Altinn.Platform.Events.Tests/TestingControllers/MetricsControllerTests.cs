@@ -44,18 +44,17 @@ public partial class IntegrationTests
 
         /// <summary>
         /// Scenario:
-        ///   Post to the trigger endpoint with a valid platform access token.
+        ///   Post to the trigger endpoint without any credentials.
         /// Expected result:
-        ///   Returns OK and the metrics service is triggered.
+        ///   Returns OK and the metrics service is triggered. The endpoint is internal and anonymous.
         /// </summary>
         [Fact]
-        public async Task TriggerGetMetrics_ValidPlatformAccessToken_ReturnsOkAndTriggersService()
+        public async Task TriggerGetMetrics_NoCredentials_ReturnsOkAndTriggersService()
         {
             // Arrange
             Mock<IMetricsService> metricsService = new();
             HttpClient client = GetTestClient(metricsService.Object);
             HttpRequestMessage request = new(HttpMethod.Post, _requestUri);
-            request.Headers.Add("PlatformAccessToken", PrincipalUtil.GetAccessToken("ttd", "endring-av-navn-v2"));
 
             // Act
             HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -63,28 +62,6 @@ public partial class IntegrationTests
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             metricsService.Verify(s => s.TriggerGetMetrics(It.IsAny<CancellationToken>()), Times.Once);
-        }
-
-        /// <summary>
-        /// Scenario:
-        ///   Post to the trigger endpoint without a platform access token.
-        /// Expected result:
-        ///   Returns Unauthorized and the metrics service is not triggered.
-        /// </summary>
-        [Fact]
-        public async Task TriggerGetMetrics_NoPlatformAccessToken_ReturnsUnauthorized()
-        {
-            // Arrange
-            Mock<IMetricsService> metricsService = new();
-            HttpClient client = GetTestClient(metricsService.Object);
-            HttpRequestMessage request = new(HttpMethod.Post, _requestUri);
-
-            // Act
-            HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
-
-            // Assert
-            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            metricsService.Verify(s => s.TriggerGetMetrics(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         private HttpClient GetTestClient(IMetricsService metricsService)

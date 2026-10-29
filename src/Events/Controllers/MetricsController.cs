@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Services.Interfaces;
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
