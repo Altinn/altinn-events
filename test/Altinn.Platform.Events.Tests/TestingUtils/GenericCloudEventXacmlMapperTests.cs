@@ -22,6 +22,7 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
         private readonly CloudEvent _cloudEventWithResourceInstance;
         private readonly CloudEvent _cloudEventWithOrgNoSubject;
         private readonly CloudEvent _cloudEventWithPersonSubject;
+        private readonly CloudEvent _cloudEventWithEmailIdentifiedSubject;
         private readonly CloudEvent _cloudEventWithNoSubject;
         private readonly CloudEvent _cloudEventWithUnknownSubject;
         private readonly CloudEvent _cloudEventWithAppResource;
@@ -39,10 +40,13 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             _cloudEvent["resource"] = "urn:altinn:resource:nbib.bokoversikt.api";
 
             _cloudEventWithOrgNoSubject = _cloudEvent.Clone();
-            _cloudEventWithOrgNoSubject.Subject = "urn:altinn:organization:identifier-no:912345678";
+            _cloudEventWithOrgNoSubject.Subject = "urn:altinn:organization:identifier-no:991825827";
 
             _cloudEventWithPersonSubject = _cloudEvent.Clone();
-            _cloudEventWithPersonSubject.Subject = "urn:altinn:person:identifier-no:12345678901";
+            _cloudEventWithPersonSubject.Subject = "urn:altinn:person:identifier-no:03827099790";
+
+            _cloudEventWithEmailIdentifiedSubject = _cloudEvent.Clone();
+            _cloudEventWithEmailIdentifiedSubject.Subject = "urn:altinn:person:idporten-email:vålmes.bøplok+loks?q@ælop.no";
 
             _cloudEventWithNoSubject = _cloudEvent.Clone();
             _cloudEventWithNoSubject.Subject = null;
@@ -245,6 +249,20 @@ namespace Altinn.Platform.Events.Tests.TestingUtils
             // Assert
             Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
             Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:organization:identifier-no"));
+        }
+
+        [Fact]
+        public void CreateResourceCategory_CloudEventWithEmailIdentifiedSubject()
+        {
+            // Arrange
+            int expectedAttributeCount = 5;
+
+            // Act
+            var actual = GenericCloudEventXacmlMapper.CreateResourceCategory(_cloudEventWithEmailIdentifiedSubject);
+
+            // Assert
+            Assert.Equal(expectedAttributeCount, actual.Attribute.Count);
+            Assert.Contains(actual.Attribute, a => a.AttributeId.Equals("urn:altinn:person:idporten-email"));
         }
 
         [Fact]

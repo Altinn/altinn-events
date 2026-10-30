@@ -1,0 +1,15 @@
+info:
+  name: Email user
+  type: folder
+  seq: 7
+
+request:
+  auth:
+    type: bearer
+    token: "{{t_token}}"
+  scripts:
+    - type: before-request
+      code: |-
+        // Paths are resolved from the collection root (Bruno folder), not this file's folder.
+        const { obtainToken } = require("./Email user/emailToken.js");
+        await obtainToken("terjedatatest@leet.no", "altinn:events.subscribe");
