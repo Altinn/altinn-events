@@ -212,7 +212,6 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         string[] queueNames =
         [
             WolverineSettings.RegistrationQueueName,
-            WolverineSettings.InboundQueueName,
             WolverineSettings.OutboundQueueName,
             WolverineSettings.ValidationQueueName
         ];

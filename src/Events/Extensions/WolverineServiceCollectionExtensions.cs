@@ -39,7 +39,6 @@ public static class WolverineServiceCollectionExtensions
                 AddValidationPublisher(wolverineSettings, opts);
 
                 AddRegistrationListener(wolverineSettings, opts);
-                AddInboundListener(wolverineSettings, opts);
                 AddOutboundListener(wolverineSettings, opts);
                 AddValidationListener(wolverineSettings, opts);
             }
@@ -91,14 +90,6 @@ public static class WolverineServiceCollectionExtensions
             .ListenerCount(settings.RegistrationListenerCount)
             .ProcessInline();
         opts.Policies.Add(new RegistrationEventHandlerPolicy(settings));
-    }
-
-    private static void AddInboundListener(WolverineSettings settings, WolverineOptions opts)
-    {
-        if (!settings.EnableInboundListener)
-        {
-            return;
-        }
     }
 
     private static void AddOutboundListener(WolverineSettings settings, WolverineOptions opts)

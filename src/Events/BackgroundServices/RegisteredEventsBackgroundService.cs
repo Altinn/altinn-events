@@ -14,8 +14,7 @@ using Microsoft.Extensions.Options;
 namespace Altinn.Platform.Events.BackgroundServices;
 
 /// <summary>
-/// Polls for registered events and forwards them to outbound delivery, replacing the
-/// events-inbound Azure Service Bus queue. Runs <see cref="EventsProcessingSettings.TaskCount"/>
+/// Polls for registered events and forwards them to outbound delivery. Runs <see cref="EventsProcessingSettings.TaskCount"/>
 /// concurrent polling loops, each resolving a scoped <see cref="IRegisteredEventsProcessingService"/>
 /// per iteration.
 /// </summary>
