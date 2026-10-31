@@ -8,8 +8,8 @@ namespace Altinn.Platform.Events.Functions;
 
 /// <summary>
 /// Processes incoming CloudEvents from the "events-registration" queue.
-/// CloudEvents are first persisted and then routed via the Events API inbound endpoint
-/// (which enqueues to the "events-inbound" queue).
+/// CloudEvents are persisted with status Registered and picked up for outbound processing
+/// by the Events API background service.
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="EventsRegistration"/> class.
@@ -19,8 +19,7 @@ public class EventsRegistration(IEventsClient eventsClient)
     private readonly IEventsClient _eventsClient = eventsClient;
 
     /// <summary>
-    /// Saves cloudEvents from events-registration queue to persistent storage
-    /// and sends to events-inbound queue storage.
+    /// Saves cloudEvents from events-registration queue to persistent storage.
     /// </summary>
     [Function(nameof(EventsRegistration))]
     public async Task Run([QueueTrigger("events-registration", Connection = "QueueStorage")] string item)
@@ -35,7 +34,6 @@ public class EventsRegistration(IEventsClient eventsClient)
         */
 
         await _eventsClient.SaveCloudEvent(cloudEvent);
-        await _eventsClient.PostInbound(cloudEvent);
     }
 
     /// <summary>

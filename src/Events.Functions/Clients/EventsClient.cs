@@ -83,20 +83,6 @@ namespace Altinn.Platform.Events.Functions.Clients
         }
 
         /// <inheritdoc/>
-        public async Task PostInbound(CloudEvent cloudEvent)
-        {
-            string endpointUrl = "inbound";
-
-            var (success, statusCode) = await PostCloudEventToEndpoint(cloudEvent, endpointUrl);
-
-            if (!success)
-            {
-                _logger.LogError("// PostInbound event with id {CloudEventId} failed with status code {StatusCode}", cloudEvent.Id, statusCode);
-                throw new HttpRequestException($"// PostInbound event with id {cloudEvent.Id} failed with status code {statusCode}");
-            }
-        }
-
-        /// <inheritdoc/>
         public async Task PostOutbound(CloudEvent cloudEvent)
         {
             string endpointUrl = "outbound";
