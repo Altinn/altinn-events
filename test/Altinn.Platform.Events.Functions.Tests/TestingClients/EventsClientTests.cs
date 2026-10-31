@@ -135,51 +135,6 @@ namespace Altinn.Platform.Events.Functions.Tests.TestingClients
         /// Verify that the endpoint the client sends a request to is set correctly
         /// </summary>
         [Fact]
-        public async Task PostInbound_SuccessResponse()
-        {
-            // Arrange
-            var handlerMock = CreateMessageHandlerMock(
-                "https://platform.test.altinn.cloud/events/api/v1/inbound",
-                HttpStatusCode.OK);
-
-            var sut = CreateTestInstance(handlerMock.Object);
-
-            // Act
-            await sut.PostInbound(_cloudEvent);
-
-            // Assert
-            handlerMock.VerifyAll();
-        }
-
-        [Fact]
-        public async Task PostInbound_NonSuccessResponse_ErrorLoggedAndExceptionThrown()
-        {
-            // Arrange
-            var handlerMock = CreateMessageHandlerMock(
-                "https://platform.test.altinn.cloud/events/api/v1/inbound",
-                HttpStatusCode.ServiceUnavailable);
-
-            var sut = CreateTestInstance(handlerMock.Object);
-
-            // Act
-            await Assert.ThrowsAsync<HttpRequestException>(async () => await sut.PostInbound(_cloudEvent));
-
-            // Assert
-            handlerMock.VerifyAll();
-            _loggerMock.Verify(
-                x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("PostInbound event with id 1337 failed with status code ServiceUnavailable")),
-                It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
-                Times.Once);
-        }
-
-        /// <summary>
-        /// Verify that the endpoint the client sends a request to is set correctly
-        /// </summary>
-        [Fact]
         public async Task PostOutbound_SuccessResponse()
         {
             // Arrange

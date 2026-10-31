@@ -95,20 +95,6 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<string> PostInbound(CloudEvent cloudEvent)
-        {
-            QueuePostReceipt receipt = await _queueClient.EnqueueInbound(cloudEvent.Serialize());
-
-            if (!receipt.Success)
-            {
-                _logger.LogError(receipt.Exception, "// EventsService // PostInbound // Failed to send cloudEventId {EventId} to queue.", cloudEvent.Id);
-                throw receipt.Exception;
-            }
-
-            return cloudEvent.Id;
-        }
-
-        /// <inheritdoc/>
         public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size = 50)
         {
             if ((!string.IsNullOrEmpty(person) || !string.IsNullOrEmpty(unit)) && partyId <= 0)

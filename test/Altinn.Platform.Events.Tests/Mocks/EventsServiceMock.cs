@@ -152,11 +152,6 @@ namespace Altinn.Platform.Events.Tests.Mocks
             throw new NotImplementedException();
         }
 
-        public Task<string> PostInbound(CloudEvent cloudEvent)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<bool> Save(CloudEvent cloudEvent, Guid? idempotencyKey, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();

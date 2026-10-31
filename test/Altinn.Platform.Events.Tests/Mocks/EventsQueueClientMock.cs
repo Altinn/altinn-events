@@ -23,11 +23,6 @@ namespace Altinn.Platform.Events.Tests.Mocks
             return Task.FromResult(new QueuePostReceipt { Success = true });
         }
 
-        public Task<QueuePostReceipt> EnqueueInbound(string content)
-        {
-            return Task.FromResult(new QueuePostReceipt { Success = true });
-        }
-
         public Task<QueuePostReceipt> EnqueueOutbound(string content)
         {
             CloudEventEnvelope cloudEventEnvelope = JsonSerializer.Deserialize<CloudEventEnvelope>(content);
