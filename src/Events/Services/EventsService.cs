@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
 using Altinn.Platform.Events.Extensions;
-using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Wolverine.Publishers;
@@ -23,7 +22,6 @@ namespace Altinn.Platform.Events.Services
     {
         private readonly ICloudEventRepository _repository;
         private readonly ITraceLogService _traceLogService;
-        private readonly IEventsQueueClient _queueClient;
         private readonly IRegisterService _registerService;
         private readonly IAuthorization _authorizationService;
         private readonly ILogger _logger;
@@ -43,7 +41,6 @@ namespace Altinn.Platform.Events.Services
         {
             _repository = repository;
             _traceLogService = traceLogService;
-            _queueClient = queueClient;
             _registerService = registerService;
             _authorizationService = authorizationService;
             _logger = logger;
