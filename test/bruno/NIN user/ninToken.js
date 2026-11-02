@@ -17,6 +17,23 @@ const ninUsers = {
       AuthN_PartyId: "51368167",
       AuthN_PartyUuid: "200718e3-ab43-4d34-86ee-4cd8a975a55c"
     }
+  },
+  "08907497373": { // use-case test user
+    at22: {
+      AuthN_UserId: "20885891",
+      AuthN_PartyId: "50393868",
+      AuthN_PartyUuid: "b8bba17c-d081-4405-ba0b-034722b3b771"
+    },
+    at23: {
+      AuthN_UserId: "20637195",
+      AuthN_PartyId: "50273283",
+      AuthN_PartyUuid: "87a67973-55ad-42eb-984f-39b0cca9b969"
+    },
+    tt02: {
+      AuthN_UserId: "1282603",
+      AuthN_PartyId: "50649310",
+      AuthN_PartyUuid: "a1f2cfd7-3014-45bc-a34c-28d0ac651adb"
+    }
   }
 };
 
