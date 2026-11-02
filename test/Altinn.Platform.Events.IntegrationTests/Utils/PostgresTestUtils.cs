@@ -93,4 +93,23 @@ public static class PostgresTestUtils
         var result = await command.ExecuteScalarAsync();
         return result is int retryCount ? retryCount : null;
     }
+
+    /// <summary>
+    /// Sets the status of the event with the given cloud event id, directly in the database.
+    /// Intended for arranging events in a specific status in integration tests.
+    /// </summary>
+    /// <param name="connectionString">The PostgreSQL connection string.</param>
+    /// <param name="cloudEventId">The id of the cloud event to update.</param>
+    /// <param name="status">The status to set.</param>
+    public static async Task SetEventStatusAsync(string connectionString, string cloudEventId, int status)
+    {
+        await using var dataSource = NpgsqlDataSource.Create(connectionString);
+
+        await using var command = dataSource.CreateCommand(
+            "UPDATE events.events SET status = $1 WHERE cloudevent->>'id' = $2");
+        command.Parameters.AddWithValue((short)status);
+        command.Parameters.AddWithValue(cloudEventId);
+
+        await command.ExecuteNonQueryAsync();
+    }
 }
