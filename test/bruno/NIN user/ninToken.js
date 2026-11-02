@@ -60,7 +60,7 @@ const obtainToken = async (nin, scopes, force = false) => {
   const tokenGeneratorUserName = bru.getProcessEnv("TOKEN_BASIC_AUTH_USER");
   const tokenGeneratorUserPassword = bru.getProcessEnv("TOKEN_BASIC_AUTH_PW");
   
-  let tokenUrl = `${tokenGeneratorBaseUrl}/api/GetPersonalToken?env=${environment}&scopes=${tokenScopes}&pid=${nin}&userid=${user.AuthN_UserId}&partyid=${user.AuthN_PartyId}&authLvl=3&ttl=1800`;
+  let tokenUrl = `${tokenGeneratorBaseUrl}/api/GetPersonalToken?env=${environment}&scopes=${tokenScopes}&pid=${nin}&userid=${user.AuthN_UserId}&partyid=${user.AuthN_PartyId}&partyuuid=${user.AuthN_PartyUuid}&authLvl=3&ttl=1800`;
   
   const authorizationHeader = 'Basic ' + btoa(`${tokenGeneratorUserName}:${tokenGeneratorUserPassword}`);
   const response = await bru.sendRequest({

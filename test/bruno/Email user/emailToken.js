@@ -61,7 +61,7 @@ const obtainToken = async (email, scopes, force = false) => {
   const tokenGeneratorUserName = bru.getProcessEnv("TOKEN_BASIC_AUTH_USER");
   const tokenGeneratorUserPassword = bru.getProcessEnv("TOKEN_BASIC_AUTH_PW");
   
-  let tokenUrl = `${tokenGeneratorBaseUrl}/api/GetSelfRegisteredEmailUserToken?env=${environment}&scopes=${tokenScopes}&email=${email}&userid=${user.AuthN_UserId}&partyid=${user.AuthN_PartyId}&authLvl=3&ttl=1800`;
+  let tokenUrl = `${tokenGeneratorBaseUrl}/api/GetSelfRegisteredEmailUserToken?env=${environment}&scopes=${tokenScopes}&email=${email}&userid=${user.AuthN_UserId}&partyid=${user.AuthN_PartyId}&partyuuid=${user.AuthN_PartyUuid}&authLvl=3&ttl=1800`;
   
   const authorizationHeader = 'Basic ' + btoa(`${tokenGeneratorUserName}:${tokenGeneratorUserPassword}`);
   const response = await bru.sendRequest({
