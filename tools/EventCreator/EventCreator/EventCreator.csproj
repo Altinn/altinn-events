@@ -21,9 +21,9 @@
     <PackageReference Include="CloudNative.CloudEvents.AspNetCore" Version="2.9.0" />
     <PackageReference Include="CloudNative.CloudEvents.SystemTextJson" Version="2.9.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
-    <PackageReference Include="WolverineFx" Version="6.54.0" />
-    <PackageReference Include="WolverineFx.AzureServiceBus" Version="6.54.0" />
-    <PackageReference Include="WolverineFx.RuntimeCompilation" Version="6.54.0" />
+    <PackageReference Include="WolverineFx" Version="6.60.0" />
+    <PackageReference Include="WolverineFx.AzureServiceBus" Version="6.60.0" />
+    <PackageReference Include="WolverineFx.RuntimeCompilation" Version="6.60.0" />
   </ItemGroup>
 
   <ItemGroup>
