@@ -21,11 +21,6 @@ public class WolverineSettings
     public bool EnableRegistrationListener { get; set; } = false;
 
     /// <summary>
-    /// Enables the Wolverine listener on the inbound queue.
-    /// </summary>
-    public bool EnableInboundListener { get; set; } = false;
-
-    /// <summary>
     /// Enables the Wolverine listener on the outbound queue.
     /// </summary>
     public bool EnableOutboundListener { get; set; } = false;
@@ -41,7 +36,7 @@ public class WolverineSettings
     /// </summary>
     public bool IsAzureServiceBusEnabled =>
         EnableRegistrationPublisher || EnableValidationPublisher ||
-        EnableRegistrationListener || EnableInboundListener ||
+        EnableRegistrationListener || 
         EnableOutboundListener || EnableValidationListener;
 
     /// <summary>
@@ -82,21 +77,6 @@ public class WolverineSettings
     /// Retry policy configuration for the validation queue.
     /// </summary>
     public QueueRetryPolicy ValidationQueuePolicy { get; set; } = new();
-
-    /// <summary>
-    /// Azure Service Bus queue name for event inbound.
-    /// </summary>
-    public string InboundQueueName { get; set; }
-
-    /// <summary>
-    /// Number of listeners to be used against the inbound queue (per pod).
-    /// </summary>
-    public int InboundListenerCount { get; set; } = 5;
-
-    /// <summary>
-    /// Retry policy configuration for the inbound queue.
-    /// </summary>
-    public QueueRetryPolicy InboundQueuePolicy { get; set; } = new();
 
     /// <summary>
     /// Azure Service Bus queue name for event outbound.

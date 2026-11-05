@@ -124,7 +124,6 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         var successReceipt = new Models.QueuePostReceipt { Success = true };
 
         mock.Setup(x => x.EnqueueRegistration(It.IsAny<string>())).ReturnsAsync(successReceipt);
-        mock.Setup(x => x.EnqueueInbound(It.IsAny<string>())).ReturnsAsync(successReceipt);
         mock.Setup(x => x.EnqueueOutbound(It.IsAny<string>())).ReturnsAsync(successReceipt);
         mock.Setup(x => x.EnqueueSubscriptionValidation(It.IsAny<string>())).ReturnsAsync(successReceipt);
 
@@ -212,7 +211,6 @@ public class IntegrationTestWebApplicationFactory(IntegrationTestContainersFixtu
         string[] queueNames =
         [
             WolverineSettings.RegistrationQueueName,
-            WolverineSettings.InboundQueueName,
             WolverineSettings.OutboundQueueName,
             WolverineSettings.ValidationQueueName
         ];
