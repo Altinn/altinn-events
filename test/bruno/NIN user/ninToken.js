@@ -17,6 +17,23 @@ const ninUsers = {
       AuthN_PartyId: "51368167",
       AuthN_PartyUuid: "200718e3-ab43-4d34-86ee-4cd8a975a55c"
     }
+  },
+  "08907497373": { // use-case test user
+    at22: {
+      AuthN_UserId: "20885891",
+      AuthN_PartyId: "50393868",
+      AuthN_PartyUuid: "b8bba17c-d081-4405-ba0b-034722b3b771"
+    },
+    at23: {
+      AuthN_UserId: "20637195",
+      AuthN_PartyId: "50273283",
+      AuthN_PartyUuid: "87a67973-55ad-42eb-984f-39b0cca9b969"
+    },
+    tt02: {
+      AuthN_UserId: "1282603",
+      AuthN_PartyId: "50649310",
+      AuthN_PartyUuid: "a1f2cfd7-3014-45bc-a34c-28d0ac651adb"
+    }
   }
 };
 
@@ -60,7 +77,7 @@ const obtainToken = async (nin, scopes, force = false) => {
   const tokenGeneratorUserName = bru.getProcessEnv("TOKEN_BASIC_AUTH_USER");
   const tokenGeneratorUserPassword = bru.getProcessEnv("TOKEN_BASIC_AUTH_PW");
   
-  let tokenUrl = `${tokenGeneratorBaseUrl}/api/GetPersonalToken?env=${environment}&scopes=${tokenScopes}&pid=${nin}&userid=${user.AuthN_UserId}&partyid=${user.AuthN_PartyId}&authLvl=3&ttl=1800`;
+  let tokenUrl = `${tokenGeneratorBaseUrl}/api/GetPersonalToken?env=${environment}&scopes=${tokenScopes}&pid=${nin}&userid=${user.AuthN_UserId}&partyid=${user.AuthN_PartyId}&partyuuid=${user.AuthN_PartyUuid}&authLvl=3&ttl=1800`;
   
   const authorizationHeader = 'Basic ' + btoa(`${tokenGeneratorUserName}:${tokenGeneratorUserPassword}`);
   const response = await bru.sendRequest({

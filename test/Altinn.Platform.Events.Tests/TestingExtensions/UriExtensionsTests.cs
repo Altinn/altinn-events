@@ -27,6 +27,8 @@ namespace Altinn.Platform.Events.Tests.TestingExtensions
         [InlineData("urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66", true)]
         [InlineData("  urn:namespaceid:ttd:apps:apps-test", false)]
         [InlineData("urn:foo::::", false)]
+        [InlineData("urn:altinn:person:idporten-email:ikke-svar@altinn.no", true)]
+        [InlineData("urn:altinn:person:idporten-email:vålmes.bøplok+loks?q@ælop.no", false)]
         public void IsValidUrn(string urn, bool expected)
         {
             bool actual = UriExtensions.IsValidUrn(urn);

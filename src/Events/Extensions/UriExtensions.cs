@@ -8,7 +8,7 @@ namespace Altinn.Platform.Events.Extensions;
 /// </summary>
 public static class UriExtensions
 {
-    private static string _urnPattern = @"^urn:[a-z0-9-]{1,30}(:[a-z0-9()+,.\-;$_!\/]{1,100}){1,10}$";
+    private static string _urnPattern = @"^urn:[a-z0-9-]{1,30}(:[a-z0-9()+,.\-;@$_!\/]{1,100}){1,10}$";
 
     /// <summary>
     ///  Validates that the provided uri is a urn or an url with the https scheme.
