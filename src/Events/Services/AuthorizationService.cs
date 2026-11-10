@@ -257,8 +257,24 @@ public class AuthorizationService : IAuthorization
 
     private static bool UnsupportedSubject(CloudEvent e)
     {
+        if (e.Subject is null)
+        {
+            return false;
+        }
+
         // The internal Authorization endpoints doesn't allow the use of national identity number as subject.
-        return e.Subject is not null && e.Subject.StartsWith("urn:altinn:person:identifier-no:");
+        if (e.Subject.StartsWith("urn:altinn:person:identifier-no:"))
+        {
+            return true;
+        }
+
+        // Authorization currently do not support email as a part of the resource description.
+        if (e.Subject.StartsWith("urn:altinn:person:idporten-email:"))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private static void ReplaceSubject(CloudEvent cloudEvent, IEnumerable<PartyIdentifiers> partyIdentifiersList)
@@ -268,14 +284,11 @@ public class AuthorizationService : IAuthorization
             return;
         }
 
+        PartyIdentifiers? partyIdentifiers =
+            partyIdentifiersList.FirstOrDefault(p => p.ExternalUrn == cloudEvent.Subject!);
+
         // Backup the original subject in the event
         cloudEvent[_originalSubjectKey] = cloudEvent.Subject!;
-
-        // The subject is in the format urn:altinn:person:identifier-no:08895699684
-        string nationalIdentityNumber = cloudEvent.Subject!.Replace("urn:altinn:person:identifier-no:", string.Empty);
-
-        PartyIdentifiers? partyIdentifiers =
-            partyIdentifiersList.FirstOrDefault(p => p.PersonIdentifier == nationalIdentityNumber);
 
         if (partyIdentifiers is not null)
         {

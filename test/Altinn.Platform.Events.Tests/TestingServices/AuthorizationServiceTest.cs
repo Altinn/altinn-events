@@ -182,7 +182,8 @@ public class AuthorizationServiceTest
                 PartyId = 50301578,
                 PartyType = "person",
                 PersonIdentifier = "11913049472",
-                PartyUuid = Guid.Parse("4a80af94-14be-4af5-9f95-a6a0824c5b55")
+                PartyUuid = Guid.Parse("4a80af94-14be-4af5-9f95-a6a0824c5b55"),
+                ExternalUrn = "urn:altinn:person:identifier-no:11913049472"
             }
             ]);
 
@@ -333,6 +334,90 @@ public class AuthorizationServiceTest
 
         // Check that the cloud event is back to the original subject
         Assert.Equal("urn:altinn:person:identifier-no:18874198354", cloudEvent.Subject);
+    }
+
+    [Fact]
+    public async Task AuthorizeConsumerForGenericEvent_EventWithUnsupportedEmailSubject_LogicPerformSubjectReplace()
+    {
+        // Arrange
+        CloudEvent cloudEvent =
+            GetCloudEvent("e7c581bc-e931-46c8-bfc0-3c6716d8da15", "urn:altinn:person:idporten-email:nolsnimo.vipsivel@leet.no", false);
+
+        PartiesRegisterQueryResponse partiesRegisterQueryResponse =
+            await TestDataLoader.Load<PartiesRegisterQueryResponse>("oneemailperson");
+
+        Mock<IRegisterService> registerMock = new();
+        registerMock.Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .Callback((IEnumerable<string> requestedUrnList, CancellationToken cancellationToken) =>
+            {
+                Assert.Single(requestedUrnList);
+                Assert.Equal("urn:altinn:person:idporten-email:nolsnimo.vipsivel@leet.no", requestedUrnList.ElementAt(0));
+            })
+            .ReturnsAsync([partiesRegisterQueryResponse.Data[0]]);
+
+        // Create a mock XACML response that includes the subject category with org attribute
+        XacmlJsonResponse decisionResponse = new()
+        {
+            Response =
+            [
+                new XacmlJsonResult
+                {
+                    Decision = "Permit",
+                    Category = new List<XacmlJsonCategory>
+                    {
+                        new()
+                        {
+                            CategoryId = XacmlConstants.MatchAttributeCategory.Subject,
+                            Attribute = new List<XacmlJsonAttribute>
+                            {
+                                new XacmlJsonAttribute
+                                {
+                                    AttributeId = "urn:altinn:org",
+                                    Value = "ttd"
+                                }
+                            }
+                        },
+                        new()
+                        {
+                            CategoryId = XacmlConstants.MatchAttributeCategory.Resource,
+                            Attribute = new List<XacmlJsonAttribute>
+                            {
+                                new XacmlJsonAttribute
+                                {
+                                    AttributeId = "urn:altinn:party:uuid",
+                                    Value = "87772315-c68a-45e9-b73a-9c0a693d4ad0"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        };
+
+        Mock<IPDP> pdpMock = new();
+        pdpMock.Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Callback((XacmlJsonRequestRoot authRequest) =>
+            {
+                List<XacmlJsonCategory> resources = authRequest.Request.Resource;
+
+                Assert.Single(resources);
+
+                Assert.Equal("urn:altinn:party:uuid", resources[0].Attribute[4].AttributeId);
+                Assert.Equal("87772315-c68a-45e9-b73a-9c0a693d4ad0", resources[0].Attribute[4].Value);
+            })
+            .ReturnsAsync(decisionResponse);
+
+        // Act
+        AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
+
+        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, ["/org/ttd"], CancellationToken.None);
+
+        // Assert
+        Assert.Single(result);
+        Assert.True(result["/org/ttd"]);
+
+        // Check that the cloud event is back to the original subject
+        Assert.Equal("urn:altinn:person:idporten-email:nolsnimo.vipsivel@leet.no", cloudEvent.Subject);
     }
 
     [Fact]
