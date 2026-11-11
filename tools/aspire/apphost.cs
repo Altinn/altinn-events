@@ -1,7 +1,7 @@
-#:sdk Aspire.AppHost.Sdk@13.6.4
-#:package Aspire.Hosting.PostgreSQL@13.6.4
-#:package Aspire.Hosting.Azure.ServiceBus@13.6.4
-#:package Aspire.Hosting.Azure.Functions@13.6.4
+#:sdk Aspire.AppHost.Sdk@13.6.5
+#:package Aspire.Hosting.PostgreSQL@13.6.5
+#:package Aspire.Hosting.Azure.ServiceBus@13.6.5
+#:package Aspire.Hosting.Azure.Functions@13.6.5
 #:property AspireUseCliBundle=true
 
 using System.Diagnostics;
