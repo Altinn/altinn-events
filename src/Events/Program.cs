@@ -96,9 +96,13 @@ async Task SetConfigurationProviders(ConfigurationManager config)
         configJsonFile2 = "/app/appsettings.json";
     }
 
-    config.AddJsonFile(configJsonFile1, optional: true, reloadOnChange: true);
+    // Honor the standard host setting (e.g. DOTNET_hostBuilder__reloadConfigOnChange=false) so test runs
+    // don't create a file watcher per test host and exhaust the inotify instance limit on Linux.
+    bool reloadOnChange = config.GetValue("hostBuilder:reloadConfigOnChange", true);
 
-    config.AddJsonFile(configJsonFile2, optional: false, reloadOnChange: true);
+    config.AddJsonFile(configJsonFile1, optional: true, reloadOnChange: reloadOnChange);
+
+    config.AddJsonFile(configJsonFile2, optional: false, reloadOnChange: reloadOnChange);
 
     config.AddUserSecrets<Program>();
 
