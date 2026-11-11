@@ -138,7 +138,7 @@ public class AuthorizationServiceTest
     {
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), TestContext.Current.CancellationToken))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .Callback((XacmlJsonRequestRoot authRequest, CancellationToken cancellationToken) =>
             {
                 List<XacmlJsonCategory> resources = authRequest.Request.Resource;
@@ -244,7 +244,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(_cloudEvent, ["/org/ttd"], CancellationToken.None);
+        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(_cloudEvent, ["/org/ttd"], TestContext.Current.CancellationToken);
 
         // Assert
         pdpMock.VerifyAll();
@@ -326,7 +326,7 @@ public class AuthorizationServiceTest
         // Act
         AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, ["/org/ttd"], CancellationToken.None);
+        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, ["/org/ttd"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -410,7 +410,7 @@ public class AuthorizationServiceTest
         // Act
         AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, ["/org/ttd"], CancellationToken.None);
+        var result = await sut.AuthorizeMultipleConsumersForGenericEvent(cloudEvent, ["/org/ttd"], TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -476,7 +476,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, TestContext.Current.CancellationToken);
 
         // Assert
         pdpMock.VerifyAll();
@@ -492,7 +492,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, TestContext.Current.CancellationToken);
 
         // Assert
         pdpMock.VerifyAll();
@@ -508,7 +508,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(actual);
@@ -536,8 +536,8 @@ public class AuthorizationServiceTest
         XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_publish_one");
 
         Mock<IPDP> pdpMock = new();
-        pdpMock.Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
-            .Callback((XacmlJsonRequestRoot authRequest) =>
+        pdpMock.Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
+            .Callback((XacmlJsonRequestRoot authRequest, CancellationToken cancellationToken) =>
             {
                 List<XacmlJsonCategory> resources = authRequest.Request.Resource;
 
@@ -551,7 +551,7 @@ public class AuthorizationServiceTest
         // Act
         AuthorizationService sut = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        bool actual = await sut.AuthorizePublishEvent(cloudEvent, CancellationToken.None);
+        bool actual = await sut.AuthorizePublishEvent(cloudEvent, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(actual);
@@ -573,7 +573,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(actual);
@@ -592,7 +592,7 @@ public class AuthorizationServiceTest
         // Act
         var sut = new AuthorizationService(pdpMock.Object, principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
-        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, CancellationToken.None);
+        bool actual = await sut.AuthorizePublishEvent(_cloudEvent, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(actual);
@@ -627,8 +627,8 @@ public class AuthorizationServiceTest
 
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
-            .Callback((XacmlJsonRequestRoot authRequest) =>
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
+            .Callback((XacmlJsonRequestRoot authRequest, CancellationToken cancellation) =>
             {
                 List<XacmlJsonCategory> resources = authRequest.Request.Resource;
 
@@ -655,7 +655,7 @@ public class AuthorizationServiceTest
         AuthorizationService target = new(pdpMock.Object, _principalMock.Object, registerMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, false, CancellationToken.None);
+        List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, false, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(finalCloudEvents);
@@ -692,8 +692,8 @@ public class AuthorizationServiceTest
 
         Mock<IPDP> pdpMock = new();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
-            .Callback((XacmlJsonRequestRoot authRequest) =>
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
+            .Callback((XacmlJsonRequestRoot authRequest, CancellationToken cancellation) =>
             {
                 List<XacmlJsonCategory> resources = authRequest.Request.Resource;
 
@@ -727,7 +727,7 @@ public class AuthorizationServiceTest
         AuthorizationService target = new(pdpMock.Object, _principalMock.Object, _registerServiceMock.Object, NullLogger<AuthorizationService>.Instance);
 
         // Act
-        List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, true, CancellationToken.None);
+        List<CloudEvent> finalCloudEvents = await target.AuthorizeEvents(cloudEvents, true, TestContext.Current.CancellationToken);
 
         // Assert
         // The Asserts we care about here is defined in the callback of the mock, which will fail the test if the logic is not correct.
@@ -976,7 +976,7 @@ public class AuthorizationServiceTest
     {
         var pdpMock = new Mock<IPDP>();
         pdpMock
-            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+            .Setup(pdp => pdp.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new XacmlJsonResponse
             {
                 Response =

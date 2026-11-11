@@ -99,7 +99,7 @@ public class AuthorizationService : IAuthorization
 
         XacmlJsonRequestRoot xacmlJsonRequest = 
             GenericCloudEventXacmlMapper.CreateMultiDecisionRequest(consumer, actionType, cloudEvents.ToList());
-        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest, cancellationToken);
 
         List<CloudEvent> authorizedEvents = FilterAuthorizedRequests(cloudEvents.ToList(), consumer, response);
 
@@ -132,7 +132,7 @@ public class AuthorizationService : IAuthorization
 
         RestoreSubject(cloudEvent);
 
-        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest);
+        XacmlJsonResponse response = await _pdp.GetDecisionForRequest(xacmlJsonRequest, cancellationToken);
 
         return IsPermit(response);
     }
