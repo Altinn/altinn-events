@@ -7,6 +7,7 @@
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "ExponentialRetryBackoff:QueueName": "events-outbound",
     "Platform:ApiEventsEndpoint": "http://localhost:5080/events/api/v1/",
+    "EventsOutboundSettings:MaskinportenSettings:Scope": "altinn:events.push",
     "KeyVault:KeyVaultURI": "https://altinn-at22-kv.vault.azure.net/",
     "WolverineSettings:EnableOutboundListener": "true",
     "WolverineSettings:EnableValidationListener": "true",

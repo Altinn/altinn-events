@@ -1,4 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
+
+using Altinn.ApiClients.Maskinporten.Extensions;
+using Altinn.ApiClients.Maskinporten.Services;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Wolverine.Extensions;
@@ -49,7 +52,7 @@ public static class WolverineServiceCollectionExtensions
         // Split registration (named client + plain AddScoped), not AddHttpClient<TClient,TImpl>'s typed-client
         // overload — Wolverine's handler code generation rejects that as an opaque factory registration.
         // Matches Events' own WebhookService registration for the identical reason.
-        services.AddHttpClient(AsbWebhookService.HttpClientName);
+        services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(AsbWebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
         services.AddScoped<IWebhookService, AsbWebhookService>();
     }
 
