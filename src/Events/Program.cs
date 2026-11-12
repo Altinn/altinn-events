@@ -7,6 +7,8 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+using Altinn.ApiClients.Maskinporten.Extensions;
+using Altinn.ApiClients.Maskinporten.Services;
 using Altinn.Common.AccessToken;
 using Altinn.Common.AccessToken.Configuration;
 using Altinn.Common.AccessToken.Services;
@@ -263,7 +265,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
-    services.AddHttpClient(WebhookService.HttpClientName);
+    services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(WebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
     services.AddScoped<IWebhookService, WebhookService>();
 
     services.AddScoped<IAuthorization, AuthorizationService>();
