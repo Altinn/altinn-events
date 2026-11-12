@@ -287,6 +287,17 @@ public class AuthorizationService : IAuthorization
         PartyIdentifiers? partyIdentifiers =
             partyIdentifiersList.FirstOrDefault(p => p.ExternalUrn == cloudEvent.Subject!);
 
+        if (partyIdentifiers is null)
+        {
+            // Fallback for  NIN identified person if external urn is missing.
+            // There are no similar option for email identified.
+            string nationalIdentityNumber = 
+                cloudEvent.Subject!.Replace("urn:altinn:person:identifier-no:", string.Empty);
+
+            partyIdentifiers =
+                partyIdentifiersList.FirstOrDefault(p => p.PersonIdentifier == nationalIdentityNumber);
+        }
+
         // Backup the original subject in the event
         cloudEvent[_originalSubjectKey] = cloudEvent.Subject!;
 

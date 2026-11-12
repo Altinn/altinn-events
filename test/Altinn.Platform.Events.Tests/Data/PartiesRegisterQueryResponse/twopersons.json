@@ -13,8 +13,7 @@
       "partyUuid": "930423fe-8bbd-43f0-bf4c-3ddf5a5eb4e7",
       "partyId": 50023810,
       "personIdentifier": "31073102351",
-      "organizationIdentifier": null,
-      "externalUrn": "urn:altinn:person:identifier-no:31073102351"
+      "organizationIdentifier": null
     }
   ]
 }
