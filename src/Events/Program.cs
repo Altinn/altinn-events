@@ -135,7 +135,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
 
     services.AddOpenTelemetry()
         .ConfigureResource(resourceBuilder => resourceBuilder.AddService(serviceName: TelemetryClient.AppName, serviceInstanceId: Environment.MachineName))
-        .WithMetrics(metrics => 
+        .WithMetrics(metrics =>
         {
             metrics.AddAspNetCoreInstrumentation();
             metrics.AddMeter(
@@ -145,7 +145,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
                 TelemetryClient.AppName,
                 BacklogMetrics.MeterName);
         })
-        .WithTracing(tracing => 
+        .WithTracing(tracing =>
         {
             if (builder.Environment.IsDevelopment())
             {
@@ -269,12 +269,12 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
-    services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(WebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
     services.AddScoped<IWebhookService, WebhookService>();
-
     services.AddScoped<IAuthorization, AuthorizationService>();
     services.AddTransient<IClaimsPrincipalProvider, ClaimsPrincipalProvider>();
 
+    AddHttpClient(services, config);
+    
     services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "Altinn Platform Events", Version = "v1" });
@@ -420,6 +420,21 @@ void Configure(IConfiguration config)
     app.MapControllers();
 
     app.MapHealthChecks("/health");
+}
+
+static void AddHttpClient(IServiceCollection services, IConfiguration config)
+{
+    var eventsOutboundSettings = config.GetSection("EventsOutboundSettings").Get<EventsOutboundSettings>()
+            ?? throw new InvalidOperationException("Configuration section 'EventsOutboundSettings' is missing entirely.");
+
+    if (eventsOutboundSettings.EnableWebhookAuthentication)
+    {
+        services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(WebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
+    }
+    else
+    {
+        services.AddHttpClient(WebhookService.HttpClientName);
+    }
 }
 
 /// <summary>

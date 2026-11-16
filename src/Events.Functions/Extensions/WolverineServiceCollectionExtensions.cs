@@ -48,12 +48,28 @@ public static class WolverineServiceCollectionExtensions
                 AddValidationListener(wolverineSettings, opts);
             }
         });
+        
+        AddHttpClient(services, config);
 
+        services.AddScoped<IWebhookService, AsbWebhookService>();
+    }
+
+    private static void AddHttpClient(IServiceCollection services, IConfiguration config)
+    {
         // Split registration (named client + plain AddScoped), not AddHttpClient<TClient,TImpl>'s typed-client
         // overload — Wolverine's handler code generation rejects that as an opaque factory registration.
         // Matches Events' own WebhookService registration for the identical reason.
-        services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(AsbWebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
-        services.AddScoped<IWebhookService, AsbWebhookService>();
+        var eventsOutboundSettings = config.GetSection("EventsOutboundSettings").Get<EventsOutboundSettings>()
+            ?? throw new InvalidOperationException("Configuration section 'EventsOutboundSettings' is missing entirely.");
+
+        if (eventsOutboundSettings.EnableWebhookAuthentication)
+        {
+            services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(AsbWebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
+        }
+        else
+        {
+            services.AddHttpClient(AsbWebhookService.HttpClientName);
+        }
     }
 
     private static void AddOutboundListener(FunctionsWolverineSettings settings, WolverineOptions opts)
