@@ -1,6 +1,7 @@
+name: Local
 variables:
   - name: Environment
-    value: local
+    value: at23
   - name: BaseUrl
     value: http://localhost:5080
   - name: PlatformHostUrl

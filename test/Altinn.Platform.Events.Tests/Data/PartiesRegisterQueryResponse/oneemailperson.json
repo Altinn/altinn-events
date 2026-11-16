@@ -1,0 +1,13 @@
+﻿{
+  "data": [
+    {
+      "partyType": "self-identified-user",
+      "email": "nolsnimo.vipsivel@leet.no",
+      "partyUuid": "87772315-c68a-45e9-b73a-9c0a693d4ad0",
+      "versionId": 451126403,
+      "urn": "urn:altinn:party:uuid:87772315-c68a-45e9-b73a-9c0a693d4ad0",
+      "externalUrn": "urn:altinn:person:idporten-email:nolsnimo.vipsivel@leet.no",
+      "partyId": 21782289
+    }
+  ]
+}
