@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 namespace Altinn.Platform.Events.Functions.Configuration;
 
@@ -13,7 +13,7 @@ public class EventsOutboundSettings
     public int RequestTimeout { get; set; } = 300;
 
     /// <summary>
-    /// Used to flag whether Maskinporen authentication should be available on webhook http requests
+    /// Used to flag whether Maskinporten authentication should be available on webhook http requests
     /// </summary>
     public bool EnableWebhookAuthentication { get; set; } = false;
 }

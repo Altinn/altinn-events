@@ -1,4 +1,4 @@
-﻿namespace Altinn.Platform.Events.Configuration;
+namespace Altinn.Platform.Events.Configuration;
 
 /// <summary>
 /// Configuration object used to hold settings for the EventsOutbound function and related services.
@@ -11,7 +11,7 @@ public class EventsOutboundSettings
     public int RequestTimeout { get; set; } = 45;
 
     /// <summary>
-    /// Used to flag whether Maskinporen authentication should be available on webhook http requests
+    /// Used to flag whether Maskinporten authentication should be available on webhook http requests
     /// </summary>
     public bool EnableWebhookAuthentication { get; set; } = false;
 }

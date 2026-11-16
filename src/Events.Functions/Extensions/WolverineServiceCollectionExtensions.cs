@@ -7,6 +7,7 @@ using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Wolverine.Extensions;
 using Altinn.Platform.Events.Functions.Wolverine.Policies;
 using Altinn.Platform.Events.Functions.Wolverine.Services.Interfaces;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -48,19 +49,19 @@ public static class WolverineServiceCollectionExtensions
                 AddValidationListener(wolverineSettings, opts);
             }
         });
-        
-        AddHttpClient(services, config);
 
+        AddWebhookHttpClient(services, config);
+
+        // Plain AddScoped rather than AddHttpClient<TClient,TImpl>'s typed-client overload — Wolverine's handler
+        // code generation rejects that as an opaque factory registration. Matches Events' own WebhookService
+        // registration for the identical reason.
         services.AddScoped<IWebhookService, AsbWebhookService>();
     }
 
-    private static void AddHttpClient(IServiceCollection services, IConfiguration config)
+    private static void AddWebhookHttpClient(IServiceCollection services, IConfiguration config)
     {
-        // Split registration (named client + plain AddScoped), not AddHttpClient<TClient,TImpl>'s typed-client
-        // overload — Wolverine's handler code generation rejects that as an opaque factory registration.
-        // Matches Events' own WebhookService registration for the identical reason.
         var eventsOutboundSettings = config.GetSection("EventsOutboundSettings").Get<EventsOutboundSettings>()
-                    ?? new EventsOutboundSettings();
+            ?? new EventsOutboundSettings();
 
         if (eventsOutboundSettings.EnableWebhookAuthentication)
         {
