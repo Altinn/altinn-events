@@ -1,7 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-
-using Altinn.ApiClients.Maskinporten.Extensions;
-using Altinn.ApiClients.Maskinporten.Services;
 using Altinn.Platform.Events.Functions.Configuration;
 using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Wolverine.Extensions;
@@ -50,27 +47,12 @@ public static class WolverineServiceCollectionExtensions
             }
         });
 
-        AddWebhookHttpClient(services, config);
+        services.AddWebhookHttpClient(config);
 
         // Plain AddScoped rather than AddHttpClient<TClient,TImpl>'s typed-client overload — Wolverine's handler
         // code generation rejects that as an opaque factory registration. Matches Events' own WebhookService
         // registration for the identical reason.
         services.AddScoped<IWebhookService, AsbWebhookService>();
-    }
-
-    private static void AddWebhookHttpClient(IServiceCollection services, IConfiguration config)
-    {
-        var eventsOutboundSettings = config.GetSection("EventsOutboundSettings").Get<EventsOutboundSettings>()
-            ?? new EventsOutboundSettings();
-
-        if (eventsOutboundSettings.EnableWebhookAuthentication)
-        {
-            services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(AsbWebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
-        }
-        else
-        {
-            services.AddHttpClient(AsbWebhookService.HttpClientName);
-        }
     }
 
     private static void AddOutboundListener(FunctionsWolverineSettings settings, WolverineOptions opts)

@@ -7,8 +7,6 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-using Altinn.ApiClients.Maskinporten.Extensions;
-using Altinn.ApiClients.Maskinporten.Services;
 using Altinn.Common.AccessToken;
 using Altinn.Common.AccessToken.Configuration;
 using Altinn.Common.AccessToken.Services;
@@ -269,7 +267,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IPDP, PDPAppSI>();
     services.AddTransient<IAuthorizationHandler, ScopeAccessHandler>();
-    AddWebhookHttpClient(services, config);
+    services.AddWebhookHttpClient(config);
     services.AddScoped<IWebhookService, WebhookService>();
 
     services.AddScoped<IAuthorization, AuthorizationService>();
@@ -420,21 +418,6 @@ void Configure(IConfiguration config)
     app.MapControllers();
 
     app.MapHealthChecks("/health");
-}
-
-static void AddWebhookHttpClient(IServiceCollection services, IConfiguration config)
-{
-    var eventsOutboundSettings = config.GetSection("EventsOutboundSettings").Get<EventsOutboundSettings>()
-        ?? new EventsOutboundSettings();
-
-    if (eventsOutboundSettings.EnableWebhookAuthentication)
-    {
-        services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(WebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
-    }
-    else
-    {
-        services.AddHttpClient(WebhookService.HttpClientName);
-    }
 }
 
 /// <summary>
