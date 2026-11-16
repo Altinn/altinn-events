@@ -60,7 +60,7 @@ public static class WolverineServiceCollectionExtensions
         // overload — Wolverine's handler code generation rejects that as an opaque factory registration.
         // Matches Events' own WebhookService registration for the identical reason.
         var eventsOutboundSettings = config.GetSection("EventsOutboundSettings").Get<EventsOutboundSettings>()
-            ?? throw new InvalidOperationException("Configuration section 'EventsOutboundSettings' is missing entirely.");
+                    ?? new EventsOutboundSettings();
 
         if (eventsOutboundSettings.EnableWebhookAuthentication)
         {
