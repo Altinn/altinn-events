@@ -731,7 +731,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
-                string expected = "Subject must be specified using either query params party or unit or header value person.";
+                string expected = "Subject must be specified using query parameter party or unit, or header parameter person.";
 
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -832,7 +832,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Value of 'Person' needs to be exactly 11 digits.", actual.Detail);
+                Assert.StartsWith("Value of 'Person' needs to be a valid national identity number.", actual.Detail);
             }
 
             /// <summary>
@@ -862,7 +862,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Value of 'Person' needs to be exactly 11 digits.", actual.Detail);
+                Assert.StartsWith("Value of 'Person' needs to be a valid national identity number.", actual.Detail);
             }
 
             /// <summary>
@@ -887,7 +887,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                httpRequestMessage.Headers.Add("Person", "01038712345");
+                httpRequestMessage.Headers.Add("Person", "01014922047");
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
@@ -1136,7 +1136,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Value of 'Unit' needs to be exactly 9 digits.", actual.Detail);
+                Assert.StartsWith("Value of 'Unit' needs to be a valid organization number.", actual.Detail);
             }
 
             /// <summary>
@@ -1165,7 +1165,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Value of 'Unit' needs to be exactly 9 digits.", actual.Detail);
+                Assert.StartsWith("Value of 'Unit' needs to be a valid organization number.", actual.Detail);
             }
 
             /// <summary>
@@ -1186,7 +1186,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                httpRequestMessage.Headers.Add("Person", "01038712345");
+                httpRequestMessage.Headers.Add("Person", "01014922047");
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
@@ -1196,6 +1196,69 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
                 Assert.StartsWith("Only one of 'Party' or 'Person' can be defined.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for party with an 11 digit person number that has an invalid checksum
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the service is never called.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_InvalidChecksumHeaderPerson_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "01038712345");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Value of 'Person' needs to be a valid national identity number.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for party with a 9 digit organization number that has an invalid checksum
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the service is never called.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_InvalidChecksumQueryParamUnit_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&unit=123456789&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Value of 'Unit' needs to be a valid organization number.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
             }
 
             /// <summary>
@@ -1217,7 +1280,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                httpRequestMessage.Headers.Add("Person", "01038712345");
+                httpRequestMessage.Headers.Add("Person", "01014922047");
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
@@ -1249,7 +1312,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                httpRequestMessage.Headers.Add("Person", "01038712345");
+                httpRequestMessage.Headers.Add("Person", "01014922047");
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);

@@ -12,6 +12,7 @@ using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Register.Contracts;
 
 using CloudNative.CloudEvents;
 using Microsoft.AspNetCore.Authorization;
@@ -221,7 +222,7 @@ namespace Altinn.Platform.Events.Controllers
 
             if (!string.IsNullOrEmpty(query.Person) && !HasValidSsnFormat(query.Person))
             {
-                return (false, "Value of 'Person' needs to be exactly 11 digits.");
+                return (false, "Value of 'Person' needs to be a valid national identity number.");
             }
 
             if (!string.IsNullOrEmpty(query.Unit) && query.Party > 0)
@@ -236,15 +237,15 @@ namespace Altinn.Platform.Events.Controllers
 
             if (!string.IsNullOrEmpty(query.Unit) && !HasValidUnitFormat(query.Unit))
             {
-                return (false, "Value of 'Unit' needs to be exactly 9 digits.");
+                return (false, "Value of 'Unit' needs to be a valid organization number.");
             }
 
             return (true, null);
         }
 
-        private static bool HasValidSsnFormat(string personStr) => personStr.Length == 11 && personStr.All(char.IsDigit);
+        private static bool HasValidSsnFormat(string person) => PersonIdentifier.TryParse(person, null, out _);
 
-        private static bool HasValidUnitFormat(string unit) => unit.Length == 9 && unit.All(char.IsDigit);
+        private static bool HasValidUnitFormat(string unit) => OrganizationIdentifier.TryParse(unit, null, out _);
 
         private void SetNextLink(List<CloudEvent> events)
         {

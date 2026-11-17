@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
+using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services;
@@ -232,7 +235,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await eventsService.GetAppEvents("1", null, null, 0, ["https://ttd.apps.at22.altinn.cloud/ttd/app-test/"], null, [], null, null);
 
             // Assert
-            registerMock.Verify(r => r.PartyLookup(It.Is<string>(s => string.IsNullOrEmpty(s)), It.Is<string>(s => string.IsNullOrEmpty(s))), Times.Never);
+            registerMock.VerifyNoOtherCalls();
         }
 
         #region Generic events
@@ -479,7 +482,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await eventsService.GetEvents("1", "https://ttd.apps.at22.altinn.cloud/ttd/app-test/", null, null, [], 50, CancellationToken.None);
 
             // Assert
-            registerMock.Verify(r => r.PartyLookup(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            registerMock.VerifyNoOtherCalls();
         }
 
         #endregion
@@ -674,26 +677,19 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
-        public async Task GetAppEvents_PersonProvided_PartyLookupCalled()
+        public async Task GetAppEvents_PersonProvided_PartyLookupCalledWithPersonUrn()
         {
             // Arrange
             int expectedPartyId = 12345;
-            string person = "01039012345";
+            string person = "01014922047";
+            string expectedUrn = $"urn:altinn:person:identifier-no:{person}";
 
             Mock<IRegisterService> registerMock = new();
-            registerMock.Setup(r => r.PartyLookup(null, person)).ReturnsAsync(expectedPartyId);
+            registerMock
+                .Setup(r => r.PartyLookup(It.Is<IEnumerable<string>>(urns => urns.Single() == expectedUrn), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new PartyIdentifiers { PartyType = "person", PartyId = expectedPartyId, PersonIdentifier = person }]);
 
-            var repositoryMock = new Mock<ICloudEventRepository>();
-            repositoryMock.Setup(r => r.GetAppEvents(
-                It.IsAny<string>(),
-                It.IsAny<DateTime?>(),
-                It.IsAny<DateTime?>(),
-                It.Is<string>(s => s == $"/party/{expectedPartyId}"),
-                It.IsAny<List<string>>(),
-                It.IsAny<string>(),
-                It.IsAny<List<string>>(),
-                It.IsAny<int>()))
-                .ReturnsAsync([]);
+            Mock<ICloudEventRepository> repositoryMock = GetAppEventsRepositoryMock();
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, registerMock: registerMock);
 
@@ -701,30 +697,25 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await eventsService.GetAppEvents(null, null, null, 0, [], null, [], null, person);
 
             // Assert
-            registerMock.Verify(r => r.PartyLookup(null, person), Times.Once);
+            registerMock.Verify(r => r.PartyLookup(It.Is<IEnumerable<string>>(urns => urns.Single() == expectedUrn), It.IsAny<CancellationToken>()), Times.Once);
+            registerMock.VerifyNoOtherCalls();
+            VerifyAppEventsQueriedForSubject(repositoryMock, $"/party/{expectedPartyId}");
         }
 
         [Fact]
-        public async Task GetAppEvents_UnitProvided_PartyLookupCalled()
+        public async Task GetAppEvents_UnitProvided_PartyLookupCalledWithOrganizationUrn()
         {
             // Arrange
             int expectedPartyId = 54321;
-            string unit = "897069650";
+            string unit = "989271156";
+            string expectedUrn = $"urn:altinn:organization:identifier-no:{unit}";
 
             Mock<IRegisterService> registerMock = new();
-            registerMock.Setup(r => r.PartyLookup(unit, null)).ReturnsAsync(expectedPartyId);
+            registerMock
+                .Setup(r => r.PartyLookup(It.Is<IEnumerable<string>>(urns => urns.Single() == expectedUrn), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([new PartyIdentifiers { PartyType = "organization", PartyId = expectedPartyId, OrganizationIdentifier = unit }]);
 
-            var repositoryMock = new Mock<ICloudEventRepository>();
-            repositoryMock.Setup(r => r.GetAppEvents(
-                It.IsAny<string>(),
-                It.IsAny<DateTime?>(),
-                It.IsAny<DateTime?>(),
-                It.Is<string>(s => s == $"/party/{expectedPartyId}"),
-                It.IsAny<List<string>>(),
-                It.IsAny<string>(),
-                It.IsAny<List<string>>(),
-                It.IsAny<int>()))
-                .ReturnsAsync([]);
+            Mock<ICloudEventRepository> repositoryMock = GetAppEventsRepositoryMock();
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, registerMock: registerMock);
 
@@ -732,7 +723,63 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             await eventsService.GetAppEvents(null, null, null, 0, [], null, [], unit, null);
 
             // Assert
-            registerMock.Verify(r => r.PartyLookup(unit, null), Times.Once);
+            registerMock.Verify(r => r.PartyLookup(It.Is<IEnumerable<string>>(urns => urns.Single() == expectedUrn), It.IsAny<CancellationToken>()), Times.Once);
+            registerMock.VerifyNoOtherCalls();
+            VerifyAppEventsQueriedForSubject(repositoryMock, $"/party/{expectedPartyId}");
+        }
+
+        [Fact]
+        public async Task GetAppEvents_PartyNotFoundInRegister_ThrowsNotFoundAndSkipsQuery()
+        {
+            // Arrange
+            Mock<IRegisterService> registerMock = new();
+            registerMock
+                .Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
+
+            Mock<ICloudEventRepository> repositoryMock = GetAppEventsRepositoryMock();
+
+            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, registerMock: registerMock);
+
+            // Act
+            PlatformHttpException actual = await Assert.ThrowsAsync<PlatformHttpException>(
+                () => eventsService.GetAppEvents(null, null, null, 0, [], null, [], "989271156", null));
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, actual.Response.StatusCode);
+            repositoryMock.VerifyNoOtherCalls();
+        }
+
+        private static Mock<ICloudEventRepository> GetAppEventsRepositoryMock()
+        {
+            Mock<ICloudEventRepository> repositoryMock = new();
+            repositoryMock.Setup(r => r.GetAppEvents(
+                It.IsAny<string>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<string>(),
+                It.IsAny<List<string>>(),
+                It.IsAny<string>(),
+                It.IsAny<List<string>>(),
+                It.IsAny<int>()))
+                .ReturnsAsync([]);
+
+            return repositoryMock;
+        }
+
+        private static void VerifyAppEventsQueriedForSubject(Mock<ICloudEventRepository> repositoryMock, string expectedSubject)
+        {
+            repositoryMock.Verify(
+                r => r.GetAppEvents(
+                    It.IsAny<string>(),
+                    It.IsAny<DateTime?>(),
+                    It.IsAny<DateTime?>(),
+                    expectedSubject,
+                    It.IsAny<List<string>>(),
+                    It.IsAny<string>(),
+                    It.IsAny<List<string>>(),
+                    It.IsAny<int>()),
+                Times.Once);
         }
 
         [Fact]
