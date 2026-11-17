@@ -1200,6 +1200,70 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
             /// <summary>
             /// Scenario:
+            ///   Get events for party with both unit and person number defined as filter parameters
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_ConflictingQueryParamsUnitAndPerson_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&unit=989271156&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "01038712345");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Only one of 'Unit' or 'Person' can be defined.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for org with both unit and person number defined as filter parameters
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async Task GetForOrg_ConflictingQueryParamsUnitAndPerson_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&unit=989271156&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "01038712345");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Only one of 'Unit' or 'Person' can be defined.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
+            }
+
+            /// <summary>
+            /// Scenario:
             ///   Post a valid CloudEventRequest with a valid Idempotency-Key header.
             /// Expected result:
             ///   Returns HttpStatus Created and the idempotency key is forwarded to the service.
