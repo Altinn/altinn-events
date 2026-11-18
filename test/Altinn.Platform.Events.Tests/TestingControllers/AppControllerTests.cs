@@ -1110,7 +1110,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Only one of 'Party' or 'Unit' can be defined.", actual.Detail);
+                Assert.StartsWith("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
             }
 
             /// <summary>
@@ -1198,7 +1198,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Only one of 'Party' or 'Person' can be defined.", actual.Detail);
+                Assert.StartsWith("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
             }
 
             /// <summary>
@@ -1305,7 +1305,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("'ExternalUrn' cannot be combined with 'Party', 'Unit' or 'Person'.", actual.Detail);
+                Assert.Equal("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
                 eventsService.VerifyNoOtherCalls();
             }
 
@@ -1436,7 +1436,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("Only one of 'Unit' or 'Person' can be defined.", actual.Detail);
+                Assert.Equal("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
                 eventsService.VerifyNoOtherCalls();
             }
 
@@ -1468,7 +1468,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.Equal("Only one of 'Unit' or 'Person' can be defined.", actual.Detail);
+                Assert.Equal("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
                 eventsService.VerifyNoOtherCalls();
             }
 

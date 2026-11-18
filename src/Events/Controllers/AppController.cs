@@ -253,50 +253,33 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "The 'Size' parameter must be a number larger that 0.");
             }
 
-            if (!string.IsNullOrEmpty(query.Person) && query.Party > 0)
+            bool hasParty = query.Party > 0;
+            bool hasUnit = !string.IsNullOrEmpty(query.Unit);
+            bool hasPerson = !string.IsNullOrEmpty(query.Person);
+            bool hasExternalUrn = !string.IsNullOrEmpty(query.ExternalUrn);
+
+            if (new[] { hasParty, hasUnit, hasPerson, hasExternalUrn }.Count(isSet => isSet) > 1)
             {
-                return (false, "Only one of 'Party' or 'Person' can be defined.");
+                return (false, "Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.");
             }
 
-            if (!string.IsNullOrEmpty(query.Person) && !HasValidSsnFormat(query.Person))
+            if (hasPerson && !PersonIdentifier.TryParse(query.Person, null, out _))
             {
                 return (false, "Value of 'Person' needs to be a valid national identity number.");
             }
 
-            if (!string.IsNullOrEmpty(query.Unit) && query.Party > 0)
-            {
-                return (false, "Only one of 'Party' or 'Unit' can be defined.");
-            }
-
-            if (!string.IsNullOrEmpty(query.Unit) && !string.IsNullOrEmpty(query.Person))
-            {
-                return (false, "Only one of 'Unit' or 'Person' can be defined.");
-            }
-
-            if (!string.IsNullOrEmpty(query.Unit) && !HasValidUnitFormat(query.Unit))
+            if (hasUnit && !OrganizationIdentifier.TryParse(query.Unit, null, out _))
             {
                 return (false, "Value of 'Unit' needs to be a valid organization number.");
             }
 
-            if (!string.IsNullOrEmpty(query.ExternalUrn))
+            if (hasExternalUrn && !PartyUrn.TryParse(query.ExternalUrn, out _))
             {
-                if (query.Party > 0 || !string.IsNullOrEmpty(query.Unit) || !string.IsNullOrEmpty(query.Person))
-                {
-                    return (false, "'ExternalUrn' cannot be combined with 'Party', 'Unit' or 'Person'.");
-                }
-
-                if (!PartyUrn.TryParse(query.ExternalUrn, out _))
-                {
-                    return (false, "Value of 'ExternalUrn' needs to be a valid party URN.");
-                }
+                return (false, "Value of 'ExternalUrn' needs to be a valid party URN.");
             }
 
             return (true, null);
         }
-
-        private static bool HasValidSsnFormat(string person) => PersonIdentifier.TryParse(person, null, out _);
-
-        private static bool HasValidUnitFormat(string unit) => OrganizationIdentifier.TryParse(unit, null, out _);
 
         private void SetNextLink(List<CloudEvent> events)
         {
