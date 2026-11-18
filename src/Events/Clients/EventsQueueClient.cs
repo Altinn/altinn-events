@@ -26,8 +26,6 @@ namespace Altinn.Platform.Events.Clients
 
         private QueueClient _registrationQueueClient;
 
-        private QueueClient _inboundQueueClient;
-
         private QueueClient _outboundQueueClient;
 
         private QueueClient _validationQueueClient;
@@ -47,22 +45,6 @@ namespace Altinn.Platform.Events.Clients
             try
             {
                 QueueClient client = await GetRegistrationQueueClient();
-                await client.SendMessageAsync(content);
-            }
-            catch (Exception e)
-            {
-                return new QueuePostReceipt { Success = false, Exception = e };
-            }
-
-            return new QueuePostReceipt { Success = true };
-        }
-
-        /// <inheritdoc/>
-        public async Task<QueuePostReceipt> EnqueueInbound(string content)
-        {
-            try
-            {
-                QueueClient client = await GetInboundQueueClient();
                 await client.SendMessageAsync(content);
             }
             catch (Exception e)
@@ -114,17 +96,6 @@ namespace Altinn.Platform.Events.Clients
             }
 
             return _registrationQueueClient;
-        }
-
-        private async Task<QueueClient> GetInboundQueueClient()
-        {
-            if (_inboundQueueClient == null)
-            {
-                _inboundQueueClient = new QueueClient(_settings.ConnectionString, _settings.InboundQueueName, _queueClientOptions);
-                await _inboundQueueClient.CreateIfNotExistsAsync();
-            }
-
-            return _inboundQueueClient;
         }
 
         private async Task<QueueClient> GetOutboundQueueClient()

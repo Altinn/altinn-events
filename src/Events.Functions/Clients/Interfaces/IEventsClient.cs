@@ -7,7 +7,7 @@ using CloudNative.CloudEvents;
 namespace Altinn.Platform.Events.Functions.Clients.Interfaces
 {
     /// <summary>
-    /// Interface to Events Inbound queue API
+    /// Interface to the Events API used by the Azure Functions
     /// </summary>
     public interface IEventsClient
     {
@@ -26,12 +26,6 @@ namespace Altinn.Platform.Events.Functions.Clients.Interfaces
         /// <param name="isSuccessStatusCode">Boolean value that indicates whether the status code was successful or not</param>
         /// <returns></returns>
         Task LogWebhookHttpStatusCode(CloudEventEnvelope cloudEventEnvelope, System.Net.HttpStatusCode statusCode, bool isSuccessStatusCode);
-
-        /// <summary>
-        /// Send cloudEvent for outbound processing.
-        /// </summary>
-        /// <param name="cloudEvent">CloudEvent to send</param>
-        Task PostInbound(CloudEvent cloudEvent);
 
         /// <summary>
         /// Send cloudEvent for outbound processing.

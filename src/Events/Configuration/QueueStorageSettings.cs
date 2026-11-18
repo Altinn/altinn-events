@@ -18,12 +18,6 @@ namespace Altinn.Platform.Events.Configuration
         public string RegistrationQueueName { get; set; }
 
         /// <summary>
-        /// Name of the queue to push incoming events to, after persisting to db.
-        /// Serviced by EventsInbound Azure Function
-        /// </summary>
-        public string InboundQueueName { get; set; }
-
-        /// <summary>
         /// Name of queue serviced by EventsOutbound Azure Function
         /// </summary>
         public string OutboundQueueName { get; set; }

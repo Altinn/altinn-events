@@ -45,4 +45,9 @@ public record PartyIdentifiers
     /// The party's organization number if of type "organization".
     /// </summary>
     public string? OrganizationIdentifier { get; set; }
+
+    /// <summary>
+    /// The party's external URN value.
+    /// </summary>
+    public string? ExternalUrn { get; set; }
 }

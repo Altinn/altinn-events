@@ -1,0 +1,2 @@
+create index if not exists idx_events_cloudevent_subject_sequenceno_time ON events.events USING btree (((cloudevent ->> 'subject'::text)), sequenceno, ((cloudevent ->> 'time'::text)));
+drop index if exists events.idx_events_cloudevent_subject_time;

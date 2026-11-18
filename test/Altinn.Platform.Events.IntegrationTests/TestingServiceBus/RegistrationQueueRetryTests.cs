@@ -27,11 +27,11 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
 
     /// <summary>
     /// Tests the normal flow where the database is available.
-    /// Message should flow: RegisterQueue -> RegistrationEventHandler -> Save to DB -> InboundQueue -> ...
+    /// Message should flow: RegisterQueue -> RegistrationEventHandler -> Save to DB.
     /// Verifies event was saved to database (messages processed successfully).
     /// </summary>
     [Fact]
-    public async Task RegisterEventCommand_WhenDatabaseAvailable_MessageFlowsToInboundQueue()
+    public async Task RegisterEventCommand_WhenDatabaseAvailable_EventIsSavedToDatabase()
     {
         // Arrange
         var factory = new IntegrationTestWebApplicationFactory(_fixture).Initialize();

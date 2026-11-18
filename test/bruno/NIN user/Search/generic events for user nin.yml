@@ -1,0 +1,40 @@
+info:
+  name: generic events for user nin
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{PlatformHostUrl}}/events/api/v1/events?resource=urn:altinn:resource:app_ttd_apps-test&after=7955e214-3476-4a87-ba84-f835bf58be13&size=10&subject=urn:altinn:person:identifier-no:{{AuthN_Pid}}"
+  headers:
+    - name: Altinn-AlternativeSubject
+      value: urn:altinn:person:identifier-no:{{AuthN_Pid}}
+      disabled: true
+    - name: Altinn-AlternativeSubject
+      value: /person/{{AuthN_Pid}}
+      disabled: true
+  params:
+    - name: resource
+      value: urn:altinn:resource:app_ttd_apps-test
+      type: query
+    - name: after
+      value: 7955e214-3476-4a87-ba84-f835bf58be13
+      type: query
+    - name: size
+      value: "10"
+      type: query
+    - name: subject
+      value: /party/{{AuthN_PartyId}}
+      type: query
+      disabled: true
+    - name: subject
+      value: urn:altinn:person:identifier-no:{{AuthN_Pid}}
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

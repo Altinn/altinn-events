@@ -35,12 +35,10 @@ public static class WolverineServiceCollectionExtensions
                 opts.ConfigureEventsDefaults(env, wolverineSettings.ServiceBusConnectionString);
 
                 AddRegistrationPublisher(wolverineSettings, opts);
-                AddInboundPublisher(wolverineSettings, opts);
                 AddOutboundPublisher(wolverineSettings, opts);
                 AddValidationPublisher(wolverineSettings, opts);
 
                 AddRegistrationListener(wolverineSettings, opts);
-                AddInboundListener(wolverineSettings, opts);
                 AddOutboundListener(wolverineSettings, opts);
                 AddValidationListener(wolverineSettings, opts);
             }
@@ -59,13 +57,6 @@ public static class WolverineServiceCollectionExtensions
 
         opts.PublishMessage<RegisterEventCommand>()
             .ToAzureServiceBusQueue(settings.RegistrationQueueName)
-            .SendInline();
-    }
-
-    private static void AddInboundPublisher(WolverineSettings settings, WolverineOptions opts)
-    {
-        opts.PublishMessage<InboundEventCommand>()
-            .ToAzureServiceBusQueue(settings.InboundQueueName)
             .SendInline();
     }
 
@@ -99,19 +90,6 @@ public static class WolverineServiceCollectionExtensions
             .ListenerCount(settings.RegistrationListenerCount)
             .ProcessInline();
         opts.Policies.Add(new RegistrationEventHandlerPolicy(settings));
-    }
-
-    private static void AddInboundListener(WolverineSettings settings, WolverineOptions opts)
-    {
-        if (!settings.EnableInboundListener)
-        {
-            return;
-        }
-
-        opts.ListenToAzureServiceBusQueue(settings.InboundQueueName)
-            .ListenerCount(settings.InboundListenerCount)
-            .ProcessInline();
-        opts.Policies.Add(new InboundEventHandlerPolicy(settings));
     }
 
     private static void AddOutboundListener(WolverineSettings settings, WolverineOptions opts)

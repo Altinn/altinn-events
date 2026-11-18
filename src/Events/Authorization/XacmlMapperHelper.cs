@@ -4,7 +4,7 @@ using System.Security.Claims;
 
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Common.PEP.Helpers;
-using Altinn.Platform.Events.Extensions;
+using Altinn.Register.Contracts;
 
 namespace Altinn.Platform.Events.Authorization;
 
@@ -66,9 +66,9 @@ public static class XacmlMapperHelper
             string value = subject.Replace(SystemUserPrefix, string.Empty);
             xacmlCategory.Attribute.Add(DecisionHelper.CreateXacmlJsonAttribute(ClaimSystemUserId, value, ClaimValueTypes.String, DefaultIssuer, includeInResult));
         }
-        else if (UriExtensions.IsValidUrn(subject))
+        else if (PartyUrn.TryParse(subject, out PartyUrn? partyUrn))
         {
-            xacmlCategory.AddAttributeFromUrn(subject);
+            xacmlCategory.AddAttributeFromUrn(partyUrn.ToString());
         }
 
         return xacmlCategory;

@@ -1,7 +1,7 @@
 info:
   name: access token (ttd_apps-test)
   type: http
-  seq: 6
+  seq: 7
 
 http:
   method: GET

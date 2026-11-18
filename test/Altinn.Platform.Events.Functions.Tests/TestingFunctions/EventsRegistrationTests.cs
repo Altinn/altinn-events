@@ -24,7 +24,7 @@ public class EventsRegistrationTests
     }
 
     [Fact]
-    public async Task Run_SaveEventFails_PostInboundNotCalled()
+    public async Task Run_SaveEventFails_ExceptionPropagated()
     {
         // Arrange
         Mock<IEventsClient> clientMock = new();
@@ -32,37 +32,20 @@ public class EventsRegistrationTests
         clientMock.Setup(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()))
            .ThrowsAsync(new HttpRequestException("// SaveCloudEvent with id {cloudEvent.Id} failed with status code {statusCode}"));
 
-        clientMock
-            .Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
-            .Returns(Task.CompletedTask);
-
         EventsRegistration sut = new(clientMock.Object);
 
-        // Act
-        try
-        {
-            await sut.Run(serializedCloudEvent);
-        }
-        catch (HttpRequestException)
-        {
-        }
-
-        // Assert
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => sut.Run(serializedCloudEvent));
         clientMock.Verify(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()), Times.Once);
-        clientMock.Verify(c => c.PostInbound(It.IsAny<CloudEvent>()), Times.Never);
     }
 
     [Fact]
-    public async Task Run_SaveEventSucceeds_PostInboundCalled()
+    public async Task Run_SaveEventSucceeds_EventSavedOnce()
     {
         // Arrange
         Mock<IEventsClient> clientMock = new();
 
         clientMock.Setup(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()))
-            .Returns(Task.CompletedTask);
-
-        clientMock
-            .Setup(c => c.PostInbound(It.IsAny<CloudEvent>()))
             .Returns(Task.CompletedTask);
 
         EventsRegistration sut = new EventsRegistration(clientMock.Object);
@@ -72,7 +55,6 @@ public class EventsRegistrationTests
 
         // Assert
         clientMock.Verify(c => c.SaveCloudEvent(It.IsAny<CloudEvent>()), Times.Once);
-        clientMock.Verify(c => c.PostInbound(It.IsAny<CloudEvent>()), Times.Once);
     }
 
     [Theory]
