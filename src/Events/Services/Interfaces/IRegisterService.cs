@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Altinn.Register.Contracts;
+
 namespace Altinn.Platform.Events.Services.Interfaces;
 
 /// <summary>
@@ -26,8 +28,22 @@ public interface IRegisterService
     /// </param>
     /// <returns>A list of the perties found in register</returns>
     Task<IEnumerable<PartyIdentifiers>> PartyLookup(
-        IEnumerable<string> partyUrnList, 
+        IEnumerable<string> partyUrnList,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Finds the party id of the party identified by the given party URN. A party id URN
+    /// (urn:altinn:party:id) is resolved without calling register.
+    /// </summary>
+    /// <param name="partyUrn">A party URN identifying a single party.</param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that can be used by other objects or threads to receive notice of cancellation.
+    /// </param>
+    /// <returns>The party id of the party.</returns>
+    /// <exception cref="Exceptions.PlatformHttpException">
+    /// Thrown with status 404 when register has no party matching the URN.
+    /// </exception>
+    Task<int> GetPartyId(PartyUrn partyUrn, CancellationToken cancellationToken);
 
     /// <summary>
     /// Retrieves party information of the main unit associated with the specified organization number.

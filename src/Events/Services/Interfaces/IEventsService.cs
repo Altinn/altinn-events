@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Altinn.Register.Contracts;
+
 using CloudNative.CloudEvents;
 
 namespace Altinn.Platform.Events.Services.Interfaces
@@ -30,9 +32,28 @@ namespace Altinn.Platform.Events.Services.Interfaces
         Task<string> RegisterNew(CloudEvent cloudEvent, Guid? idempotencyKey);
 
         /// <summary>
-        /// Gets list of cloud events based on query params
+        /// Gets list of app events based on query params
         /// </summary>
-        Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size = 50);
+        /// <param name="after">Only include events registered after the event with this id.</param>
+        /// <param name="from">Only include events with time at or after this value.</param>
+        /// <param name="to">Only include events with time at or before this value.</param>
+        /// <param name="subject">The party URN of the event subject, or null for any subject.</param>
+        /// <param name="source">The event sources to include, or null or empty for any source.</param>
+        /// <param name="resource">The resource to include, or null for any resource.</param>
+        /// <param name="type">The event types to include, or empty for any type.</param>
+        /// <param name="size">The maximum number of events to return.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the request.</param>
+        /// <returns>The events the user is authorized to read.</returns>
+        Task<List<CloudEvent>> GetAppEvents(
+            string after,
+            DateTime? from,
+            DateTime? to,
+            PartyUrn subject,
+            List<string> source,
+            string resource,
+            List<string> type,
+            int size = 50,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a list of cloud events based on a set of filter parameters.

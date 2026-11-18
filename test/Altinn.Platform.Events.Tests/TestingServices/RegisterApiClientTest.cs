@@ -26,6 +26,8 @@ using Moq.Protected;
 
 using Xunit;
 
+using PartyUrn = Altinn.Register.Contracts.PartyUrn;
+
 namespace Altinn.Platform.Events.Tests.TestingServices
 {
     public class RegisterApiClientTest
@@ -272,6 +274,80 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
+        public async Task GetPartyId_PartyIdUrn_ReturnsPartyIdWithoutCallingRegister()
+        {
+            // Arrange
+            bool registerCalled = false;
+            DelegatingHandlerStub messageHandler = new((request, token) =>
+            {
+                registerCalled = true;
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+            });
+
+            RegisterApiClient target = CreateRegisterApiClient(messageHandler);
+
+            // Act
+            int actual = await target.GetPartyId(PartyUrn.Parse("urn:altinn:party:id:50002108"), CancellationToken.None);
+
+            // Assert
+            Assert.Equal(50002108, actual);
+            Assert.False(registerCalled);
+        }
+
+        [Fact]
+        public async Task GetPartyId_EmailUrn_QueriesRegisterWithUrnAndReturnsPartyId()
+        {
+            // Arrange
+            string externalUrn = "urn:altinn:person:idporten-email:user@example.com";
+            HttpRequestMessage requestMessage = null;
+            PartiesRegisterQueryRequest requestContent = null;
+            DelegatingHandlerStub messageHandler = new(async (request, token) =>
+            {
+                requestMessage = request;
+                requestContent = await request.Content.ReadFromJsonAsync<PartiesRegisterQueryRequest>(token);
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new PartiesRegisterQueryResponse
+                    {
+                        Data = [new PartyIdentifiers { PartyType = "self-identified-user", PartyId = 67890, ExternalUrn = externalUrn }]
+                    })
+                };
+            });
+
+            RegisterApiClient target = CreateRegisterApiClient(messageHandler);
+
+            // Act
+            int actual = await target.GetPartyId(PartyUrn.Parse(externalUrn), CancellationToken.None);
+
+            // Assert
+            Assert.Equal(67890, actual);
+            Assert.Equal(
+                "http://localhost:5101/register/api/v2/internal/parties/query?fields=identifiers",
+                requestMessage.RequestUri.ToString());
+            Assert.Equal([externalUrn], requestContent.Data);
+        }
+
+        [Fact]
+        public async Task GetPartyId_NoPartyFound_ThrowsNotFoundPlatformException()
+        {
+            // Arrange
+            DelegatingHandlerStub messageHandler = new((request, token) =>
+                Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(new PartiesRegisterQueryResponse { Data = [] })
+                }));
+
+            RegisterApiClient target = CreateRegisterApiClient(messageHandler);
+
+            // Act
+            PlatformHttpException actual = await Assert.ThrowsAsync<PlatformHttpException>(
+                () => target.GetPartyId(PartyUrn.Parse("urn:altinn:organization:identifier-no:989271156"), CancellationToken.None));
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, actual.Response.StatusCode);
+        }
+
+        [Fact]
         public async Task GetMainUnit_MainUnitFound_ReturnsOrganizationRecord()
         {
             // Arrange
@@ -472,6 +548,19 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Assert
             Assert.NotNull(actual);
+        }
+
+        private RegisterApiClient CreateRegisterApiClient(DelegatingHandlerStub messageHandler)
+        {
+            InitializeMocks(5);
+
+            return new RegisterApiClient(
+                CreateFactory(new HttpClient(messageHandler)),
+                _contextAccessor.Object,
+                _accessTokenGenerator.Object,
+                _generalSettings.Object,
+                _platformSettings.Object,
+                new Mock<ILogger<RegisterApiClient>>().Object);
         }
 
         private static IHttpClientFactory CreateFactory(HttpClient client)

@@ -36,6 +36,8 @@ using Moq;
 
 using Xunit;
 
+using PartyUrn = Altinn.Register.Contracts.PartyUrn;
+
 namespace Altinn.Platform.Events.Tests.TestingControllers
 {
     /// <summary>
@@ -579,7 +581,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/events?resource=urn:altinn:resource:systemx&after=e31dbb11-2208-4dda-a549-92a0db8c7708&subject=/party/567890";
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
+                eventsService.Setup(es => es.GetEvents(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object, null);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("digdir", scope: "altinn:events.subscribe"));

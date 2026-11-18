@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,6 +20,8 @@ using Microsoft.Extensions.Logging;
 
 using Moq;
 using Xunit;
+
+using PartyUrn = Altinn.Register.Contracts.PartyUrn;
 
 namespace Altinn.Platform.Events.Tests.TestingServices
 {
@@ -119,7 +121,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetAppEvents(string.Empty, new DateTime(2020, 06, 17, 0, 0, 0, DateTimeKind.Utc), null, 54321, [], null, [], null, null);
+            List<CloudEvent> actual = await eventsService.GetAppEvents(string.Empty, new DateTime(2020, 06, 17, 0, 0, 0, DateTimeKind.Utc), null, PartyUrn.PartyId.Create(54321), [], null, [], cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -142,7 +144,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetAppEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, 0, [], null, [], null, null);
+            List<CloudEvent> actual = await eventsService.GetAppEvents("e31dbb11-2208-4dda-a549-92a0db8c8808", null, null, null, [], null, [], cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
@@ -176,7 +178,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            await eventsService.GetAppEvents(null, null, null, partyId, ["https://ttd.apps.tt02.altinn.no/ttd/apps-test/"], null, ["instance.completed"], null, null);
+            await eventsService.GetAppEvents(null, null, null, PartyUrn.PartyId.Create((uint)partyId), ["https://ttd.apps.tt02.altinn.no/ttd/apps-test/"], null, ["instance.completed"], cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -209,7 +211,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            await eventsService.GetAppEvents(null, null, null, 0, [], null, [], null, null);
+            await eventsService.GetAppEvents(null, null, null, null, [], null, [], cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -232,7 +234,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(registerMock: registerMock);
 
             // Act
-            await eventsService.GetAppEvents("1", null, null, 0, ["https://ttd.apps.at22.altinn.cloud/ttd/app-test/"], null, [], null, null);
+            await eventsService.GetAppEvents("1", null, null, null, ["https://ttd.apps.at22.altinn.cloud/ttd/app-test/"], null, [], cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             registerMock.VerifyNoOtherCalls();
@@ -676,66 +678,43 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 Times.Once);
         }
 
-        [Fact]
-        public async Task GetAppEvents_PersonProvided_PartyLookupCalledWithPersonUrn()
+        [Theory]
+        [InlineData("urn:altinn:person:idporten-email:user@example.com")]
+        [InlineData("urn:altinn:person:identifier-no:01014922047")]
+        [InlineData("urn:altinn:organization:identifier-no:989271156")]
+        [InlineData("urn:altinn:party:uuid:3fa85f64-5717-4562-b3fc-2c963f66afa6")]
+        public async Task GetAppEvents_SubjectProvided_PartyIdFromRegisterUsedAsSubjectFilter(string subjectUrn)
         {
             // Arrange
-            int expectedPartyId = 12345;
-            string person = "01014922047";
-            string expectedUrn = $"urn:altinn:person:identifier-no:{person}";
+            int expectedPartyId = 67890;
+            PartyUrn subject = PartyUrn.Parse(subjectUrn);
 
             Mock<IRegisterService> registerMock = new();
             registerMock
-                .Setup(r => r.PartyLookup(It.Is<IEnumerable<string>>(urns => urns.Single() == expectedUrn), It.IsAny<CancellationToken>()))
-                .ReturnsAsync([new PartyIdentifiers { PartyType = "person", PartyId = expectedPartyId, PersonIdentifier = person }]);
+                .Setup(r => r.GetPartyId(subject, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expectedPartyId);
 
             Mock<ICloudEventRepository> repositoryMock = GetAppEventsRepositoryMock();
 
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, registerMock: registerMock);
 
             // Act
-            await eventsService.GetAppEvents(null, null, null, 0, [], null, [], null, person);
+            await eventsService.GetAppEvents(null, null, null, subject, [], null, [], cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
-            registerMock.Verify(r => r.PartyLookup(It.Is<IEnumerable<string>>(urns => urns.Single() == expectedUrn), It.IsAny<CancellationToken>()), Times.Once);
+            registerMock.Verify(r => r.GetPartyId(subject, It.IsAny<CancellationToken>()), Times.Once);
             registerMock.VerifyNoOtherCalls();
             VerifyAppEventsQueriedForSubject(repositoryMock, $"/party/{expectedPartyId}");
         }
 
         [Fact]
-        public async Task GetAppEvents_UnitProvided_PartyLookupCalledWithOrganizationUrn()
-        {
-            // Arrange
-            int expectedPartyId = 54321;
-            string unit = "989271156";
-            string expectedUrn = $"urn:altinn:organization:identifier-no:{unit}";
-
-            Mock<IRegisterService> registerMock = new();
-            registerMock
-                .Setup(r => r.PartyLookup(It.Is<IEnumerable<string>>(urns => urns.Single() == expectedUrn), It.IsAny<CancellationToken>()))
-                .ReturnsAsync([new PartyIdentifiers { PartyType = "organization", PartyId = expectedPartyId, OrganizationIdentifier = unit }]);
-
-            Mock<ICloudEventRepository> repositoryMock = GetAppEventsRepositoryMock();
-
-            EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, registerMock: registerMock);
-
-            // Act
-            await eventsService.GetAppEvents(null, null, null, 0, [], null, [], unit, null);
-
-            // Assert
-            registerMock.Verify(r => r.PartyLookup(It.Is<IEnumerable<string>>(urns => urns.Single() == expectedUrn), It.IsAny<CancellationToken>()), Times.Once);
-            registerMock.VerifyNoOtherCalls();
-            VerifyAppEventsQueriedForSubject(repositoryMock, $"/party/{expectedPartyId}");
-        }
-
-        [Fact]
-        public async Task GetAppEvents_PartyNotFoundInRegister_ThrowsNotFoundAndSkipsQuery()
+        public async Task GetAppEvents_PartyNotFoundInRegister_ThrowsAndSkipsQuery()
         {
             // Arrange
             Mock<IRegisterService> registerMock = new();
             registerMock
-                .Setup(r => r.PartyLookup(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync([]);
+                .Setup(r => r.GetPartyId(It.IsAny<PartyUrn>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new PlatformHttpException(new HttpResponseMessage(HttpStatusCode.NotFound), "Not found"));
 
             Mock<ICloudEventRepository> repositoryMock = GetAppEventsRepositoryMock();
 
@@ -743,7 +722,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
 
             // Act
             PlatformHttpException actual = await Assert.ThrowsAsync<PlatformHttpException>(
-                () => eventsService.GetAppEvents(null, null, null, 0, [], null, [], "989271156", null));
+                () => eventsService.GetAppEvents(null, null, null, PartyUrn.Parse("urn:altinn:organization:identifier-no:989271156"), [], null, [], cancellationToken: TestContext.Current.CancellationToken));
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, actual.Response.StatusCode);
@@ -803,7 +782,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object, authorizationMock: authMock);
 
             // Act
-            List<CloudEvent> result = await eventsService.GetAppEvents(null, null, null, 0, [], null, [], null, null);
+            List<CloudEvent> result = await eventsService.GetAppEvents(null, null, null, null, [], null, [], cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Empty(result);
@@ -911,7 +890,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: repositoryMock.Object);
 
             // Act
-            await eventsService.GetAppEvents(null, null, null, 0, null, null, [], null, null);
+            await eventsService.GetAppEvents(null, null, null, null, null, null, [], cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             repositoryMock.VerifyAll();
@@ -1103,6 +1082,14 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 authorizationMock = _authorizationMock;
             }
 
+            if (registerMock == null)
+            {
+                // Resolve party id URNs the same way as the real register client does.
+                _registerMock
+                    .Setup(r => r.GetPartyId(It.IsAny<PartyUrn>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync((PartyUrn partyUrn, CancellationToken cancellationToken) => GetPartyIdFromUrn(partyUrn));
+            }
+
             return new EventsService(
                 repositoryMock ?? _repositoryMock,
                 (traceLogServiceMock ?? _traceLogServiceMock).Object,
@@ -1111,6 +1098,13 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 (authorizationMock ?? _authorizationMock).Object,
                 (loggerMock ?? _loggerMock).Object,
                 (registrationPublisherMock ?? _registrationPublisherMock).Object);
+        }
+
+        private static int GetPartyIdFromUrn(PartyUrn partyUrn)
+        {
+            return partyUrn.IsPartyId(out uint partyId)
+                ? (int)partyId
+                : throw new InvalidOperationException($"Test register mock can only resolve party id URNs, got {partyUrn}.");
         }
     }
 }

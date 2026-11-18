@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Clients.Interfaces;
-using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
@@ -97,19 +93,30 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size = 50)
+        public async Task<List<CloudEvent>> GetAppEvents(
+            string after,
+            DateTime? from,
+            DateTime? to,
+            PartyUrn subject,
+            List<string> source,
+            string resource,
+            List<string> type,
+            int size = 50,
+            CancellationToken cancellationToken = default)
         {
-            if ((!string.IsNullOrEmpty(person) || !string.IsNullOrEmpty(unit)) && partyId <= 0)
+            string subjectFilter = null;
+
+            if (subject is not null)
             {
-                partyId = await LookupPartyId(unit, person);
+                int partyId = await _registerService.GetPartyId(subject, cancellationToken);
+                subjectFilter = $"/party/{partyId}";
             }
 
-            string subject = partyId == 0 ? null : $"/party/{partyId}";
             source = source?.Count > 0 ? source : null;
             type = type.Count > 0 ? type : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subject, source, resource, type, size);
+            List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subjectFilter, source, resource, type, size);
 
             if (events.Count == 0)
             {
@@ -144,38 +151,6 @@ namespace Altinn.Platform.Events.Services
             bool isAppEvents = resource.StartsWith("urn:altinn:resource:app_", StringComparison.OrdinalIgnoreCase);
 
             return await _authorizationService.AuthorizeEvents(events, isAppEvents, cancellationToken);
-        }
-
-        /// <summary>
-        /// Finds the party id of the person or organization by querying register with a party URN.
-        /// </summary>
-        /// <param name="unit">The organization number. Used when <paramref name="person"/> is empty.</param>
-        /// <param name="person">The national identity number.</param>
-        /// <returns>The party id of the person or organization.</returns>
-        /// <exception cref="PlatformHttpException">Thrown with status 404 when register has no matching party.</exception>
-        private async Task<int> LookupPartyId(string unit, string person)
-        {
-            bool isPerson = !string.IsNullOrEmpty(person);
-
-            PartyUrn partyUrn = isPerson
-                ? PartyUrn.PersonId.Create(PersonIdentifier.Parse(person))
-                : PartyUrn.OrganizationId.Create(OrganizationIdentifier.Parse(unit));
-
-            IEnumerable<PartyIdentifiers> partyIdentifiersList =
-                await _registerService.PartyLookup([partyUrn.ToString()], CancellationToken.None);
-
-            PartyIdentifiers partyIdentifiers = partyIdentifiersList.FirstOrDefault(p => isPerson
-                ? p.PersonIdentifier == person
-                : p.OrganizationIdentifier == unit);
-
-            if (partyIdentifiers is null)
-            {
-                throw new PlatformHttpException(
-                    new HttpResponseMessage(HttpStatusCode.NotFound),
-                    $"No party found in register for {(isPerson ? "the given person" : $"organization {unit}")}.");
-            }
-
-            return partyIdentifiers.PartyId;
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Configuration;
@@ -110,6 +111,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <param name="org">The application owner acronym</param>
         /// <param name="app">The name of the app</param>
         /// <param name="query">The query parameters and headers used to filter the events</param>
+        /// <param name="cancellationToken">A cancellation token that is cancelled if the request is aborted</param>
         [HttpGet("{org}/{app}")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -120,7 +122,8 @@ namespace Altinn.Platform.Events.Controllers
         public async Task<ActionResult<List<CloudEvent>>> GetForOrg(
             [FromRoute] string org,
             [FromRoute] string app,
-            AppEventsQueryModel query)
+            AppEventsQueryModel query,
+            CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(HttpContext.User.GetOrg()))
             {
@@ -139,7 +142,7 @@ namespace Altinn.Platform.Events.Controllers
             try
             {
                 List<CloudEvent> events = await _eventsService.GetAppEvents(
-                    query.After, query.From, query.To, query.Party, null, resource, query.Type, query.Unit, query.Person, query.Size);
+                    query.After, query.From, query.To, GetSubjectUrn(query), null, resource, query.Type, query.Size, cancellationToken);
                 SetNextLink(events);
 
                 return events;
@@ -153,11 +156,12 @@ namespace Altinn.Platform.Events.Controllers
         /// <summary>
         /// Search for app events as an end user.
         /// </summary>
-        /// <remarks>This endpoints requires one event subject parameter. That means either 
-        /// <c>party</c>, <c>unit</c> or <c>person</c>.</remarks>
+        /// <remarks>This endpoints requires one event subject parameter. That means either
+        /// <c>party</c>, <c>unit</c>, <c>person</c> or <c>externalUrn</c>.</remarks>
         /// <param name="query">The query parameters and headers used to filter the events</param>
         /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/%&quot;, &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/%&quot;]">
         /// A list of the sources to include</param>
+        /// <param name="cancellationToken">A cancellation token that is cancelled if the request is aborted</param>
         [HttpGet("party")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -166,7 +170,8 @@ namespace Altinn.Platform.Events.Controllers
         [Produces("application/json")]
         public async Task<ActionResult<List<CloudEvent>>> GetForParty(
             AppEventsQueryModel query,
-            [FromQuery] List<string> source)
+            [FromQuery] List<string> source,
+            CancellationToken cancellationToken)
         {
             (bool isValid, string errorMessage) = ValidateQueryParams(query);
 
@@ -175,15 +180,17 @@ namespace Altinn.Platform.Events.Controllers
                 return Problem(errorMessage, null, 400);
             }
 
-            if (string.IsNullOrEmpty(query.Person) && string.IsNullOrEmpty(query.Unit) && query.Party <= 0)
+            PartyUrn subject = GetSubjectUrn(query);
+
+            if (subject is null)
             {
-                return Problem("Subject must be specified using query parameter party or unit, or header parameter person.", null, 400);
+                return Problem("Subject must be specified using query parameter party or unit, or header parameter person or externalUrn.", null, 400);
             }
 
             try
             {
                 List<CloudEvent> events = await _eventsService.GetAppEvents(
-                    query.After, query.From, query.To, query.Party, source, null, query.Type, query.Unit, query.Person, query.Size);
+                    query.After, query.From, query.To, subject, source, null, query.Type, query.Size, cancellationToken);
                 SetNextLink(events);
                 return events;
             }
@@ -191,6 +198,37 @@ namespace Altinn.Platform.Events.Controllers
             {
                 return HandlePlatformHttpException(e);
             }
+        }
+
+        /// <summary>
+        /// Converts the subject parameter of the query into a party URN. The query must have
+        /// passed <see cref="ValidateQueryParams"/>, which ensures that at most one subject
+        /// parameter is set and that its value can be parsed.
+        /// </summary>
+        /// <returns>The party URN of the subject, or null if no subject parameter is set.</returns>
+        private static PartyUrn GetSubjectUrn(AppEventsQueryModel query)
+        {
+            if (query.Party > 0)
+            {
+                return PartyUrn.PartyId.Create((uint)query.Party);
+            }
+
+            if (!string.IsNullOrEmpty(query.Unit))
+            {
+                return PartyUrn.OrganizationId.Create(OrganizationIdentifier.Parse(query.Unit));
+            }
+
+            if (!string.IsNullOrEmpty(query.Person))
+            {
+                return PartyUrn.PersonId.Create(PersonIdentifier.Parse(query.Person));
+            }
+
+            if (!string.IsNullOrEmpty(query.ExternalUrn))
+            {
+                return PartyUrn.Parse(query.ExternalUrn);
+            }
+
+            return null;
         }
 
         private static (bool IsValid, string ErrorMessage) ValidateQueryParams(AppEventsQueryModel query)
@@ -238,6 +276,19 @@ namespace Altinn.Platform.Events.Controllers
             if (!string.IsNullOrEmpty(query.Unit) && !HasValidUnitFormat(query.Unit))
             {
                 return (false, "Value of 'Unit' needs to be a valid organization number.");
+            }
+
+            if (!string.IsNullOrEmpty(query.ExternalUrn))
+            {
+                if (query.Party > 0 || !string.IsNullOrEmpty(query.Unit) || !string.IsNullOrEmpty(query.Person))
+                {
+                    return (false, "'ExternalUrn' cannot be combined with 'Party', 'Unit' or 'Person'.");
+                }
+
+                if (!PartyUrn.TryParse(query.ExternalUrn, out _))
+                {
+                    return (false, "Value of 'ExternalUrn' needs to be a valid party URN.");
+                }
             }
 
             return (true, null);

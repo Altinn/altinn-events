@@ -37,7 +37,7 @@ public class AppEventsQueryModel
 
     /// <summary>
     /// Search for app events where the subject is the specified party id. This parameter 
-    /// is mutually exclusive with unit and person.
+    /// is mutually exclusive with unit, person and externalUrn.
     /// </summary>
     /// <example>50002108</example>
     [FromQuery(Name = "party")]
@@ -46,7 +46,7 @@ public class AppEventsQueryModel
     /// <summary>
     /// Search for app events where the subject is the party id of the specified organization.
     /// The value should be a valid organization number. This parameter is mutually exclusive
-    /// with party and person.
+    /// with party, person and externalUrn.
     /// </summary>
     /// <example>989271156</example>
     [FromQuery(Name = "unit")]
@@ -55,11 +55,22 @@ public class AppEventsQueryModel
     /// <summary>
     /// Search for app events where the subject is the party id of the specified person.
     /// The value should be a valid national identity number. This parameter is mutually exclusive
-    /// with party and unit.
+    /// with party, unit and externalUrn.
     /// </summary>
     /// <example>01014922047</example>
     [FromHeader(Name = "person")]
     public string Person { get; set; }
+
+    /// <summary>
+    /// Search for app events where the subject is the party id of the party identified by this URN.
+    /// Primarily intended for persons identified by email (urn:altinn:person:idporten-email),
+    /// but any valid party URN is accepted, e.g. urn:altinn:person:identifier-no,
+    /// urn:altinn:organization:identifier-no, urn:altinn:party:id or urn:altinn:party:uuid.
+    /// This parameter is mutually exclusive with party, unit and person.
+    /// </summary>
+    /// <example>urn:altinn:person:idporten-email:user@example.com</example>
+    [FromHeader(Name = "externalUrn")]
+    public string ExternalUrn { get; set; }
 
     /// <summary>
     /// Search for app events where the event type is one of the types specified in the list.
