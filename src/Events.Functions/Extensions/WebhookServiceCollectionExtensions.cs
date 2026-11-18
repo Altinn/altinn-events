@@ -26,7 +26,7 @@ public static class WebhookServiceCollectionExtensions
 
         if (eventsOutboundSettings.EnableWebhookAuthentication)
         {
-            services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(AsbWebhookService.HttpClientName, config.GetSection("EventsOutboundSettings:MaskinportenSettings"));
+            services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(AsbWebhookService.HttpClientName, config.GetSection("EventsWebhookClient:MaskinportenSettings"));
         }
         else
         {

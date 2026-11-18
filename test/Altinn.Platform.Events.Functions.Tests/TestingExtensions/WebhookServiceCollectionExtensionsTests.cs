@@ -28,7 +28,7 @@ public class WebhookServiceCollectionExtensionsTests
         // Arrange
         Dictionary<string, string> settings = new()
         {
-            ["EventsOutboundSettings:MaskinportenSettings:Scope"] = "altinn:system/events.event.push"
+            ["EventsWebhookClient:MaskinportenSettings:Scope"] = "altinn:system/events.event.push"
         };
 
         if (flag != null)
