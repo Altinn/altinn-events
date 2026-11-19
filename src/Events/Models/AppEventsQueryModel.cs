@@ -41,7 +41,7 @@ public class AppEventsQueryModel
     /// </summary>
     /// <example>50002108</example>
     [FromQuery(Name = "party")]
-    public int Party { get; set; }
+    public int? Party { get; set; }
 
     /// <summary>
     /// Search for app events where the subject is the party id of the specified organization.

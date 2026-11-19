@@ -208,7 +208,7 @@ namespace Altinn.Platform.Events.Controllers
         /// <returns>The party URN of the subject, or null if no subject parameter is set.</returns>
         private static PartyUrn GetSubjectUrn(AppEventsQueryModel query)
         {
-            if (query.Party > 0)
+            if (query.Party is not null && query.Party > 0)
             {
                 return PartyUrn.PartyId.Create((uint)query.Party);
             }
@@ -253,7 +253,7 @@ namespace Altinn.Platform.Events.Controllers
                 return (false, "The 'Size' parameter must be a number larger that 0.");
             }
 
-            bool hasParty = query.Party > 0;
+            bool hasParty = query.Party is not null && query.Party > 0;
             bool hasUnit = !string.IsNullOrEmpty(query.Unit);
             bool hasPerson = !string.IsNullOrEmpty(query.Person);
             bool hasExternalUrn = !string.IsNullOrEmpty(query.ExternalUrn);
