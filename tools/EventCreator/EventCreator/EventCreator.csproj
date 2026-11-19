@@ -20,7 +20,7 @@
     <PackageReference Include="Npgsql.DependencyInjection" Version="10.0.3" />
     <PackageReference Include="CloudNative.CloudEvents.AspNetCore" Version="2.9.0" />
     <PackageReference Include="CloudNative.CloudEvents.SystemTextJson" Version="2.9.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="11.0.0" />
     <PackageReference Include="WolverineFx" Version="6.64.1" />
     <PackageReference Include="WolverineFx.AzureServiceBus" Version="6.64.1" />
     <PackageReference Include="WolverineFx.RuntimeCompilation" Version="6.64.1" />
