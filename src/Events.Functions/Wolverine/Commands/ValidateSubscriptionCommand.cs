@@ -10,6 +10,7 @@ namespace Altinn.Platform.Events.Functions.Wolverine.Commands;
 /// message types by full CLR name by default and this command must route identically
 /// regardless of which app's copy is compiled.
 /// </summary>
+/// <param name="Subscription">The subscription to validate.</param>
 [MessageIdentity("Altinn.Platform.Events.Wolverine.Commands.ValidateSubscriptionCommand")]
 public record ValidateSubscriptionCommand(
     Subscription Subscription);
