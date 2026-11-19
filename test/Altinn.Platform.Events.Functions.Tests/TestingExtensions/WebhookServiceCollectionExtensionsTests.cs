@@ -5,6 +5,7 @@ using Altinn.ApiClients.Maskinporten.Interfaces;
 using Altinn.ApiClients.Maskinporten.Models;
 using Altinn.Platform.Events.Functions.Extensions;
 using Altinn.Platform.Events.Functions.Services;
+using Altinn.Platform.Events.Functions.Services.Interfaces;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +29,8 @@ public class WebhookServiceCollectionExtensionsTests
         // Arrange
         Dictionary<string, string> settings = new()
         {
-            ["EventsWebhookClient:MaskinportenSettings:Scope"] = "altinn:system/events.event.push"
+            ["EventsWebhookClient:MaskinportenSettings:Scope"] = "altinn:system/events.event.push",
+            ["KeyVault:KeyVaultURI"] = "https://vault.example.com/"
         };
 
         if (flag != null)
@@ -44,6 +46,26 @@ public class WebhookServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public async Task AddWebhookHttpClient_JwkUnavailableInKeyVault_SendsWithoutToken()
+    {
+        // Arrange
+        Dictionary<string, string> settings = new()
+        {
+            ["EventsOutboundSettings:EnableWebhookAuthentication"] = "true",
+            ["KeyVault:KeyVaultURI"] = "https://vault.example.com/"
+        };
+
+        Mock<IKeyVaultService> keyVault = new();
+        keyVault.Setup(k => k.GetSecretAsync(It.IsAny<string>(), It.IsAny<string>())).ThrowsAsync(new InvalidOperationException("denied"));
+
+        // Act
+        AuthenticationHeaderValue actual = await SendThroughWebhookClient(settings, keyVault.Object);
+
+        // Assert
+        Assert.Null(actual);
+    }
+
+    [Fact]
     public async Task AddWebhookHttpClient_NoEventsOutboundSettings_SendsWithoutToken()
     {
         // Act
@@ -53,8 +75,15 @@ public class WebhookServiceCollectionExtensionsTests
         Assert.Null(actual);
     }
 
-    private static async Task<AuthenticationHeaderValue> SendThroughWebhookClient(Dictionary<string, string> settings)
+    private static async Task<AuthenticationHeaderValue> SendThroughWebhookClient(Dictionary<string, string> settings, IKeyVaultService keyVaultService = null)
     {
+        if (keyVaultService is null)
+        {
+            Mock<IKeyVaultService> keyVaultMock = new();
+            keyVaultMock.Setup(k => k.GetSecretAsync(It.IsAny<string>(), "EventsWebhookClient--MaskinportenSettings--EncodedJwk")).ReturnsAsync("fake-jwk");
+            keyVaultService = keyVaultMock.Object;
+        }
+
         IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         AuthorizationHeaderCapturingHandler transport = new();
 
@@ -67,7 +96,7 @@ public class WebhookServiceCollectionExtensionsTests
 
         // Registered first so the library's TryAdd keeps the fake token service
         services.AddSingleton(maskinportenMock.Object);
-        services.AddWebhookHttpClient(config);
+        services.AddWebhookHttpClient(config, keyVaultService);
         services.AddHttpClient(AsbWebhookService.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => transport);
 
         using ServiceProvider provider = services.BuildServiceProvider();
