@@ -113,7 +113,7 @@ namespace Altinn.Platform.Events.Services
             }
 
             source = source?.Count > 0 ? source : null;
-            type = type.Count > 0 ? type : null;
+            type = type?.Count > 0 ? type : null;
             after ??= string.Empty;
 
             List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subjectFilter, source, resource, type, size);
