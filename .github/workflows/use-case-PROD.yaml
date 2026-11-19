@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up k6
-        uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
+        uses: grafana/setup-k6-action@c47136d33d365efbeb9ae7266908b5dcf98cdece # v1.3.0
       - name: Create k6 secrets file
         id: k6-secrets
         env:
@@ -39,25 +39,25 @@ jobs:
           printf 'webhookEndpoint=%s\n' "$WEBHOOK_ENDPOINT" >> "$SECRETS_FILE"
           echo "file=$SECRETS_FILE" >> "$GITHUB_OUTPUT"
       - name: Run app-events use case tests
-        uses: grafana/run-k6-action@4082a08c7e40cf6d65863911077dfb60ae0a4f04 # v1.5.0
+        uses: grafana/run-k6-action@54385d2a25c222a08b4a3aec6b653b8fb370a1ed # v1.6.0
         with:
           path: test/k6/src/tests/app-events.js
           flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test-prod
       - name: Run events use case tests (POST)
         if: always()
-        uses: grafana/run-k6-action@4082a08c7e40cf6d65863911077dfb60ae0a4f04 # v1.5.0
+        uses: grafana/run-k6-action@54385d2a25c222a08b4a3aec6b653b8fb370a1ed # v1.6.0
         with:
           path: test/k6/src/tests/events/post.js
           flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }}
       - name: Run events use case tests (GET)
         if: always()
-        uses: grafana/run-k6-action@4082a08c7e40cf6d65863911077dfb60ae0a4f04 # v1.5.0
+        uses: grafana/run-k6-action@54385d2a25c222a08b4a3aec6b653b8fb370a1ed # v1.6.0
         with:
           path: test/k6/src/tests/events/get.js
           flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }}
       - name: Run subscription use case tests
         if: always()
-        uses: grafana/run-k6-action@4082a08c7e40cf6d65863911077dfb60ae0a4f04 # v1.5.0
+        uses: grafana/run-k6-action@54385d2a25c222a08b4a3aec6b653b8fb370a1ed # v1.6.0
         with:
           path: test/k6/src/tests/subscriptions.js
           flags: --secret-source=file=${{ steps.k6-secrets.outputs.file }} -e app=apps-test-prod
