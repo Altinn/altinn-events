@@ -121,7 +121,7 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             EventsService eventsService = GetEventsService(repositoryMock: new CloudEventRepositoryMock(2));
 
             // Act
-            List<CloudEvent> actual = await eventsService.GetAppEvents(string.Empty, new DateTime(2020, 06, 17, 0, 0, 0, DateTimeKind.Utc), null, PartyUrn.PartyId.Create(54321), [], null, [], cancellationToken: TestContext.Current.CancellationToken);
+            List<CloudEvent> actual = await eventsService.GetAppEvents(string.Empty, new DateTime(2020, 06, 17, 0, 0, 0, DateTimeKind.Utc), null, PartyUrn.PartyId.Create(54321), null, null, null, cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(expectedCount, actual.Count);
