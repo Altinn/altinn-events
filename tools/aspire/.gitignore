@@ -1,0 +1,3 @@
+# The exported development certificate and other files the app host makes on each run.
+.local/
+appsettings.Local.json

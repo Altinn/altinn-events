@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+		<UserSecretsId>events-mock-auth-tool-4b8e1d27</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- The certificates the API's tests sign their tokens with. They are test-only. -->
+		<None Include="..\..\..\test\Altinn.Platform.Events.Tests\jwtselfsignedcert.pfx" Link="jwtselfsignedcert.pfx">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="..\..\..\test\Altinn.Platform.Events.Tests\platform-org.pfx" Link="platform-org.pfx">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="..\..\..\test\Altinn.Platform.Events.Tests\ttd-org.pfx" Link="ttd-org.pfx">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>
