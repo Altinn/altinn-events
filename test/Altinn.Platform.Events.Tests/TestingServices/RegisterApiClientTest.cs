@@ -136,8 +136,9 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 new Mock<ILogger<RegisterApiClient>>().Object);
 
             List<string> partyUrnList = [
-                "urn:altinn:person:identifier-no:02056241046", 
-                "urn:altinn:person:identifier-no:31073102351"];
+                "urn:altinn:person:identifier-no:02056241046",
+                "urn:altinn:person:identifier-no:31073102351"
+            ];
 
             // Act
             List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList, CancellationToken.None)];
@@ -196,7 +197,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
             List<string> partyUrnList = [
                 "urn:altinn:person:identifier-no:02056241046",
                 "urn:altinn:person:identifier-no:31073102351",
-                "urn:altinn:person:identifier-no:18874198354"];
+                "urn:altinn:person:identifier-no:18874198354"
+            ];
 
             // Act
             List<PartyIdentifiers> partyIdentifiers = [.. await target.PartyLookup(partyUrnList, CancellationToken.None)];
@@ -245,7 +247,8 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 new Mock<ILogger<RegisterApiClient>>().Object);
 
             List<string> partyUrnList = [
-                "urn:altinn:person:identifier-no:02056241046"];
+                "urn:altinn:person:identifier-no:02056241046"
+            ];
 
             PlatformHttpException actualException = null;
 

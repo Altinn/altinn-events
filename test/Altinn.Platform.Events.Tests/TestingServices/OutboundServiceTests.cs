@@ -671,8 +671,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync([new Subscription { Id = 1, Consumer = "/org/nav" }]);
             repositoryMock
                 .Setup(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync([new Subscription { Id = 2, Consumer = "/org/ttd", IncludeSubunits = false },
-                               new Subscription { Id = 3, Consumer = "/org/skd", IncludeSubunits = false }]);
+                .ReturnsAsync(
+                [
+                    new Subscription { Id = 2, Consumer = "/org/ttd", IncludeSubunits = false },
+                    new Subscription { Id = 3, Consumer = "/org/skd", IncludeSubunits = false }
+                ]);
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock
@@ -735,8 +738,11 @@ namespace Altinn.Platform.Events.Tests.TestingServices
                 .ReturnsAsync([new Subscription { Id = 1, Consumer = "/org/nav" }]);
             repositoryMock
                 .Setup(r => r.GetSubscriptions(It.IsAny<string>(), mainUnitSubject, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync([new Subscription { Id = 2, Consumer = "/org/ttd", IncludeSubunits = true },
-                               new Subscription { Id = 3, Consumer = "/org/skd", IncludeSubunits = false }]);
+                .ReturnsAsync(
+                [
+                    new Subscription { Id = 2, Consumer = "/org/ttd", IncludeSubunits = true },
+                    new Subscription { Id = 3, Consumer = "/org/skd", IncludeSubunits = false }
+                ]);
 
             Mock<IAuthorization> authorizationMock = new();
             authorizationMock

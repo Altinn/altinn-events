@@ -177,14 +177,16 @@ public class AuthorizationServiceTest
                 Assert.Single(requestedUrnList);
                 Assert.Equal("urn:altinn:person:identifier-no:11913049472", requestedUrnList.ElementAt(0));
             })
-            .ReturnsAsync([new PartyIdentifiers
-            {
-                PartyId = 50301578,
-                PartyType = "person",
-                PersonIdentifier = "11913049472",
-                PartyUuid = Guid.Parse("4a80af94-14be-4af5-9f95-a6a0824c5b55"),
-                ExternalUrn = "urn:altinn:person:identifier-no:11913049472"
-            }
+            .ReturnsAsync(
+            [
+                new PartyIdentifiers
+                {
+                    PartyId = 50301578,
+                    PartyType = "person",
+                    PersonIdentifier = "11913049472",
+                    PartyUuid = Guid.Parse("4a80af94-14be-4af5-9f95-a6a0824c5b55"),
+                    ExternalUrn = "urn:altinn:person:identifier-no:11913049472"
+                }
             ]);
 
         CloudEvent cloudEvent = new()
@@ -607,7 +609,8 @@ public class AuthorizationServiceTest
             GetCloudEvent("29168d79-b081-4299-9eec-2db9b5259fac", "urn:altinn:person:identifier-no:31073102351", false),
             GetCloudEvent("bf1411fe-c55e-4472-9f37-10e2c2403ecb", "urn:altinn:person:identifier-no:31073102351", false),
             GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "urn:altinn:person:identifier-no:notfound", false),
-            GetCloudEvent("a7c7b7bf-3151-4de8-b326-aeaa5c36e7c4", null, false)];
+            GetCloudEvent("a7c7b7bf-3151-4de8-b326-aeaa5c36e7c4", null, false)
+        ];
 
         List<PartyIdentifiers> partyIdentifiers =
             (await TestDataLoader.Load<PartiesRegisterQueryResponse>("twopersons")).Data;
@@ -686,7 +689,8 @@ public class AuthorizationServiceTest
             GetCloudEvent("29168d79-b081-4299-9eec-2db9b5259fac", "/party/67654562", true),
             GetCloudEvent("bf1411fe-c55e-4472-9f37-10e2c2403ecb", "/party/67654562", false),
             GetCloudEvent("95d53441-5ecf-4165-83d8-a757afd8a7e2", "/party/67654562", false),
-            GetCloudEvent("a7c7b7bf-3151-4de8-b326-aeaa5c36e7c4", "/party/67654562", true)];
+            GetCloudEvent("a7c7b7bf-3151-4de8-b326-aeaa5c36e7c4", "/party/67654562", true)
+        ];
 
         XacmlJsonResponse decisionResponse = await TestDataLoader.Load<XacmlJsonResponse>("permit_subscribe_five");
 
