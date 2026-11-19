@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Configuration;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Register.Contracts;
 
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -45,6 +46,10 @@ public class CachingRegisterService : IRegisterService
     public Task<IEnumerable<PartyIdentifiers>> PartyLookup(
         IEnumerable<string> partyUrnList, CancellationToken cancellationToken)
         => _inner.PartyLookup(partyUrnList, cancellationToken);
+
+    /// <inheritdoc/>
+    public Task<int> GetPartyId(PartyUrn partyUrn, CancellationToken cancellationToken)
+        => _inner.GetPartyId(partyUrn, cancellationToken);
 
     /// <inheritdoc/>
     public async Task<OrganizationRecord> GetMainUnit(

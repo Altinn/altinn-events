@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Services;
@@ -32,6 +33,8 @@ using Microsoft.Extensions.Options;
 using Moq;
 
 using Xunit;
+
+using PartyUrn = Altinn.Register.Contracts.PartyUrn;
 
 namespace Altinn.Platform.Events.Tests.TestingControllers
 {
@@ -585,7 +588,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?after=e31dbb11-2208-4dda-a549-92a0db8c7708&party=567890";
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
+                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<PartyUrn>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
@@ -731,7 +734,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
             {
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
-                string expected = "Subject must be specified using either query params party or unit or header value person.";
+                string expected = "Subject must be specified using query parameter party or unit, or header parameter person or externalUrn.";
 
                 HttpClient client = GetTestClient(new Mock<IEventsService>().Object);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1));
@@ -832,7 +835,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Value of 'Person' needs to be exactly 11 digits.", actual.Detail);
+                Assert.StartsWith("Value of 'Person' needs to be a valid national identity number.", actual.Detail);
             }
 
             /// <summary>
@@ -862,7 +865,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Value of 'Person' needs to be exactly 11 digits.", actual.Detail);
+                Assert.StartsWith("Value of 'Person' needs to be a valid national identity number.", actual.Detail);
             }
 
             /// <summary>
@@ -887,7 +890,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                httpRequestMessage.Headers.Add("Person", "01038712345");
+                httpRequestMessage.Headers.Add("Person", "01014922047");
 
                 // Act
                 HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
@@ -980,7 +983,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 // Arrange
                 string requestUri = $"{BasePath}/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c7708&party=1337";
                 Mock<IEventsService> eventsService = new Mock<IEventsService>();
-                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception());
+                eventsService.Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<PartyUrn>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).Throws(new Exception());
                 HttpClient client = GetTestClient(eventsService.Object);
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
@@ -1107,7 +1110,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Only one of 'Party' or 'Unit' can be defined.", actual.Detail);
+                Assert.StartsWith("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
             }
 
             /// <summary>
@@ -1136,7 +1139,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Value of 'Unit' needs to be exactly 9 digits.", actual.Detail);
+                Assert.StartsWith("Value of 'Unit' needs to be a valid organization number.", actual.Detail);
             }
 
             /// <summary>
@@ -1165,7 +1168,7 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Value of 'Unit' needs to be exactly 9 digits.", actual.Detail);
+                Assert.StartsWith("Value of 'Unit' needs to be a valid organization number.", actual.Detail);
             }
 
             /// <summary>
@@ -1186,6 +1189,181 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
 
                 HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "01014922047");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.StartsWith("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for party with an email identified person given in the externalUrn header
+            /// Expected result:
+            ///   The events of the party are returned
+            /// Success criteria:
+            ///   Result status is 200 OK, and the next link keeps the query parameters.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_ValidRequestExternalUrn_ReturnsListOfEventsAndNextUrl()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
+                string expectedNext = $"http://localhost:5080/events/api/v1/app/party?after=e31dbb11-2208-4dda-a549-92a0db8c8808&from=2020-01-01Z&size=5";
+
+                int expectedCount = 2;
+
+                HttpClient client = GetTestClient(new EventsServiceMock(1));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("externalUrn", "urn:altinn:person:idporten-email:user@example.com");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                List<CloudEvent> actual = JsonSerializer.Deserialize<List<CloudEvent>>(responseString);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(expectedCount, actual.Count);
+                Assert.Equal(expectedNext, response.Headers.GetValues("next").First());
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for party with an externalUrn header that is not a valid party URN
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the service is never called.
+            /// </summary>
+            [Theory]
+            [InlineData("urn:altinn:foo:bar")]
+            [InlineData("not-a-urn")]
+            [InlineData("urn:altinn:person:identifier-no:01038712345")]
+            public async Task GetForParty_InvalidExternalUrn_ReturnsBadRequest(string externalUrn)
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("externalUrn", externalUrn);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Value of 'ExternalUrn' needs to be a valid party URN.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for party with externalUrn combined with another subject parameter
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the service is never called.
+            /// </summary>
+            [Theory]
+            [InlineData("party=1337", null)]
+            [InlineData("unit=989271156", null)]
+            [InlineData(null, "01014922047")]
+            public async Task GetForParty_ExternalUrnCombinedWithOtherSubject_ReturnsBadRequest(string subjectQuery, string person)
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5{(subjectQuery is null ? string.Empty : "&" + subjectQuery)}";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("externalUrn", "urn:altinn:person:idporten-email:user@example.com");
+                if (person is not null)
+                {
+                    httpRequestMessage.Headers.Add("Person", person);
+                }
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for org and app with an externalUrn header
+            /// Expected result:
+            ///   The externalUrn value is passed on to the events service
+            /// Success criteria:
+            ///   Result status is 200 OK and the service is called with the URN.
+            /// </summary>
+            [Fact]
+            public async Task GetForOrg_ExternalUrn_IsPassedToService()
+            {
+                // Arrange
+                string externalUrn = "urn:altinn:person:idporten-email:user@example.com";
+                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                eventsService
+                    .Setup(es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<PartyUrn>(), It.IsAny<List<string>>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync([]);
+
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("externalUrn", externalUrn);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                eventsService.Verify(
+                    es => es.GetAppEvents(It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.Is<PartyUrn>(subject => subject.ToString() == externalUrn), null, It.IsAny<string>(), It.IsAny<List<string>>(), 5, It.IsAny<CancellationToken>()),
+                    Times.Once);
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for party with an 11 digit person number that has an invalid checksum
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the service is never called.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_InvalidChecksumHeaderPerson_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
                 httpRequestMessage.Headers.Add("Person", "01038712345");
 
                 // Act
@@ -1195,7 +1373,103 @@ namespace Altinn.Platform.Events.Tests.TestingControllers
 
                 // Assert
                 Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-                Assert.StartsWith("Only one of 'Party' or 'Person' can be defined.", actual.Detail);
+                Assert.Equal("Value of 'Person' needs to be a valid national identity number.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for party with a 9 digit organization number that has an invalid checksum
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the service is never called.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_InvalidChecksumQueryParamUnit_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&unit=123456789&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Value of 'Unit' needs to be a valid organization number.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for party with both unit and person number defined as filter parameters
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async Task GetForParty_ConflictingQueryParamsUnitAndPerson_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/party?from=2020-01-01Z&unit=989271156&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "01014922047");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
+            }
+
+            /// <summary>
+            /// Scenario:
+            ///   Get events for org with both unit and person number defined as filter parameters
+            /// Expected result:
+            ///   The result be a problem detail object
+            /// Success criteria:
+            ///   Result status is 400 bad request and the problem details specifying which parameter is incorrect.
+            /// </summary>
+            [Fact]
+            public async Task GetForOrg_ConflictingQueryParamsUnitAndPerson_ReturnsBadRequest()
+            {
+                // Arrange
+                string requestUri = $"{BasePath}/app/ttd/endring-av-navn-v2?from=2020-01-01Z&unit=989271156&size=5";
+
+                Mock<IEventsService> eventsService = new();
+                HttpClient client = GetTestClient(eventsService.Object);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetOrgToken("ttd"));
+
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                httpRequestMessage.Headers.Add("Person", "01014922047");
+
+                // Act
+                HttpResponseMessage response = await client.SendAsync(httpRequestMessage, TestContext.Current.CancellationToken);
+                string responseString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+                var actual = JsonSerializer.Deserialize<ProblemDetails>(responseString, _options);
+
+                // Assert
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.", actual.Detail);
+                eventsService.VerifyNoOtherCalls();
             }
 
             /// <summary>

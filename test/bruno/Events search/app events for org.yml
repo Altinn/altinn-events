@@ -6,10 +6,26 @@ info:
 http:
   method: GET
   url: "{{PlatformHostUrl}}/events/api/v1/app/ttd/apps-test?after=7955e214-3476-4a87-ba84-f835bf58be13"
+  headers:
+    - name: ExternalUrn
+      value: urn:altinn:person:idporten-email:terjedatatest@leet.no
+    - name: ExternalUrn
+      value: urn:altinn:person:identifier-no:08907497373
+      disabled: true
+    - name: ExternalUrn
+      value: urn:altinn:organization:identifier-no:313455327
+      disabled: true
+    - name: Person
+      value: "08907497373"
+      disabled: true
   params:
     - name: after
       value: 7955e214-3476-4a87-ba84-f835bf58be13
       type: query
+    - name: unit
+      value: "313455327"
+      type: query
+      disabled: true
   auth: inherit
 
 runtime:

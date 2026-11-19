@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Tests.Models;
+using Altinn.Register.Contracts;
 
 using CloudNative.CloudEvents;
 
@@ -31,7 +32,8 @@ namespace Altinn.Platform.Events.Tests.Mocks
                 { "897069653", 500003 },
                 { "897069631", 1002 },
                 { "01039012345", 1337 },
-                { "12345678901",  1000 }
+                { "12345678901",  1000 },
+                { "urn:altinn:person:idporten-email:user@example.com", 1337 }
             };
 
             _serializerOptions = new JsonSerializerOptions()
@@ -40,12 +42,9 @@ namespace Altinn.Platform.Events.Tests.Mocks
             };
         }
 
-        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size = 50)
+        public Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, PartyUrn subject, List<string> source, string resource, List<string> type, int size = 50, CancellationToken cancellationToken = default)
         {
-            if (!string.IsNullOrEmpty(unit) || !string.IsNullOrEmpty(person))
-            {
-                partyId = PartyLookup(unit, person);
-            }
+            int partyId = PartyLookup(subject);
 
             string eventsPath = Path.Combine(GetEventsPath(), $@"{_eventsCollection}.json");
 
@@ -76,8 +75,8 @@ namespace Altinn.Platform.Events.Tests.Mocks
 
                 if (partyId > 0)
                 {
-                    string subject = $"/party/{partyId}";
-                    filter = filter.Where(te => te.Subject.Equals(subject));
+                    string subjectFilter = $"/party/{partyId}";
+                    filter = filter.Where(te => te.Subject.Equals(subjectFilter));
                 }
 
                 if (source?.Count == 1)
@@ -157,9 +156,33 @@ namespace Altinn.Platform.Events.Tests.Mocks
             throw new NotImplementedException();
         }
 
-        private int PartyLookup(string unit, string person)
+        /// <summary>
+        /// Resolves the subject to a party id. Organization and person URNs are looked up by their
+        /// identifier, other URNs by the full URN. Unknown subjects resolve to 0, meaning no subject filter.
+        /// </summary>
+        private int PartyLookup(PartyUrn subject)
         {
-            return string.IsNullOrEmpty(unit) ? _partyLookup.GetValueOrDefault(person) : _partyLookup.GetValueOrDefault(unit);
+            if (subject is null)
+            {
+                return 0;
+            }
+
+            if (subject.IsPartyId(out uint partyId))
+            {
+                return (int)partyId;
+            }
+
+            if (subject.IsOrganizationId(out OrganizationIdentifier organizationIdentifier))
+            {
+                return _partyLookup.GetValueOrDefault(organizationIdentifier.ToString());
+            }
+
+            if (subject.IsPersonId(out PersonIdentifier personIdentifier))
+            {
+                return _partyLookup.GetValueOrDefault(personIdentifier.ToString());
+            }
+
+            return _partyLookup.GetValueOrDefault(subject.ToString());
         }
 
         private static string GetEventsPath()

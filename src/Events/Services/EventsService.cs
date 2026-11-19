@@ -8,6 +8,7 @@ using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Repository;
 using Altinn.Platform.Events.Services.Interfaces;
 using Altinn.Platform.Events.Wolverine.Publishers;
+using Altinn.Register.Contracts;
 
 using CloudNative.CloudEvents;
 
@@ -92,19 +93,30 @@ namespace Altinn.Platform.Events.Services
         }
 
         /// <inheritdoc/>
-        public async Task<List<CloudEvent>> GetAppEvents(string after, DateTime? from, DateTime? to, int partyId, List<string> source, string resource, List<string> type, string unit, string person, int size = 50)
+        public async Task<List<CloudEvent>> GetAppEvents(
+            string after,
+            DateTime? from,
+            DateTime? to,
+            PartyUrn subject,
+            List<string> source,
+            string resource,
+            List<string> type,
+            int size = 50,
+            CancellationToken cancellationToken = default)
         {
-            if ((!string.IsNullOrEmpty(person) || !string.IsNullOrEmpty(unit)) && partyId <= 0)
+            string subjectFilter = null;
+
+            if (subject is not null)
             {
-                partyId = await _registerService.PartyLookup(unit, person);
+                int partyId = await _registerService.GetPartyId(subject, cancellationToken);
+                subjectFilter = $"/party/{partyId}";
             }
 
-            string subject = partyId == 0 ? null : $"/party/{partyId}";
             source = source?.Count > 0 ? source : null;
-            type = type.Count > 0 ? type : null;
+            type = type?.Count > 0 ? type : null;
             after ??= string.Empty;
 
-            List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subject, source, resource, type, size);
+            List<CloudEvent> events = await _repository.GetAppEvents(after, from, to, subjectFilter, source, resource, type, size);
 
             if (events.Count == 0)
             {
