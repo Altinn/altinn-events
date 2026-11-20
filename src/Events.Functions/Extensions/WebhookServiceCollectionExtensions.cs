@@ -63,8 +63,7 @@ public static class WebhookServiceCollectionExtensions
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"WARNING: Could not fetch Maskinporten JWK from Key Vault. Webhook requests will be sent without authentication. {ex.Message}");
-            return null;
+            throw new InvalidOperationException("Failed to read Maskinporten settings from Key Vault", ex);
         }
     }
 }
