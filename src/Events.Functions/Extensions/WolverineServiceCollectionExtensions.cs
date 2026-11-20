@@ -4,6 +4,7 @@ using Altinn.Platform.Events.Functions.Services;
 using Altinn.Platform.Events.Functions.Wolverine.Extensions;
 using Altinn.Platform.Events.Functions.Wolverine.Policies;
 using Altinn.Platform.Events.Functions.Wolverine.Services.Interfaces;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -46,10 +47,11 @@ public static class WolverineServiceCollectionExtensions
             }
         });
 
-        // Split registration (named client + plain AddScoped), not AddHttpClient<TClient,TImpl>'s typed-client
-        // overload — Wolverine's handler code generation rejects that as an opaque factory registration.
-        // Matches Events' own WebhookService registration for the identical reason.
-        services.AddHttpClient(AsbWebhookService.HttpClientName);
+        services.AddWebhookHttpClient(config);
+
+        // Plain AddScoped rather than AddHttpClient<TClient,TImpl>'s typed-client overload — Wolverine's handler
+        // code generation rejects that as an opaque factory registration. Matches Events' own WebhookService
+        // registration for the identical reason.
         services.AddScoped<IWebhookService, AsbWebhookService>();
     }
 

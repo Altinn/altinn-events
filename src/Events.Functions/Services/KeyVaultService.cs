@@ -6,6 +6,7 @@ using Altinn.Platform.Events.Functions.Services.Interfaces;
 using Azure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Certificates;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Events.Functions.Services
@@ -33,6 +34,14 @@ namespace Altinn.Platform.Events.Functions.Services
             }
 
             return null;
+        }
+
+        /// <inheritdoc/>
+        public async Task<string> GetSecretAsync(string vaultUri, string secretName)
+        {
+            SecretClient secretClient = new(new Uri(vaultUri), new DefaultAzureCredential());
+            KeyVaultSecret secret = await secretClient.GetSecretAsync(secretName);
+            return secret.Value;
         }
     }
 }
