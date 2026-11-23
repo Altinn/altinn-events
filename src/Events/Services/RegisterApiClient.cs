@@ -23,6 +23,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+using PartyUrn = Altinn.Register.Contracts.PartyUrn;
+
 namespace Altinn.Platform.Events.Services
 {
     /// <summary>
@@ -136,6 +138,30 @@ namespace Altinn.Platform.Events.Services
             }
 
             return partyIdentifiers;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetPartyId(PartyUrn partyUrn, CancellationToken cancellationToken)
+        {
+            if (partyUrn.IsPartyId(out uint partyId))
+            {
+                return (int)partyId;
+            }
+
+            // Register is queried with a single URN, so any returned party is the one we asked for.
+            IEnumerable<PartyIdentifiers> partyIdentifiersList =
+                await PartyLookup([partyUrn.ToString()], cancellationToken);
+
+            PartyIdentifiers partyIdentifiers = partyIdentifiersList.FirstOrDefault();
+
+            if (partyIdentifiers is null)
+            {
+                throw new PlatformHttpException(
+                    new HttpResponseMessage(HttpStatusCode.NotFound),
+                    "No party found in register for the given party URN.");
+            }
+
+            return partyIdentifiers.PartyId;
         }
 
         /// <inheritdoc/>

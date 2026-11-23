@@ -5,9 +5,14 @@ info:
 
 http:
   method: GET
-  url: "{{PlatformHostUrl}}/events/api/v1/app/party?from=2026-11-02T08:00:53.3917Z&party={{AuthN_PartyId}}"
+  url: "{{PlatformHostUrl}}/events/api/v1/app/party?from=2026-11-02T08:00:53.3917Z"
   headers:
-    - name: person
+    - name: ExternalUrn
+      value: urn:altinn:person:identifier-no:{{AuthN_Pid}}
+    - name: ExternalUrn
+      value: urn:altinn:organization:identifier-no:313455327
+      disabled: true
+    - name: Person
       value: "{{AuthN_Pid}}"
       disabled: true
   params:
@@ -17,6 +22,7 @@ http:
     - name: party
       value: "{{AuthN_PartyId}}"
       type: query
+      disabled: true
   auth: inherit
 
 settings:

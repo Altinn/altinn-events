@@ -1,0 +1,24 @@
+info:
+  name: app subscription self party
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{PlatformHostUrl}}/events/api/v1/subscriptions"
+  body:
+    type: json
+    data: |-
+      {
+        "sourceFilter": "https://ttd.apps.{{Environment}}.altinn.cloud/ttd/team-core",
+        "endpoint": "https://webhook.site/f5e0088f-ce1c-4ce6-ae30-bd4250a10294",
+        "subjectFilter": "/party/{{AuthN_PartyId}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

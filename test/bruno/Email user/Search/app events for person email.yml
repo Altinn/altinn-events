@@ -6,6 +6,10 @@ info:
 http:
   method: GET
   url: "{{PlatformHostUrl}}/events/api/v1/app/party?from=2026-09-20T11:00:53.3917Z&party={{AuthN_PartyId}}"
+  headers:
+    - name: ExternalUrn
+      value: urn:altinn:person:idporten-email:{{AuthN_Email}}
+      disabled: true
   params:
     - name: from
       value: 2026-09-20T11:00:53.3917Z

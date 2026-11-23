@@ -13,6 +13,8 @@ using Altinn.Platform.Register.Models;
 
 using Newtonsoft.Json;
 
+using PartyUrn = Altinn.Register.Contracts.PartyUrn;
+
 namespace Altinn.Platform.Events.Tests.Mocks;
 
 public class RegisterServiceMock : IRegisterService
@@ -66,6 +68,16 @@ public class RegisterServiceMock : IRegisterService
     public Task<IEnumerable<PartyIdentifiers>> PartyLookup(
         IEnumerable<string> partyUrnList, CancellationToken cancellationToken)
     {
+        throw new NotImplementedException();
+    }
+
+    public Task<int> GetPartyId(PartyUrn partyUrn, CancellationToken cancellationToken)
+    {
+        if (partyUrn.IsPartyId(out uint partyId))
+        {
+            return Task.FromResult((int)partyId);
+        }
+
         throw new NotImplementedException();
     }
 

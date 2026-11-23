@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Altinn.Common.AccessToken.Configuration;
@@ -12,6 +13,7 @@ using Altinn.Platform.Events.Exceptions;
 using Altinn.Platform.Events.Extensions;
 using Altinn.Platform.Events.Models;
 using Altinn.Platform.Events.Services.Interfaces;
+using Altinn.Register.Contracts;
 
 using CloudNative.CloudEvents;
 using Microsoft.AspNetCore.Authorization;
@@ -102,20 +104,14 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Retrieves a set of events related to an application owner based on query parameters.
+        /// Search for app events from the specified app with the given filter parameters.
         /// </summary>
+        /// <remarks>This endpoint is exclusive for service owners. End users must use 
+        /// the <c>party</c>endpoint instead.</remarks>
         /// <param name="org">The application owner acronym</param>
         /// <param name="app">The name of the app</param>
-        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter even that should be included</param>
-        /// <param name="from" example="2022-02-14 07:22:19Z">The lower limit for when the cloud event was created in UTC</param>
-        /// <param name="to" example="2022-06-16 13:37:00Z">The upper limit for when the cloud event was created in UTC</param>
-        /// <param name="party" example="50002108">The party id representing the subjects</param>
-        /// <param name="unit" example="989271156">The organisation number representing the subject</param>
-        /// <param name="person" example="01014922047">The person number representing the subject</param>
-        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
-        /// A list of the event types to include
-        /// </param>
-        /// <param name="size">The maximum number of events to include in the response</param>
+        /// <param name="query">The query parameters and headers used to filter the events</param>
+        /// <param name="cancellationToken">A cancellation token that is cancelled if the request is aborted</param>
         [HttpGet("{org}/{app}")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -124,24 +120,17 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
         public async Task<ActionResult<List<CloudEvent>>> GetForOrg(
-                [FromRoute] string org,
-                [FromRoute] string app,
-                [FromQuery] string after,
-                [FromQuery] DateTime? from,
-                [FromQuery] DateTime? to,
-                [FromQuery] int party,
-                [FromQuery] string unit,
-                [FromHeader] string person,
-                [FromQuery] List<string> type,
-                [FromQuery] int size = 50)
+            [FromRoute] string org,
+            [FromRoute] string app,
+            AppEventsQueryModel query,
+            CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(HttpContext.User.GetOrg()))
             {
-                // Only orgs can do a search based on a specific app. Alternative can be a service owner read in scope. Need to be added later
                 return StatusCode(401, "Only orgs can call this api");
             }
 
-            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size, person, unit, party);
+            (bool isValid, string errorMessage) = ValidateQueryParams(query);
 
             if (!isValid)
             {
@@ -152,7 +141,8 @@ namespace Altinn.Platform.Events.Controllers
 
             try
             {
-                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, null, resource, type, unit, person, size);
+                List<CloudEvent> events = await _eventsService.GetAppEvents(
+                    query.After, query.From, query.To, GetSubjectUrn(query), null, resource, query.Type, query.Size, cancellationToken);
                 SetNextLink(events);
 
                 return events;
@@ -164,20 +154,14 @@ namespace Altinn.Platform.Events.Controllers
         }
 
         /// <summary>
-        /// Retrieves a set of events related to a party based on query parameters.
+        /// Search for app events as an end user.
         /// </summary>
-        /// <param name="after" example="3fa85f64-5717-4562-b3fc-2c963f66afa6">Id of the latter event that should be included</param>
-        /// <param name="from" example="2022-02-14 07:22:19Z">The lower limit for when the cloud event was created in UTC</param>
-        /// <param name="to" example="2022-06-16 13:37:00Z">The upper limit for when the cloud event was created in UTC</param>
-        /// <param name="party" example="50002108">The party id representing the subjects</param>
-        /// <param name="unit" example="989271156">The organisation number representing the subject</param>
-        /// <param name="person" example="01014922047">The person number representing the subject</param>
-        /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/&quot;
-        /// , &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/&quot;, &quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-%/&quot;]">
+        /// <remarks>This endpoints requires one event subject parameter. That means either
+        /// <c>party</c>, <c>unit</c>, <c>person</c> or <c>externalUrn</c>.</remarks>
+        /// <param name="query">The query parameters and headers used to filter the events</param>
+        /// <param name="source" example="[&quot;https://ttd.apps.at22.altinn.cloud/ttd/apps-test/%&quot;, &quot;https://ttd.apps.at22.altinn.cloud/digdir/bli-tjenesteeier/%&quot;]">
         /// A list of the sources to include</param>
-        /// <param name="type" example="[&quot;app.instance.created&quot;, &quot;app.instance.process.completed&quot;]">
-        /// A list of the event types to include</param>
-        /// <param name="size">The maximum number of events to include in the response</param>
+        /// <param name="cancellationToken">A cancellation token that is cancelled if the request is aborted</param>
         [HttpGet("party")]
         [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -185,31 +169,28 @@ namespace Altinn.Platform.Events.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Produces("application/json")]
         public async Task<ActionResult<List<CloudEvent>>> GetForParty(
-            [FromQuery] string after,
-            [FromQuery] DateTime? from,
-            [FromQuery] DateTime? to,
-            [FromQuery] int party,
-            [FromQuery] string unit,
-            [FromHeader] string person,
+            AppEventsQueryModel query,
             [FromQuery] List<string> source,
-            [FromQuery] List<string> type,
-            [FromQuery] int size = 50)
+            CancellationToken cancellationToken)
         {
-            (bool isValid, string errorMessage) = ValidateQueryParams(after, from, to, size, person, unit, party);
+            (bool isValid, string errorMessage) = ValidateQueryParams(query);
 
             if (!isValid)
             {
                 return Problem(errorMessage, null, 400);
             }
 
-            if (string.IsNullOrEmpty(person) && string.IsNullOrEmpty(unit) && party <= 0)
+            PartyUrn subject = GetSubjectUrn(query);
+
+            if (subject is null)
             {
-                return Problem("Subject must be specified using either query params party or unit or header value person.", null, 400);
+                return Problem("Subject must be specified using query parameter party or unit, or header parameter person or externalUrn.", null, 400);
             }
 
             try
             {
-                List<CloudEvent> events = await _eventsService.GetAppEvents(after, from, to, party, source, null, type, unit, person, size);
+                List<CloudEvent> events = await _eventsService.GetAppEvents(
+                    query.After, query.From, query.To, subject, source, null, query.Type, query.Size, cancellationToken);
                 SetNextLink(events);
                 return events;
             }
@@ -219,54 +200,86 @@ namespace Altinn.Platform.Events.Controllers
             }
         }
 
-        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(string after, DateTime? from, DateTime? to, int size, string person, string unit, int party)
+        /// <summary>
+        /// Converts the subject parameter of the query into a party URN. The query must have
+        /// passed <see cref="ValidateQueryParams"/>, which ensures that at most one subject
+        /// parameter is set and that its value can be parsed.
+        /// </summary>
+        /// <returns>The party URN of the subject, or null if no subject parameter is set.</returns>
+        private static PartyUrn GetSubjectUrn(AppEventsQueryModel query)
         {
-            if (string.IsNullOrEmpty(after) && from == null)
+            if (query.Party is not null && query.Party > 0)
+            {
+                return PartyUrn.PartyId.Create((uint)query.Party);
+            }
+
+            if (!string.IsNullOrEmpty(query.Unit))
+            {
+                return PartyUrn.OrganizationId.Create(OrganizationIdentifier.Parse(query.Unit));
+            }
+
+            if (!string.IsNullOrEmpty(query.Person))
+            {
+                return PartyUrn.PersonId.Create(PersonIdentifier.Parse(query.Person));
+            }
+
+            if (!string.IsNullOrEmpty(query.ExternalUrn))
+            {
+                return PartyUrn.Parse(query.ExternalUrn);
+            }
+
+            return null;
+        }
+
+        private static (bool IsValid, string ErrorMessage) ValidateQueryParams(AppEventsQueryModel query)
+        {
+            if (string.IsNullOrEmpty(query.After) && query.From == null)
             {
                 return (false, "The 'From' or 'After' parameter must be defined.");
             }
 
-            if (from != null && !from.Value.SpecifiesTimezone())
+            if (query.From != null && !query.From.Value.SpecifiesTimezone())
             {
                 return (false, "The 'From' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
 
-            if (to != null && !to.Value.SpecifiesTimezone())
+            if (query.To != null && !query.To.Value.SpecifiesTimezone())
             {
                 return (false, "The 'To' parameter must specify timezone. E.g. 2022-07-07T11:00:53.3917Z for UTC");
             }
 
-            if (size < 1)
+            if (query.Size < 1)
             {
                 return (false, "The 'Size' parameter must be a number larger that 0.");
             }
 
-            if (!string.IsNullOrEmpty(person) && party > 0)
+            bool hasParty = query.Party is not null && query.Party > 0;
+            bool hasUnit = !string.IsNullOrEmpty(query.Unit);
+            bool hasPerson = !string.IsNullOrEmpty(query.Person);
+            bool hasExternalUrn = !string.IsNullOrEmpty(query.ExternalUrn);
+
+            if (new[] { hasParty, hasUnit, hasPerson, hasExternalUrn }.Count(isSet => isSet) > 1)
             {
-                return (false, "Only one of 'Party' or 'Person' can be defined.");
+                return (false, "Only one of 'Party', 'Unit', 'Person' or 'ExternalUrn' can be defined.");
             }
 
-            if (!string.IsNullOrEmpty(person) && !HasValidSsnFormat(person))
+            if (hasPerson && !PersonIdentifier.TryParse(query.Person, null, out _))
             {
-                return (false, "Value of 'Person' needs to be exactly 11 digits.");
+                return (false, "Value of 'Person' needs to be a valid national identity number.");
             }
 
-            if (!string.IsNullOrEmpty(unit) && party > 0)
+            if (hasUnit && !OrganizationIdentifier.TryParse(query.Unit, null, out _))
             {
-                return (false, "Only one of 'Party' or 'Unit' can be defined.");
+                return (false, "Value of 'Unit' needs to be a valid organization number.");
             }
 
-            if (!string.IsNullOrEmpty(unit) && !HasValidUnitFormat(unit))
+            if (hasExternalUrn && !PartyUrn.TryParse(query.ExternalUrn, out _))
             {
-                return (false, "Value of 'Unit' needs to be exactly 9 digits.");
+                return (false, "Value of 'ExternalUrn' needs to be a valid party URN.");
             }
 
             return (true, null);
         }
-
-        private static bool HasValidSsnFormat(string personStr) => personStr.Length == 11 && personStr.All(char.IsDigit);
-
-        private static bool HasValidUnitFormat(string unit) => unit.Length == 9 && unit.All(char.IsDigit);
 
         private void SetNextLink(List<CloudEvent> events)
         {
