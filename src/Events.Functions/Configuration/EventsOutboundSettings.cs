@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 namespace Altinn.Platform.Events.Functions.Configuration;
 
@@ -11,4 +11,9 @@ public class EventsOutboundSettings
     /// The number of seconds the event push http client will wait for a response before timing out.
     /// </summary>
     public int RequestTimeout { get; set; } = 300;
+
+    /// <summary>
+    /// Used to flag whether Maskinporten authentication should be available on webhook http requests
+    /// </summary>
+    public bool EnableWebhookAuthentication { get; set; } = false;
 }
