@@ -12,6 +12,11 @@ const ninUsers = {
       AuthN_PartyId: "50891883",
       AuthN_PartyUuid: "629fa2c0-27cd-40a2-ac6a-99bdf374dba2"
     },
+    yt01: {
+      AuthN_UserId: "4543039",
+      AuthN_PartyId: "62581069",
+      AuthN_PartyUuid: "ed5b066d-1097-4fbd-8448-297977400e4c"
+    },
     tt02: {
       AuthN_UserId: "1597896",
       AuthN_PartyId: "51368167",
@@ -28,6 +33,11 @@ const ninUsers = {
       AuthN_UserId: "20637195",
       AuthN_PartyId: "50273283",
       AuthN_PartyUuid: "87a67973-55ad-42eb-984f-39b0cca9b969"
+    },
+    yt01: {
+      AuthN_UserId: "4549158",
+      AuthN_PartyId: "62039514",
+      AuthN_PartyUuid: "a2f0629f-8537-4810-b8c1-06f9c6e7a1d5"
     },
     tt02: {
       AuthN_UserId: "1282603",
