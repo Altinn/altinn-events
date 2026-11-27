@@ -15,6 +15,7 @@ using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -28,6 +29,11 @@ if (!string.IsNullOrEmpty(keyVaultUri))
 
 builder.Services.AddApplicationInsightsTelemetryWorkerService();
 builder.Services.ConfigureFunctionsApplicationInsights();
+
+// host.json log levels do not apply to the isolated worker, so mirror them here.
+builder.Logging.SetMinimumLevel(LogLevel.Warning);
+builder.Logging.AddFilter("Function", LogLevel.Information);
+builder.Logging.AddFilter("Altinn.Platform.Events.Functions", LogLevel.Information);
 
 builder.Services.Configure<PlatformSettings>(builder.Configuration.GetSection("Platform"));
 builder.Services.Configure<KeyVaultSettings>(builder.Configuration.GetSection("KeyVault"));

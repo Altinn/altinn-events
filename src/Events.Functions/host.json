@@ -8,9 +8,13 @@
       }
     },
     "logLevel": {
-      "default": "Information",
-      "Function": "Debug",
-      "Altinn.Platform.Events.Functions.Services.PushEventsService": "Information"
+      "default": "Warning",
+      "Function": "Information",
+      "Host.Results": "Information",
+      "Host.Aggregator": "Warning",
+      "System.Net.Http.HttpClient": "Warning",
+      "Wolverine": "Warning",
+      "Altinn.Platform.Events.Functions": "Information"
     }
   },
   "extensions": {
