@@ -351,6 +351,82 @@ namespace Altinn.Platform.Events.Tests.TestingServices
         }
 
         [Fact]
+        public async Task PartyLookup_QueryResponseIsPartialContent_ReturnsDeserializedParties()
+        {
+            // Arrange
+            DelegatingHandlerStub messageHandler = new((request, token) =>
+                Task.FromResult(new HttpResponseMessage(HttpStatusCode.PartialContent)
+                {
+                    Content = JsonContent.Create(new PartiesRegisterQueryResponse
+                    {
+                        Data = [new PartyIdentifiers { PartyType = "organization", PartyId = 12345 }]
+                    })
+                }));
+
+            RegisterApiClient target = CreateRegisterApiClient(messageHandler);
+
+            List<string> partyUrnList = [
+                "urn:altinn:organization:identifier-no:989271156",
+                "urn:altinn:organization:identifier-no:978685293"
+            ];
+
+            // Act
+            List<PartyIdentifiers> actual = [.. await target.PartyLookup(partyUrnList, CancellationToken.None)];
+
+            // Assert
+            PartyIdentifiers single = Assert.Single(actual);
+            Assert.Equal(12345, single.PartyId);
+        }
+
+        [Fact]
+        public async Task GetPartyId_QueryResponseIsPartialContentWithNoParties_ThrowsNotFoundPlatformException()
+        {
+            // Arrange
+            DelegatingHandlerStub messageHandler = new((request, token) =>
+                Task.FromResult(new HttpResponseMessage(HttpStatusCode.PartialContent)
+                {
+                    Content = JsonContent.Create(new PartiesRegisterQueryResponse { Data = [] })
+                }));
+
+            RegisterApiClient target = CreateRegisterApiClient(messageHandler);
+
+            // Act
+            PlatformHttpException actual = await Assert.ThrowsAsync<PlatformHttpException>(
+                () => target.GetPartyId(PartyUrn.Parse("urn:altinn:organization:identifier-no:978685293"), CancellationToken.None));
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, actual.Response.StatusCode);
+        }
+
+        [Fact]
+        public async Task PartyLookup_ResponseIsPartialContent_IdReturned()
+        {
+            // Arrange
+            Party party = new Party { PartyId = 500000, OrgNumber = "897069650", PartyTypeName = PartyType.Organisation };
+            HttpResponseMessage httpResponseMessage = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.PartialContent,
+                Content = new StringContent(JsonSerializer.Serialize(party), Encoding.UTF8, "application/json")
+            };
+
+            InitializeMocks(httpResponseMessage, _ => { });
+
+            RegisterApiClient target = new RegisterApiClient(
+                CreateFactory(new HttpClient(_handlerMock.Object)),
+                _contextAccessor.Object,
+                _accessTokenGenerator.Object,
+                _generalSettings.Object,
+                _platformSettings.Object,
+                new Mock<ILogger<RegisterApiClient>>().Object);
+
+            // Act
+            int actual = await target.PartyLookup("897069650", null);
+
+            // Assert
+            Assert.Equal(500000, actual);
+        }
+
+        [Fact]
         public async Task GetMainUnit_MainUnitFound_ReturnsOrganizationRecord()
         {
             // Arrange

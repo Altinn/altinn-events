@@ -89,7 +89,7 @@ namespace Altinn.Platform.Events.Services
             content.Headers.ContentType = MediaTypeHeaderValue.Parse(ApplicationJson);
 
             HttpResponseMessage response = await _client.PostAsync(bearerToken, endpointUrl, content, accessToken);
-            if (response.StatusCode == HttpStatusCode.OK)
+            if (response.IsSuccessStatusCode)
             {
                 Party party = await response.Content.ReadFromJsonAsync<Party>(_serializerOptions);
                 return party.PartyId;
@@ -123,13 +123,18 @@ namespace Altinn.Platform.Events.Services
                 HttpResponseMessage response = await _client.PostAsync(
                     RequestUri, content, accessToken, cancellationToken);
 
-                if (response.StatusCode == HttpStatusCode.OK)
+                // Register may respond with 206 Partial Content when some of the requested
+                // parties were not found. Any 2xx response is treated as a success.
+                if (response.IsSuccessStatusCode)
                 {
-                    PartiesRegisterQueryResponse queryResults = 
+                    PartiesRegisterQueryResponse queryResults =
                         await response.Content.ReadFromJsonAsync<PartiesRegisterQueryResponse>(
                             _serializerOptions, cancellationToken);
 
-                    partyIdentifiers.AddRange(queryResults.Data);
+                    if (queryResults?.Data is not null)
+                    {
+                        partyIdentifiers.AddRange(queryResults.Data);
+                    }
                 }
                 else
                 {
