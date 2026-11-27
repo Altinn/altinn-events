@@ -11,6 +11,17 @@ Documentation: https://docs.altinn.studio/events
 
 These instructions will get you a copy of the events component up and running on your machine for development and testing purposes.
 
+### Run everything with Aspire
+
+[`tools/aspire`](tools/aspire/README.md) runs the API and Events.Functions with PostgreSQL, the Service Bus emulator, a local Key Vault and mocks of the token generator, Register, Authorization and a subscriber's webhook, from one command and without credentials:
+
+```bash
+cd tools/aspire
+aspire run
+```
+
+The steps below set the API up by hand instead.
+
 ### Prerequisites
 
 1. [.NET 10.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)

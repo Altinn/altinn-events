@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Altinn.Platform.Events.Tools.MockAuth/Altinn.Platform.Events.Tools.MockAuth.csproj" />
+    <Project Path="src/Altinn.Platform.Events.Tools.PlatformMocks/Altinn.Platform.Events.Tools.PlatformMocks.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Altinn.Platform.Events.Tools.Tests/Altinn.Platform.Events.Tools.Tests.csproj" />
+  </Folder>
+</Solution>
