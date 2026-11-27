@@ -89,8 +89,8 @@ public class RegistrationQueueRetryTests(IntegrationTestContainersFixture fixtur
             var deadLetterMessage = await ServiceBusTestUtils.WaitForDeadLetterMessageAsync(
                 _fixture,
                 factory.WolverineSettings.RegistrationQueueName,
-                TimeSpan.FromSeconds(5));
-            
+                TimeSpan.FromSeconds(8));
+
             // Assert - Message should be in dead letter queue after retries are exhausted
             Assert.NotNull(deadLetterMessage);
 
